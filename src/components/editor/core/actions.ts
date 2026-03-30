@@ -1,10 +1,10 @@
 import type { LexicalEditor } from "lexical";
-import { HTML_EXAMPLE, MARKDOWN_EXAMPLE } from "./editor-constants";
+import { HTML_EXAMPLE, MARKDOWN_EXAMPLE } from "./constants";
 import {
   createEmptyEditorState,
   loadMarkdownContent,
   replaceEditorHtmlContent,
-} from "./editor-utils";
+} from "./utils";
 
 export const copyEditorOutput = async (value: string) => {
   await navigator.clipboard.writeText(value);

@@ -7,14 +7,14 @@ import {
   loadEditorHtmlExample,
   loadEditorMarkdownExample,
   resetEditorContent,
-} from "./editor-actions";
-import { createEditorConfig } from "./editor-config";
-import { DEFAULT_PLACEHOLDER } from "./editor-constants";
-import { EditorContent } from "./editor-content";
-import { EditorActionBar, EditorOutputGrid } from "./editor-panels";
-import type { EditorProps, EditorSnapshot } from "./editor-types";
-import { EditorHeader, EditorShell } from "./editor-ui";
-import { readEditorSnapshot } from "./editor-utils";
+} from "./core/actions";
+import { createEditorConfig } from "./core/config";
+import { DEFAULT_PLACEHOLDER } from "./core/constants";
+import type { EditorProps, EditorSnapshot } from "./core/types";
+import { readEditorSnapshot } from "./core/utils";
+import { EditorHeader, EditorShell } from "./ui/chrome";
+import { EditorContent } from "./ui/content";
+import { EditorActionBar, EditorOutputGrid } from "./ui/panels";
 
 export function Editor({
   className,

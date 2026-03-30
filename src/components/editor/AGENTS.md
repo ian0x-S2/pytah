@@ -19,25 +19,38 @@ Current structure:
 
 - `editor.tsx`
   - composition root for the editor experience
-  - wires plugins, shell UI, import/export controls, and output panels
-- `editor-config.ts`
-  - Lexical config factory and registered nodes
-- `editor-constants.ts`
-  - placeholder text, example content, and feature constants
-- `editor-types.ts`
-  - public editor types shared across the feature
-- `editor-utils.ts`
-  - serialization and content-loading helpers
-- `editor-actions.ts`
-  - editor-level action helpers for reset/import/copy flows
-- `editor-ui.tsx`
-  - presentational editor shell/header/footer/output UI
-- `editor-panels.tsx`
-  - editor action bar and output panel composition
-- `editor-content.tsx`
-  - editor content area and Lexical plugin wiring below the composer root
+  - wires core state, shell UI, plugin composition, import/export controls, and output panels
+- `core/`
+  - non-React editor foundations and shared feature types
+  - `actions.ts`
+    - editor-level actions for reset/import/copy flows
+  - `config.ts`
+    - Lexical config factory and registered nodes
+  - `constants.ts`
+    - placeholder text, example content, and feature constants
+  - `theme.ts`
+    - Lexical theme classes
+  - `types.ts`
+    - public editor types shared across the feature
+  - `utils.ts`
+    - serialization and content-loading helpers
+- `ui/`
+  - React composition and presentational editor surfaces outside plugin feature folders
+  - `content.tsx`
+    - editor content area and Lexical plugin wiring below the composer root
+  - `chrome.tsx`
+    - shell/header/footer/output primitives
+  - `panels.tsx`
+    - action bar and output panel composition
 - `plugins/`
   - isolated Lexical behaviors
+  - `core/`
+    - low-level editor lifecycle plugins used across the editor surface
+    - `editable.tsx`
+    - `editor-state.tsx`
+    - `focus-on-mount.tsx`
+    - `horizontal-rule.tsx`
+    - `seed-content.tsx`
 
 Preferred plugin structure for complex plugins:
 
@@ -60,9 +73,10 @@ Current examples:
 
 ## Maintenance Rules
 
+- Keep editor foundations in `core/`, editor rendering/composition in `ui/`, and Lexical behavior in `plugins/`
 - Keep complex feature data in typed config files instead of inline arrays inside components
 - Keep Lexical tree mutations in small pure helpers when possible
-- Keep editor composition concerns in `editor.tsx`, content wiring in `editor-content.tsx`, and panel/layout concerns in `editor-panels.tsx` or `editor-ui.tsx`
+- Keep `editor.tsx` thin and focused on orchestration
 - Prefer relative imports for files inside `src/components/editor/*`
 - Avoid deprecated Lexical React helpers when `@lexical/extension` or core Lexical APIs exist
 - If a plugin grows beyond one responsibility, split it into a feature folder

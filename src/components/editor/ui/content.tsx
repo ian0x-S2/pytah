@@ -7,19 +7,19 @@ import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPl
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { TabIndentationPlugin } from "@lexical/react/LexicalTabIndentationPlugin";
 import type { LexicalEditor } from "lexical";
-import type { EditorSnapshot } from "./editor-types";
-import { EditorFooter } from "./editor-ui";
-import { BlockTypeToolbarPlugin } from "./plugins/block-type-toolbar/plugin";
-import { EditablePlugin } from "./plugins/editable-plugin";
-import { EditorStatePlugin } from "./plugins/editor-state-plugin";
-import { FloatingToolbarPlugin } from "./plugins/floating-toolbar/plugin";
-import { FocusOnMountPlugin } from "./plugins/focus-on-mount-plugin";
-import { HorizontalRulePlugin } from "./plugins/horizontal-rule-plugin";
-import { LinkBehaviorPlugin } from "./plugins/link-behavior/plugin";
-import { EDITOR_MARKDOWN_TRANSFORMERS } from "./plugins/markdown/transformers";
-import { SeedContentPlugin } from "./plugins/seed-content-plugin";
-import { SlashCommandPlugin } from "./plugins/slash-command/plugin";
-import { TableBehaviorPlugin } from "./plugins/table-behavior/plugin";
+import type { EditorSnapshot } from "../core/types";
+import { BlockTypeToolbarPlugin } from "../plugins/block-type-toolbar/plugin";
+import { EditablePlugin } from "../plugins/core/editable";
+import { EditorStatePlugin } from "../plugins/core/editor-state";
+import { FocusOnMountPlugin } from "../plugins/core/focus-on-mount";
+import { HorizontalRulePlugin } from "../plugins/core/horizontal-rule";
+import { SeedContentPlugin } from "../plugins/core/seed-content";
+import { FloatingToolbarPlugin } from "../plugins/floating-toolbar/plugin";
+import { LinkBehaviorPlugin } from "../plugins/link-behavior/plugin";
+import { EDITOR_MARKDOWN_TRANSFORMERS } from "../plugins/markdown/transformers";
+import { SlashCommandPlugin } from "../plugins/slash-command/plugin";
+import { TableBehaviorPlugin } from "../plugins/table-behavior/plugin";
+import { EditorFooter } from "./chrome";
 
 interface EditorTopToolbarProps {
   editable: boolean;

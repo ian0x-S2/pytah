@@ -2,13 +2,13 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import type { LexicalEditor } from "lexical";
 import { useEffect } from "react";
-import type { EditorSnapshot } from "../editor-types";
+import type { EditorSnapshot } from "../../core/types";
 import {
   createEmptyEditorState,
   loadMarkdownContent,
   readEditorSnapshot,
   replaceEditorHtmlContent,
-} from "../editor-utils";
+} from "../../core/utils";
 
 export interface EditorStatePluginProps {
   initialHtml?: string;

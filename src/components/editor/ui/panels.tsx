@@ -1,7 +1,7 @@
 import { FileCode2Icon, FileTextIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { EditorSnapshot } from "./editor-types";
-import { OutputPanel } from "./editor-ui";
+import type { EditorSnapshot } from "../core/types";
+import { OutputPanel } from "./chrome";
 
 interface EditorActionBarProps {
   onLoadHtml: () => void;

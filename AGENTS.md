@@ -143,6 +143,7 @@ This repository is a Vite + React + TypeScript application centered on a rich ed
 ### Editor Architecture Rules
 
 - `src/components/editor/editor.tsx` is the composition root for the editor experience
+- keep editor foundations in `src/components/editor/core/`, React composition in `src/components/editor/ui/`, and Lexical behaviors in `src/components/editor/plugins/`
 - complex plugins should live in `src/components/editor/plugins/<feature>/`
 - keep declarative config separate from Lexical mutation logic and React wiring
 - prefer feature-local relative imports inside `src/components/editor/*`

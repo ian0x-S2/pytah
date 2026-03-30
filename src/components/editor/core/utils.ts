@@ -9,7 +9,7 @@ import {
   $getRoot,
   type LexicalEditor,
 } from "lexical";
-import { EDITOR_MARKDOWN_TRANSFORMERS } from "./plugins/markdown/transformers";
+import { EDITOR_MARKDOWN_TRANSFORMERS } from "../plugins/markdown/transformers";
 
 export interface EditorSnapshot {
   html: string;

@@ -2,8 +2,8 @@ import type { FileTextIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { FEATURE_ITEMS, WORD_SEPARATOR_PATTERN } from "./editor-constants";
-import type { EditorSnapshot } from "./editor-types";
+import { FEATURE_ITEMS, WORD_SEPARATOR_PATTERN } from "../core/constants";
+import type { EditorSnapshot } from "../core/types";
 
 export function EditorShell({
   children,
