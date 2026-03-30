@@ -71,6 +71,16 @@ Current examples:
 - `plugins/table-behavior/*`
 - `plugins/markdown/*`
 
+Table behavior module conventions:
+- `plugins/table-behavior/actions.ts`
+  - row/column insertion and deletion operations
+- `plugins/table-behavior/selection.ts`
+  - current table selection derivation for contextual controls
+- `plugins/table-behavior/types.ts`
+  - local table interaction state types
+- `plugins/table-behavior/plugin.tsx`
+  - contextual table controls and Lexical table integration
+
 ## Maintenance Rules
 
 - Keep editor foundations in `core/`, editor rendering/composition in `ui/`, and Lexical behavior in `plugins/`
@@ -89,4 +99,5 @@ Current examples:
 - Exported HTML and Markdown must stay in sync with editor state
 - Links should stay valid, auto-detect when obvious, and remain usable in both editable and read-only modes
 - Tables and checklists should stay first-class editing blocks, not hacked-in visual widgets
+- Table controls should act on the current cell context, float around the active table, and make row/column structure editable in-place
 - Editor should remain usable in editable and read-only modes
