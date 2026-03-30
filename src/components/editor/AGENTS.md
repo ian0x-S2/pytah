@@ -65,11 +65,26 @@ Preferred plugin structure for complex plugins:
 
 Current examples:
 - `plugins/slash-command/*`
+- `plugins/layout/*`
 - `plugins/block-type-toolbar/*`
 - `plugins/floating-toolbar/*`
 - `plugins/link-behavior/*`
 - `plugins/table-behavior/*`
 - `plugins/markdown/*`
+
+Layout feature conventions:
+- `core/nodes/layout-container-node.ts`
+  - grid container node that stores `templateColumns`
+- `core/nodes/layout-item-node.ts`
+  - per-column shadow root node for editable column content
+- `plugins/layout/constants.ts`
+  - official layout preset labels and template strings
+- `plugins/layout/commands.ts`
+  - custom layout insertion command
+- `plugins/layout/utils.ts`
+  - helpers that build column structures in the Lexical tree
+- `plugins/layout/plugin.tsx`
+  - command registration layer only
 
 Table behavior module conventions:
 - `plugins/table-behavior/actions.ts`
@@ -99,6 +114,7 @@ Table behavior module conventions:
 - Exported HTML and Markdown must stay in sync with editor state
 - Links should stay valid, auto-detect when obvious, and remain usable in both editable and read-only modes
 - Tables and checklists should stay first-class editing blocks, not hacked-in visual widgets
+- Columns layouts should stay editable as real Lexical structure, not visual wrappers without import/export support
 - Table controls should act on the current cell context, float around the active table, and make row/column structure editable in-place
 - Table edge controls should prefer low-noise affordances: render full-length top and right rails that match the table width/height, with a single add trigger traveling along those rails for column and row actions
 - Table edge trigger positioning should track the active cell context so insertion affordances feel anchored to the current row/column, not just the table center, while keeping full-edge hover strips for discoverability

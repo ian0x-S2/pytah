@@ -15,6 +15,7 @@ import { FocusOnMountPlugin } from "../plugins/core/focus-on-mount";
 import { HorizontalRulePlugin } from "../plugins/core/horizontal-rule";
 import { SeedContentPlugin } from "../plugins/core/seed-content";
 import { FloatingToolbarPlugin } from "../plugins/floating-toolbar/plugin";
+import { LayoutPlugin } from "../plugins/layout/plugin";
 import { LinkBehaviorPlugin } from "../plugins/link-behavior/plugin";
 import { EDITOR_MARKDOWN_TRANSFORMERS } from "../plugins/markdown/transformers";
 import { SlashCommandPlugin } from "../plugins/slash-command/plugin";
@@ -85,6 +86,7 @@ export function EditorContent({
       <ListPlugin />
       <CheckListPlugin />
       <LinkBehaviorPlugin editable={editable} />
+      <LayoutPlugin />
       <HorizontalRulePlugin />
       <TableBehaviorPlugin />
       <TabIndentationPlugin />

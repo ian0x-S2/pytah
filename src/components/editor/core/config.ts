@@ -5,6 +5,8 @@ import { ListItemNode, ListNode } from "@lexical/list";
 import type { InitialConfigType } from "@lexical/react/LexicalComposer";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
+import { LayoutContainerNode } from "./nodes/layout-container-node";
+import { LayoutItemNode } from "./nodes/layout-item-node";
 import { editorTheme } from "./theme";
 
 function onError(error: Error) {
@@ -21,6 +23,8 @@ const EDITOR_NODES = [
   LinkNode,
   AutoLinkNode,
   HorizontalRuleNode,
+  LayoutContainerNode,
+  LayoutItemNode,
   TableNode,
   TableRowNode,
   TableCellNode,

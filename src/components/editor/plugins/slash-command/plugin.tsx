@@ -12,6 +12,7 @@ import {
 } from "lexical";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -19,6 +20,16 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { INSERT_LAYOUT_COMMAND } from "../layout/commands";
+import { LAYOUT_PRESETS } from "../layout/constants";
 import { SLASH_COMMANDS } from "./commands";
 import { SLASH_COMMAND_EXECUTORS } from "./executors";
 import type { SlashCommandId, SlashMenuPosition } from "./types";
@@ -36,6 +47,8 @@ const EMPTY_MENU_POSITION: SlashMenuPosition = {
   top: 0,
 };
 
+const TEMPLATE_COLUMN_SEPARATOR = /\s+/;
+
 const getSelectionRectangle = (): SlashMenuPosition | null => {
   const nativeSelection = window.getSelection();
   if (!(nativeSelection && nativeSelection.rangeCount > 0)) {
@@ -51,9 +64,43 @@ const getSelectionRectangle = (): SlashMenuPosition | null => {
   };
 };
 
+const getLayoutPreviewColumns = (templateColumns: string) => {
+  return templateColumns.split(TEMPLATE_COLUMN_SEPARATOR).filter(Boolean);
+};
+
+function LayoutPresetPreview({ templateColumns }: { templateColumns: string }) {
+  const columns = getLayoutPreviewColumns(templateColumns);
+  const columnOccurrences = new Map<string, number>();
+
+  return (
+    <div className="grid h-14 w-full gap-2 rounded-xl border border-border/70 bg-muted/40 p-2">
+      <div
+        className="grid h-full gap-2"
+        style={{ gridTemplateColumns: templateColumns }}
+      >
+        {columns.map((column) => {
+          const currentCount = columnOccurrences.get(column) ?? 0;
+          columnOccurrences.set(column, currentCount + 1);
+
+          return (
+            <div
+              className="rounded-md border border-border/70 bg-background/90 shadow-xs"
+              key={`${templateColumns}-${column}-${currentCount}`}
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function SlashCommandPlugin() {
   const [editor] = useLexicalComposerContext();
   const [isOpen, setIsOpen] = useState(false);
+  const [isLayoutPresetOpen, setIsLayoutPresetOpen] = useState(false);
+  const [pendingLayoutTargetKey, setPendingLayoutTargetKey] = useState<
+    string | null
+  >(null);
   const [position, setPosition] =
     useState<SlashMenuPosition>(EMPTY_MENU_POSITION);
   const [query, setQuery] = useState("");
@@ -72,6 +119,26 @@ export function SlashCommandPlugin() {
 
   const executeCommand = useCallback(
     (commandId: SlashCommandId) => {
+      if (commandId === "columns") {
+        editor.getEditorState().read(() => {
+          const selection = $getSelection();
+          if (!$isRangeSelection(selection)) {
+            return;
+          }
+
+          const node = selection.anchor.getNode();
+          if (!$isTextNode(node)) {
+            return;
+          }
+
+          setPendingLayoutTargetKey(node.getTopLevelElementOrThrow().getKey());
+        });
+
+        setIsLayoutPresetOpen(true);
+        setIsOpen(false);
+        return;
+      }
+
       editor.update(() => {
         const selection = $getSelection();
         if (!$isRangeSelection(selection)) {
@@ -94,6 +161,24 @@ export function SlashCommandPlugin() {
     [editor]
   );
 
+  const executeLayoutPreset = useCallback(
+    (templateColumns: string) => {
+      if (!pendingLayoutTargetKey) {
+        return;
+      }
+
+      editor.dispatchCommand(INSERT_LAYOUT_COMMAND, {
+        targetNodeKey: pendingLayoutTargetKey,
+        templateColumns,
+      });
+
+      setPendingLayoutTargetKey(null);
+      setIsLayoutPresetOpen(false);
+      setIsOpen(false);
+    },
+    [editor, pendingLayoutTargetKey]
+  );
+
   useEffect(() => {
     if (filteredCommands.length === 0) {
       setSelectedCommandId("");
@@ -106,15 +191,15 @@ export function SlashCommandPlugin() {
   }, [filteredCommands, selectedCommandId]);
 
   useEffect(() => {
-    if (!isOpen) {
+    if (!isOpen || isLayoutPresetOpen) {
       return;
     }
 
     setSelectedCommandId(getFirstCommandId(filteredCommands));
-  }, [filteredCommands, isOpen]);
+  }, [filteredCommands, isLayoutPresetOpen, isOpen]);
 
   useEffect(() => {
-    if (!(isOpen && selectedCommandId)) {
+    if (!(isOpen && selectedCommandId) || isLayoutPresetOpen) {
       return;
     }
 
@@ -131,9 +216,13 @@ export function SlashCommandPlugin() {
     return () => {
       window.cancelAnimationFrame(animationFrameId);
     };
-  }, [isOpen, selectedCommandId]);
+  }, [isLayoutPresetOpen, isOpen, selectedCommandId]);
 
   useEffect(() => {
+    if (isLayoutPresetOpen) {
+      return;
+    }
+
     return editor.registerUpdateListener(({ editorState }) => {
       editorState.read(() => {
         const selection = $getSelection();
@@ -142,12 +231,14 @@ export function SlashCommandPlugin() {
 
         if (!isCollapsedRangeSelection) {
           setIsOpen(false);
+          setIsLayoutPresetOpen(false);
           return;
         }
 
         const node = selection.anchor.getNode();
         if (!$isTextNode(node)) {
           setIsOpen(false);
+          setIsLayoutPresetOpen(false);
           return;
         }
 
@@ -158,6 +249,7 @@ export function SlashCommandPlugin() {
 
         if (nextQuery === null) {
           setIsOpen(false);
+          setIsLayoutPresetOpen(false);
           return;
         }
 
@@ -171,7 +263,7 @@ export function SlashCommandPlugin() {
         setIsOpen(true);
       });
     });
-  }, [editor]);
+  }, [editor, isLayoutPresetOpen]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -182,6 +274,10 @@ export function SlashCommandPlugin() {
       editor.registerCommand(
         KEY_ARROW_DOWN_COMMAND,
         (event) => {
+          if (isLayoutPresetOpen) {
+            return true;
+          }
+
           event.preventDefault();
           setSelectedCommandId((currentSelection) => {
             return getNeighborCommandId(
@@ -197,6 +293,10 @@ export function SlashCommandPlugin() {
       editor.registerCommand(
         KEY_ARROW_UP_COMMAND,
         (event) => {
+          if (isLayoutPresetOpen) {
+            return true;
+          }
+
           event.preventDefault();
           setSelectedCommandId((currentSelection) => {
             return getNeighborCommandId(
@@ -213,6 +313,12 @@ export function SlashCommandPlugin() {
         KEY_ENTER_COMMAND,
         (event) => {
           event?.preventDefault();
+
+          if (isLayoutPresetOpen) {
+            executeLayoutPreset(LAYOUT_PRESETS[0]?.value ?? "1fr 1fr");
+            return true;
+          }
+
           const selectedCommand = filteredCommands[selectedIndex];
           if (selectedCommand) {
             executeCommand(selectedCommand.id);
@@ -224,56 +330,142 @@ export function SlashCommandPlugin() {
       editor.registerCommand(
         KEY_ESCAPE_COMMAND,
         () => {
+          if (isLayoutPresetOpen) {
+            setIsLayoutPresetOpen(false);
+            return true;
+          }
+
           setIsOpen(false);
           return true;
         },
         COMMAND_PRIORITY_HIGH
       )
     );
-  }, [editor, executeCommand, filteredCommands, isOpen, selectedIndex]);
+  }, [
+    editor,
+    executeCommand,
+    executeLayoutPreset,
+    filteredCommands,
+    isLayoutPresetOpen,
+    isOpen,
+    selectedIndex,
+  ]);
 
-  if (!isOpen || filteredCommands.length === 0) {
-    return null;
-  }
-
-  return createPortal(
-    <div
-      className="fade-in-0 zoom-in-95 fixed z-50 w-72 animate-in overflow-hidden rounded-lg bg-popover shadow-md ring-1 ring-foreground/10 duration-100"
-      style={{ left: position.left, top: position.top }}
-    >
-      <Command
-        onValueChange={(value) => setSelectedCommandId(value as SlashCommandId)}
-        shouldFilter={false}
-        value={selectedCommandId}
-      >
-        <CommandList ref={commandListRef}>
-          <CommandGroup heading="Blocks">
-            {filteredCommands.map((command, index) => (
-              <CommandItem
-                className={
-                  index === selectedIndex ? "bg-muted text-foreground" : ""
+  return (
+    <>
+      {isOpen && filteredCommands.length > 0
+        ? createPortal(
+            <div
+              className="fade-in-0 zoom-in-95 fixed z-50 w-72 animate-in overflow-hidden rounded-lg bg-popover shadow-md ring-1 ring-foreground/10 duration-100"
+              style={{ left: position.left, top: position.top }}
+            >
+              <Command
+                onValueChange={(value) =>
+                  setSelectedCommandId(value as SlashCommandId)
                 }
-                key={command.id}
-                onMouseEnter={() => setSelectedCommandId(command.id)}
-                onSelect={() => executeCommand(command.id)}
-                value={command.id}
+                shouldFilter={false}
+                value={selectedCommandId}
               >
-                <command.icon className="size-4 shrink-0 text-muted-foreground" />
-                <div className="flex flex-col">
-                  <span className="text-sm">{command.label}</span>
-                  <span className="text-muted-foreground text-xs">
-                    {command.description}
+                <CommandList ref={commandListRef}>
+                  <CommandGroup heading="Blocks">
+                    {filteredCommands.map((command, index) => (
+                      <CommandItem
+                        className={
+                          index === selectedIndex
+                            ? "bg-muted text-foreground"
+                            : ""
+                        }
+                        key={command.id}
+                        onMouseEnter={() => setSelectedCommandId(command.id)}
+                        onSelect={() => executeCommand(command.id)}
+                        value={command.id}
+                      >
+                        <command.icon className="size-4 shrink-0 text-muted-foreground" />
+                        <div className="flex flex-col">
+                          <span className="text-sm">{command.label}</span>
+                          <span className="text-muted-foreground text-xs">
+                            {command.description}
+                          </span>
+                        </div>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                  {filteredCommands.length === 0 ? (
+                    <CommandEmpty>No results found</CommandEmpty>
+                  ) : null}
+                </CommandList>
+              </Command>
+            </div>,
+            document.body
+          )
+        : null}
+
+      <Dialog onOpenChange={setIsLayoutPresetOpen} open={isLayoutPresetOpen}>
+        <DialogContent
+          className="max-h-[calc(100vh-2rem)] overflow-hidden p-0 sm:max-w-2xl"
+          showCloseButton
+        >
+          <DialogHeader className="px-5 pt-5 pb-0 sm:px-6 sm:pt-6">
+            <DialogTitle>Choose columns layout</DialogTitle>
+            <DialogDescription>
+              Pick one of the official Lexical-style column presets.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="max-h-[min(70vh,34rem)] overflow-y-auto px-4 pt-2 pb-4 sm:px-6 sm:pb-6">
+            <div className="grid gap-3 sm:grid-cols-2">
+              {LAYOUT_PRESETS.map((preset) => (
+                <Button
+                  className="h-auto min-h-32 justify-start rounded-2xl border border-border/80 px-4 py-4 text-left hover:bg-muted/60"
+                  key={preset.value}
+                  onClick={() => executeLayoutPreset(preset.value)}
+                  type="button"
+                  variant="ghost"
+                >
+                  <span className="flex w-full flex-col items-start gap-3">
+                    <LayoutPresetPreview templateColumns={preset.value} />
+                    <span className="flex flex-col items-start gap-1">
+                      <span className="font-medium text-foreground text-sm">
+                        {preset.label}
+                      </span>
+                      <span className="text-muted-foreground text-xs">
+                        {preset.description}
+                      </span>
+                      <span className="font-mono text-[11px] text-muted-foreground/80">
+                        {preset.value}
+                      </span>
+                    </span>
                   </span>
-                </div>
-              </CommandItem>
-            ))}
-          </CommandGroup>
-          {filteredCommands.length === 0 ? (
-            <CommandEmpty>No results found</CommandEmpty>
-          ) : null}
-        </CommandList>
-      </Command>
-    </div>,
-    document.body
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <DialogFooter
+            className="mt-0 px-4 py-3 sm:px-6"
+            showCloseButton={false}
+          >
+            <Button
+              onClick={() => {
+                setPendingLayoutTargetKey(null);
+                setIsLayoutPresetOpen(false);
+              }}
+              type="button"
+              variant="outline"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() =>
+                executeLayoutPreset(LAYOUT_PRESETS[0]?.value ?? "1fr 1fr")
+              }
+              type="button"
+            >
+              Use default
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

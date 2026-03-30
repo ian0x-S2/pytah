@@ -21,6 +21,8 @@ import {
   $isParagraphNode,
   type ElementNode,
 } from "lexical";
+import { DEFAULT_LAYOUT_TEMPLATE } from "../layout/constants";
+import { applyLayoutPreset } from "../layout/utils";
 import type { SlashCommandId } from "./types";
 
 const replaceElementChildren = (
@@ -118,6 +120,10 @@ const applyDividerCommand = (targetElement: ElementNode) => {
   paragraph.select();
 };
 
+const applyColumnsCommand = (targetElement: ElementNode) => {
+  applyLayoutPreset(targetElement, DEFAULT_LAYOUT_TEMPLATE);
+};
+
 export const SLASH_COMMAND_EXECUTORS: Record<
   SlashCommandId,
   (element: ElementNode) => void
@@ -125,6 +131,7 @@ export const SLASH_COMMAND_EXECUTORS: Record<
   bullet: (element) => applyListCommand(element, "bullet"),
   check: (element) => applyListCommand(element, "check"),
   code: applyCodeCommand,
+  columns: applyColumnsCommand,
   h1: (element) => applyHeadingCommand(element, "h1"),
   h2: (element) => applyHeadingCommand(element, "h2"),
   h3: (element) => applyHeadingCommand(element, "h3"),

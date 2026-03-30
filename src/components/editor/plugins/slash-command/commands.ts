@@ -6,6 +6,7 @@ import {
   ListIcon,
   ListOrderedIcon,
   MinusIcon,
+  PanelsTopLeftIcon,
   SquareCheckIcon,
   TableIcon,
   TextQuoteIcon,
@@ -78,6 +79,13 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     id: "check",
     keywords: ["check", "checklist", "todo", "task"],
     label: "Checklist",
+  },
+  {
+    description: "Multi-column content layout",
+    icon: PanelsTopLeftIcon,
+    id: "columns",
+    keywords: ["columns", "layout", "grid", "multi-column"],
+    label: "Columns",
   },
   {
     description: "Simple editable table",
