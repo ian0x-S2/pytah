@@ -10,6 +10,7 @@ export type SlashCommandId =
   | "bullet"
   | "number"
   | "check"
+  | "image"
   | "columns"
   | "table"
   | "hr";

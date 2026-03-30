@@ -1,5 +1,6 @@
 import {
   CHECK_LIST,
+  type ElementTransformer,
   type MultilineElementTransformer,
   TRANSFORMERS,
 } from "@lexical/markdown";
@@ -13,9 +14,37 @@ import {
   TableRowNode,
 } from "@lexical/table";
 import { $createParagraphNode, $createTextNode } from "lexical";
+import {
+  $createImageNode,
+  $isImageNode,
+  ImageNode,
+} from "../../core/nodes/image-node";
 
+const IMAGE_REGEXP = /^!\[([^\]]*)\]\(([^)\s]+)\)$/;
 const TABLE_DIVIDER_LINE_PATTERN = /^\|(?:\s*:?-+:?\s*\|)+\s*$/;
 const TABLE_ROW_PATTERN = /^\|(.+)\|\s*$/;
+
+const IMAGE_TRANSFORMER: ElementTransformer = {
+  dependencies: [ImageNode],
+  export: (node) => {
+    if (!$isImageNode(node)) {
+      return null;
+    }
+
+    return `![${node.getAltText().replace(/]/g, "\\]")}](${node.getSrc()})`;
+  },
+  regExp: IMAGE_REGEXP,
+  replace: (parentNode, _children, match) => {
+    const [, altText, src] = match;
+    parentNode.replace(
+      $createImageNode({
+        altText,
+        src,
+      })
+    );
+  },
+  type: "element",
+};
 
 const splitMarkdownTableCells = (line: string): string[] => {
   return line
@@ -147,5 +176,6 @@ const TABLE_TRANSFORMER: MultilineElementTransformer = {
 export const EDITOR_MARKDOWN_TRANSFORMERS = [
   ...TRANSFORMERS.filter((transformer) => transformer !== CHECK_LIST),
   CHECK_LIST,
+  IMAGE_TRANSFORMER,
   TABLE_TRANSFORMER,
 ];

@@ -23,6 +23,7 @@ export const editorTheme: EditorThemeClasses = {
       "mb-0.5 list-none before:mr-2 before:inline-flex before:size-4 before:items-center before:justify-center before:rounded-sm before:border before:border-border before:bg-background before:content-['']",
   },
   link: "text-primary underline underline-offset-4 cursor-pointer hover:text-primary/80",
+  image: "block",
   layoutContainer:
     "my-4 grid gap-3 rounded-xl border border-border/70 bg-muted/20 p-3 md:gap-4",
   layoutItem:

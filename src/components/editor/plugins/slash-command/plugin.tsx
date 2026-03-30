@@ -10,6 +10,7 @@ import {
   KEY_ENTER_COMMAND,
   KEY_ESCAPE_COMMAND,
 } from "lexical";
+import type { ChangeEvent } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { INSERT_IMAGE_COMMAND } from "../image/commands";
+import { readFileAsDataUrl } from "../image/utils";
 import { INSERT_LAYOUT_COMMAND } from "../layout/commands";
 import { LAYOUT_PRESETS } from "../layout/constants";
 import { SLASH_COMMANDS } from "./commands";
@@ -97,7 +102,15 @@ function LayoutPresetPreview({ templateColumns }: { templateColumns: string }) {
 export function SlashCommandPlugin() {
   const [editor] = useLexicalComposerContext();
   const [isOpen, setIsOpen] = useState(false);
+  const [imageAltText, setImageAltText] = useState("");
+  const [imageFileName, setImageFileName] = useState("");
+  const [imageFileSrc, setImageFileSrc] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState("");
+  const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   const [isLayoutPresetOpen, setIsLayoutPresetOpen] = useState(false);
+  const [pendingImageTargetKey, setPendingImageTargetKey] = useState<
+    string | null
+  >(null);
   const [pendingLayoutTargetKey, setPendingLayoutTargetKey] = useState<
     string | null
   >(null);
@@ -117,9 +130,44 @@ export function SlashCommandPlugin() {
     return getSelectedCommandIndex(filteredCommands, selectedCommandId);
   }, [filteredCommands, selectedCommandId]);
 
+  const resetImageDialog = useCallback(() => {
+    setImageAltText("");
+    setImageFileName("");
+    setImageFileSrc(null);
+    setImageUrl("");
+    setPendingImageTargetKey(null);
+    setIsImageDialogOpen(false);
+  }, []);
+
+  const handleImageFileChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      event.target.value = "";
+
+      if (!file) {
+        setImageFileName("");
+        setImageFileSrc(null);
+        return;
+      }
+
+      readFileAsDataUrl(file)
+        .then((src) => {
+          setImageAltText((currentAltText) => currentAltText || file.name);
+          setImageFileName(file.name);
+          setImageFileSrc(src);
+          setImageUrl("");
+        })
+        .catch(() => {
+          setImageFileName("");
+          setImageFileSrc(null);
+        });
+    },
+    []
+  );
+
   const executeCommand = useCallback(
     (commandId: SlashCommandId) => {
-      if (commandId === "columns") {
+      if (commandId === "columns" || commandId === "image") {
         editor.getEditorState().read(() => {
           const selection = $getSelection();
           if (!$isRangeSelection(selection)) {
@@ -131,10 +179,22 @@ export function SlashCommandPlugin() {
             return;
           }
 
-          setPendingLayoutTargetKey(node.getTopLevelElementOrThrow().getKey());
+          const targetNodeKey = node.getTopLevelElementOrThrow().getKey();
+
+          if (commandId === "columns") {
+            setPendingLayoutTargetKey(targetNodeKey);
+            return;
+          }
+
+          setPendingImageTargetKey(targetNodeKey);
         });
 
-        setIsLayoutPresetOpen(true);
+        if (commandId === "columns") {
+          setIsLayoutPresetOpen(true);
+        } else {
+          setIsImageDialogOpen(true);
+        }
+
         setIsOpen(false);
         return;
       }
@@ -179,6 +239,29 @@ export function SlashCommandPlugin() {
     [editor, pendingLayoutTargetKey]
   );
 
+  const submitImage = useCallback(() => {
+    const nextImageSrc = imageFileSrc ?? imageUrl.trim();
+    if (!(nextImageSrc && pendingImageTargetKey)) {
+      return;
+    }
+
+    editor.dispatchCommand(INSERT_IMAGE_COMMAND, {
+      altText: imageAltText.trim(),
+      src: nextImageSrc,
+      targetNodeKey: pendingImageTargetKey,
+    });
+
+    resetImageDialog();
+    setIsOpen(false);
+  }, [
+    editor,
+    imageAltText,
+    imageFileSrc,
+    imageUrl,
+    pendingImageTargetKey,
+    resetImageDialog,
+  ]);
+
   useEffect(() => {
     if (filteredCommands.length === 0) {
       setSelectedCommandId("");
@@ -191,15 +274,19 @@ export function SlashCommandPlugin() {
   }, [filteredCommands, selectedCommandId]);
 
   useEffect(() => {
-    if (!isOpen || isLayoutPresetOpen) {
+    if (!isOpen || isImageDialogOpen || isLayoutPresetOpen) {
       return;
     }
 
     setSelectedCommandId(getFirstCommandId(filteredCommands));
-  }, [filteredCommands, isLayoutPresetOpen, isOpen]);
+  }, [filteredCommands, isImageDialogOpen, isLayoutPresetOpen, isOpen]);
 
   useEffect(() => {
-    if (!(isOpen && selectedCommandId) || isLayoutPresetOpen) {
+    if (
+      !(isOpen && selectedCommandId) ||
+      isImageDialogOpen ||
+      isLayoutPresetOpen
+    ) {
       return;
     }
 
@@ -216,10 +303,10 @@ export function SlashCommandPlugin() {
     return () => {
       window.cancelAnimationFrame(animationFrameId);
     };
-  }, [isLayoutPresetOpen, isOpen, selectedCommandId]);
+  }, [isImageDialogOpen, isLayoutPresetOpen, isOpen, selectedCommandId]);
 
   useEffect(() => {
-    if (isLayoutPresetOpen) {
+    if (isImageDialogOpen || isLayoutPresetOpen) {
       return;
     }
 
@@ -263,7 +350,7 @@ export function SlashCommandPlugin() {
         setIsOpen(true);
       });
     });
-  }, [editor, isLayoutPresetOpen]);
+  }, [editor, isImageDialogOpen, isLayoutPresetOpen]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -274,7 +361,7 @@ export function SlashCommandPlugin() {
       editor.registerCommand(
         KEY_ARROW_DOWN_COMMAND,
         (event) => {
-          if (isLayoutPresetOpen) {
+          if (isImageDialogOpen || isLayoutPresetOpen) {
             return true;
           }
 
@@ -293,7 +380,7 @@ export function SlashCommandPlugin() {
       editor.registerCommand(
         KEY_ARROW_UP_COMMAND,
         (event) => {
-          if (isLayoutPresetOpen) {
+          if (isImageDialogOpen || isLayoutPresetOpen) {
             return true;
           }
 
@@ -319,6 +406,11 @@ export function SlashCommandPlugin() {
             return true;
           }
 
+          if (isImageDialogOpen) {
+            submitImage();
+            return true;
+          }
+
           const selectedCommand = filteredCommands[selectedIndex];
           if (selectedCommand) {
             executeCommand(selectedCommand.id);
@@ -330,6 +422,11 @@ export function SlashCommandPlugin() {
       editor.registerCommand(
         KEY_ESCAPE_COMMAND,
         () => {
+          if (isImageDialogOpen) {
+            resetImageDialog();
+            return true;
+          }
+
           if (isLayoutPresetOpen) {
             setIsLayoutPresetOpen(false);
             return true;
@@ -346,9 +443,12 @@ export function SlashCommandPlugin() {
     executeCommand,
     executeLayoutPreset,
     filteredCommands,
+    isImageDialogOpen,
     isLayoutPresetOpen,
     isOpen,
+    resetImageDialog,
     selectedIndex,
+    submitImage,
   ]);
 
   return (
@@ -464,6 +564,92 @@ export function SlashCommandPlugin() {
               Use default
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        onOpenChange={(open) => {
+          if (!open) {
+            resetImageDialog();
+          }
+        }}
+        open={isImageDialogOpen}
+      >
+        <DialogContent className="sm:max-w-lg" showCloseButton>
+          <DialogHeader>
+            <DialogTitle>Insert image</DialogTitle>
+            <DialogDescription>
+              Add an external image URL and optional alt text.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form
+            className="space-y-4"
+            onSubmit={(event) => {
+              event.preventDefault();
+              submitImage();
+            }}
+          >
+            <div className="grid gap-2">
+              <label className="font-medium text-sm" htmlFor="slash-image-url">
+                Image URL
+              </label>
+              <Input
+                autoFocus
+                id="slash-image-url"
+                onChange={(event) => setImageUrl(event.target.value)}
+                placeholder="https://example.com/image.jpg"
+                type="url"
+                value={imageUrl}
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <label className="font-medium text-sm" htmlFor="slash-image-file">
+                Local file
+              </label>
+              <Input
+                accept="image/*"
+                id="slash-image-file"
+                onChange={handleImageFileChange}
+                type="file"
+              />
+              {imageFileName ? (
+                <p className="text-muted-foreground text-xs">
+                  Selected: {imageFileName}
+                </p>
+              ) : null}
+            </div>
+
+            <div className="grid gap-2">
+              <label className="font-medium text-sm" htmlFor="slash-image-alt">
+                Alt text
+              </label>
+              <Textarea
+                id="slash-image-alt"
+                onChange={(event) => setImageAltText(event.target.value)}
+                placeholder="Describe the image for accessibility"
+                rows={3}
+                value={imageAltText}
+              />
+            </div>
+
+            <DialogFooter showCloseButton={false}>
+              <Button
+                onClick={resetImageDialog}
+                type="button"
+                variant="outline"
+              >
+                Cancel
+              </Button>
+              <Button
+                disabled={!(imageFileSrc || imageUrl.trim())}
+                type="submit"
+              >
+                Insert image
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </>

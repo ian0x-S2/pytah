@@ -65,6 +65,7 @@ Preferred plugin structure for complex plugins:
 
 Current examples:
 - `plugins/slash-command/*`
+- `plugins/image/*`
 - `plugins/layout/*`
 - `plugins/block-type-toolbar/*`
 - `plugins/floating-toolbar/*`
@@ -85,6 +86,16 @@ Layout feature conventions:
   - helpers that build column structures in the Lexical tree
 - `plugins/layout/plugin.tsx`
   - command registration layer only
+
+Image feature conventions:
+- `core/nodes/image-node.tsx`
+  - custom image node with HTML and JSON serialization plus mutable alt/size state
+- `plugins/image/commands.ts`
+  - insertion command payload for image creation
+- `plugins/image/component.tsx`
+  - interactive image rendering, node selection, inline metadata editing, and handle-based resize preview
+- `plugins/image/plugin.tsx`
+  - command registration plus paste/drop file insertion behavior
 
 Table behavior module conventions:
 - `plugins/table-behavior/actions.ts`
@@ -113,6 +124,9 @@ Table behavior module conventions:
 - Slash menu should open focused on the first filtered item
 - Exported HTML and Markdown must stay in sync with editor state
 - Links should stay valid, auto-detect when obvious, and remain usable in both editable and read-only modes
+- Images should round-trip through HTML `<img>` and Markdown `![alt](src)` without losing source or alt text
+- Images may enter through slash command URL/file flows, paste, or drag and drop, while still landing as real editor nodes
+- Editable image blocks should support node selection, keyboard removal, and handle-based resize that previews imperatively during drag and commits once at the end, without affecting read-only mode
 - Tables and checklists should stay first-class editing blocks, not hacked-in visual widgets
 - Columns layouts should stay editable as real Lexical structure, not visual wrappers without import/export support
 - Table controls should act on the current cell context, float around the active table, and make row/column structure editable in-place

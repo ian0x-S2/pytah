@@ -136,6 +136,7 @@ export const SLASH_COMMAND_EXECUTORS: Record<
   h2: (element) => applyHeadingCommand(element, "h2"),
   h3: (element) => applyHeadingCommand(element, "h3"),
   hr: applyDividerCommand,
+  image: applyParagraphCommand,
   number: (element) => applyListCommand(element, "number"),
   paragraph: applyParagraphCommand,
   quote: applyQuoteCommand,

@@ -3,6 +3,7 @@ import {
   Heading1Icon,
   Heading2Icon,
   Heading3Icon,
+  ImageIcon,
   ListIcon,
   ListOrderedIcon,
   MinusIcon,
@@ -79,6 +80,13 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     id: "check",
     keywords: ["check", "checklist", "todo", "task"],
     label: "Checklist",
+  },
+  {
+    description: "Insert an image from URL",
+    icon: ImageIcon,
+    id: "image",
+    keywords: ["image", "photo", "media", "picture", "img"],
+    label: "Image",
   },
   {
     description: "Multi-column content layout",
