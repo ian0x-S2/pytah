@@ -1,0 +1,37 @@
+import { CodeHighlightNode, CodeNode } from "@lexical/code";
+import { HorizontalRuleNode } from "@lexical/extension";
+import { AutoLinkNode, LinkNode } from "@lexical/link";
+import { ListItemNode, ListNode } from "@lexical/list";
+import type { InitialConfigType } from "@lexical/react/LexicalComposer";
+import { HeadingNode, QuoteNode } from "@lexical/rich-text";
+import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
+import { editorTheme } from "./editor-theme";
+
+function onError(error: Error) {
+  console.error("[Editor]", error);
+}
+
+const EDITOR_NODES = [
+  HeadingNode,
+  QuoteNode,
+  ListNode,
+  ListItemNode,
+  CodeNode,
+  CodeHighlightNode,
+  LinkNode,
+  AutoLinkNode,
+  HorizontalRuleNode,
+  TableNode,
+  TableRowNode,
+  TableCellNode,
+];
+
+export const createEditorConfig = (editable: boolean): InitialConfigType => {
+  return {
+    editable,
+    namespace: "PytahEditor",
+    nodes: EDITOR_NODES,
+    onError,
+    theme: editorTheme,
+  };
+};
