@@ -34,10 +34,12 @@ export function ImagePlugin() {
 
   useEffect(() => {
     const insertImage = ({
+      alignment,
       altText,
       src,
       targetNodeKey,
     }: {
+      alignment?: "left" | "center" | "right";
       altText: string;
       src: string;
       targetNodeKey?: string;
@@ -48,6 +50,7 @@ export function ImagePlugin() {
       }
 
       const imageNode = $createImageNode({
+        alignment,
         altText: altText.trim(),
         src: trimmedSrc,
       });

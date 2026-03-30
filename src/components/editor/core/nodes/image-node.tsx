@@ -16,6 +16,7 @@ import { ImageComponent } from "../../plugins/image/component";
 
 export type SerializedImageNode = Spread<
   {
+    alignment?: ImageAlignment;
     altText: string;
     height: number | "inherit";
     src: string;
@@ -24,13 +25,36 @@ export type SerializedImageNode = Spread<
   SerializedLexicalNode
 >;
 
+export type ImageAlignment = "left" | "center" | "right";
+
 export interface ImagePayload {
+  alignment?: ImageAlignment;
   altText: string;
   height?: number | "inherit";
   key?: NodeKey;
   src: string;
   width?: number | "inherit";
 }
+
+const getImageAlignment = (domNode: HTMLImageElement): ImageAlignment => {
+  const align = domNode.getAttribute("align");
+
+  if (align === "center" || align === "right" || align === "left") {
+    return align;
+  }
+
+  const { marginLeft, marginRight } = domNode.style;
+
+  if (marginLeft === "auto" && marginRight === "auto") {
+    return "center";
+  }
+
+  if (marginLeft === "auto") {
+    return "right";
+  }
+
+  return "left";
+};
 
 const convertImageElement = (domNode: Node): DOMConversionOutput | null => {
   if (!(domNode instanceof HTMLImageElement)) {
@@ -44,6 +68,7 @@ const convertImageElement = (domNode: Node): DOMConversionOutput | null => {
 
   return {
     node: $createImageNode({
+      alignment: getImageAlignment(domNode),
       altText: domNode.getAttribute("alt") ?? "",
       height: domNode.height || undefined,
       src,
@@ -53,6 +78,7 @@ const convertImageElement = (domNode: Node): DOMConversionOutput | null => {
 };
 
 export class ImageNode extends DecoratorNode<JSX.Element> {
+  __alignment: ImageAlignment;
   __altText: string;
   __height: number | "inherit";
   __src: string;
@@ -61,6 +87,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
   constructor(
     src: string,
     altText: string,
+    alignment: ImageAlignment = "left",
     width: number | "inherit" = "inherit",
     height: number | "inherit" = "inherit",
     key?: NodeKey
@@ -68,6 +95,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
     super(key);
     this.__src = src;
     this.__altText = altText;
+    this.__alignment = alignment;
     this.__width = width;
     this.__height = height;
   }
@@ -80,6 +108,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
     return new ImageNode(
       node.__src,
       node.__altText,
+      node.__alignment,
       node.__width,
       node.__height,
       node.__key
@@ -97,6 +126,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
 
   static importJSON(serializedNode: SerializedImageNode): ImageNode {
     return $createImageNode({
+      alignment: serializedNode.alignment,
       altText: serializedNode.altText,
       height: serializedNode.height,
       src: serializedNode.src,
@@ -107,6 +137,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
   updateFromJSON(serializedNode: LexicalUpdateJSON<SerializedImageNode>): this {
     return super
       .updateFromJSON(serializedNode)
+      .setAlignment(serializedNode.alignment ?? "left")
       .setAltText(serializedNode.altText)
       .setHeight(serializedNode.height)
       .setSrc(serializedNode.src)
@@ -117,6 +148,15 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
     const element = document.createElement("img");
     element.setAttribute("src", this.__src);
     element.setAttribute("alt", this.__altText);
+    element.style.display = "block";
+
+    if (this.__alignment === "center") {
+      element.style.marginLeft = "auto";
+      element.style.marginRight = "auto";
+    } else if (this.__alignment === "right") {
+      element.style.marginLeft = "auto";
+      element.style.marginRight = "0";
+    }
 
     if (this.__width !== "inherit") {
       element.width = this.__width;
@@ -132,6 +172,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
   exportJSON(): SerializedImageNode {
     return {
       ...super.exportJSON(),
+      alignment: this.__alignment,
       altText: this.__altText,
       height: this.__height,
       src: this.__src,
@@ -158,6 +199,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
   decorate(): JSX.Element {
     return (
       <ImageComponent
+        alignment={this.__alignment}
         altText={this.__altText}
         height={this.__height}
         nodeKey={this.getKey()}
@@ -179,6 +221,10 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
     return this.getLatest().__altText;
   }
 
+  getAlignment(): ImageAlignment {
+    return this.getLatest().__alignment;
+  }
+
   getWidth(): number | "inherit" {
     return this.getLatest().__width;
   }
@@ -190,6 +236,12 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
   setAltText(altText: string): this {
     const writable = this.getWritable();
     writable.__altText = altText;
+    return writable;
+  }
+
+  setAlignment(alignment: ImageAlignment): this {
+    const writable = this.getWritable();
+    writable.__alignment = alignment;
     return writable;
   }
 
@@ -223,6 +275,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
 }
 
 export function $createImageNode({
+  alignment,
   altText,
   height,
   key,
@@ -232,6 +285,7 @@ export function $createImageNode({
   return new ImageNode(
     src,
     altText,
+    alignment ?? "left",
     width ?? "inherit",
     height ?? "inherit",
     key
