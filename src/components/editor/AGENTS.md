@@ -100,4 +100,6 @@ Table behavior module conventions:
 - Links should stay valid, auto-detect when obvious, and remain usable in both editable and read-only modes
 - Tables and checklists should stay first-class editing blocks, not hacked-in visual widgets
 - Table controls should act on the current cell context, float around the active table, and make row/column structure editable in-place
+- Table edge controls should prefer low-noise affordances: render full-length top and right rails that match the table width/height, with a single add trigger traveling along those rails for column and row actions
+- Table edge trigger positioning should track the active cell context so insertion affordances feel anchored to the current row/column, not just the table center, while keeping full-edge hover strips for discoverability
 - Editor should remain usable in editable and read-only modes

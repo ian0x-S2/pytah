@@ -8,11 +8,3 @@ export interface TableSelectionState {
   rowIndex: number;
   tableKey: NodeKey | null;
 }
-
-export interface TableOverlayPosition {
-  height: number;
-  isVisible: boolean;
-  left: number;
-  top: number;
-  width: number;
-}

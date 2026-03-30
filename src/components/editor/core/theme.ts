@@ -25,12 +25,18 @@ export const editorTheme: EditorThemeClasses = {
   link: "text-primary underline underline-offset-4 cursor-pointer hover:text-primary/80",
   table:
     "my-4 w-full border-collapse overflow-hidden rounded-lg border border-border text-sm",
+  tableAddColumns: "bg-muted hover:bg-muted/80",
+  tableAddRows: "bg-muted hover:bg-muted/80",
   tableCell:
-    "min-w-32 border border-border px-3 py-2 align-top outline-none [&_*]:mb-0",
+    "relative min-w-32 border border-border px-3 py-2 align-top outline-none [&_*]:mb-0",
+  tableCellActionButton:
+    "rounded-full border border-border bg-background shadow-sm hover:bg-muted",
+  tableCellActionButtonContainer: "absolute right-1.5 top-1.5 z-10",
   tableCellHeader:
     "min-w-32 border border-border bg-muted/60 px-3 py-2 text-left font-semibold align-top outline-none [&_*]:mb-0",
   tableRow: "even:bg-muted/10",
-  tableScrollableWrapper: "my-4 w-full overflow-x-auto",
+  tableScrollableWrapper:
+    "editor-table-scroll-wrapper my-4 w-full overflow-x-auto",
   tableCellSelected: "!border-primary bg-primary/10",
   tableSelection: "bg-primary/10",
   text: {
