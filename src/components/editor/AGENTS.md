@@ -66,6 +66,7 @@ Preferred plugin structure for complex plugins:
 Current examples:
 - `plugins/slash-command/*`
 - `plugins/image/*`
+- `plugins/draggable-block/*`
 - `plugins/layout/*`
 - `plugins/block-type-toolbar/*`
 - `plugins/floating-toolbar/*`
@@ -97,6 +98,11 @@ Image feature conventions:
 - `plugins/image/plugin.tsx`
   - command registration plus paste/drop file insertion behavior
 
+Draggable block feature conventions:
+- `plugins/draggable-block/plugin.tsx`
+  - block-level drag handle wiring around `@lexical/react` draggable block support
+  - owns floating handle anchor resolution and drop target indicator rendering
+
 Table behavior module conventions:
 - `plugins/table-behavior/actions.ts`
   - row/column insertion and deletion operations
@@ -127,6 +133,7 @@ Table behavior module conventions:
 - Images should round-trip through HTML `<img>` and Markdown `![alt](src)` without losing source or alt text
 - Images may enter through slash command URL/file flows, paste, or drag and drop, while still landing as real editor nodes
 - Editable image blocks should support node selection, keyboard removal, and handle-based resize that previews imperatively during drag and commits once at the end, without affecting read-only mode
+- Top-level editor blocks should remain reorderable through the drag handle without breaking editable or read-only behavior
 - Tables and checklists should stay first-class editing blocks, not hacked-in visual widgets
 - Columns layouts should stay editable as real Lexical structure, not visual wrappers without import/export support
 - Table controls should act on the current cell context, float around the active table, and make row/column structure editable in-place

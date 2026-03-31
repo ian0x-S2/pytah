@@ -14,6 +14,7 @@ import { EditorStatePlugin } from "../plugins/core/editor-state";
 import { FocusOnMountPlugin } from "../plugins/core/focus-on-mount";
 import { HorizontalRulePlugin } from "../plugins/core/horizontal-rule";
 import { SeedContentPlugin } from "../plugins/core/seed-content";
+import { DraggableBlockPlugin } from "../plugins/draggable-block/plugin";
 import { FloatingToolbarPlugin } from "../plugins/floating-toolbar/plugin";
 import { ImagePlugin } from "../plugins/image/plugin";
 import { LayoutPlugin } from "../plugins/layout/plugin";
@@ -69,7 +70,7 @@ export function EditorContent({
           contentEditable={
             <ContentEditable
               aria-placeholder={placeholder}
-              className="relative min-h-105 px-8 py-10 text-[17px] leading-8 focus:outline-none"
+              className="ContentEditable__root relative min-h-105 px-8 py-10 text-[17px] leading-8 focus:outline-none"
               placeholder={
                 <div className="pointer-events-none absolute top-10 left-8 text-muted-foreground">
                   {placeholder}
@@ -103,6 +104,7 @@ export function EditorContent({
       {editable ? (
         <>
           <FocusOnMountPlugin />
+          <DraggableBlockPlugin />
           <FloatingToolbarPlugin />
           <SlashCommandPlugin />
         </>
