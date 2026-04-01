@@ -27,6 +27,8 @@ export const editorTheme: EditorThemeClasses = {
       "mb-0.5 list-none before:mr-2 before:inline-flex before:size-4 before:items-center before:justify-center before:rounded-sm before:border before:border-border before:bg-background before:content-['']",
   },
   link: "text-primary underline underline-offset-4 cursor-pointer hover:text-primary/80",
+  hr: "my-6 h-px cursor-pointer border-0 bg-border transition-colors",
+  hrSelected: "bg-primary h-0.5",
   image: "block",
   collapsibleContainer:
     "group/collapsible my-4 overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-xs",
