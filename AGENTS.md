@@ -145,6 +145,10 @@ This repository is a Vite + React + TypeScript application centered on a rich ed
 - `src/components/editor/editor.tsx` is the composition root for the editor experience
 - keep editor foundations in `src/components/editor/core/`, React composition in `src/components/editor/ui/`, and Lexical behaviors in `src/components/editor/plugins/`
 - complex plugins should live in `src/components/editor/plugins/<feature>/`
+- keep `src/components/editor/core/nodes/` feature-first: prefer `core/nodes/<feature>/...` over a flat list of unrelated node files
+- if a feature owns two or more related Lexical nodes, group them under the same `core/nodes/<feature>/` folder and use simple filenames such as `container-node.ts`, `content-node.ts`, `item-node.ts`, or `node.tsx`
+- keep node-only DOM helpers and serialization helpers inside the same node feature folder
+- align `plugins/<feature>/` with `core/nodes/<feature>/` whenever the feature owns custom nodes
 - keep declarative config separate from Lexical mutation logic and React wiring
 - prefer feature-local relative imports inside `src/components/editor/*`
 - avoid barrel files

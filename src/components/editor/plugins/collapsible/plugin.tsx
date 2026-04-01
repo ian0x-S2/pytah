@@ -15,15 +15,15 @@ import { useEffect } from "react";
 import {
   $isCollapsibleContainerNode,
   CollapsibleContainerNode,
-} from "../../core/nodes/collapsible-container-node";
+} from "../../core/nodes/collapsible/container-node";
 import {
   $isCollapsibleContentNode,
   CollapsibleContentNode,
-} from "../../core/nodes/collapsible-content-node";
+} from "../../core/nodes/collapsible/content-node";
 import {
   $isCollapsibleTitleNode,
   CollapsibleTitleNode,
-} from "../../core/nodes/collapsible-title-node";
+} from "../../core/nodes/collapsible/title-node";
 import {
   INSERT_COLLAPSIBLE_COMMAND,
   type InsertCollapsiblePayload,

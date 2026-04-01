@@ -9,11 +9,8 @@ import type {
   SerializedElementNode,
 } from "lexical";
 import { ElementNode } from "lexical";
-import { $isCollapsibleContainerNode } from "./collapsible-container-node";
-import {
-  domOnBeforeMatch,
-  setDomHiddenUntilFound,
-} from "./collapsible-dom-utils";
+import { $isCollapsibleContainerNode } from "./container-node";
+import { domOnBeforeMatch, setDomHiddenUntilFound } from "./dom-utils";
 
 export type SerializedCollapsibleContentNode = SerializedElementNode;
 

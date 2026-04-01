@@ -17,7 +17,7 @@ import {
   type SerializedElementNode,
   type Spread,
 } from "lexical";
-import { setDomHiddenUntilFound } from "./collapsible-dom-utils";
+import { setDomHiddenUntilFound } from "./dom-utils";
 
 export type SerializedCollapsibleContainerNode = Spread<
   {

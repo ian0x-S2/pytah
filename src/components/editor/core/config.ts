@@ -5,12 +5,12 @@ import { ListItemNode, ListNode } from "@lexical/list";
 import type { InitialConfigType } from "@lexical/react/LexicalComposer";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
-import { CollapsibleContainerNode } from "./nodes/collapsible-container-node";
-import { CollapsibleContentNode } from "./nodes/collapsible-content-node";
-import { CollapsibleTitleNode } from "./nodes/collapsible-title-node";
-import { ImageNode } from "./nodes/image-node";
-import { LayoutContainerNode } from "./nodes/layout-container-node";
-import { LayoutItemNode } from "./nodes/layout-item-node";
+import { CollapsibleContainerNode } from "./nodes/collapsible/container-node";
+import { CollapsibleContentNode } from "./nodes/collapsible/content-node";
+import { CollapsibleTitleNode } from "./nodes/collapsible/title-node";
+import { ImageNode } from "./nodes/image/node";
+import { LayoutContainerNode } from "./nodes/layout/container-node";
+import { LayoutItemNode } from "./nodes/layout/item-node";
 import { editorTheme } from "./theme";
 
 function onError(error: Error) {

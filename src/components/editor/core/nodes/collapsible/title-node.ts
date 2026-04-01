@@ -10,8 +10,8 @@ import type {
   SerializedElementNode,
 } from "lexical";
 import { $createParagraphNode, $isElementNode, ElementNode } from "lexical";
-import { $isCollapsibleContainerNode } from "./collapsible-container-node";
-import { $isCollapsibleContentNode } from "./collapsible-content-node";
+import { $isCollapsibleContainerNode } from "./container-node";
+import { $isCollapsibleContentNode } from "./content-node";
 
 export type SerializedCollapsibleTitleNode = SerializedElementNode;
 

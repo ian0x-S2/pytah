@@ -18,7 +18,7 @@ import {
   $createImageNode,
   $isImageNode,
   ImageNode,
-} from "../../core/nodes/image-node";
+} from "../../core/nodes/image/node";
 
 const IMAGE_REGEXP = /^!\[([^\]]*)\]\(([^)\s]+)\)$/;
 const TABLE_DIVIDER_LINE_PATTERN = /^\|(?:\s*:?-+:?\s*\|)+\s*$/;

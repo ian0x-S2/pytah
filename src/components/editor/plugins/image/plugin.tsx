@@ -13,7 +13,7 @@ import {
   PASTE_COMMAND,
 } from "lexical";
 import { useEffect } from "react";
-import { $createImageNode, $isImageNode } from "../../core/nodes/image-node";
+import { $createImageNode, $isImageNode } from "../../core/nodes/image/node";
 import { INSERT_IMAGE_COMMAND } from "./commands";
 import { getFirstImageFile, readFileAsDataUrl } from "./utils";
 

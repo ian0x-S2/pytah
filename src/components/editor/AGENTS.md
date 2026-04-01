@@ -76,9 +76,9 @@ Current examples:
 - `plugins/markdown/*`
 
 Layout feature conventions:
-- `core/nodes/layout-container-node.ts`
+- `core/nodes/layout/container-node.ts`
   - grid container node that stores `templateColumns`
-- `core/nodes/layout-item-node.ts`
+- `core/nodes/layout/item-node.ts`
   - per-column shadow root node for editable column content
 - `plugins/layout/constants.ts`
   - official layout preset labels and template strings
@@ -90,7 +90,7 @@ Layout feature conventions:
   - command registration layer only
 
 Image feature conventions:
-- `core/nodes/image-node.tsx`
+- `core/nodes/image/node.tsx`
   - custom image node with HTML and JSON serialization plus mutable alt/size state
 - `plugins/image/commands.ts`
   - insertion command payload for image creation
@@ -100,11 +100,11 @@ Image feature conventions:
   - command registration plus paste/drop file insertion behavior
 
 Collapsible feature conventions:
-- `core/nodes/collapsible-container-node.ts`
+- `core/nodes/collapsible/container-node.ts`
   - root details-like node that stores expanded state and serializes to HTML `<details>`
-- `core/nodes/collapsible-title-node.ts`
+- `core/nodes/collapsible/title-node.ts`
   - editable summary row that toggles the container and routes Enter into the body
-- `core/nodes/collapsible-content-node.ts`
+- `core/nodes/collapsible/content-node.ts`
   - expandable body shadow root for nested editor content
 - `plugins/collapsible/commands.ts`
   - insertion command payloads for collapsible blocks
@@ -131,6 +131,10 @@ Table behavior module conventions:
 ## Maintenance Rules
 
 - Keep editor foundations in `core/`, editor rendering/composition in `ui/`, and Lexical behavior in `plugins/`
+- Keep `core/nodes/` feature-first: use `core/nodes/<feature>/...` instead of a flat node file list
+- If a feature has two or more related nodes, place them in the same `core/nodes/<feature>/` folder with simple filenames like `container-node.ts`, `item-node.ts`, or `node.tsx`
+- Keep node-only DOM helpers, serialization helpers, and feature-local node utilities in the same node feature folder
+- Align `plugins/<feature>/` with `core/nodes/<feature>/` whenever the feature owns custom Lexical nodes
 - Keep complex feature data in typed config files instead of inline arrays inside components
 - Keep Lexical tree mutations in small pure helpers when possible
 - Keep `editor.tsx` thin and focused on orchestration

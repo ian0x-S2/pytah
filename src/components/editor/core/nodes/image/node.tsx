@@ -12,7 +12,7 @@ import type {
 } from "lexical";
 import { DecoratorNode } from "lexical";
 import type { JSX } from "react";
-import { ImageComponent } from "../../plugins/image/component";
+import { ImageComponent } from "../../../plugins/image/component";
 
 export type SerializedImageNode = Spread<
   {

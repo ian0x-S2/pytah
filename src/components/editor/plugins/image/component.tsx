@@ -15,7 +15,7 @@ import {
   type NodeKey,
 } from "lexical";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { $isImageNode, type ImageAlignment } from "../../core/nodes/image-node";
+import { $isImageNode, type ImageAlignment } from "../../core/nodes/image/node";
 import { ImageResizer } from "./resizer";
 
 interface ImageComponentProps {

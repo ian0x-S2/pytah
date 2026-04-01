@@ -1,6 +1,6 @@
 import { $createParagraphNode, type ElementNode } from "lexical";
-import { $createLayoutContainerNode } from "../../core/nodes/layout-container-node";
-import { $createLayoutItemNode } from "../../core/nodes/layout-item-node";
+import { $createLayoutContainerNode } from "../../core/nodes/layout/container-node";
+import { $createLayoutItemNode } from "../../core/nodes/layout/item-node";
 
 const TEMPLATE_COLUMN_SEPARATOR = /\s+/;
 
