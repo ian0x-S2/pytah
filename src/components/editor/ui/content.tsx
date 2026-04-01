@@ -9,6 +9,7 @@ import { TabIndentationPlugin } from "@lexical/react/LexicalTabIndentationPlugin
 import type { LexicalEditor } from "lexical";
 import type { EditorSnapshot } from "../core/types";
 import { BlockTypeToolbarPlugin } from "../plugins/block-type-toolbar/plugin";
+import { CollapsiblePlugin } from "../plugins/collapsible/plugin";
 import { EditablePlugin } from "../plugins/core/editable";
 import { EditorStatePlugin } from "../plugins/core/editor-state";
 import { FocusOnMountPlugin } from "../plugins/core/focus-on-mount";
@@ -89,6 +90,7 @@ export function EditorContent({
       <CheckListPlugin />
       <LinkBehaviorPlugin editable={editable} />
       <ImagePlugin />
+      <CollapsiblePlugin />
       <LayoutPlugin />
       <HorizontalRulePlugin />
       <TableBehaviorPlugin />

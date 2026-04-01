@@ -16,6 +16,16 @@ import { EditorHeader, EditorShell } from "./ui/chrome";
 import { EditorContent } from "./ui/content";
 import { EditorActionBar, EditorOutputGrid } from "./ui/panels";
 
+let hotReloadComposerKey = 0;
+
+if (import.meta.hot) {
+  hotReloadComposerKey = import.meta.hot.data.hotReloadComposerKey ?? 0;
+
+  import.meta.hot.dispose((data) => {
+    data.hotReloadComposerKey = hotReloadComposerKey + 1;
+  });
+}
+
 export function Editor({
   className,
   editable = true,
@@ -81,7 +91,10 @@ export function Editor({
 
   return (
     <div className={cn("space-y-6", className)}>
-      <LexicalComposer initialConfig={initialConfig}>
+      <LexicalComposer
+        initialConfig={initialConfig}
+        key={`pytah-editor-${hotReloadComposerKey}`}
+      >
         <EditorShell>
           <EditorHeader />
           <EditorActionBar

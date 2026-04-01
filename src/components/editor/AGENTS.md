@@ -66,6 +66,7 @@ Preferred plugin structure for complex plugins:
 Current examples:
 - `plugins/slash-command/*`
 - `plugins/image/*`
+- `plugins/collapsible/*`
 - `plugins/draggable-block/*`
 - `plugins/layout/*`
 - `plugins/block-type-toolbar/*`
@@ -97,6 +98,20 @@ Image feature conventions:
   - interactive image rendering, node selection, inline metadata editing, and handle-based resize preview
 - `plugins/image/plugin.tsx`
   - command registration plus paste/drop file insertion behavior
+
+Collapsible feature conventions:
+- `core/nodes/collapsible-container-node.ts`
+  - root details-like node that stores expanded state and serializes to HTML `<details>`
+- `core/nodes/collapsible-title-node.ts`
+  - editable summary row that toggles the container and routes Enter into the body
+- `core/nodes/collapsible-content-node.ts`
+  - expandable body shadow root for nested editor content
+- `plugins/collapsible/commands.ts`
+  - insertion command payloads for collapsible blocks
+- `plugins/collapsible/utils.ts`
+  - helper builders that replace or insert collapsible structures in the Lexical tree
+- `plugins/collapsible/plugin.tsx`
+  - command registration, structural transforms, and keyboard behavior
 
 Draggable block feature conventions:
 - `plugins/draggable-block/plugin.tsx`
@@ -135,6 +150,7 @@ Table behavior module conventions:
 - Editable image blocks should support node selection, keyboard removal, and handle-based resize that previews imperatively during drag and commits once at the end, without affecting read-only mode
 - Top-level editor blocks should remain reorderable through the drag handle without breaking editable or read-only behavior
 - Tables and checklists should stay first-class editing blocks, not hacked-in visual widgets
+- Collapsible sections should stay real Lexical structure with editable title and body, not decorator-only UI wrappers
 - Columns layouts should stay editable as real Lexical structure, not visual wrappers without import/export support
 - Table controls should act on the current cell context, float around the active table, and make row/column structure editable in-place
 - Table edge controls should prefer low-noise affordances: render full-length top and right rails that match the table width/height, with a single add trigger traveling along those rails for column and row actions

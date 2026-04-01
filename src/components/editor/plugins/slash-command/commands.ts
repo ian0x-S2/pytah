@@ -1,4 +1,5 @@
 import {
+  ChevronRightIcon,
   CodeIcon,
   Heading1Icon,
   Heading2Icon,
@@ -87,6 +88,13 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     id: "image",
     keywords: ["image", "photo", "media", "picture", "img"],
     label: "Image",
+  },
+  {
+    description: "Expandable toggle section",
+    icon: ChevronRightIcon,
+    id: "collapsible",
+    keywords: ["collapsible", "toggle", "details", "accordion"],
+    label: "Collapsible",
   },
   {
     description: "Multi-column content layout",

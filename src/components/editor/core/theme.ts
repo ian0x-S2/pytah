@@ -24,6 +24,11 @@ export const editorTheme: EditorThemeClasses = {
   },
   link: "text-primary underline underline-offset-4 cursor-pointer hover:text-primary/80",
   image: "block",
+  collapsibleContainer:
+    "group/collapsible my-4 overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-xs",
+  collapsibleTitle:
+    "relative block cursor-pointer list-none border-b border-border/70 px-4 py-3 pl-10 font-medium outline-none marker:content-none [&::-webkit-details-marker]:hidden [&>p]:mb-0 before:absolute before:left-4 before:top-1/2 before:-translate-y-1/2 before:text-xs before:text-muted-foreground before:transition-transform before:content-['▸'] data-[open=true]:before:rotate-90",
+  collapsibleContent: "px-4 py-3 pl-10 text-foreground [&>p:last-child]:mb-0",
   layoutContainer:
     "my-4 grid gap-3 rounded-xl border border-border/70 bg-muted/20 p-3 md:gap-4",
   layoutItem:

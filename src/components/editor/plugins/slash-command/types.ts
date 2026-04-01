@@ -11,6 +11,7 @@ export type SlashCommandId =
   | "number"
   | "check"
   | "image"
+  | "collapsible"
   | "columns"
   | "table"
   | "hr";

@@ -21,6 +21,7 @@ import {
   $isParagraphNode,
   type ElementNode,
 } from "lexical";
+import { replaceElementWithCollapsible } from "../collapsible/utils";
 import { DEFAULT_LAYOUT_TEMPLATE } from "../layout/constants";
 import { applyLayoutPreset } from "../layout/utils";
 import type { SlashCommandId } from "./types";
@@ -124,6 +125,10 @@ const applyColumnsCommand = (targetElement: ElementNode) => {
   applyLayoutPreset(targetElement, DEFAULT_LAYOUT_TEMPLATE);
 };
 
+const applyCollapsibleCommand = (targetElement: ElementNode) => {
+  replaceElementWithCollapsible(targetElement);
+};
+
 export const SLASH_COMMAND_EXECUTORS: Record<
   SlashCommandId,
   (element: ElementNode) => void
@@ -131,6 +136,7 @@ export const SLASH_COMMAND_EXECUTORS: Record<
   bullet: (element) => applyListCommand(element, "bullet"),
   check: (element) => applyListCommand(element, "check"),
   code: applyCodeCommand,
+  collapsible: applyCollapsibleCommand,
   columns: applyColumnsCommand,
   h1: (element) => applyHeadingCommand(element, "h1"),
   h2: (element) => applyHeadingCommand(element, "h2"),
