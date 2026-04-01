@@ -1,7 +1,8 @@
 import { $isCodeNode } from "@lexical/code";
-import { $isLinkNode } from "@lexical/link";
+import { $isAutoLinkNode, $isLinkNode } from "@lexical/link";
 import {
   $getSelection,
+  $isLineBreakNode,
   $isRangeSelection,
   type LexicalNode,
   type RangeSelection,
@@ -13,7 +14,7 @@ import type {
   FloatingToolbarState,
 } from "./types";
 
-const getSelectedNode = (selection: RangeSelection) => {
+export const getFloatingToolbarSelectedNode = (selection: RangeSelection) => {
   const anchorNode = selection.anchor.getNode();
   const focusNode = selection.focus.getNode();
 
@@ -24,18 +25,42 @@ const getSelectedNode = (selection: RangeSelection) => {
   return selection.isBackward() ? anchorNode : focusNode;
 };
 
-const getLinkNode = (node: LexicalNode) => {
+export const getSelectedLinkNode = (node: LexicalNode) => {
   const parent = node.getParent();
 
-  if ($isLinkNode(parent)) {
+  if ($isLinkNode(parent) || $isAutoLinkNode(parent)) {
     return parent;
   }
 
-  if ($isLinkNode(node)) {
+  if ($isLinkNode(node) || $isAutoLinkNode(node)) {
     return node;
   }
 
   return null;
+};
+
+export const isSelectionWithinSingleLink = (selection: RangeSelection) => {
+  const focusNode = getFloatingToolbarSelectedNode(selection);
+  const focusLinkNode = getSelectedLinkNode(focusNode);
+
+  if (!focusLinkNode) {
+    return false;
+  }
+
+  const invalidNode = selection
+    .getNodes()
+    .filter((node) => !$isLineBreakNode(node))
+    .find((node) => {
+      const linkNode = getSelectedLinkNode(node);
+
+      if (focusLinkNode && !focusLinkNode.is(linkNode)) {
+        return true;
+      }
+
+      return $isAutoLinkNode(linkNode) && linkNode.getIsUnlinked();
+    });
+
+  return invalidNode === undefined;
 };
 
 const getToolbarPosition = (): FloatingToolbarPosition | null => {
@@ -61,7 +86,7 @@ const getFormatState = (
   selection: RangeSelection,
   node: LexicalNode
 ): FloatingToolbarFormatState => {
-  const linkNode = getLinkNode(node);
+  const linkNode = getSelectedLinkNode(node);
 
   return {
     isBold: selection.hasFormat("bold"),
@@ -84,7 +109,7 @@ export const readFloatingToolbarState = (): FloatingToolbarState => {
     };
   }
 
-  const node = getSelectedNode(selection);
+  const node = getFloatingToolbarSelectedNode(selection);
   const parent = node.getParent();
   const isInsideCodeBlock =
     $isCodeNode(node) || (parent && $isCodeNode(parent));
@@ -108,7 +133,9 @@ export const readFloatingToolbarState = (): FloatingToolbarState => {
     };
   }
 
-  const linkNode = getLinkNode(node);
+  const linkNode = isSelectionWithinSingleLink(selection)
+    ? getSelectedLinkNode(node)
+    : null;
 
   return {
     formats: getFormatState(selection, node),

@@ -19,6 +19,7 @@ import { DraggableBlockPlugin } from "../plugins/draggable-block/plugin";
 import { FloatingToolbarPlugin } from "../plugins/floating-toolbar/plugin";
 import { ImagePlugin } from "../plugins/image/plugin";
 import { LayoutPlugin } from "../plugins/layout/plugin";
+import { FloatingLinkEditorPlugin } from "../plugins/link-behavior/floating-link-editor";
 import { LinkBehaviorPlugin } from "../plugins/link-behavior/plugin";
 import { EDITOR_MARKDOWN_TRANSFORMERS } from "../plugins/markdown/transformers";
 import { SlashCommandPlugin } from "../plugins/slash-command/plugin";
@@ -110,6 +111,7 @@ export function EditorContent({
           <FocusOnMountPlugin />
           <DraggableBlockPlugin />
           <FloatingToolbarPlugin />
+          <FloatingLinkEditorPlugin />
           <SlashCommandPlugin />
         </>
       ) : null}

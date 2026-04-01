@@ -1,29 +1,24 @@
+import { TOGGLE_LINK_COMMAND } from "@lexical/link";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { mergeRegister } from "@lexical/utils";
 import { COMMAND_PRIORITY_LOW, SELECTION_CHANGE_COMMAND } from "lexical";
 import {
   BoldIcon,
-  CheckIcon,
   CodeIcon,
   ItalicIcon,
   LinkIcon,
   StrikethroughIcon,
   UnderlineIcon,
-  XIcon,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Toggle } from "@/components/ui/toggle";
 import { cn } from "@/lib/utils";
-import {
-  clearToolbarLink,
-  submitToolbarLink,
-  toggleToolbarFormat,
-} from "./actions";
+import { LINK_PLACEHOLDER_URL } from "../link-behavior/utils";
+import { toggleToolbarFormat } from "./actions";
 import { DEFAULT_FORMAT_STATE, EMPTY_TOOLBAR_POSITION } from "./constants";
+import { OPEN_FLOATING_LINK_EDITOR_COMMAND } from "./link-command";
 import { readFloatingToolbarState } from "./selection";
 import type {
   FloatingToolbarFormatState,
@@ -48,8 +43,6 @@ export function FloatingToolbarPlugin() {
   );
   const [formats, setFormats] =
     useState<FloatingToolbarFormatState>(DEFAULT_FORMAT_STATE);
-  const [linkMode, setLinkMode] = useState(false);
-  const [linkUrl, setLinkUrl] = useState("");
 
   const updateToolbar = useCallback(() => {
     const toolbarState = readFloatingToolbarState();
@@ -57,11 +50,7 @@ export function FloatingToolbarPlugin() {
     setFormats(toolbarState.formats);
     setIsVisible(toolbarState.isVisible);
     setPosition(toolbarState.position);
-
-    if (!linkMode) {
-      setLinkUrl(toolbarState.linkUrl);
-    }
-  }, [linkMode]);
+  }, []);
 
   useEffect(() => {
     return mergeRegister(
@@ -81,25 +70,14 @@ export function FloatingToolbarPlugin() {
     );
   }, [editor, updateToolbar]);
 
-  const handleLinkSubmit = useCallback(() => {
-    const nextLinkUrl = submitToolbarLink(editor, linkUrl);
-    setLinkMode(false);
-    setLinkUrl(nextLinkUrl);
-  }, [editor, linkUrl]);
-
-  const handleLinkCancel = useCallback(() => {
-    setLinkMode(false);
-    setLinkUrl("");
-  }, []);
-
   const handleLinkToggle = useCallback(() => {
     if (formats.isLink) {
-      clearToolbarLink(editor);
+      editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
       return;
     }
 
-    setLinkMode(true);
-    setLinkUrl("");
+    editor.dispatchCommand(TOGGLE_LINK_COMMAND, LINK_PLACEHOLDER_URL);
+    editor.dispatchCommand(OPEN_FLOATING_LINK_EDITOR_COMMAND, undefined);
   }, [editor, formats.isLink]);
 
   if (!isVisible) {
@@ -124,61 +102,28 @@ export function FloatingToolbarPlugin() {
         )}
         role="toolbar"
       >
-        {linkMode ? (
-          <div className="flex items-center gap-1 px-1">
-            <Input
-              className="h-7 w-48 text-xs"
-              onChange={(event) => {
-                setLinkUrl((event.target as HTMLInputElement).value);
-              }}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  handleLinkSubmit();
-                }
+        {TOOLBAR_FORMAT_ACTIONS.map((action) => {
+          const Icon = action.icon;
 
-                if (event.key === "Escape") {
-                  handleLinkCancel();
-                }
-              }}
-              placeholder="https://..."
-              value={linkUrl}
-            />
-            <Button onClick={handleLinkSubmit} size="icon-xs" variant="ghost">
-              <CheckIcon />
-            </Button>
-            <Button onClick={handleLinkCancel} size="icon-xs" variant="ghost">
-              <XIcon />
-            </Button>
-          </div>
-        ) : (
-          <>
-            {TOOLBAR_FORMAT_ACTIONS.map((action) => {
-              const Icon = action.icon;
-
-              return (
-                <Toggle
-                  key={action.format}
-                  onPressedChange={() =>
-                    toggleToolbarFormat(editor, action.format)
-                  }
-                  pressed={formats[action.key]}
-                  size="sm"
-                >
-                  <Icon />
-                </Toggle>
-              );
-            })}
-            <Separator className="mx-0.5 h-5" orientation="vertical" />
+          return (
             <Toggle
-              onPressedChange={handleLinkToggle}
-              pressed={formats.isLink}
+              key={action.format}
+              onPressedChange={() => toggleToolbarFormat(editor, action.format)}
+              pressed={formats[action.key]}
               size="sm"
             >
-              <LinkIcon />
+              <Icon />
             </Toggle>
-          </>
-        )}
+          );
+        })}
+        <Separator className="mx-0.5 h-5" orientation="vertical" />
+        <Toggle
+          onPressedChange={handleLinkToggle}
+          pressed={formats.isLink}
+          size="sm"
+        >
+          <LinkIcon />
+        </Toggle>
       </div>
     </div>,
     document.body
