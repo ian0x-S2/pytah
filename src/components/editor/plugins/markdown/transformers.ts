@@ -19,8 +19,15 @@ import {
   $isImageNode,
   ImageNode,
 } from "../../core/nodes/image/node";
+import {
+  $createYouTubeNode,
+  $isYouTubeNode,
+  YouTubeNode,
+} from "../../core/nodes/youtube/node";
+import { parseYouTubeUrl } from "../youtube/utils";
 
 const IMAGE_REGEXP = /^!\[([^\]]*)\]\(([^)\s]+)\)$/;
+const YOUTUBE_URL_REGEXP = /^https?:\/\/\S+$/;
 const TABLE_DIVIDER_LINE_PATTERN = /^\|(?:\s*:?-+:?\s*\|)+\s*$/;
 const TABLE_ROW_PATTERN = /^\|(.+)\|\s*$/;
 
@@ -42,6 +49,27 @@ const IMAGE_TRANSFORMER: ElementTransformer = {
         src,
       })
     );
+  },
+  type: "element",
+};
+
+const YOUTUBE_TRANSFORMER: ElementTransformer = {
+  dependencies: [YouTubeNode],
+  export: (node) => {
+    if (!$isYouTubeNode(node)) {
+      return null;
+    }
+
+    return `https://www.youtube.com/watch?v=${node.getVideoId()}`;
+  },
+  regExp: YOUTUBE_URL_REGEXP,
+  replace: (parentNode, _children, match) => {
+    const videoId = parseYouTubeUrl(match[0]);
+    if (!videoId) {
+      return;
+    }
+
+    parentNode.replace($createYouTubeNode(videoId));
   },
   type: "element",
 };
@@ -177,5 +205,6 @@ export const EDITOR_MARKDOWN_TRANSFORMERS = [
   ...TRANSFORMERS.filter((transformer) => transformer !== CHECK_LIST),
   CHECK_LIST,
   IMAGE_TRANSFORMER,
+  YOUTUBE_TRANSFORMER,
   TABLE_TRANSFORMER,
 ];

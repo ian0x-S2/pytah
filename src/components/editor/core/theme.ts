@@ -1,6 +1,10 @@
 import type { EditorThemeClasses } from "lexical";
 
 export const editorTheme: EditorThemeClasses = {
+  embedBlock: {
+    base: "my-4",
+    focus: "outline-none",
+  },
   root: "outline-none min-h-[200px] px-1",
   paragraph: "mb-1 leading-7 text-foreground",
   heading: {

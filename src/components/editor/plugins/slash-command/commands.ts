@@ -9,6 +9,7 @@ import {
   ListOrderedIcon,
   MinusIcon,
   PanelsTopLeftIcon,
+  PlayIcon,
   SquareCheckIcon,
   TableIcon,
   TextQuoteIcon,
@@ -88,6 +89,13 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     id: "image",
     keywords: ["image", "photo", "media", "picture", "img"],
     label: "Image",
+  },
+  {
+    description: "Embed a YouTube video",
+    icon: PlayIcon,
+    id: "youtube",
+    keywords: ["youtube", "video", "embed", "yt"],
+    label: "YouTube",
   },
   {
     description: "Expandable toggle section",

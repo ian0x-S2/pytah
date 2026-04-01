@@ -23,6 +23,7 @@ import { LinkBehaviorPlugin } from "../plugins/link-behavior/plugin";
 import { EDITOR_MARKDOWN_TRANSFORMERS } from "../plugins/markdown/transformers";
 import { SlashCommandPlugin } from "../plugins/slash-command/plugin";
 import { TableBehaviorPlugin } from "../plugins/table-behavior/plugin";
+import { YouTubePlugin } from "../plugins/youtube/plugin";
 import { EditorFooter } from "./chrome";
 
 interface EditorTopToolbarProps {
@@ -90,6 +91,7 @@ export function EditorContent({
       <CheckListPlugin />
       <LinkBehaviorPlugin editable={editable} />
       <ImagePlugin />
+      <YouTubePlugin />
       <CollapsiblePlugin />
       <LayoutPlugin />
       <HorizontalRulePlugin />

@@ -11,6 +11,7 @@ import { CollapsibleTitleNode } from "./nodes/collapsible/title-node";
 import { ImageNode } from "./nodes/image/node";
 import { LayoutContainerNode } from "./nodes/layout/container-node";
 import { LayoutItemNode } from "./nodes/layout/item-node";
+import { YouTubeNode } from "./nodes/youtube/node";
 import { editorTheme } from "./theme";
 
 function onError(error: Error) {
@@ -28,6 +29,7 @@ const EDITOR_NODES = [
   AutoLinkNode,
   HorizontalRuleNode,
   ImageNode,
+  YouTubeNode,
   CollapsibleContainerNode,
   CollapsibleTitleNode,
   CollapsibleContentNode,

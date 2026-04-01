@@ -147,4 +147,5 @@ export const SLASH_COMMAND_EXECUTORS: Record<
   paragraph: applyParagraphCommand,
   quote: applyQuoteCommand,
   table: applyTableCommand,
+  youtube: applyParagraphCommand,
 };

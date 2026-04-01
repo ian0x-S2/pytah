@@ -66,6 +66,7 @@ Preferred plugin structure for complex plugins:
 Current examples:
 - `plugins/slash-command/*`
 - `plugins/image/*`
+- `plugins/youtube/*`
 - `plugins/collapsible/*`
 - `plugins/draggable-block/*`
 - `plugins/layout/*`
@@ -98,6 +99,16 @@ Image feature conventions:
   - interactive image rendering, node selection, inline metadata editing, and handle-based resize preview
 - `plugins/image/plugin.tsx`
   - command registration plus paste/drop file insertion behavior
+
+YouTube feature conventions:
+- `core/nodes/youtube/node.tsx`
+  - decorator block node that stores the video id and round-trips through HTML `iframe[data-lexical-youtube]`
+- `plugins/youtube/commands.ts`
+  - insertion command payload for YouTube embeds
+- `plugins/youtube/plugin.tsx`
+  - command registration that inserts the embed block and trailing paragraph
+- `plugins/youtube/utils.ts`
+  - URL parsing helpers shared by slash command and markdown import
 
 Collapsible feature conventions:
 - `core/nodes/collapsible/container-node.ts`
@@ -152,6 +163,7 @@ Table behavior module conventions:
 - Images should round-trip through HTML `<img>` and Markdown `![alt](src)` without losing source or alt text
 - Images may enter through slash command URL/file flows, paste, or drag and drop, while still landing as real editor nodes
 - Editable image blocks should support node selection, keyboard removal, and handle-based resize that previews imperatively during drag and commits once at the end, without affecting read-only mode
+- YouTube embeds should round-trip through HTML iframe export/import and Markdown as canonical YouTube URLs without losing the video id
 - Top-level editor blocks should remain reorderable through the drag handle without breaking editable or read-only behavior
 - Tables and checklists should stay first-class editing blocks, not hacked-in visual widgets
 - Collapsible sections should stay real Lexical structure with editable title and body, not decorator-only UI wrappers
