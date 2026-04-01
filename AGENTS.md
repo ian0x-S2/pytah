@@ -159,3 +159,4 @@ When changing this codebase, keep these facts in mind:
 - editable and read-only modes must both remain functional
 - architecture changes should update the nearest relevant `AGENTS.md` so future work keeps the same mental model
 - if a feature-specific README duplicates agent context, prefer `AGENTS.md` as the durable source of truth
+- the `lexical/` submodule must be ignored by git (ensure it's in `.gitignore` before committing)
