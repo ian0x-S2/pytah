@@ -31,3 +31,8 @@ export interface SlashMenuPosition {
   left: number;
   top: number;
 }
+
+export interface SlashMenuAnchor {
+  getBoundingClientRect: () => DOMRect;
+  getClientRects: () => DOMRectList;
+}

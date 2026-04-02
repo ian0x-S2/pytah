@@ -1,3 +1,4 @@
+import { Popover as PopoverPrimitive } from "@base-ui/react/popover";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { mergeRegister } from "@lexical/utils";
 import {
@@ -12,7 +13,6 @@ import {
 } from "lexical";
 import type { ChangeEvent } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import { INSERT_IMAGE_COMMAND } from "../image/commands";
 import { readFileAsDataUrl } from "../image/utils";
 import { INSERT_LAYOUT_COMMAND } from "../layout/commands";
@@ -39,7 +40,7 @@ import { INSERT_YOUTUBE_COMMAND } from "../youtube/commands";
 import { parseYouTubeUrl } from "../youtube/utils";
 import { SLASH_COMMANDS } from "./commands";
 import { SLASH_COMMAND_EXECUTORS } from "./executors";
-import type { SlashCommandId, SlashMenuPosition } from "./types";
+import type { SlashCommandId, SlashMenuAnchor } from "./types";
 import {
   filterSlashCommands,
   getFirstCommandId,
@@ -49,25 +50,108 @@ import {
   hasSelectedCommand,
 } from "./utils";
 
-const EMPTY_MENU_POSITION: SlashMenuPosition = {
-  left: 0,
-  top: 0,
+const TEMPLATE_COLUMN_SEPARATOR = /\s+/;
+const SLASH_MENU_COLLISION_AVOIDANCE = {
+  align: "none",
+  fallbackAxisSide: "none",
+  side: "flip",
+} as const;
+
+const getFirstTextDescendant = (element: HTMLElement): HTMLElement => {
+  let inner = element;
+
+  while (inner.firstElementChild instanceof HTMLElement) {
+    inner = inner.firstElementChild;
+  }
+
+  return inner;
 };
 
-const TEMPLATE_COLUMN_SEPARATOR = /\s+/;
-
-const getSelectionRectangle = (): SlashMenuPosition | null => {
+const getSelectionRectangle = (
+  editor: ReturnType<typeof useLexicalComposerContext>[0]
+): DOMRect | null => {
   const nativeSelection = window.getSelection();
-  if (!(nativeSelection && nativeSelection.rangeCount > 0)) {
+  const rootElement = editor.getRootElement();
+
+  if (
+    !(
+      nativeSelection &&
+      nativeSelection.rangeCount > 0 &&
+      rootElement?.contains(nativeSelection.anchorNode)
+    )
+  ) {
     return null;
   }
 
   const range = nativeSelection.getRangeAt(0);
-  const rectangle = range.getBoundingClientRect();
+  const firstClientRect = range.getClientRects().item(0);
+  const rectangle =
+    nativeSelection.anchorNode === rootElement
+      ? getFirstTextDescendant(rootElement).getBoundingClientRect()
+      : (firstClientRect ?? range.getBoundingClientRect());
+  const fallbackRectangle =
+    nativeSelection.focusNode?.parentElement?.getBoundingClientRect();
+  const nextRectangle =
+    rectangle.width === 0 && rectangle.height === 0 && fallbackRectangle
+      ? fallbackRectangle
+      : rectangle;
 
+  if (nextRectangle.width === 0 && nextRectangle.height === 0) {
+    return null;
+  }
+
+  return nextRectangle;
+};
+
+const createSlashMenuAnchor = (
+  editor: ReturnType<typeof useLexicalComposerContext>[0]
+): SlashMenuAnchor => {
   return {
-    left: rectangle.left,
-    top: rectangle.bottom + 4,
+    getBoundingClientRect: () => {
+      const rectangle = getSelectionRectangle(editor);
+
+      if (!rectangle) {
+        return new DOMRect();
+      }
+
+      return new DOMRect(
+        rectangle.left,
+        rectangle.top,
+        Math.max(rectangle.width, 1),
+        Math.max(rectangle.height, 1)
+      );
+    },
+    getClientRects: () => {
+      const rect = getSelectionRectangle(editor);
+
+      if (!rect) {
+        return {
+          item: () => null,
+          length: 0,
+          [Symbol.iterator](): IterableIterator<DOMRect> {
+            return [][Symbol.iterator]();
+          },
+        } as DOMRectList;
+      }
+
+      const anchorRect = new DOMRect(
+        rect.left,
+        rect.top,
+        Math.max(rect.width, 1),
+        Math.max(rect.height, 1)
+      );
+
+      return {
+        0: anchorRect,
+        item: (index: number) => {
+          return index === 0 ? anchorRect : null;
+        },
+        length: 1,
+        *[Symbol.iterator](): IterableIterator<DOMRect> {
+          yield anchorRect;
+        },
+      } as DOMRectList;
+    },
   };
 };
 
@@ -120,8 +204,6 @@ export function SlashCommandPlugin() {
   const [pendingYouTubeTargetKey, setPendingYouTubeTargetKey] = useState<
     string | null
   >(null);
-  const [position, setPosition] =
-    useState<SlashMenuPosition>(EMPTY_MENU_POSITION);
   const [query, setQuery] = useState("");
   const [selectedCommandId, setSelectedCommandId] = useState<
     SlashCommandId | ""
@@ -136,6 +218,48 @@ export function SlashCommandPlugin() {
   const selectedIndex = useMemo(() => {
     return getSelectedCommandIndex(filteredCommands, selectedCommandId);
   }, [filteredCommands, selectedCommandId]);
+
+  const anchor = useMemo(() => {
+    return createSlashMenuAnchor(editor);
+  }, [editor]);
+
+  const updateSlashMenu = useCallback(() => {
+    const selection = $getSelection();
+    const isCollapsedRangeSelection =
+      $isRangeSelection(selection) && selection.isCollapsed();
+
+    if (!isCollapsedRangeSelection) {
+      setIsOpen(false);
+      setIsLayoutPresetOpen(false);
+      return;
+    }
+
+    const node = selection.anchor.getNode();
+    if (!$isTextNode(node)) {
+      setIsOpen(false);
+      setIsLayoutPresetOpen(false);
+      return;
+    }
+
+    const textUpToCursor = node
+      .getTextContent()
+      .slice(0, selection.anchor.offset);
+    const nextQuery = getSlashQueryMatch(textUpToCursor);
+
+    if (nextQuery === null) {
+      setIsOpen(false);
+      setIsLayoutPresetOpen(false);
+      return;
+    }
+
+    if (!getSelectionRectangle(editor)) {
+      setIsOpen(false);
+      return;
+    }
+
+    setQuery(nextQuery);
+    setIsOpen(true);
+  }, [editor]);
 
   const resetImageDialog = useCallback(() => {
     setImageAltText("");
@@ -373,45 +497,16 @@ export function SlashCommandPlugin() {
 
     return editor.registerUpdateListener(({ editorState }) => {
       editorState.read(() => {
-        const selection = $getSelection();
-        const isCollapsedRangeSelection =
-          $isRangeSelection(selection) && selection.isCollapsed();
-
-        if (!isCollapsedRangeSelection) {
-          setIsOpen(false);
-          setIsLayoutPresetOpen(false);
-          return;
-        }
-
-        const node = selection.anchor.getNode();
-        if (!$isTextNode(node)) {
-          setIsOpen(false);
-          setIsLayoutPresetOpen(false);
-          return;
-        }
-
-        const textUpToCursor = node
-          .getTextContent()
-          .slice(0, selection.anchor.offset);
-        const nextQuery = getSlashQueryMatch(textUpToCursor);
-
-        if (nextQuery === null) {
-          setIsOpen(false);
-          setIsLayoutPresetOpen(false);
-          return;
-        }
-
-        setQuery(nextQuery);
-
-        const nextPosition = getSelectionRectangle();
-        if (nextPosition) {
-          setPosition(nextPosition);
-        }
-
-        setIsOpen(true);
+        updateSlashMenu();
       });
     });
-  }, [editor, isImageDialogOpen, isLayoutPresetOpen, isYouTubeDialogOpen]);
+  }, [
+    editor,
+    isImageDialogOpen,
+    isLayoutPresetOpen,
+    isYouTubeDialogOpen,
+    updateSlashMenu,
+  ]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -527,11 +622,27 @@ export function SlashCommandPlugin() {
 
   return (
     <>
-      {isOpen && filteredCommands.length > 0
-        ? createPortal(
-            <div
-              className="fade-in-0 zoom-in-95 fixed z-50 w-72 animate-in overflow-hidden rounded-lg bg-popover shadow-md ring-1 ring-foreground/10 duration-100"
-              style={{ left: position.left, top: position.top }}
+      <PopoverPrimitive.Root
+        modal={false}
+        open={isOpen && filteredCommands.length > 0}
+      >
+        <PopoverPrimitive.Portal>
+          <PopoverPrimitive.Positioner
+            align="start"
+            anchor={anchor}
+            className="isolate z-50"
+            collisionAvoidance={SLASH_MENU_COLLISION_AVOIDANCE}
+            positionMethod="fixed"
+            side="bottom"
+            sideOffset={4}
+          >
+            <PopoverPrimitive.Popup
+              className={cn(
+                "data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 z-50 flex w-72 origin-(--transform-origin) flex-col overflow-hidden rounded-lg bg-popover p-0 text-popover-foreground text-sm shadow-md outline-hidden ring-1 ring-foreground/10 duration-100 data-closed:animate-out data-open:animate-in"
+              )}
+              data-slot="slash-command-popover"
+              finalFocus={false}
+              initialFocus={false}
             >
               <Command
                 onValueChange={(value) =>
@@ -569,10 +680,10 @@ export function SlashCommandPlugin() {
                   ) : null}
                 </CommandList>
               </Command>
-            </div>,
-            document.body
-          )
-        : null}
+            </PopoverPrimitive.Popup>
+          </PopoverPrimitive.Positioner>
+        </PopoverPrimitive.Portal>
+      </PopoverPrimitive.Root>
 
       <Dialog onOpenChange={setIsLayoutPresetOpen} open={isLayoutPresetOpen}>
         <DialogContent
