@@ -91,6 +91,7 @@ const getFormatState = (
   return {
     isBold: selection.hasFormat("bold"),
     isCode: selection.hasFormat("code"),
+    isHighlight: selection.hasFormat("highlight"),
     isItalic: selection.hasFormat("italic"),
     isLink: linkNode !== null,
     isStrikethrough: selection.hasFormat("strikethrough"),

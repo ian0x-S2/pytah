@@ -1,6 +1,7 @@
 export interface FloatingToolbarFormatState {
   isBold: boolean;
   isCode: boolean;
+  isHighlight: boolean;
   isItalic: boolean;
   isLink: boolean;
   isStrikethrough: boolean;

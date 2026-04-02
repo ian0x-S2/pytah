@@ -61,6 +61,8 @@ export const editorTheme: EditorThemeClasses = {
     underline: "underline underline-offset-4",
     strikethrough: "line-through",
     underlineStrikethrough: "underline line-through",
+    highlight:
+      "rounded-sm bg-yellow-200 px-0.5 text-foreground dark:bg-yellow-500/30",
     code: "bg-muted text-foreground px-1.5 py-0.5 rounded-md font-mono text-[0.875em]",
   },
   code: "bg-muted rounded-lg p-4 font-mono text-sm my-3 block overflow-x-auto",

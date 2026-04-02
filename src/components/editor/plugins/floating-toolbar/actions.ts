@@ -59,7 +59,13 @@ export const clearToolbarLink = (editor: LexicalEditor) => {
 
 export const toggleToolbarFormat = (
   editor: LexicalEditor,
-  format: "bold" | "italic" | "underline" | "strikethrough" | "code"
+  format:
+    | "bold"
+    | "italic"
+    | "underline"
+    | "strikethrough"
+    | "code"
+    | "highlight"
 ) => {
   editor.dispatchCommand(FORMAT_TEXT_COMMAND, format);
 };

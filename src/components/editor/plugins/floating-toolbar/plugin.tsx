@@ -5,6 +5,7 @@ import { COMMAND_PRIORITY_LOW, SELECTION_CHANGE_COMMAND } from "lexical";
 import {
   BoldIcon,
   CodeIcon,
+  HighlighterIcon,
   ItalicIcon,
   LinkIcon,
   StrikethroughIcon,
@@ -30,6 +31,7 @@ const TOOLBAR_FORMAT_ACTIONS = [
   { format: "italic", icon: ItalicIcon, key: "isItalic" },
   { format: "underline", icon: UnderlineIcon, key: "isUnderline" },
   { format: "strikethrough", icon: StrikethroughIcon, key: "isStrikethrough" },
+  { format: "highlight", icon: HighlighterIcon, key: "isHighlight" },
   { format: "code", icon: CodeIcon, key: "isCode" },
 ] as const;
 
