@@ -94,10 +94,14 @@ const readTableMenuContext = (
   const cellRect = tableCellElement.getBoundingClientRect();
   const anchorRect = anchorElem.getBoundingClientRect();
 
+  const buttonSize = 20;
   return {
     position: {
-      left: cellRect.right - anchorRect.left - 26,
-      top: cellRect.top - anchorRect.top + 6,
+      left: cellRect.right - anchorRect.left - buttonSize - 6,
+      top:
+        cellRect.top -
+        anchorRect.top +
+        Math.round((cellRect.height - buttonSize) / 2),
     },
     selectionCounts: resolveSelectionCounts(selection),
   };
@@ -370,6 +374,7 @@ function TableCellActionMenuContainer({
           render={
             <Button
               aria-label="Open table actions"
+              className="size-5"
               onMouseDown={(event) => {
                 event.preventDefault();
                 event.stopPropagation();
@@ -379,7 +384,7 @@ function TableCellActionMenuContainer({
             />
           }
         >
-          <ChevronDownIcon className="size-3" />
+          <ChevronDownIcon className="size-2.5" />
         </PopoverTrigger>
         <PopoverContent
           align="start"
