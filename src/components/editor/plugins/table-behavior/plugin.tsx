@@ -34,6 +34,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Separator } from "@/components/ui/separator";
 
 interface SelectionCounts {
   columns: number;
@@ -226,7 +227,7 @@ function TableActionMenu({
         <Columns2Icon />
         <span>Insert {columnLabel} right</span>
       </Button>
-      <div className="my-1 h-px bg-border" />
+      <Separator className="my-1" />
       <Button
         className="justify-start"
         onClick={deleteRow}

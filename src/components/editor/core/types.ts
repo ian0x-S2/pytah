@@ -11,6 +11,7 @@ export interface EditorProps {
   editable?: boolean;
   initialHtml?: string;
   initialMarkdown?: string;
+  minimal?: boolean;
   onChange?: (snapshot: EditorSnapshot, editor: LexicalEditor) => void;
   placeholder?: string;
 }

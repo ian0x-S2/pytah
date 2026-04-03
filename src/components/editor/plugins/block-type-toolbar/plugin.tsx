@@ -87,7 +87,7 @@ export function BlockTypeToolbarPlugin() {
 
               return (
                 <button
-                  className="flex w-full items-start gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-muted"
+                  className="flex w-full items-start gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
                   key={option.value}
                   onClick={() => handleBlockTypeChange(option.value)}
                   type="button"

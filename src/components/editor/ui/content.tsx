@@ -50,6 +50,7 @@ interface EditorContentProps {
   editorInstance: LexicalEditor | null;
   initialHtml?: string;
   initialMarkdown?: string;
+  minimal?: boolean;
   onSnapshotChange: (snapshot: EditorSnapshot, editor: LexicalEditor) => void;
   placeholder: string;
   snapshot: EditorSnapshot;
@@ -60,6 +61,7 @@ export function EditorContent({
   editorInstance,
   initialHtml,
   initialMarkdown,
+  minimal = false,
   onSnapshotChange,
   placeholder,
   snapshot,
@@ -85,7 +87,7 @@ export function EditorContent({
         />
       </div>
 
-      <EditorFooter snapshot={snapshot} />
+      {!minimal && <EditorFooter snapshot={snapshot} />}
 
       <HistoryPlugin />
       <ListPlugin />

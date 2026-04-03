@@ -31,6 +31,7 @@ export function Editor({
   editable = true,
   initialHtml,
   initialMarkdown,
+  minimal = false,
   onChange,
   placeholder = DEFAULT_PLACEHOLDER,
 }: EditorProps) {
@@ -90,35 +91,50 @@ export function Editor({
   }, [editorInstance]);
 
   return (
-    <div className={cn("space-y-6", className)}>
+    <div className={cn(!minimal && "space-y-6", className)}>
       <LexicalComposer
         initialConfig={initialConfig}
         key={`pytah-editor-${hotReloadComposerKey}`}
       >
-        <EditorShell>
-          <EditorHeader />
-          <EditorActionBar
-            onLoadHtml={handleLoadHtmlExample}
-            onLoadMarkdown={handleLoadMarkdownExample}
-            onReset={handleReset}
-          />
+        {minimal ? (
           <EditorContent
             editable={editable}
             editorInstance={editorInstance}
             initialHtml={initialHtml}
             initialMarkdown={initialMarkdown}
+            minimal
             onSnapshotChange={handleSnapshotChange}
             placeholder={placeholder}
             snapshot={snapshot}
           />
-        </EditorShell>
+        ) : (
+          <EditorShell>
+            <EditorHeader />
+            <EditorActionBar
+              onLoadHtml={handleLoadHtmlExample}
+              onLoadMarkdown={handleLoadMarkdownExample}
+              onReset={handleReset}
+            />
+            <EditorContent
+              editable={editable}
+              editorInstance={editorInstance}
+              initialHtml={initialHtml}
+              initialMarkdown={initialMarkdown}
+              onSnapshotChange={handleSnapshotChange}
+              placeholder={placeholder}
+              snapshot={snapshot}
+            />
+          </EditorShell>
+        )}
       </LexicalComposer>
 
-      <EditorOutputGrid
-        onCopyHtml={handleCopyHtml}
-        onCopyMarkdown={handleCopyMarkdown}
-        snapshot={snapshot}
-      />
+      {!minimal && (
+        <EditorOutputGrid
+          onCopyHtml={handleCopyHtml}
+          onCopyMarkdown={handleCopyMarkdown}
+          snapshot={snapshot}
+        />
+      )}
     </div>
   );
 }
