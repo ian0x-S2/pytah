@@ -2,7 +2,7 @@ import { calculateZoomLevel } from "@lexical/utils";
 import type { LexicalEditor } from "lexical";
 import { useRef } from "react";
 
-type ResizeDirection = "n" | "ne" | "e" | "se" | "s" | "sw" | "w" | "nw";
+type ResizeDirection = "ne" | "nw" | "se" | "sw";
 
 interface ImageResizerProps {
   editor: LexicalEditor;
@@ -24,80 +24,22 @@ interface ResizeState {
   startY: number;
 }
 
-const RESIZE_DIRECTIONS: ResizeDirection[] = [
-  "n",
-  "ne",
-  "e",
-  "se",
-  "s",
-  "sw",
-  "w",
-  "nw",
-];
+const CORNER_DIRECTIONS: ResizeDirection[] = ["ne", "se", "sw", "nw"];
 
-const clamp = (value: number, min: number, max: number) => {
-  return Math.min(Math.max(value, min), max);
+const CORNER_CLASSES: Record<ResizeDirection, string> = {
+  ne: "right-0 top-0 translate-x-1/2 -translate-y-1/2 cursor-nesw-resize border-t-2 border-r-2",
+  se: "bottom-0 right-0 translate-x-1/2 translate-y-1/2 cursor-nwse-resize border-b-2 border-r-2",
+  sw: "bottom-0 left-0 -translate-x-1/2 translate-y-1/2 cursor-nesw-resize border-b-2 border-l-2",
+  nw: "left-0 top-0 -translate-x-1/2 -translate-y-1/2 cursor-nwse-resize border-t-2 border-l-2",
 };
 
-const isEast = (direction: ResizeDirection) => {
-  return direction === "e" || direction === "ne" || direction === "se";
-};
+const clamp = (value: number, min: number, max: number) =>
+  Math.min(Math.max(value, min), max);
 
-const isWest = (direction: ResizeDirection) => {
-  return direction === "w" || direction === "nw" || direction === "sw";
-};
+const isEast = (d: ResizeDirection) => d === "ne" || d === "se";
 
-const isNorth = (direction: ResizeDirection) => {
-  return direction === "n" || direction === "ne" || direction === "nw";
-};
-
-const isSouth = (direction: ResizeDirection) => {
-  return direction === "s" || direction === "se" || direction === "sw";
-};
-
-const getCursor = (direction: ResizeDirection) => {
-  if (direction === "e" || direction === "w") {
-    return "ew-resize";
-  }
-
-  if (direction === "n" || direction === "s") {
-    return "ns-resize";
-  }
-
-  if (direction === "nw" || direction === "se") {
-    return "nwse-resize";
-  }
-
-  return "nesw-resize";
-};
-
-const getHandleClassName = (direction: ResizeDirection) => {
-  const cornerClassName =
-    "absolute h-3 w-3 rounded-full border border-primary/70 bg-background shadow-sm";
-  const sideClassName =
-    "absolute top-1/2 h-12 w-2 -translate-y-1/2 rounded-full border border-primary/70 bg-background shadow-sm";
-
-  switch (direction) {
-    case "n":
-      return `${cornerClassName} left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 cursor-ns-resize`;
-    case "ne":
-      return `${cornerClassName} right-0 top-0 translate-x-1/2 -translate-y-1/2 cursor-nesw-resize`;
-    case "e":
-      return `${sideClassName} right-0 translate-x-1/2 cursor-ew-resize`;
-    case "se":
-      return `${cornerClassName} bottom-0 right-0 translate-x-1/2 translate-y-1/2 cursor-nwse-resize`;
-    case "s":
-      return `${cornerClassName} bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 cursor-ns-resize`;
-    case "sw":
-      return `${cornerClassName} bottom-0 left-0 -translate-x-1/2 translate-y-1/2 cursor-nesw-resize`;
-    case "w":
-      return `${sideClassName} left-0 -translate-x-1/2 cursor-ew-resize`;
-    case "nw":
-      return `${cornerClassName} left-0 top-0 -translate-x-1/2 -translate-y-1/2 cursor-nwse-resize`;
-    default:
-      return cornerClassName;
-  }
-};
+const getCursor = (d: ResizeDirection) =>
+  d === "nw" || d === "se" ? "nwse-resize" : "nesw-resize";
 
 export function ImageResizer({
   editor,
@@ -107,14 +49,11 @@ export function ImageResizer({
   onResizeStart,
 }: ImageResizerProps) {
   const controlWrapperRef = useRef<HTMLDivElement | null>(null);
-  const userSelect = useRef({
-    priority: "",
-    value: "default",
-  });
+  const userSelect = useRef({ priority: "", value: "default" });
   const positioningRef = useRef<ResizeState>({
     currentHeight: 0,
     currentWidth: 0,
-    direction: "e",
+    direction: "se",
     isResizing: false,
     ratio: 0,
     startHeight: 0,
@@ -130,17 +69,10 @@ export function ImageResizer({
   } else if (editorRootElement) {
     maxWidthContainer = editorRootElement.getBoundingClientRect().width - 20;
   }
-  const maxHeightContainer = editorRootElement
-    ? editorRootElement.getBoundingClientRect().height - 20
-    : 100;
 
   const setStartCursor = (direction: ResizeDirection) => {
     const cursor = getCursor(direction);
-
-    if (editorRootElement) {
-      editorRootElement.style.setProperty("cursor", cursor, "important");
-    }
-
+    editorRootElement?.style.setProperty("cursor", cursor, "important");
     document.body.style.setProperty("cursor", cursor, "important");
     userSelect.current.value = document.body.style.getPropertyValue(
       "-webkit-user-select"
@@ -170,50 +102,16 @@ export function ImageResizer({
     }
 
     const zoom = calculateZoomLevel(image);
-    const horizontal =
-      isEast(positioning.direction) || isWest(positioning.direction);
-    const vertical =
-      isNorth(positioning.direction) || isSouth(positioning.direction);
-
-    if (horizontal && vertical) {
-      let diff = Math.floor(positioning.startX - event.clientX / zoom);
-      diff = isEast(positioning.direction) ? -diff : diff;
-
-      const width = clamp(
-        positioning.startWidth + diff,
-        100,
-        maxWidthContainer
-      );
-      const height = width / positioning.ratio;
-
-      image.style.width = `${width}px`;
-      image.style.height = `${height}px`;
-      positioning.currentHeight = height;
-      positioning.currentWidth = width;
-      return;
-    }
-
-    if (vertical) {
-      let diff = Math.floor(positioning.startY - event.clientY / zoom);
-      diff = isSouth(positioning.direction) ? -diff : diff;
-
-      const height = clamp(
-        positioning.startHeight + diff,
-        100,
-        maxHeightContainer
-      );
-
-      image.style.height = `${height}px`;
-      positioning.currentHeight = height;
-      return;
-    }
-
+    // All corners resize both axes while locking aspect ratio.
     let diff = Math.floor(positioning.startX - event.clientX / zoom);
     diff = isEast(positioning.direction) ? -diff : diff;
 
     const width = clamp(positioning.startWidth + diff, 100, maxWidthContainer);
+    const height = width / positioning.ratio;
 
     image.style.width = `${width}px`;
+    image.style.height = `${height}px`;
+    positioning.currentHeight = height;
     positioning.currentWidth = width;
   };
 
@@ -290,12 +188,12 @@ export function ImageResizer({
 
   return (
     <div
-      className="absolute inset-0 rounded-2xl [&.image-control-wrapper--resizing]:touch-none"
+      className="absolute inset-0 [&.image-control-wrapper--resizing]:touch-none"
       ref={controlWrapperRef}
     >
-      {RESIZE_DIRECTIONS.map((direction) => (
+      {CORNER_DIRECTIONS.map((direction) => (
         <div
-          className={getHandleClassName(direction)}
+          className={`absolute size-2.5 rounded-full bg-primary/70 ${CORNER_CLASSES[direction]}`}
           key={direction}
           onPointerDown={(event) => handlePointerDown(event, direction)}
         />
