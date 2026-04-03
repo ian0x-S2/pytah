@@ -1,5 +1,32 @@
 import { cn } from "@/lib/utils";
 
+interface SourceSliceOptions {
+  end: string;
+  includeEnd?: boolean;
+  start: string;
+}
+
+export function sliceSource(
+  source: string,
+  { end, includeEnd = true, start }: SourceSliceOptions
+) {
+  const startIndex = source.indexOf(start);
+
+  if (startIndex < 0) {
+    throw new Error(`Source slice start marker was not found: ${start}`);
+  }
+
+  const endMarkerIndex = source.indexOf(end, startIndex);
+
+  if (endMarkerIndex < 0) {
+    throw new Error(`Source slice end marker was not found: ${end}`);
+  }
+
+  const endIndex = includeEnd ? endMarkerIndex + end.length : endMarkerIndex;
+
+  return source.slice(startIndex, endIndex).trim();
+}
+
 export function PageHeader({
   children,
   className,

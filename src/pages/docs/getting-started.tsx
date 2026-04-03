@@ -5,7 +5,36 @@ import {
   Paragraph,
   SectionHeading,
   SubHeading,
+  sliceSource,
 } from "@/components/docs/primitives";
+import editorTypesSource from "@/components/editor/core/types.ts?raw";
+import indexCssSource from "@/index.css?raw";
+import demoPageSource from "@/pages/demo.tsx?raw";
+
+const editorUsageExample = sliceSource(demoPageSource, {
+  end: "          <Editor editable={editable} minimal />",
+  start: 'import { Editor } from "@/components/editor/editor";',
+});
+
+const editorPropsSource = sliceSource(editorTypesSource, {
+  end: "}",
+  start: "export interface EditorProps {",
+});
+
+const highlightTokensSource = sliceSource(indexCssSource, {
+  end: "  --highlight-foreground: oklch(0.145 0 0);",
+  start: "  --highlight: oklch(0.97 0.05 90);",
+});
+
+const darkHighlightTokensSource = sliceSource(indexCssSource, {
+  end: "  --highlight-foreground: oklch(0.985 0 0);",
+  start: "  --highlight: oklch(0.35 0.06 85);",
+});
+
+const tailwindThemeBridgeSource = sliceSource(indexCssSource, {
+  end: "  --color-highlight-foreground: var(--highlight-foreground);",
+  start: "  --color-highlight: var(--highlight);",
+});
 
 export function GettingStartedPage() {
   return (
@@ -79,15 +108,11 @@ export function GettingStartedPage() {
       </Paragraph>
       <CodeBlock language="css">
         {`:root {
-  /* ... your existing ShadCN tokens ... */
-  --highlight: oklch(0.905 0.145 98);
-  --highlight-foreground: oklch(0.145 0 0);
+${highlightTokensSource}
 }
 
 .dark {
-  /* ... your existing ShadCN tokens ... */
-  --highlight: oklch(0.65 0.13 85);
-  --highlight-foreground: oklch(0.985 0 0);
+${darkHighlightTokensSource}
 }`}
       </CodeBlock>
       <Paragraph>
@@ -95,42 +120,22 @@ export function GettingStartedPage() {
       </Paragraph>
       <CodeBlock language="css">
         {`@theme inline {
-  --color-highlight: var(--highlight);
-  --color-highlight-foreground: var(--highlight-foreground);
+${tailwindThemeBridgeSource}
 }`}
       </CodeBlock>
 
       <SectionHeading id="render">4. Render the Editor</SectionHeading>
-      <CodeBlock language="tsx">
-        {`import { Editor } from "@/components/editor/editor";
-
-function MyPage() {
-  return (
-    <Editor
-      editable={true}
-      onChange={(snapshot) => {
-        console.log(snapshot.html);
-        console.log(snapshot.markdown);
-      }}
-    />
-  );
-}`}
-      </CodeBlock>
+      <Paragraph>
+        The demo page is the smallest real integration in this repository. It
+        toggles edit mode and mounts the editor in minimal mode:
+      </Paragraph>
+      <CodeBlock language="tsx">{editorUsageExample}</CodeBlock>
 
       <SubHeading id="props">Editor Props</SubHeading>
       <Paragraph>
         The <code>Editor</code> component accepts the following props:
       </Paragraph>
-      <CodeBlock language="typescript">
-        {`interface EditorProps {
-  className?: string;
-  editable?: boolean;         // default: true
-  initialHtml?: string;       // seed content from HTML
-  initialMarkdown?: string;   // seed content from Markdown
-  onChange?: (snapshot: EditorSnapshot, editor: LexicalEditor) => void;
-  placeholder?: string;
-}`}
-      </CodeBlock>
+      <CodeBlock language="typescript">{editorPropsSource}</CodeBlock>
 
       <Callout title="That's it" variant="tip">
         The editor is self-contained. It manages its own Lexical composer,

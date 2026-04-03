@@ -216,6 +216,9 @@ When changing this codebase, keep these facts in mind:
 - the editor must stay copy/paste ready for HTML and Markdown workflows
 - slash command behavior is a core UX surface and must keep highlight, initial focus and scroll synchronization correct
 - editable and read-only modes must both remain functional
+- `src/pages/docs/` should treat the application source as the canonical reference for code examples and API shapes
+- when docs need to show real code, prefer importing source with `?raw` or reading from shared exported metadata instead of duplicating snippets manually
+- keep prose and editorial explanation in docs manual, but avoid copying implementation code, prop shapes, command registries, or token definitions when they already exist elsewhere in `src/`
 - architecture changes should update the nearest relevant `AGENTS.md` so future work keeps the same mental model
 - if a feature-specific README duplicates agent context, prefer `AGENTS.md` as the durable source of truth
 - the `lexical/` submodule must be ignored by git (ensure it's in `.gitignore` before committing)

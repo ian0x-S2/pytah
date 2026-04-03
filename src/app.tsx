@@ -8,7 +8,7 @@ function App() {
     <Switch>
       <Route component={HomePage} path="/" />
       <Route component={DemoPage} path="/demo" />
-      <Route component={DocsPage} path="/docs/:slug*" />
+      <Route component={DocsPage} path="/docs/*" />
       <Route>
         <div className="flex min-h-screen items-center justify-center">
           <p className="text-muted-foreground">Page not found</p>

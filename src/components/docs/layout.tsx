@@ -2,10 +2,17 @@ import {
   BookOpenIcon,
   BoxIcon,
   CodeIcon,
+  GripVerticalIcon,
+  ImageIcon,
   LayoutIcon,
+  LinkIcon,
   PaletteIcon,
   PlayIcon,
   PlugIcon,
+  SlashIcon,
+  TableIcon,
+  ToggleLeftIcon,
+  VideoIcon,
 } from "lucide-react";
 import { Link, useRoute } from "wouter";
 import { cn } from "@/lib/utils";
@@ -27,6 +34,42 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/docs/components", icon: BoxIcon, label: "Components" },
   { href: "/docs/plugins", icon: PlugIcon, label: "Plugins" },
   { href: "/docs/theming", icon: PaletteIcon, label: "Theming" },
+];
+
+const GUIDE_ITEMS: NavItem[] = [
+  { href: "/docs/guides/image", icon: ImageIcon, label: "Image" },
+  {
+    href: "/docs/guides/slash-command",
+    icon: SlashIcon,
+    label: "Slash Command",
+  },
+  {
+    href: "/docs/guides/floating-toolbar",
+    icon: LayoutIcon,
+    label: "Floating Toolbar",
+  },
+  {
+    href: "/docs/guides/collapsible",
+    icon: ToggleLeftIcon,
+    label: "Collapsible",
+  },
+  {
+    href: "/docs/guides/table-behavior",
+    icon: TableIcon,
+    label: "Table Behavior",
+  },
+  { href: "/docs/guides/layout", icon: BoxIcon, label: "Layout" },
+  { href: "/docs/guides/youtube", icon: VideoIcon, label: "YouTube Embed" },
+  {
+    href: "/docs/guides/draggable-block",
+    icon: GripVerticalIcon,
+    label: "Draggable Block",
+  },
+  {
+    href: "/docs/guides/link-behavior",
+    icon: LinkIcon,
+    label: "Link Behavior",
+  },
 ];
 
 function NavLink({ href, icon: Icon, label }: NavItem) {
@@ -58,10 +101,23 @@ function Sidebar() {
         <ThemeToggle />
       </div>
 
-      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-        {NAV_ITEMS.map((item) => (
-          <NavLink key={item.href} {...item} />
-        ))}
+      <nav className="flex-1 overflow-y-auto px-3 py-4">
+        <div className="space-y-1">
+          {NAV_ITEMS.map((item) => (
+            <NavLink key={item.href} {...item} />
+          ))}
+        </div>
+
+        <div className="mt-6">
+          <p className="mb-1 px-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">
+            Guides
+          </p>
+          <div className="space-y-1">
+            {GUIDE_ITEMS.map((item) => (
+              <NavLink key={item.href} {...item} />
+            ))}
+          </div>
+        </div>
       </nav>
 
       <div className="border-border border-t px-3 py-3">
