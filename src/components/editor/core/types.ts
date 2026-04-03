@@ -8,6 +8,7 @@ export interface EditorSnapshot {
 
 export interface EditorProps {
   className?: string;
+  contentClassName?: string;
   editable?: boolean;
   initialHtml?: string;
   initialMarkdown?: string;

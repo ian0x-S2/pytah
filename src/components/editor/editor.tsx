@@ -28,6 +28,7 @@ if (import.meta.hot) {
 
 export function Editor({
   className,
+  contentClassName,
   editable = true,
   initialHtml,
   initialMarkdown,
@@ -98,6 +99,7 @@ export function Editor({
       >
         {minimal ? (
           <EditorContent
+            contentClassName={contentClassName}
             editable={editable}
             editorInstance={editorInstance}
             initialHtml={initialHtml}
@@ -116,6 +118,7 @@ export function Editor({
               onReset={handleReset}
             />
             <EditorContent
+              contentClassName={contentClassName}
               editable={editable}
               editorInstance={editorInstance}
               initialHtml={initialHtml}

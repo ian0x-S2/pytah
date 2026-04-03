@@ -7,6 +7,7 @@ import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPl
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { TabIndentationPlugin } from "@lexical/react/LexicalTabIndentationPlugin";
 import type { LexicalEditor } from "lexical";
+import { cn } from "@/lib/utils";
 import type { EditorSnapshot } from "../core/types";
 import { BlockTypeToolbarPlugin } from "../plugins/block-type-toolbar/plugin";
 import { CollapsiblePlugin } from "../plugins/collapsible/plugin";
@@ -37,7 +38,7 @@ function EditorTopToolbar({ editable }: EditorTopToolbarProps) {
   }
 
   return (
-    <div className="border-border border-b bg-background px-3 py-2">
+    <div className="border-border border-b bg-muted/20 px-8 py-2">
       <div className="overflow-x-auto">
         <BlockTypeToolbarPlugin />
       </div>
@@ -46,6 +47,7 @@ function EditorTopToolbar({ editable }: EditorTopToolbarProps) {
 }
 
 interface EditorContentProps {
+  contentClassName?: string;
   editable: boolean;
   editorInstance: LexicalEditor | null;
   initialHtml?: string;
@@ -57,6 +59,7 @@ interface EditorContentProps {
 }
 
 export function EditorContent({
+  contentClassName,
   editable,
   editorInstance,
   initialHtml,
@@ -75,7 +78,10 @@ export function EditorContent({
           contentEditable={
             <ContentEditable
               aria-placeholder={placeholder}
-              className="ContentEditable__root relative min-h-105 px-8 py-10 text-[17px] leading-8 focus:outline-none"
+              className={cn(
+                "ContentEditable__root relative min-h-105 px-8 py-10 text-[17px] leading-8 focus:outline-none",
+                contentClassName
+              )}
               placeholder={
                 <div className="pointer-events-none absolute top-10 left-8 text-muted-foreground">
                   {placeholder}

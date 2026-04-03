@@ -24,9 +24,11 @@ export function EditorShell({
   );
 }
 
-export function EditorHeader() {
+export function EditorHeader({ className }: { className?: string }) {
   return (
-    <div className="border-border border-b bg-muted/40 px-4 py-3">
+    <div
+      className={cn("border-border border-b bg-muted/40 px-4 py-3", className)}
+    >
       <div className="flex flex-wrap items-center gap-2">
         {FEATURE_ITEMS.map((item) => (
           <div
@@ -42,7 +44,13 @@ export function EditorHeader() {
   );
 }
 
-export function EditorFooter({ snapshot }: { snapshot: EditorSnapshot }) {
+export function EditorFooter({
+  className,
+  snapshot,
+}: {
+  className?: string;
+  snapshot: EditorSnapshot;
+}) {
   const trimmedText = snapshot.text.trim();
   const wordCount = trimmedText
     ? trimmedText.split(WORD_SEPARATOR_PATTERN).length
@@ -50,7 +58,12 @@ export function EditorFooter({ snapshot }: { snapshot: EditorSnapshot }) {
   const characterCount = snapshot.text.length;
 
   return (
-    <div className="border-border border-t bg-muted/30 px-4 py-2 text-muted-foreground text-xs">
+    <div
+      className={cn(
+        "border-border border-t bg-muted/30 px-4 py-2 text-muted-foreground text-xs",
+        className
+      )}
+    >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-3">
           <span>{wordCount} words</span>

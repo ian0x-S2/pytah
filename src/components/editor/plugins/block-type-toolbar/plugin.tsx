@@ -9,7 +9,17 @@ import {
   SELECTION_CHANGE_COMMAND,
   UNDO_COMMAND,
 } from "lexical";
-import { ChevronDownIcon, RedoIcon, UndoIcon } from "lucide-react";
+import {
+  AlignCenterIcon,
+  AlignLeftIcon,
+  AlignRightIcon,
+  CheckIcon,
+  ChevronDownIcon,
+  IndentDecreaseIcon,
+  IndentIncreaseIcon,
+  RedoIcon,
+  UndoIcon,
+} from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -103,6 +113,9 @@ export function BlockTypeToolbarPlugin() {
                       {option.description}
                     </span>
                   </span>
+                  {option.value === currentBlockType && (
+                    <CheckIcon className="ml-auto size-3.5 shrink-0 self-center text-muted-foreground" />
+                  )}
                 </button>
               );
             })}
@@ -132,51 +145,56 @@ export function BlockTypeToolbarPlugin() {
       <Separator className="mx-1 h-5" orientation="vertical" />
 
       <Button
+        aria-label="Align left"
         onClick={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "left")}
-        size="sm"
+        size="icon-sm"
         type="button"
         variant="ghost"
       >
-        Left
+        <AlignLeftIcon />
       </Button>
       <Button
+        aria-label="Align center"
         onClick={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "center")}
-        size="sm"
+        size="icon-sm"
         type="button"
         variant="ghost"
       >
-        Center
+        <AlignCenterIcon />
       </Button>
       <Button
+        aria-label="Align right"
         onClick={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "right")}
-        size="sm"
+        size="icon-sm"
         type="button"
         variant="ghost"
       >
-        Right
+        <AlignRightIcon />
       </Button>
 
       <Separator className="mx-1 h-5" orientation="vertical" />
 
       <Button
+        aria-label="Outdent"
         onClick={() =>
           editor.dispatchCommand(OUTDENT_CONTENT_COMMAND, undefined)
         }
-        size="sm"
+        size="icon-sm"
         type="button"
         variant="ghost"
       >
-        Outdent
+        <IndentDecreaseIcon />
       </Button>
       <Button
+        aria-label="Indent"
         onClick={() =>
           editor.dispatchCommand(INDENT_CONTENT_COMMAND, undefined)
         }
-        size="sm"
+        size="icon-sm"
         type="button"
         variant="ghost"
       >
-        Indent
+        <IndentIncreaseIcon />
       </Button>
     </div>
   );
