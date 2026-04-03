@@ -35,6 +35,7 @@ export function Editor({
   minimal = false,
   onChange,
   placeholder = DEFAULT_PLACEHOLDER,
+  toolbar = false,
 }: EditorProps) {
   const [snapshot, setSnapshot] = useState<EditorSnapshot>({
     html: "",
@@ -108,6 +109,7 @@ export function Editor({
             onSnapshotChange={handleSnapshotChange}
             placeholder={placeholder}
             snapshot={snapshot}
+            toolbar={toolbar}
           />
         ) : (
           <EditorShell>
@@ -126,6 +128,7 @@ export function Editor({
               onSnapshotChange={handleSnapshotChange}
               placeholder={placeholder}
               snapshot={snapshot}
+              toolbar={toolbar}
             />
           </EditorShell>
         )}

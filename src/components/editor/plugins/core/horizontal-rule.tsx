@@ -119,7 +119,7 @@ const registerHorizontalRuleMutationListener = (
   selectedClassName: string
 ) => {
   return editor.registerMutationListener(HorizontalRuleNode, (nodes) => {
-    editor.getEditorState().read(() => {
+    editor.read(() => {
       for (const [nodeKey, mutation] of nodes) {
         if (mutation === "destroyed") {
           continue;

@@ -3,18 +3,35 @@ import {
   EyeIcon,
   MaximizeIcon,
   MinimizeIcon,
+  PanelTopIcon,
   PencilIcon,
 } from "lucide-react";
 import { useState } from "react";
 import { Link } from "wouter";
 import { ThemeToggle } from "@/components/docs/theme-toggle";
+import type { EditorToolbar } from "@/components/editor/core/types";
 import { Editor } from "@/components/editor/editor";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+const TOOLBAR_CYCLE: EditorToolbar[] = [false, "basic", "full"];
+
+const TOOLBAR_LABELS: Record<string, string> = {
+  basic: "Basic",
+  full: "Full",
+};
+
 export function DemoPage() {
   const [editable, setEditable] = useState(true);
   const [zen, setZen] = useState(false);
+  const [toolbar, setToolbar] = useState<EditorToolbar>(false);
+
+  const cycleToolbar = () => {
+    setToolbar((prev) => {
+      const idx = TOOLBAR_CYCLE.indexOf(prev);
+      return TOOLBAR_CYCLE[(idx + 1) % TOOLBAR_CYCLE.length];
+    });
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -38,6 +55,15 @@ export function DemoPage() {
           </div>
           <div className="flex items-center gap-1">
             <ThemeToggle />
+            <Button
+              className="gap-1.5"
+              onClick={cycleToolbar}
+              size="sm"
+              variant={toolbar ? "secondary" : "ghost"}
+            >
+              <PanelTopIcon className="size-3.5" />
+              {toolbar ? `Toolbar: ${TOOLBAR_LABELS[toolbar]}` : "Toolbar: Off"}
+            </Button>
             <Button
               className="gap-1.5"
               onClick={() => setEditable((prev) => !prev)}
@@ -97,7 +123,7 @@ export function DemoPage() {
 
         {/* Editor flows as the page body — no card, no border */}
         <div className={cn(zen && "pt-20")}>
-          <Editor editable={editable} minimal />
+          <Editor editable={editable} minimal toolbar={toolbar} />
         </div>
       </main>
 

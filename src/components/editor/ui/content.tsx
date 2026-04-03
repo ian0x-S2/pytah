@@ -8,7 +8,7 @@ import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { TabIndentationPlugin } from "@lexical/react/LexicalTabIndentationPlugin";
 import type { LexicalEditor } from "lexical";
 import { cn } from "@/lib/utils";
-import type { EditorSnapshot } from "../core/types";
+import type { EditorSnapshot, EditorToolbar } from "../core/types";
 import { BlockTypeToolbarPlugin } from "../plugins/block-type-toolbar/plugin";
 import { CollapsiblePlugin } from "../plugins/collapsible/plugin";
 import { EditablePlugin } from "../plugins/core/editable";
@@ -18,6 +18,7 @@ import { HorizontalRulePlugin } from "../plugins/core/horizontal-rule";
 import { SeedContentPlugin } from "../plugins/core/seed-content";
 import { DraggableBlockPlugin } from "../plugins/draggable-block/plugin";
 import { FloatingToolbarPlugin } from "../plugins/floating-toolbar/plugin";
+import { FullToolbarPlugin } from "../plugins/full-toolbar/plugin";
 import { ImagePlugin } from "../plugins/image/plugin";
 import { LayoutPlugin } from "../plugins/layout/plugin";
 import { FloatingLinkEditorPlugin } from "../plugins/link-behavior/floating-link-editor";
@@ -30,17 +31,22 @@ import { EditorFooter } from "./chrome";
 
 interface EditorTopToolbarProps {
   editable: boolean;
+  toolbar: EditorToolbar;
 }
 
-function EditorTopToolbar({ editable }: EditorTopToolbarProps) {
-  if (!editable) {
+function EditorTopToolbar({ editable, toolbar }: EditorTopToolbarProps) {
+  if (!(editable && toolbar)) {
     return null;
   }
 
   return (
-    <div className="border-border border-b bg-muted/20 px-8 py-2">
+    <div className="px-8 py-2">
       <div className="overflow-x-auto">
-        <BlockTypeToolbarPlugin />
+        {toolbar === "full" ? (
+          <FullToolbarPlugin />
+        ) : (
+          <BlockTypeToolbarPlugin />
+        )}
       </div>
     </div>
   );
@@ -56,6 +62,7 @@ interface EditorContentProps {
   onSnapshotChange: (snapshot: EditorSnapshot, editor: LexicalEditor) => void;
   placeholder: string;
   snapshot: EditorSnapshot;
+  toolbar: EditorToolbar;
 }
 
 export function EditorContent({
@@ -68,10 +75,11 @@ export function EditorContent({
   onSnapshotChange,
   placeholder,
   snapshot,
+  toolbar,
 }: EditorContentProps) {
   return (
     <>
-      <EditorTopToolbar editable={editable} />
+      <EditorTopToolbar editable={editable} toolbar={toolbar} />
 
       <div className="group relative bg-background">
         <RichTextPlugin

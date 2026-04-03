@@ -7,6 +7,8 @@ export interface FloatingToolbarFormatState {
   isItalic: boolean;
   isLink: boolean;
   isStrikethrough: boolean;
+  isSubscript: boolean;
+  isSuperscript: boolean;
   isUnderline: boolean;
   /** Current color CSS value of the selection, or "" if none/mixed. */
   textColor: string;

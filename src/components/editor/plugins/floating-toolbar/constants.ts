@@ -15,6 +15,8 @@ export const DEFAULT_FORMAT_STATE: FloatingToolbarFormatState = {
   isItalic: false,
   isLink: false,
   isStrikethrough: false,
+  isSubscript: false,
+  isSuperscript: false,
   isUnderline: false,
   bgColor: "",
   textColor: "",

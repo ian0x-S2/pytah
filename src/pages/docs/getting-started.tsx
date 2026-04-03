@@ -12,7 +12,7 @@ import indexCssSource from "@/index.css?raw";
 import demoPageSource from "@/pages/demo.tsx?raw";
 
 const editorUsageExample = sliceSource(demoPageSource, {
-  end: "          <Editor editable={editable} minimal />",
+  end: "          <Editor editable={editable} minimal toolbar={toolbar} />",
   start: 'import { Editor } from "@/components/editor/editor";',
 });
 

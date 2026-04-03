@@ -96,6 +96,8 @@ const getFormatState = (
     isItalic: selection.hasFormat("italic"),
     isLink: linkNode !== null,
     isStrikethrough: selection.hasFormat("strikethrough"),
+    isSubscript: selection.hasFormat("subscript"),
+    isSuperscript: selection.hasFormat("superscript"),
     isUnderline: selection.hasFormat("underline"),
     bgColor: $getSelectionStyleValueForProperty(
       selection,
@@ -104,6 +106,21 @@ const getFormatState = (
     ),
     textColor: $getSelectionStyleValueForProperty(selection, "color", ""),
   };
+};
+
+/**
+ * Reads inline format state at the current cursor or selection without any
+ * visibility or position checks. Intended for static (non-floating) toolbars
+ * that always need to reflect the current editor state.
+ */
+export const readInlineFormats = (): FloatingToolbarFormatState => {
+  const selection = $getSelection();
+  if (!$isRangeSelection(selection)) {
+    return DEFAULT_FORMAT_STATE;
+  }
+
+  const node = getFloatingToolbarSelectedNode(selection);
+  return getFormatState(selection, node);
 };
 
 export const readFloatingToolbarState = (): FloatingToolbarState => {
