@@ -49,7 +49,9 @@ export function PluginsPage() {
           </TableCell>
           <TableCell>
             Block type dropdown (paragraph, headings, lists, code, quote) with
-            undo/redo and alignment controls
+            undo/redo and alignment controls, plus arrow-key navigation with
+            initial highlight on the active editor block (or the first option
+            when none matches)
           </TableCell>
           <TableCell>Button, Popover, Separator</TableCell>
         </TableRow>

@@ -38,7 +38,7 @@ import {
   UnderlineIcon,
   UndoIcon,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -127,9 +127,13 @@ export function FullToolbarPlugin({ className }: FullToolbarPluginProps) {
 
   const [blockType, setBlockType] = useState<BlockTypeValue>("paragraph");
   const [blockTypeOpen, setBlockTypeOpen] = useState(false);
+  const [activeBlockTypeIndex, setActiveBlockTypeIndex] = useState(0);
   const [insertOpen, setInsertOpen] = useState(false);
+  const [activeInsertIndex, setActiveInsertIndex] = useState(0);
   const [formats, setFormats] =
     useState<FloatingToolbarFormatState>(DEFAULT_FORMAT_STATE);
+  const blockTypeOptionRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const insertOptionRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   const currentOption = useMemo(
     () => getCurrentBlockOption(blockType, BLOCK_OPTIONS),
@@ -139,9 +143,7 @@ export function FullToolbarPlugin({ className }: FullToolbarPluginProps) {
   const update = useCallback(() => {
     editor.getEditorState().read(() => {
       const nextBlockType = getBlockTypeFromSelection();
-      if (nextBlockType) {
-        setBlockType(nextBlockType);
-      }
+      setBlockType(nextBlockType ?? "paragraph");
       setFormats(readInlineFormats());
     });
   }, [editor]);
@@ -171,6 +173,103 @@ export function FullToolbarPlugin({ className }: FullToolbarPluginProps) {
     [editor]
   );
 
+  const handleBlockTypeOpenChange = useCallback(
+    (open: boolean) => {
+      if (open) {
+        const initialIndex = Math.max(
+          BLOCK_OPTIONS.findIndex((option) => option.value === blockType),
+          0
+        );
+
+        setActiveBlockTypeIndex(initialIndex);
+      }
+
+      setBlockTypeOpen(open);
+    },
+    [blockType]
+  );
+
+  const handleInsertOpenChange = useCallback((open: boolean) => {
+    if (open) {
+      setActiveInsertIndex(0);
+    }
+
+    setInsertOpen(open);
+  }, []);
+
+  const focusBlockTypeOption = useCallback((index: number) => {
+    const optionCount = BLOCK_OPTIONS.length;
+    const nextIndex = (index + optionCount) % optionCount;
+
+    setActiveBlockTypeIndex(nextIndex);
+    blockTypeOptionRefs.current[nextIndex]?.focus();
+  }, []);
+
+  useEffect(() => {
+    if (!blockTypeOpen) {
+      return;
+    }
+
+    const animationFrameId = requestAnimationFrame(() => {
+      blockTypeOptionRefs.current[activeBlockTypeIndex]?.focus();
+    });
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [activeBlockTypeIndex, blockTypeOpen]);
+
+  useEffect(() => {
+    if (!insertOpen) {
+      return;
+    }
+
+    const animationFrameId = requestAnimationFrame(() => {
+      insertOptionRefs.current[activeInsertIndex]?.focus();
+    });
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [activeInsertIndex, insertOpen]);
+
+  const handleBlockTypeListKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      switch (event.key) {
+        case "ArrowDown": {
+          event.preventDefault();
+          focusBlockTypeOption(activeBlockTypeIndex + 1);
+          return;
+        }
+        case "ArrowUp": {
+          event.preventDefault();
+          focusBlockTypeOption(activeBlockTypeIndex - 1);
+          return;
+        }
+        case "Home": {
+          event.preventDefault();
+          focusBlockTypeOption(0);
+          return;
+        }
+        case "End": {
+          event.preventDefault();
+          focusBlockTypeOption(BLOCK_OPTIONS.length - 1);
+          return;
+        }
+        case "Enter":
+        case " ": {
+          event.preventDefault();
+          handleBlockTypeChange(BLOCK_OPTIONS[activeBlockTypeIndex].value);
+          return;
+        }
+        default: {
+          return;
+        }
+      }
+    },
+    [activeBlockTypeIndex, focusBlockTypeOption, handleBlockTypeChange]
+  );
+
   const handleLinkToggle = useCallback(() => {
     if (formats.isLink) {
       editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
@@ -179,6 +278,94 @@ export function FullToolbarPlugin({ className }: FullToolbarPluginProps) {
     editor.dispatchCommand(TOGGLE_LINK_COMMAND, LINK_PLACEHOLDER_URL);
     editor.dispatchCommand(OPEN_FLOATING_LINK_EDITOR_COMMAND, undefined);
   }, [editor, formats.isLink]);
+
+  const insertTable = useCallback(() => {
+    editor.dispatchCommand(INSERT_TABLE_COMMAND, DEFAULT_INSERT_TABLE_PAYLOAD);
+    setInsertOpen(false);
+  }, [editor]);
+
+  const insertDivider = useCallback(() => {
+    editor.dispatchCommand(INSERT_HORIZONTAL_RULE_COMMAND, undefined);
+    setInsertOpen(false);
+  }, [editor]);
+
+  const insertCollapsible = useCallback(() => {
+    editor.dispatchCommand(INSERT_COLLAPSIBLE_COMMAND, undefined);
+    setInsertOpen(false);
+  }, [editor]);
+
+  const insertActions = useMemo(
+    () => [
+      {
+        icon: <TableIcon className="size-4 text-muted-foreground" />,
+        label: "Table",
+        onSelect: insertTable,
+      },
+      {
+        icon: (
+          <span className="flex size-4 items-center justify-center text-muted-foreground">
+            -
+          </span>
+        ),
+        label: "Divider",
+        onSelect: insertDivider,
+      },
+      {
+        icon: <ChevronDownIcon className="size-4 text-muted-foreground" />,
+        label: "Collapsible",
+        onSelect: insertCollapsible,
+      },
+    ],
+    [insertCollapsible, insertDivider, insertTable]
+  );
+
+  const focusInsertOption = useCallback(
+    (index: number) => {
+      const optionCount = insertActions.length;
+      const nextIndex = (index + optionCount) % optionCount;
+
+      setActiveInsertIndex(nextIndex);
+      insertOptionRefs.current[nextIndex]?.focus();
+    },
+    [insertActions.length]
+  );
+
+  const handleInsertListKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      switch (event.key) {
+        case "ArrowDown": {
+          event.preventDefault();
+          focusInsertOption(activeInsertIndex + 1);
+          return;
+        }
+        case "ArrowUp": {
+          event.preventDefault();
+          focusInsertOption(activeInsertIndex - 1);
+          return;
+        }
+        case "Home": {
+          event.preventDefault();
+          focusInsertOption(0);
+          return;
+        }
+        case "End": {
+          event.preventDefault();
+          focusInsertOption(insertActions.length - 1);
+          return;
+        }
+        case "Enter":
+        case " ": {
+          event.preventDefault();
+          insertActions[activeInsertIndex]?.onSelect();
+          return;
+        }
+        default: {
+          return;
+        }
+      }
+    },
+    [activeInsertIndex, focusInsertOption, insertActions]
+  );
 
   const abbr = BLOCK_ABBR[blockType] ?? "P";
   const isParagraph = blockType === "paragraph";
@@ -212,7 +399,7 @@ export function FullToolbarPlugin({ className }: FullToolbarPluginProps) {
       <Separator className="mx-0.5 h-4" orientation="vertical" />
 
       {/* Block type pill */}
-      <Popover onOpenChange={setBlockTypeOpen} open={blockTypeOpen}>
+      <Popover onOpenChange={handleBlockTypeOpenChange} open={blockTypeOpen}>
         <PopoverTrigger
           render={
             <Button
@@ -233,15 +420,32 @@ export function FullToolbarPlugin({ className }: FullToolbarPluginProps) {
           <ChevronDownIcon className="size-3 shrink-0 text-muted-foreground" />
         </PopoverTrigger>
         <PopoverContent align="start" className="w-72 p-1">
-          <div className="space-y-0.5">
-            {BLOCK_OPTIONS.map((option) => {
+          <div
+            className="space-y-0.5"
+            onKeyDown={handleBlockTypeListKeyDown}
+            role="listbox"
+          >
+            {BLOCK_OPTIONS.map((option, optionIndex) => {
               const Icon = BLOCK_ICONS[option.value];
+              const isSelected = option.value === blockType;
+              const isActive = optionIndex === activeBlockTypeIndex;
 
               return (
                 <button
-                  className="flex w-full items-start gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
+                  aria-selected={isSelected}
+                  className={cn(
+                    "flex w-full items-start gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none",
+                    isActive && "bg-accent"
+                  )}
                   key={option.value}
                   onClick={() => handleBlockTypeChange(option.value)}
+                  onFocus={() => setActiveBlockTypeIndex(optionIndex)}
+                  onMouseEnter={() => setActiveBlockTypeIndex(optionIndex)}
+                  ref={(element) => {
+                    blockTypeOptionRefs.current[optionIndex] = element;
+                  }}
+                  role="option"
+                  tabIndex={optionIndex === activeBlockTypeIndex ? 0 : -1}
                   type="button"
                 >
                   <span className="mt-0.5 rounded-sm bg-muted p-1 text-muted-foreground">
@@ -255,7 +459,7 @@ export function FullToolbarPlugin({ className }: FullToolbarPluginProps) {
                       {option.description}
                     </span>
                   </span>
-                  {option.value === blockType && (
+                  {isSelected && (
                     <CheckIcon className="ml-auto size-3.5 shrink-0 self-center text-muted-foreground" />
                   )}
                 </button>
@@ -383,7 +587,7 @@ export function FullToolbarPlugin({ className }: FullToolbarPluginProps) {
       <Separator className="mx-0.5 h-4" orientation="vertical" />
 
       {/* Insert popover */}
-      <Popover onOpenChange={setInsertOpen} open={insertOpen}>
+      <Popover onOpenChange={handleInsertOpenChange} open={insertOpen}>
         <PopoverTrigger
           render={
             <Button
@@ -399,44 +603,37 @@ export function FullToolbarPlugin({ className }: FullToolbarPluginProps) {
           <span>Insert</span>
         </PopoverTrigger>
         <PopoverContent align="start" className="w-44 p-1">
-          <button
-            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
-            onClick={() => {
-              editor.dispatchCommand(
-                INSERT_TABLE_COMMAND,
-                DEFAULT_INSERT_TABLE_PAYLOAD
+          <div
+            className="space-y-0.5"
+            onKeyDown={handleInsertListKeyDown}
+            role="listbox"
+          >
+            {insertActions.map((action, optionIndex) => {
+              const isActive = optionIndex === activeInsertIndex;
+
+              return (
+                <button
+                  className={cn(
+                    "flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none",
+                    isActive && "bg-accent"
+                  )}
+                  key={action.label}
+                  onClick={action.onSelect}
+                  onFocus={() => setActiveInsertIndex(optionIndex)}
+                  onMouseEnter={() => setActiveInsertIndex(optionIndex)}
+                  ref={(element) => {
+                    insertOptionRefs.current[optionIndex] = element;
+                  }}
+                  role="option"
+                  tabIndex={optionIndex === activeInsertIndex ? 0 : -1}
+                  type="button"
+                >
+                  {action.icon}
+                  {action.label}
+                </button>
               );
-              setInsertOpen(false);
-            }}
-            type="button"
-          >
-            <TableIcon className="size-4 text-muted-foreground" />
-            Table
-          </button>
-          <button
-            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
-            onClick={() => {
-              editor.dispatchCommand(INSERT_HORIZONTAL_RULE_COMMAND, undefined);
-              setInsertOpen(false);
-            }}
-            type="button"
-          >
-            <span className="flex size-4 items-center justify-center text-muted-foreground">
-              —
-            </span>
-            Divider
-          </button>
-          <button
-            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
-            onClick={() => {
-              editor.dispatchCommand(INSERT_COLLAPSIBLE_COMMAND, undefined);
-              setInsertOpen(false);
-            }}
-            type="button"
-          >
-            <ChevronDownIcon className="size-4 text-muted-foreground" />
-            Collapsible
-          </button>
+            })}
+          </div>
         </PopoverContent>
       </Popover>
     </div>

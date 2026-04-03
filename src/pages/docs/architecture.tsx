@@ -56,7 +56,7 @@ export function ArchitecturePage() {
           "│       ├── layout/         # LayoutContainer + LayoutItem",
           "│       └── youtube/        # YouTubeNode (decorator)",
           "├── plugins/                # Behavior layer",
-          "│   ├── block-type-toolbar/ # Block type dropdown + undo/redo/alignment",
+          "│   ├── block-type-toolbar/ # Block type dropdown + undo/redo/alignment + keyboard nav",
           "│   ├── collapsible/        # Collapsible block transforms + keyboard nav",
           "│   ├── core/               # Essential plugins (editable sync, state, focus)",
           "│   ├── draggable-block/    # Drag handle for block reordering",
