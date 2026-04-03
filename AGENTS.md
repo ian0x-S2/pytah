@@ -157,6 +157,58 @@ This repository is a Vite + React + TypeScript application centered on a rich ed
 - avoid barrel files
 - avoid deprecated Lexical React helpers when core Lexical or `@lexical/extension` equivalents exist
 
+### Editor UI/UX Conventions
+
+These patterns are established and must be kept consistent across all editor components.
+
+#### className override contract
+
+Every public editor component must accept `className?: string` and merge it via `cn(defaults, className)`. This lets callers override specific utilities without losing defaults.
+
+The `Editor` component additionally exposes `contentClassName?: string`, which is threaded down to the `ContentEditable` surface via the same `cn()` pattern so consumers can override padding, min-height, font size, etc.
+
+```tsx
+// correct
+function EditorFoo({ className }: { className?: string }) {
+  return <div className={cn("default-classes", className)} />;
+}
+```
+
+#### Toolbar layout
+
+- The top toolbar (`EditorTopToolbar`) uses `px-8 py-2` so its content aligns with the editor text column (`px-8`)
+- The toolbar background is `bg-muted/20` — a subtle tint that visually separates it from the content area without hard contrast
+- Toolbar action buttons that represent a single icon use `size="icon-sm"` (28px) — never text labels for format/alignment/indent actions
+- Always provide `aria-label` on icon-only buttons
+- Active state in dropdown lists is indicated by a `<CheckIcon className="ml-auto size-3.5 shrink-0 self-center text-muted-foreground" />` on the right, not by background color alone
+
+#### Floating surfaces (toolbars, popovers, link editors)
+
+Use this set of classes for any floating panel that appears over editor content:
+
+```
+rounded-xl bg-popover shadow-lg ring-1 ring-border
+```
+
+- `rounded-xl` — softer than `rounded-lg`, feels more premium
+- `shadow-lg` — enough elevation to read clearly over content
+- `ring-1 ring-border` — uses the semantic border token, not `ring-foreground/10`
+- Animate in with `fade-in-0 zoom-in-95 animate-in duration-100`
+
+#### Positional anchoring for floating UI
+
+When a floating element is anchored to a DOM rectangle (e.g. table cell, selection):
+
+- **Vertical centering**: always derive `top` from `Math.round((anchorRect.height - elementSize) / 2)` rather than a hard pixel offset — hard offsets break when cells/rows resize
+- **Edge inset**: leave at minimum 4–6px between the floating element and the nearest edge of its anchor; never let the element butt against the cell boundary
+- **Icon-to-button ratio**: keep icon size at roughly 50–55% of the button size (e.g. `size-2.5` icon in a `size-5` button) so there is visible padding inside the hit target
+
+#### Separator usage
+
+Use `<Separator orientation="vertical" className="mx-0.5 h-4" />` to divide logical groups within a single floating row (e.g. between a URL display and its action buttons). Avoid using it as decoration — only when grouping semantically distinct controls.
+
+---
+
 ### Working Memory For This Project
 
 When changing this codebase, keep these facts in mind:
