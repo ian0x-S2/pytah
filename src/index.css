@@ -96,6 +96,14 @@
   html {
     @apply font-sans;
   }
+
+  /* Reset <mark> UA default so the Lexical highlight theme class on the
+     inner <span> is the sole source of color. Without this, the browser's
+     built-in yellow shows through the rounded corners of the inner span. */
+  mark {
+    color: inherit;
+    background-color: transparent;
+  }
 }
 
 /* ==========================================================================
@@ -128,7 +136,7 @@
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
-  --highlight: oklch(0.95 0.07 90);
+  --highlight: oklch(0.97 0.05 90);
   --highlight-foreground: oklch(0.145 0 0);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
