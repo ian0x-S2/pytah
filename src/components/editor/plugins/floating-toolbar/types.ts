@@ -1,4 +1,6 @@
 export interface FloatingToolbarFormatState {
+  /** Current background-color CSS value of the selection, or "" if none/mixed. */
+  bgColor: string;
   isBold: boolean;
   isCode: boolean;
   isHighlight: boolean;
@@ -6,6 +8,8 @@ export interface FloatingToolbarFormatState {
   isLink: boolean;
   isStrikethrough: boolean;
   isUnderline: boolean;
+  /** Current color CSS value of the selection, or "" if none/mixed. */
+  textColor: string;
 }
 
 export interface FloatingToolbarPosition {

@@ -1,5 +1,6 @@
 import { $isCodeNode } from "@lexical/code";
 import { $isAutoLinkNode, $isLinkNode } from "@lexical/link";
+import { $getSelectionStyleValueForProperty } from "@lexical/selection";
 import {
   $getSelection,
   $isLineBreakNode,
@@ -96,6 +97,12 @@ const getFormatState = (
     isLink: linkNode !== null,
     isStrikethrough: selection.hasFormat("strikethrough"),
     isUnderline: selection.hasFormat("underline"),
+    bgColor: $getSelectionStyleValueForProperty(
+      selection,
+      "background-color",
+      ""
+    ),
+    textColor: $getSelectionStyleValueForProperty(selection, "color", ""),
   };
 };
 

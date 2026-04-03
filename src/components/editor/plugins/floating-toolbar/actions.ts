@@ -3,6 +3,7 @@ import {
   $isAutoLinkNode,
   TOGGLE_LINK_COMMAND,
 } from "@lexical/link";
+import { $patchStyleText } from "@lexical/selection";
 import {
   $getSelection,
   $isRangeSelection,
@@ -68,4 +69,30 @@ export const toggleToolbarFormat = (
     | "highlight"
 ) => {
   editor.dispatchCommand(FORMAT_TEXT_COMMAND, format);
+};
+
+/**
+ * Applies an inline `color` CSS property to the current Lexical selection.
+ * Passing an empty string removes the property from all selected text nodes.
+ */
+export const applyTextColor = (editor: LexicalEditor, color: string) => {
+  editor.update(() => {
+    const selection = $getSelection();
+    if (selection !== null) {
+      $patchStyleText(selection, { color: color || null });
+    }
+  });
+};
+
+/**
+ * Applies an inline `background-color` CSS property to the current Lexical
+ * selection.  Passing an empty string removes the property.
+ */
+export const applyBgColor = (editor: LexicalEditor, color: string) => {
+  editor.update(() => {
+    const selection = $getSelection();
+    if (selection !== null) {
+      $patchStyleText(selection, { "background-color": color || null });
+    }
+  });
 };

@@ -3,11 +3,13 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { mergeRegister } from "@lexical/utils";
 import { COMMAND_PRIORITY_LOW, SELECTION_CHANGE_COMMAND } from "lexical";
 import {
+  BaselineIcon,
   BoldIcon,
   CodeIcon,
   HighlighterIcon,
   ItalicIcon,
   LinkIcon,
+  PaintBucketIcon,
   StrikethroughIcon,
   UnderlineIcon,
 } from "lucide-react";
@@ -16,8 +18,9 @@ import { createPortal } from "react-dom";
 import { Separator } from "@/components/ui/separator";
 import { Toggle } from "@/components/ui/toggle";
 import { cn } from "@/lib/utils";
+import { ColorSwatches } from "../../ui/color-swatches";
 import { LINK_PLACEHOLDER_URL } from "../link-behavior/utils";
-import { toggleToolbarFormat } from "./actions";
+import { applyBgColor, applyTextColor, toggleToolbarFormat } from "./actions";
 import { DEFAULT_FORMAT_STATE, EMPTY_TOOLBAR_POSITION } from "./constants";
 import { OPEN_FLOATING_LINK_EDITOR_COMMAND } from "./link-command";
 import { readFloatingToolbarState } from "./selection";
@@ -46,12 +49,23 @@ export function FloatingToolbarPlugin() {
   const [formats, setFormats] =
     useState<FloatingToolbarFormatState>(DEFAULT_FORMAT_STATE);
 
+  /*
+   * When a color picker popover is open we skip visibility/position updates so
+   * the floating toolbar stays alive while the user browses swatches.  A ref
+   * (rather than state) is used to avoid re-registering the update listener on
+   * every open/close cycle.
+   */
+  const isColorPickerOpenRef = useRef(false);
+
   const updateToolbar = useCallback(() => {
     const toolbarState = readFloatingToolbarState();
 
     setFormats(toolbarState.formats);
-    setIsVisible(toolbarState.isVisible);
-    setPosition(toolbarState.position);
+
+    if (!isColorPickerOpenRef.current) {
+      setIsVisible(toolbarState.isVisible);
+      setPosition(toolbarState.position);
+    }
   }, []);
 
   useEffect(() => {
@@ -81,6 +95,10 @@ export function FloatingToolbarPlugin() {
     editor.dispatchCommand(TOGGLE_LINK_COMMAND, LINK_PLACEHOLDER_URL);
     editor.dispatchCommand(OPEN_FLOATING_LINK_EDITOR_COMMAND, undefined);
   }, [editor, formats.isLink]);
+
+  const handleColorPickerOpenChange = useCallback((open: boolean) => {
+    isColorPickerOpenRef.current = open;
+  }, []);
 
   if (!isVisible) {
     return null;
@@ -118,7 +136,29 @@ export function FloatingToolbarPlugin() {
             </Toggle>
           );
         })}
+
         <Separator className="mx-0.5 h-5" orientation="vertical" />
+
+        {/* Text color — uses `color` CSS property */}
+        <ColorSwatches
+          activeColor={formats.textColor}
+          icon={BaselineIcon}
+          label="Text color"
+          onColorChange={(color) => applyTextColor(editor, color)}
+          onOpenChange={handleColorPickerOpenChange}
+        />
+
+        {/* Background color — uses `background-color` CSS property */}
+        <ColorSwatches
+          activeColor={formats.bgColor}
+          icon={PaintBucketIcon}
+          label="Background color"
+          onColorChange={(color) => applyBgColor(editor, color)}
+          onOpenChange={handleColorPickerOpenChange}
+        />
+
+        <Separator className="mx-0.5 h-5" orientation="vertical" />
+
         <Toggle
           onPressedChange={handleLinkToggle}
           pressed={formats.isLink}
