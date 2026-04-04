@@ -1,0 +1,20 @@
+{
+  "requirements": {
+    "react": "19+",
+    "tailwind": "4.x",
+    "shadcn": "4.x",
+    "lexical": "0.42.x"
+  },
+  "editorDependencies": {
+    "baseUi": "@base-ui/react",
+    "cmdk": "cmdk",
+    "cva": "class-variance-authority",
+    "lucide": "lucide-react",
+    "tailwindMerge": "tailwind-merge"
+  },
+  "notes": {
+    "alias": "The standard @/ alias must resolve to ./src.",
+    "animate": "Your global Tailwind v4 stylesheet should import tw-animate-css.",
+    "css": "The registry item injects the editor highlight tokens automatically."
+  }
+}

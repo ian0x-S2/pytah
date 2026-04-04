@@ -1,3 +1,5 @@
+"use client";
+
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { DRAG_DROP_PASTE, eventFiles } from "@lexical/rich-text";
 import {

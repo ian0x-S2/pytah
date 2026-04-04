@@ -1,3 +1,5 @@
+"use client";
+
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import type { LexicalEditor } from "lexical";
 import type { ReactNode } from "react";
@@ -28,16 +30,6 @@ import { readEditorSnapshot } from "./core/utils";
 import { EditorHeader, EditorShell } from "./ui/chrome";
 import { EditorContent } from "./ui/content";
 import { EditorActionBar, EditorOutputGrid } from "./ui/panels";
-
-let hotReloadComposerKey = 0;
-
-if (import.meta.hot) {
-  hotReloadComposerKey = import.meta.hot.data.hotReloadComposerKey ?? 0;
-
-  import.meta.hot.dispose((data) => {
-    data.hotReloadComposerKey = hotReloadComposerKey + 1;
-  });
-}
 
 const getEditorHeader = (
   minimal: boolean,
@@ -247,10 +239,7 @@ export function Editor({
 
   return (
     <div className={cn(!minimal && "space-y-6", className)}>
-      <LexicalComposer
-        initialConfig={initialConfig}
-        key={`pytah-editor-${hotReloadComposerKey}`}
-      >
+      <LexicalComposer initialConfig={initialConfig}>
         {editorBody}
       </LexicalComposer>
 

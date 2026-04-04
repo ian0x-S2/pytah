@@ -1,3 +1,5 @@
+"use client";
+
 import { calculateZoomLevel } from "@lexical/utils";
 import type { LexicalEditor } from "lexical";
 import { useRef } from "react";

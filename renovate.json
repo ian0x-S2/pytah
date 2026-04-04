@@ -1,0 +1,60 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "labels": ["dependencies"],
+  "rangeStrategy": "replace",
+  "packageRules": [
+    {
+      "description": "Keep Lexical ecosystem updates together for editor compatibility review.",
+      "groupName": "lexical editor stack",
+      "matchPackageNames": ["/^@lexical\\//", "lexical"]
+    },
+    {
+      "description": "Review React runtime and compiler-adjacent packages together.",
+      "groupName": "react runtime stack",
+      "matchPackageNames": [
+        "react",
+        "react-dom",
+        "@types/react",
+        "@types/react-dom",
+        "@vitejs/plugin-react",
+        "babel-plugin-react-compiler"
+      ]
+    },
+    {
+      "description": "Review Tailwind and style pipeline updates together.",
+      "groupName": "tailwind styling stack",
+      "matchPackageNames": [
+        "tailwindcss",
+        "@tailwindcss/vite",
+        "tailwind-merge",
+        "tw-animate-css",
+        "class-variance-authority",
+        "clsx"
+      ]
+    },
+    {
+      "description": "Review command palette and primitive updates together.",
+      "groupName": "editor ui primitives",
+      "matchPackageNames": ["@base-ui/react", "cmdk", "lucide-react", "shadcn"]
+    },
+    {
+      "description": "Run smoke coverage on dependencies that can break installability.",
+      "matchPackageNames": [
+        "/^@lexical\\//",
+        "lexical",
+        "react",
+        "react-dom",
+        "tailwindcss",
+        "@tailwindcss/vite",
+        "@base-ui/react",
+        "cmdk",
+        "shadcn"
+      ],
+      "postUpgradeTasks": {
+        "commands": ["npm run registry:build"],
+        "executionMode": "branch"
+      }
+    }
+  ]
+}

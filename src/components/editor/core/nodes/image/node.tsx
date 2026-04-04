@@ -1,3 +1,5 @@
+"use client";
+
 import { addClassNamesToElement } from "@lexical/utils";
 import type {
   DOMConversionMap,

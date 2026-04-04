@@ -1,3 +1,5 @@
+"use client";
+
 import { INSERT_HORIZONTAL_RULE_COMMAND } from "@lexical/extension";
 import { TOGGLE_LINK_COMMAND } from "@lexical/link";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";

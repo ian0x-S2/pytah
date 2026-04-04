@@ -1,3 +1,5 @@
+"use client";
+
 import type { LexicalEditor } from "lexical";
 import { useEffect } from "react";
 import { DEFAULT_EDITOR_MARKDOWN } from "../../core/constants";

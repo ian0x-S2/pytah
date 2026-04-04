@@ -1,0 +1,12 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "items": [
+    {
+      "description": "Copy/paste-ready Lexical editor with built-in chrome and extension points.",
+      "name": "editor",
+      "title": "Pytah Editor",
+      "type": "registry:block"
+    }
+  ],
+  "name": "pytah"
+}

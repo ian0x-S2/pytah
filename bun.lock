@@ -9,6 +9,7 @@
         "@fontsource-variable/geist": "^5.2.8",
         "@lexical/clipboard": "^0.42.0",
         "@lexical/code": "^0.42.0",
+        "@lexical/extension": "^0.42.0",
         "@lexical/headless": "^0.42.0",
         "@lexical/history": "^0.42.0",
         "@lexical/html": "^0.42.0",

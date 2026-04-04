@@ -7,6 +7,7 @@ import {
   SubHeading,
   sliceSource,
 } from "@/components/docs/primitives";
+import compatibility from "@/components/editor/core/compatibility.json";
 import editorTypesSource from "@/components/editor/core/types.ts?raw";
 import indexCssSource from "@/index.css?raw";
 import demoPageSource from "@/pages/demo.tsx?raw";
@@ -41,22 +42,66 @@ export function GettingStartedPage() {
     <>
       <PageHeader
         badge="Core Doc"
-        description="Add the Pytah editor to any React + shadcn/ui project via copy-paste. No package registry required."
+        description="Add the Pytah editor to any React + shadcn/ui project via shadcn CLI or manual copy-paste."
         title="Getting Started"
       />
 
       <SectionHeading id="prerequisites">Prerequisites</SectionHeading>
       <Paragraph>
-        Your project needs <code>React 19+</code>, <code>Tailwind CSS v4</code>,
-        and <code>shadcn/ui</code> (base-nova style) already configured. The
-        editor is built on <code>@base-ui/react</code> primitives, not Radix UI.
+        Your project needs <code>React {compatibility.requirements.react}</code>
+        , <code>Tailwind CSS {compatibility.requirements.tailwind}</code>, and{" "}
+        <code>shadcn/ui {compatibility.requirements.shadcn}</code> already
+        configured. The editor is built on <code>@base-ui/react</code>
+        primitives, not Radix UI, and is currently validated against Lexical{" "}
+        <code>{compatibility.requirements.lexical}</code>.
       </Paragraph>
 
-      <SectionHeading id="install-dependencies">
-        1. Install Dependencies
+      <SectionHeading id="install-cli">
+        1. Install with shadcn CLI
       </SectionHeading>
       <Paragraph>
-        Install the Lexical editor framework and its companion packages:
+        The fastest path is the registry item served by this app. Use the
+        published registry URL in your own project, or the local URL while this
+        docs app is running on your machine:
+      </Paragraph>
+      <CodeBlock language="bash">
+        {`# local docs/dev server
+bunx shadcn@latest add http://localhost:5173/r/editor.json
+
+# same path on your deployed host
+bunx shadcn@latest add https://your-domain.example/r/editor.json`}
+      </CodeBlock>
+      <Paragraph>
+        The path is always <code>/r/editor.json</code>. Only the origin changes
+        between local and deployed environments.
+      </Paragraph>
+      <Callout title="What gets installed" variant="tip">
+        The registry item installs the full editor tree, the required
+        <code>ui</code> wrappers, <code>lib/utils.ts</code>, the Lexical/Base UI
+        dependencies, and the editor highlight tokens.
+      </Callout>
+      <Paragraph>
+        Your app still needs the normal <code>shadcn/ui</code> foundations in
+        place: React {compatibility.requirements.react}, Tailwind CSS{" "}
+        {compatibility.requirements.tailwind}, a valid{" "}
+        <code>components.json</code>, and the standard <code>@/</code> alias
+        pointing at <code>src</code>.
+      </Paragraph>
+      <Callout title="Compatibility" variant="tip">
+        <code>React {compatibility.requirements.react}</code>,{" "}
+        <code>Tailwind CSS {compatibility.requirements.tailwind}</code>,{" "}
+        <code>shadcn/ui {compatibility.requirements.shadcn}</code>, and{" "}
+        <code>Lexical {compatibility.requirements.lexical}</code> are the
+        versions this registry item is currently validated against.
+      </Callout>
+
+      <SectionHeading id="copy-files">
+        2. Manual Copy-Paste Fallback
+      </SectionHeading>
+      <Paragraph>
+        If you do not want to consume the registry item, install the editor
+        manually. First install the Lexical editor framework and its companion
+        packages:
       </Paragraph>
       <CodeBlock language="bash">
         {`bun add lexical @lexical/react @lexical/rich-text @lexical/list \\
@@ -64,18 +109,14 @@ export function GettingStartedPage() {
   @lexical/markdown @lexical/utils @lexical/selection \\
   @lexical/clipboard @lexical/history @lexical/extension`}
       </CodeBlock>
-      <Paragraph>
-        Install the UI dependencies (skip any you already have):
-      </Paragraph>
+      <Paragraph>Then install the UI dependencies you still need:</Paragraph>
       <CodeBlock language="bash">
         {`bun add @base-ui/react class-variance-authority clsx \\
   tailwind-merge cmdk lucide-react`}
       </CodeBlock>
-
-      <SectionHeading id="copy-files">2. Copy Files</SectionHeading>
       <Paragraph>
-        Copy these directories and files into your project, preserving their
-        relative paths:
+        Then copy these directories and files into your project, preserving
+        their relative paths:
       </Paragraph>
       <CodeBlock language="text">
         {`src/
@@ -97,15 +138,20 @@ export function GettingStartedPage() {
 
       <Callout title="Path alias required" variant="warning">
         The editor imports use the <code>@/</code> path alias (mapped to{" "}
-        <code>./src</code>). Make sure your <code>tsconfig.json</code> and
-        bundler are configured with this alias, or rewrite the imports.
+        <code>./src</code>). A normal <code>shadcn init</code> setup already
+        gives you this. If your project differs, update{" "}
+        <code>tsconfig.json</code>
+        and your bundler config, or rewrite the imports.
       </Callout>
+      <Paragraph>
+        {compatibility.notes.animate} {compatibility.notes.css}
+      </Paragraph>
 
       <SectionHeading id="add-tokens">3. Add CSS Tokens</SectionHeading>
       <Paragraph>
-        The editor uses two custom design tokens not in the default ShadCN
-        palette. Add these to your CSS <code>:root</code> and <code>.dark</code>{" "}
-        blocks:
+        The CLI path adds these automatically. For manual installs, the editor
+        uses two custom design tokens not in the default ShadCN palette. Add
+        these to your CSS <code>:root</code> and <code>.dark</code> blocks:
       </Paragraph>
       <CodeBlock language="css">
         {`:root {
@@ -127,8 +173,10 @@ ${tailwindThemeBridgeSource}
 
       <SectionHeading id="render">4. Render the Editor</SectionHeading>
       <Paragraph>
-        The demo page is the smallest real integration in this repository. It
-        toggles edit mode and mounts the editor in minimal mode:
+        After installation, import <code>Editor</code> from
+        <code>@/components/editor/editor</code>. The demo page is the smallest
+        real integration in this repository. It toggles edit mode and mounts the
+        editor in minimal mode:
       </Paragraph>
       <CodeBlock language="tsx">{editorUsageExample}</CodeBlock>
 

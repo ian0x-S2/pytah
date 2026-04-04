@@ -5,9 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "npm run registry:build && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "registry:build": "node scripts/generate-registry.mjs && bun x ultracite fix public/r/editor.json public/r/registry.json",
+    "registry:smoke": "npm run registry:build && node scripts/smoke-registry.mjs",
     "check": "ultracite check",
     "fix": "ultracite fix",
     "prepare": "lefthook install"
@@ -20,6 +22,7 @@
     "@lexical/headless": "^0.42.0",
     "@lexical/history": "^0.42.0",
     "@lexical/html": "^0.42.0",
+    "@lexical/extension": "^0.42.0",
     "@lexical/link": "^0.42.0",
     "@lexical/list": "^0.42.0",
     "@lexical/markdown": "^0.42.0",
