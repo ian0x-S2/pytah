@@ -12,9 +12,16 @@ export function FloatingToolbarGuidePage() {
   return (
     <>
       <PageHeader
-        description="Walkthrough of the selection-anchored floating toolbar: types, constants, selection helpers, format/color actions, and the plugin component."
+        badge="Feature Guide"
+        description="Feature guide for the selection-anchored floating toolbar: state, positioning, formatting actions, and plugin wiring."
         title="Floating Toolbar"
       />
+
+      <Callout title="Feature guide" variant="info">
+        This page describes a built-in product capability. Use the
+        <code>features</code> prop on <code>Editor</code> if you only need to
+        enable or disable it from a consumer integration.
+      </Callout>
 
       <SectionHeading id="files">Files</SectionHeading>
       <FileTree

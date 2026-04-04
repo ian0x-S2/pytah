@@ -1,4 +1,5 @@
 import {
+  BlocksIcon,
   BookOpenIcon,
   BoxIcon,
   CodeIcon,
@@ -30,46 +31,51 @@ const NAV_ITEMS: NavItem[] = [
     icon: BookOpenIcon,
     label: "Getting Started",
   },
+  { href: "/docs/composition", icon: BlocksIcon, label: "Composition" },
+  { href: "/docs/api", icon: CodeIcon, label: "API" },
   { href: "/docs/architecture", icon: LayoutIcon, label: "Architecture" },
   { href: "/docs/components", icon: BoxIcon, label: "Components" },
   { href: "/docs/plugins", icon: PlugIcon, label: "Plugins" },
   { href: "/docs/theming", icon: PaletteIcon, label: "Theming" },
 ];
 
-const GUIDE_ITEMS: NavItem[] = [
-  { href: "/docs/guides/image", icon: ImageIcon, label: "Image" },
-  {
-    href: "/docs/guides/slash-command",
-    icon: SlashIcon,
-    label: "Slash Command",
-  },
+const FEATURE_GUIDE_ITEMS: NavItem[] = [
   {
     href: "/docs/guides/floating-toolbar",
     icon: LayoutIcon,
     label: "Floating Toolbar",
   },
   {
-    href: "/docs/guides/collapsible",
-    icon: ToggleLeftIcon,
-    label: "Collapsible",
+    href: "/docs/guides/link-behavior",
+    icon: LinkIcon,
+    label: "Link Behavior",
   },
   {
     href: "/docs/guides/table-behavior",
     icon: TableIcon,
     label: "Table Behavior",
   },
-  { href: "/docs/guides/layout", icon: BoxIcon, label: "Layout" },
-  { href: "/docs/guides/youtube", icon: VideoIcon, label: "YouTube Embed" },
   {
     href: "/docs/guides/draggable-block",
     icon: GripVerticalIcon,
     label: "Draggable Block",
   },
+];
+
+const EXTENSION_GUIDE_ITEMS: NavItem[] = [
+  { href: "/docs/guides/image", icon: ImageIcon, label: "Image Block" },
   {
-    href: "/docs/guides/link-behavior",
-    icon: LinkIcon,
-    label: "Link Behavior",
+    href: "/docs/guides/slash-command",
+    icon: SlashIcon,
+    label: "Slash Command",
   },
+  {
+    href: "/docs/guides/collapsible",
+    icon: ToggleLeftIcon,
+    label: "Collapsible Block",
+  },
+  { href: "/docs/guides/layout", icon: BoxIcon, label: "Layout Block" },
+  { href: "/docs/guides/youtube", icon: VideoIcon, label: "YouTube Embed" },
 ];
 
 function NavLink({ href, icon: Icon, label }: NavItem) {
@@ -110,10 +116,21 @@ function Sidebar() {
 
         <div className="mt-6">
           <p className="mb-1 px-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">
-            Guides
+            Feature Guides
           </p>
           <div className="space-y-1">
-            {GUIDE_ITEMS.map((item) => (
+            {FEATURE_GUIDE_ITEMS.map((item) => (
+              <NavLink key={item.href} {...item} />
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-6">
+          <p className="mb-1 px-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">
+            Extension Guides
+          </p>
+          <div className="space-y-1">
+            {EXTENSION_GUIDE_ITEMS.map((item) => (
               <NavLink key={item.href} {...item} />
             ))}
           </div>

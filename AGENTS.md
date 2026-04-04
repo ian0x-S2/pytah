@@ -131,6 +131,8 @@ Most formatting and common issues are automatically fixed by Biome. Run `bun x u
 
 This repository is a Vite + React + TypeScript application centered on a rich editor experience built with Lexical plus shadcn/Base UI primitives. Inspiration from Notion is acceptable, but the goal is editor quality and copy/paste ergonomics rather than cloning Notion.
 
+The long-term DX goal is a lego-like editor: contributors should prefer exposing small, composable editor building blocks and explicit extension points over hardcoding more behavior into a single monolithic editor surface.
+
 ### Project Architecture
 
 - `src/app.tsx`
@@ -146,6 +148,10 @@ This repository is a Vite + React + TypeScript application centered on a rich ed
 ### Editor Architecture Rules
 
 - `src/components/editor/editor.tsx` is the composition root for the editor experience
+- preserve a clear split between the ready-made `Editor` experience and the lower-level composition surfaces it wires together
+- prefer additive extension points such as feature flags, slots, extra plugin mounts, and extra node registration before introducing new one-off booleans or forks of the editor tree
+- when adding a new editor capability, ask first whether it should be a default product behavior or an optional lego piece that consumers can enable, replace, or omit
+- keep the default editor opinionated, but make that opinion easy to override through public props instead of requiring edits inside `ui/content.tsx` or `core/config.ts`
 - keep editor foundations in `src/components/editor/core/`, React composition in `src/components/editor/ui/`, and Lexical behaviors in `src/components/editor/plugins/`
 - complex plugins should live in `src/components/editor/plugins/<feature>/`
 - keep `src/components/editor/core/nodes/` feature-first: prefer `core/nodes/<feature>/...` over a flat list of unrelated node files
@@ -214,8 +220,10 @@ Use `<Separator orientation="vertical" className="mx-0.5 h-4" />` to divide logi
 When changing this codebase, keep these facts in mind:
 
 - the editor must stay copy/paste ready for HTML and Markdown workflows
+- editor DX is a first-class product concern: changes should move the codebase toward reusable, lego-like composition rather than tighter coupling
 - slash command behavior is a core UX surface and must keep highlight, initial focus and scroll synchronization correct
 - editable and read-only modes must both remain functional
+- default composition should remain easy to use, but advanced consumers should be able to opt out of chrome, swap surfaces, and add plugins or nodes without patching internals
 - `src/pages/docs/` should treat the application source as the canonical reference for code examples and API shapes
 - when docs need to show real code, prefer importing source with `?raw` or reading from shared exported metadata instead of duplicating snippets manually
 - keep prose and editorial explanation in docs manual, but avoid copying implementation code, prop shapes, command registries, or token definitions when they already exist elsewhere in `src/`

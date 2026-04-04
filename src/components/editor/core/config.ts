@@ -18,7 +18,7 @@ function onError(error: Error) {
   console.error("[Editor]", error);
 }
 
-const EDITOR_NODES = [
+export const DEFAULT_EDITOR_NODES = [
   HeadingNode,
   QuoteNode,
   ListNode,
@@ -40,11 +40,21 @@ const EDITOR_NODES = [
   TableCellNode,
 ];
 
-export const createEditorConfig = (editable: boolean): InitialConfigType => {
+interface CreateEditorConfigOptions {
+  editable: boolean;
+  namespace?: string;
+  nodes?: NonNullable<InitialConfigType["nodes"]>;
+}
+
+export const createEditorConfig = ({
+  editable,
+  namespace = "PytahEditor",
+  nodes,
+}: CreateEditorConfigOptions): InitialConfigType => {
   return {
     editable,
-    namespace: "PytahEditor",
-    nodes: EDITOR_NODES,
+    namespace,
+    nodes: nodes ? [...DEFAULT_EDITOR_NODES, ...nodes] : DEFAULT_EDITOR_NODES,
     onError,
     theme: editorTheme,
   };

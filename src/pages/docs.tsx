@@ -1,7 +1,9 @@
 import { Redirect, useRoute } from "wouter";
 import { DocsLayout } from "@/components/docs/layout";
+import { ApiPage } from "./docs/api";
 import { ArchitecturePage } from "./docs/architecture";
 import { ComponentsPage } from "./docs/components";
+import { CompositionPage } from "./docs/composition";
 import { GettingStartedPage } from "./docs/getting-started";
 import { CollapsibleGuidePage } from "./docs/guides/collapsible";
 import { DraggableBlockGuidePage } from "./docs/guides/draggable-block";
@@ -16,7 +18,9 @@ import { PluginsPage } from "./docs/plugins";
 import { ThemingPage } from "./docs/theming";
 
 const PAGES: Record<string, React.ComponentType> = {
+  api: ApiPage,
   architecture: ArchitecturePage,
+  composition: CompositionPage,
   components: ComponentsPage,
   "getting-started": GettingStartedPage,
   "guides/collapsible": CollapsibleGuidePage,

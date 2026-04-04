@@ -15,9 +15,16 @@ export function LinkBehaviorGuidePage() {
   return (
     <>
       <PageHeader
-        description="Full walkthrough of link auto-detection (AutoLinkPlugin), URL validation/sanitization utils, LinkBehaviorPlugin composition, and FloatingLinkEditorPlugin — the inline editor that appears when a link is selected."
+        badge="Feature Guide"
+        description="Feature guide for built-in link handling: auto-linking, URL validation, sanitization, and the floating link editor."
         title="Link Behavior"
       />
+
+      <Callout title="Feature guide" variant="info">
+        This page explains built-in link UX. Consumers who only need to change
+        whether the link editor appears should start with the editor
+        <code>features</code> API.
+      </Callout>
 
       <SectionHeading id="files">Files</SectionHeading>
       <FileTree

@@ -12,9 +12,15 @@ export function YouTubeGuidePage() {
   return (
     <>
       <PageHeader
-        description="Full walkthrough of YouTubeNode (DecoratorBlockNode), INSERT_YOUTUBE_COMMAND, and YouTubePlugin. Embeds privacy-respecting YouTube iframes that serialize to HTML and JSON."
+        badge="Extension Guide"
+        description="Extension guide for the YouTube embed block: DecoratorBlockNode implementation, insert command, and plugin wiring."
         title="YouTube Embed"
       />
+
+      <Callout title="Extension guide" variant="info">
+        This page is useful when you want to add a custom embed-style block with
+        decorator rendering and HTML serialization support.
+      </Callout>
 
       <SectionHeading id="files">Files</SectionHeading>
       <FileTree

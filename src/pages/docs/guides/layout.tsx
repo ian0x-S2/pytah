@@ -15,9 +15,16 @@ export function LayoutGuidePage() {
   return (
     <>
       <PageHeader
-        description="Walkthrough of the multi-column layout block: two Lexical nodes, a command, column presets, insertion utilities, and the plugin."
-        title="Layout (Columns)"
+        badge="Extension Guide"
+        description="Extension guide for the multi-column layout block: nodes, command, presets, insertion utilities, and plugin wiring."
+        title="Layout Block"
       />
+
+      <Callout title="Extension guide" variant="info">
+        This page documents a block-level extension pattern: custom nodes plus a
+        feature plugin. It is a good reference when adding new structural block
+        types to the editor.
+      </Callout>
 
       <SectionHeading id="files">Files</SectionHeading>
       <FileTree

@@ -16,9 +16,16 @@ export function SlashCommandGuidePage() {
   return (
     <>
       <PageHeader
-        description="Full walkthrough of the slash-command menu: types, command registry, filter utils, executors, and the plugin that wires them all together."
+        badge="Extension Guide"
+        description="Extension guide for the slash-command system: registry, filtering, executors, and how to add new command-driven insertion flows."
         title="Slash Command"
       />
+
+      <Callout title="Extension guide" variant="info">
+        This guide is primarily about extending a command-driven insertion
+        surface. For the higher-level composition API, start with the
+        <code>Composition</code> and <code>API</code> pages.
+      </Callout>
 
       <SectionHeading id="files">Files</SectionHeading>
       <FileTree

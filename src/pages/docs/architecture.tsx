@@ -11,6 +11,7 @@ export function ArchitecturePage() {
   return (
     <>
       <PageHeader
+        badge="Core Doc"
         description="How the editor is organized and the design principles behind it."
         title="Architecture"
       />
@@ -35,6 +36,11 @@ export function ArchitecturePage() {
         <strong>3. ShadCN-first styling</strong> -- All visual decisions go
         through ShadCN design tokens. No hardcoded colors.
       </Paragraph>
+      <Paragraph>
+        <strong>4. Lego-like composition</strong> -- The default editor remains
+        opinionated, but consumers can opt out of chrome, replace surfaces, add
+        plugin mounts, and register extra nodes through the public API.
+      </Paragraph>
 
       <SectionHeading id="directory-structure">
         Directory Structure
@@ -45,6 +51,7 @@ export function ArchitecturePage() {
           "├── editor.tsx              # Composition root",
           "├── core/                   # Foundation layer",
           "│   ├── actions.ts          # Editor commands (copy, reset, load)",
+          "│   ├── composition.ts      # Feature/chrome defaults + slot helpers",
           "│   ├── config.ts           # Lexical initial config + node registration",
           "│   ├── constants.ts        # Shared constants",
           "│   ├── theme.ts            # Lexical EditorThemeClasses (Tailwind)",
@@ -87,6 +94,32 @@ export function ArchitecturePage() {
         the <code>EditorStatePlugin</code> serializes the new state →{" "}
         <code>editor.tsx</code> receives the snapshot via callback → the output
         panels re-render.
+      </Paragraph>
+
+      <SectionHeading id="public-composition">
+        Public Composition
+      </SectionHeading>
+      <Paragraph>
+        The top-level <code>Editor</code> now exposes a two-layer model:
+        opinionated defaults for product usage, plus public extension points for
+        custom composition.
+      </Paragraph>
+      <Paragraph>
+        <code>features</code> toggles built-in behavior plugins such as slash
+        command, floating toolbar, focus-on-mount, and markdown shortcuts.
+        <code>chrome</code> controls the default shell, header, action bar,
+        footer, and output panels.
+      </Paragraph>
+      <Paragraph>
+        <code>slots</code> replaces visual surfaces without forking the editor
+        internals, while <code>pluginSlots</code> mounts additional React
+        plugins around the built-in plugin stack. <code>extraNodes</code> adds
+        custom Lexical nodes without editing <code>core/config.ts</code>.
+      </Paragraph>
+      <Paragraph>
+        See the dedicated <code>Composition</code> and <code>API</code> pages
+        for the consumer-facing contracts. This page focuses on how those public
+        levers map onto the internal editor structure.
       </Paragraph>
 
       <SectionHeading id="styling">Styling Strategy</SectionHeading>

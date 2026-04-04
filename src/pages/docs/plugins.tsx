@@ -15,6 +15,7 @@ export function PluginsPage() {
   return (
     <>
       <PageHeader
+        badge="Core Doc"
         description="The editor's feature set is built as composable Lexical plugins."
         title="Plugins"
       />
@@ -40,6 +41,20 @@ export function PluginsPage() {
       <CodeBlock language="src/components/editor/ui/content.tsx">
         {editorContentSource}
       </CodeBlock>
+
+      <Callout title="Public extension points" variant="info">
+        Consumers should prefer the public <code>pluginSlots</code>,{" "}
+        <code>features</code>, and <code>extraNodes</code> props on{" "}
+        <code>Editor</code>
+        before editing <code>ui/content.tsx</code>. Treat this file as the
+        default composition, not the only supported composition.
+      </Callout>
+
+      <Paragraph>
+        The <code>Composition</code> page explains where to mount plugins from a
+        consumer perspective. This page focuses on the built-in plugin stack,
+        registration order, and how to author new plugin pieces.
+      </Paragraph>
 
       <SectionHeading id="visual-plugins">Visual Plugins</SectionHeading>
       <Table headers={["Plugin", "Description", "UI Components Used"]}>
@@ -242,29 +257,33 @@ export function MyPlugin() {
         <code>editor.dispatchCommand(MY_COMMAND, payload)</code>.
       </Callout>
 
-      <SubHeading>Step 2 — Register the plugin in content.tsx</SubHeading>
+      <SubHeading>Step 2 — Mount the plugin via Editor props</SubHeading>
       <Paragraph>
-        Open <code>src/components/editor/ui/content.tsx</code> and add your
-        plugin. Import it alongside the other plugins and drop the component
-        inside <code>EditorContent</code>.
+        For most custom behavior, you do not need to edit
+        <code>src/components/editor/ui/content.tsx</code>. Mount your plugin
+        through <code>pluginSlots</code> so it composes with the default editor
+        stack.
       </Paragraph>
       <CodeBlock language="tsx">
-        {`// 1. Add the import near the other plugin imports
-import { MyPlugin } from "../plugins/my-feature/plugin";
+        {`import { Editor } from "@/components/editor/editor";
+import { MyPlugin } from "@/components/editor/plugins/my-feature/plugin";
 
-// 2. Add the component inside EditorContent, next to the other plugins
-// Conditionally render inside the editable block if the plugin
-// is only relevant in edit mode:
-{editable ? (
-  <>
-    {/* ...existing editable-only plugins */}
-    <MyPlugin />
-  </>
-) : null}
-
-// Or unconditionally if it should run in read-only mode too:
-<MyPlugin />`}
+export function MyEditor() {
+  return (
+    <Editor
+      pluginSlots={{
+        afterEditable: <MyPlugin />,
+      }}
+    />
+  );
+}`}
       </CodeBlock>
+
+      <Paragraph>
+        Use <code>beforeDefault</code> and <code>afterDefault</code> for plugins
+        that should also run in read-only mode. Use <code>beforeEditable</code>
+        and <code>afterEditable</code> for edit-only behavior.
+      </Paragraph>
 
       <SubHeading>Step 3 — Add a custom node (optional)</SubHeading>
       <Paragraph>
@@ -316,22 +335,21 @@ export function $isMyFeatureNode(
       </CodeBlock>
 
       <SubHeading>
-        Step 4 — Register the node in config.ts (optional)
+        Step 4 — Register the node via Editor props (optional)
       </SubHeading>
       <Paragraph>
         Custom nodes must be declared in the editor config before Lexical can
-        serialize or deserialize them. Open{" "}
-        <code>src/components/editor/core/config.ts</code> and add your node to{" "}
-        the <code>EDITOR_NODES</code> array.
+        serialize or deserialize them. For most consumers, use the public
+        <code>extraNodes</code> prop instead of editing{" "}
+        <code>src/components/editor/core/config.ts</code>.
       </Paragraph>
       <CodeBlock language="ts">
-        {`// src/components/editor/core/config.ts
-import { MyFeatureNode } from "./nodes/my-feature/node"; // ← add import
+        {`import { Editor } from "@/components/editor/editor";
+import { MyFeatureNode } from "@/components/editor/core/nodes/my-feature/node";
 
-const EDITOR_NODES = [
-  // ...existing nodes
-  MyFeatureNode, // ← add here
-];`}
+export function MyEditor() {
+  return <Editor extraNodes={[MyFeatureNode]} />;
+}`}
       </CodeBlock>
 
       <Callout variant="tip">

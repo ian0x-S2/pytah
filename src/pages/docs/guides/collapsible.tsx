@@ -12,9 +12,15 @@ export function CollapsibleGuidePage() {
   return (
     <>
       <PageHeader
-        description="Walkthrough of the collapsible (toggle) block: three Lexical nodes, commands, insertion utilities, and the plugin that manages keyboard navigation and node transforms."
-        title="Collapsible"
+        badge="Extension Guide"
+        description="Extension guide for the collapsible block: nodes, commands, insertion helpers, and plugin logic for transforms and keyboard handling."
+        title="Collapsible Block"
       />
+
+      <Callout title="Extension guide" variant="info">
+        This guide is a reference for multi-node block features that own both
+        document structure and behavior.
+      </Callout>
 
       <SectionHeading id="files">Files</SectionHeading>
       <FileTree

@@ -14,6 +14,7 @@ export function ThemingPage() {
   return (
     <>
       <PageHeader
+        badge="Core Doc"
         description="How the design token system works and how to swap or customize themes with zero refactoring."
         title="Theming"
       />

@@ -11,9 +11,16 @@ export function DraggableBlockGuidePage() {
   return (
     <>
       <PageHeader
-        description="Full walkthrough of DraggableBlockPlugin — the grip handle that lets users drag any top-level block to a new position in the editor."
+        badge="Feature Guide"
+        description="Feature guide for the draggable block handle that reorders top-level blocks inside the editor."
         title="Draggable Block"
       />
+
+      <Callout title="Feature guide" variant="info">
+        This is a built-in editor capability. If you only need to disable it in
+        an integration, prefer the editor <code>features</code> prop rather than
+        editing plugin internals.
+      </Callout>
 
       <SectionHeading id="files">Files</SectionHeading>
       <FileTree

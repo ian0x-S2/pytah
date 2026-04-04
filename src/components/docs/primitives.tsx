@@ -28,11 +28,13 @@ export function sliceSource(
 }
 
 export function PageHeader({
+  badge,
   children,
   className,
   description,
   title,
 }: {
+  badge?: React.ReactNode;
   children?: React.ReactNode;
   className?: string;
   description: string;
@@ -40,6 +42,11 @@ export function PageHeader({
 }) {
   return (
     <div className={cn("mb-10 space-y-2", className)}>
+      {badge ? (
+        <div className="inline-flex rounded-full border border-border bg-muted/50 px-2.5 py-1 font-medium text-[11px] text-muted-foreground uppercase tracking-wide">
+          {badge}
+        </div>
+      ) : null}
       <h1 className="font-bold text-3xl text-foreground tracking-tight">
         {title}
       </h1>

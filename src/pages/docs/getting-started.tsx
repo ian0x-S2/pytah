@@ -40,6 +40,7 @@ export function GettingStartedPage() {
   return (
     <>
       <PageHeader
+        badge="Core Doc"
         description="Add the Pytah editor to any React + shadcn/ui project via copy-paste. No package registry required."
         title="Getting Started"
       />
@@ -131,16 +132,66 @@ ${tailwindThemeBridgeSource}
       </Paragraph>
       <CodeBlock language="tsx">{editorUsageExample}</CodeBlock>
 
+      <SubHeading id="composition">Composition First</SubHeading>
+      <Paragraph>
+        The default <code>Editor</code> is intentionally ready-made, but it now
+        also exposes lego-like extension points so consumers can disable chrome,
+        replace surfaces, add plugins, and register custom Lexical nodes without
+        editing the internal editor files.
+      </Paragraph>
+      <CodeBlock language="tsx">
+        {`import { Editor } from "@/components/editor/editor";
+import { MyAnalyticsPlugin } from "@/components/editor/plugins/my-analytics/plugin";
+import { MyCalloutNode } from "@/components/editor/core/nodes/my-callout/node";
+
+export function CustomEditorExample() {
+  return (
+    <Editor
+      chrome={{ header: false, outputs: false }}
+      extraNodes={[MyCalloutNode]}
+      features={{ floatingToolbar: false, slashCommand: true }}
+      pluginSlots={{
+        afterEditable: <MyAnalyticsPlugin />,
+      }}
+      slots={{
+        actionBar: ({ onReset }) => (
+          <button onClick={onReset} type="button">
+            Reset document
+          </button>
+        ),
+      }}
+      toolbar="full"
+    />
+  );
+}`}
+      </CodeBlock>
+
       <SubHeading id="props">Editor Props</SubHeading>
       <Paragraph>
         The <code>Editor</code> component accepts the following props:
       </Paragraph>
       <CodeBlock language="typescript">{editorPropsSource}</CodeBlock>
 
+      <Paragraph>The most important composition hooks are:</Paragraph>
+      <CodeBlock language="tsx">
+        {`features    // enable/disable built-in behavior plugins
+chrome      // show/hide default shell/header/footer/action bar/output panels
+slots       // replace default visual surfaces
+pluginSlots // mount extra plugins around the built-in plugin stack
+extraNodes  // register additional Lexical nodes
+namespace   // customize the Lexical namespace when embedding multiple editors`}
+      </CodeBlock>
+
+      <Paragraph>
+        For a deeper breakdown of those contracts, continue with the
+        <code>Composition</code> and <code>API</code> pages.
+      </Paragraph>
+
       <Callout title="That's it" variant="tip">
         The editor is self-contained. It manages its own Lexical composer,
-        plugins, and toolbar. No providers or context wrappers are needed beyond
-        what React and your CSS already provide.
+        plugins, and toolbar by default, while still exposing public extension
+        points when you need a more custom composition. No providers or context
+        wrappers are needed beyond what React and your CSS already provide.
       </Callout>
     </>
   );

@@ -12,6 +12,7 @@ export function ComponentsPage() {
   return (
     <>
       <PageHeader
+        badge="Core Doc"
         description="ShadCN/Base UI primitives used by the editor and how they map to editor features."
         title="Components"
       />

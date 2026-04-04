@@ -12,9 +12,16 @@ export function ImageGuidePage() {
   return (
     <>
       <PageHeader
-        description="Full walkthrough of ImageNode, ImagePlugin (insert / paste / drop), ImageComponent (click / select / delete / alignment), and ImageResizer (4-corner pointer drag)."
-        title="Image"
+        badge="Extension Guide"
+        description="Extension guide for the image block: ImageNode, insertion flows, rendering, alignment, selection, and resize behavior."
+        title="Image Block"
       />
+
+      <Callout title="Extension guide" variant="info">
+        This page focuses on how the image feature is implemented as a reusable
+        editor block. Use it when building or adapting custom node-backed editor
+        features.
+      </Callout>
 
       <SectionHeading id="files">Files</SectionHeading>
       <FileTree

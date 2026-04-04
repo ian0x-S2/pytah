@@ -12,9 +12,16 @@ export function TableBehaviorGuidePage() {
   return (
     <>
       <PageHeader
-        description="Walkthrough of the table plugin: the base Lexical TablePlugin wrapper, the floating action-menu button anchored to the active cell, and the table-mutation helpers."
+        badge="Feature Guide"
+        description="Feature guide for built-in table behavior: Lexical table integration, floating action menu, and table mutation helpers."
         title="Table Behavior"
       />
+
+      <Callout title="Feature guide" variant="info">
+        This page describes the built-in table editing UX. Use it as a product
+        feature reference; use the <code>Composition</code> page for top-level
+        editor configuration decisions.
+      </Callout>
 
       <SectionHeading id="files">Files</SectionHeading>
       <FileTree
