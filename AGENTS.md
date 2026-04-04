@@ -8,6 +8,14 @@ This project uses **Ultracite**, a zero-config preset that enforces strict code 
 - **Check for issues**: `bun x ultracite check`
 - **Diagnose setup**: `bun x ultracite doctor`
 
+## Package Manager
+
+- Always use `bun` for this repository.
+- Use `bun install` for dependencies.
+- Use `bun run <script>` for package scripts.
+- Use `bun x <cli>` for one-off CLIs.
+- Do not default to `npm`, `npx`, `pnpm`, or `yarn` unless the user explicitly asks for them or a tool only works with them.
+
 Biome (the underlying engine) provides robust linting and formatting. Most issues are automatically fixable.
 
 ---

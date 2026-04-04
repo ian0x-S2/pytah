@@ -10,6 +10,8 @@
     "preview": "vite preview",
     "registry:build": "node scripts/generate-registry.mjs && bun x ultracite fix public/r/editor.json public/r/registry.json",
     "registry:smoke": "npm run registry:build && node scripts/smoke-registry.mjs",
+    "deps:check": "bun outdated",
+    "deps:validate": "npm run check && npm run build && npm run registry:smoke",
     "check": "ultracite check",
     "fix": "ultracite fix",
     "prepare": "lefthook install"

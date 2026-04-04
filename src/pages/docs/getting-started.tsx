@@ -146,6 +146,12 @@ bunx shadcn@latest add https://your-domain.example/r/editor.json`}
       <Paragraph>
         {compatibility.notes.animate} {compatibility.notes.css}
       </Paragraph>
+      <Callout title="Local maintenance workflow" variant="tip">
+        To review dependency updates locally, run{" "}
+        <code>npm run deps:check</code>. After bumping versions, run{" "}
+        <code>npm run deps:validate</code> to verify linting, build output,
+        registry generation, and the install smoke test.
+      </Callout>
 
       <SectionHeading id="add-tokens">3. Add CSS Tokens</SectionHeading>
       <Paragraph>
