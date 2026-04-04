@@ -43,7 +43,7 @@ export function PageHeader({
   return (
     <div className={cn("mb-10 space-y-2", className)}>
       {badge ? (
-        <div className="inline-flex rounded-full border border-border bg-muted/50 px-2.5 py-1 font-medium text-[11px] text-muted-foreground uppercase tracking-wide">
+        <div className="inline-flex rounded border border-border/60 px-2 py-0.5 font-medium text-[10px] text-muted-foreground uppercase tracking-widest">
           {badge}
         </div>
       ) : null}
