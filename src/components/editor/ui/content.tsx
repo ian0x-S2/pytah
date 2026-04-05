@@ -21,6 +21,7 @@ import type {
   EditorToolbar,
 } from "../core/types";
 import { BlockTypeToolbarPlugin } from "../plugins/block-type-toolbar/plugin";
+import { CodeHighlightPlugin } from "../plugins/code-highlight/plugin";
 import { CollapsiblePlugin } from "../plugins/collapsible/plugin";
 import { EditablePlugin } from "../plugins/core/editable";
 import { EditorStatePlugin } from "../plugins/core/editor-state";
@@ -150,6 +151,7 @@ export function EditorContent({
 
       {pluginSlots?.beforeDefault}
       {features.history ? <HistoryPlugin /> : null}
+      <CodeHighlightPlugin />
       <ListPlugin />
       <CheckListPlugin />
       <LinkBehaviorPlugin editable={editable} />
