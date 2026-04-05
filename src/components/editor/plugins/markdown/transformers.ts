@@ -1,8 +1,11 @@
 import {
   CHECK_LIST,
+  ELEMENT_TRANSFORMERS,
   type ElementTransformer,
+  MULTILINE_ELEMENT_TRANSFORMERS,
   type MultilineElementTransformer,
-  TRANSFORMERS,
+  TEXT_FORMAT_TRANSFORMERS,
+  TEXT_MATCH_TRANSFORMERS,
 } from "@lexical/markdown";
 import {
   $createTableCellNode,
@@ -202,9 +205,12 @@ const TABLE_TRANSFORMER: MultilineElementTransformer = {
 };
 
 export const EDITOR_MARKDOWN_TRANSFORMERS = [
-  ...TRANSFORMERS.filter((transformer) => transformer !== CHECK_LIST),
+  TABLE_TRANSFORMER,
   CHECK_LIST,
+  ...ELEMENT_TRANSFORMERS,
+  ...MULTILINE_ELEMENT_TRANSFORMERS,
+  ...TEXT_FORMAT_TRANSFORMERS,
+  ...TEXT_MATCH_TRANSFORMERS,
   IMAGE_TRANSFORMER,
   YOUTUBE_TRANSFORMER,
-  TABLE_TRANSFORMER,
 ];

@@ -22,9 +22,9 @@ export const editorTheme: EditorThemeClasses = {
       listitem: "list-none",
     },
     listitemChecked:
-      "mb-0.5 list-none before:mr-2 before:inline-flex before:size-4 before:items-center before:justify-center before:rounded-sm before:border before:border-primary before:bg-primary before:text-[10px] before:text-primary-foreground before:content-['✓']",
+      "mb-0.5 list-none outline-none focus:outline-none focus-visible:outline-none before:mr-2 before:inline-flex before:size-4 before:items-center before:justify-center before:rounded-sm before:border before:border-primary before:bg-primary before:text-[10px] before:text-primary-foreground before:content-['✓']",
     listitemUnchecked:
-      "mb-0.5 list-none before:mr-2 before:inline-flex before:size-4 before:items-center before:justify-center before:rounded-sm before:border before:border-border before:bg-background before:content-['']",
+      "mb-0.5 list-none outline-none focus:outline-none focus-visible:outline-none before:mr-2 before:inline-flex before:size-4 before:items-center before:justify-center before:rounded-sm before:border before:border-border before:bg-background before:content-['']",
   },
   link: "text-primary underline underline-offset-4 cursor-pointer hover:text-primary/80",
   hr: "my-6 h-px cursor-pointer border-0 bg-border transition-colors",
