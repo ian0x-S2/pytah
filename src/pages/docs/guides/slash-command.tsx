@@ -45,7 +45,10 @@ export function SlashCommandGuidePage() {
         every supported command. The docs below render the actual source files,
         so the page stays aligned with the implementation.
       </Paragraph>
-      <CodeBlock language="src/components/editor/plugins/slash-command/types.ts">
+      <CodeBlock
+        label="src/components/editor/plugins/slash-command/types.ts"
+        language="ts"
+      >
         {slashCommandTypesSource}
       </CodeBlock>
 
@@ -54,7 +57,10 @@ export function SlashCommandGuidePage() {
         <code>SLASH_COMMANDS</code> is the ordered list rendered in the menu.
         Each entry's <code>keywords</code> array drives fuzzy filtering.
       </Paragraph>
-      <CodeBlock language="src/components/editor/plugins/slash-command/commands.ts">
+      <CodeBlock
+        label="src/components/editor/plugins/slash-command/commands.ts"
+        language="ts"
+      >
         {slashCommandCommandsSource}
       </CodeBlock>
 
@@ -64,7 +70,10 @@ export function SlashCommandGuidePage() {
         up/down, and extracting the slash query from the text immediately before
         the cursor.
       </Paragraph>
-      <CodeBlock language="src/components/editor/plugins/slash-command/utils.ts">
+      <CodeBlock
+        label="src/components/editor/plugins/slash-command/utils.ts"
+        language="ts"
+      >
         {slashCommandUtilsSource}
       </CodeBlock>
 
@@ -75,7 +84,10 @@ export function SlashCommandGuidePage() {
         <em>current top-level element</em>
         that contains the cursor, and replace or transform it in-place.
       </Paragraph>
-      <CodeBlock language="src/components/editor/plugins/slash-command/executors.ts">
+      <CodeBlock
+        label="src/components/editor/plugins/slash-command/executors.ts"
+        language="ts"
+      >
         {slashCommandExecutorsSource}
       </CodeBlock>
 
@@ -87,7 +99,7 @@ export function SlashCommandGuidePage() {
       </Paragraph>
 
       <SubHeading>1. Extend the type union</SubHeading>
-      <CodeBlock language="types.ts">
+      <CodeBlock label="types.ts" language="ts">
         {`// types.ts -- add your id to SlashCommandId
 export type SlashCommandId =
   | "paragraph"
@@ -97,7 +109,7 @@ export type SlashCommandId =
       </CodeBlock>
 
       <SubHeading>2. Add the menu entry</SubHeading>
-      <CodeBlock language="commands.ts">
+      <CodeBlock label="commands.ts" language="ts">
         {`// commands.ts
 import { MyIcon } from "lucide-react";
 
@@ -114,7 +126,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
       </CodeBlock>
 
       <SubHeading>3. Add the executor</SubHeading>
-      <CodeBlock language="executors.ts">
+      <CodeBlock label="executors.ts" language="ts">
         {`// executors.ts
 export const SLASH_COMMAND_EXECUTORS: Record<SlashCommandId, ...> = {
   // ...existing entries...

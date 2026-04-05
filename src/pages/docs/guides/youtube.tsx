@@ -45,7 +45,10 @@ export function YouTubeGuidePage() {
         which is also used by <code>importDOM</code> to reconstruct the node on
         paste.
       </Paragraph>
-      <CodeBlock language="src/components/editor/core/nodes/youtube/node.tsx">
+      <CodeBlock
+        label="src/components/editor/core/nodes/youtube/node.tsx"
+        language="tsx"
+      >
         {`import { BlockWithAlignableContents } from "@lexical/react/LexicalBlockWithAlignableContents";
 import {
   DecoratorBlockNode,
@@ -229,7 +232,10 @@ export function $isYouTubeNode(
         node (used by slash-command placeholders) rather than insert at the
         current selection.
       </Paragraph>
-      <CodeBlock language="src/components/editor/plugins/youtube/commands.ts">
+      <CodeBlock
+        label="src/components/editor/plugins/youtube/commands.ts"
+        language="ts"
+      >
         {`import { createCommand } from "lexical";
 
 export interface InsertYouTubePayload {
@@ -251,7 +257,10 @@ export const INSERT_YOUTUBE_COMMAND = createCommand<InsertYouTubePayload>(
         <code>$insertNodeToNearestRoot</code>. A paragraph is always appended
         after so the cursor lands in an editable position.
       </Paragraph>
-      <CodeBlock language="src/components/editor/plugins/youtube/plugin.tsx">
+      <CodeBlock
+        label="src/components/editor/plugins/youtube/plugin.tsx"
+        language="tsx"
+      >
         {`import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { $insertNodeToNearestRoot } from "@lexical/utils";
 import {

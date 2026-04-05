@@ -1,4 +1,174 @@
+import { useEffect, useState } from "react";
+import type { HighlighterGeneric, ThemedToken, TokensResult } from "shiki";
+import { getSingletonHighlighter, getTokenStyleObject } from "shiki";
+import { useTheme } from "@/components/theme-provider";
 import { cn } from "@/lib/utils";
+
+const CODE_BLOCK_THEMES = {
+  dark: "github-dark",
+  light: "github-light",
+} as const;
+
+const CODE_BLOCK_LANGUAGES = [
+  "bash",
+  "css",
+  "javascript",
+  "jsx",
+  "markdown",
+  "typescript",
+  "tsx",
+] as const;
+
+type CodeBlockTheme =
+  (typeof CODE_BLOCK_THEMES)[keyof typeof CODE_BLOCK_THEMES];
+type CodeBlockSyntaxLanguage = (typeof CODE_BLOCK_LANGUAGES)[number];
+
+let docsHighlighterPromise: Promise<
+  HighlighterGeneric<CodeBlockSyntaxLanguage, CodeBlockTheme>
+> | null = null;
+
+const codeTokenCache = new Map<string, TokensResult>();
+
+function getDocsHighlighter() {
+  docsHighlighterPromise ??= getSingletonHighlighter({
+    langs: [...CODE_BLOCK_LANGUAGES],
+    themes: [CODE_BLOCK_THEMES.light, CODE_BLOCK_THEMES.dark],
+  }) as Promise<HighlighterGeneric<CodeBlockSyntaxLanguage, CodeBlockTheme>>;
+
+  return docsHighlighterPromise;
+}
+
+const CODE_LANGUAGE_ALIASES = {
+  bash: "bash",
+  css: "css",
+  javascript: "javascript",
+  js: "javascript",
+  jsx: "jsx",
+  markdown: "markdown",
+  md: "markdown",
+  plain: "text",
+  sh: "bash",
+  shell: "bash",
+  text: "text",
+  ts: "typescript",
+  tsx: "tsx",
+  txt: "text",
+  typescript: "typescript",
+} as const satisfies Record<string, CodeBlockSyntaxLanguage | "text">;
+
+type CodeLanguage =
+  (typeof CODE_LANGUAGE_ALIASES)[keyof typeof CODE_LANGUAGE_ALIASES];
+
+function useCodeTokens(
+  code: string,
+  language: CodeBlockSyntaxLanguage | null,
+  theme: CodeBlockTheme
+) {
+  const [state, setState] = useState<{
+    error: boolean;
+    tokensResult: TokensResult | null;
+  }>({
+    error: false,
+    tokensResult: null,
+  });
+
+  useEffect(() => {
+    if (!language) {
+      setState({ error: false, tokensResult: null });
+      return;
+    }
+
+    const cacheKey = `${theme}:${language}:${code}`;
+    const cachedTokens = codeTokenCache.get(cacheKey);
+
+    if (cachedTokens) {
+      setState({ error: false, tokensResult: cachedTokens });
+      return;
+    }
+
+    let cancelled = false;
+
+    getDocsHighlighter()
+      .then((highlighter) =>
+        highlighter.codeToTokens(code, {
+          lang: language,
+          theme,
+        })
+      )
+      .then((tokensResult) => {
+        if (cancelled) {
+          return;
+        }
+
+        codeTokenCache.set(cacheKey, tokensResult);
+        setState({ error: false, tokensResult });
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setState({ error: true, tokensResult: null });
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [code, language, theme]);
+
+  return state;
+}
+
+function tokenStyleToReactStyle(token: ThemedToken) {
+  return getTokenStyleObject(token);
+}
+
+function normalizeCodeLanguage(language?: string): CodeLanguage | null {
+  if (!language) {
+    return null;
+  }
+
+  return (
+    CODE_LANGUAGE_ALIASES[
+      language.trim().toLowerCase() as keyof typeof CODE_LANGUAGE_ALIASES
+    ] ?? null
+  );
+}
+
+function inferCodeLanguageFromLabel(label?: string): CodeLanguage | null {
+  if (!label) {
+    return null;
+  }
+
+  const extension = label.split(".").at(-1)?.toLowerCase();
+
+  if (!extension) {
+    return null;
+  }
+
+  return normalizeCodeLanguage(extension);
+}
+
+function resolveCodeBlockMeta(language?: string, label?: string) {
+  const normalizedLanguage = normalizeCodeLanguage(language);
+
+  if (normalizedLanguage) {
+    return {
+      label: label ?? language,
+      syntaxLanguage: normalizedLanguage,
+    };
+  }
+
+  if (!label && language) {
+    return {
+      label: language,
+      syntaxLanguage: inferCodeLanguageFromLabel(language),
+    };
+  }
+
+  return {
+    label,
+    syntaxLanguage: inferCodeLanguageFromLabel(label),
+  };
+}
 
 interface SourceSliceOptions {
   end: string;
@@ -101,27 +271,86 @@ export function Paragraph({ children }: { children: React.ReactNode }) {
 export function CodeBlock({
   children,
   language,
+  label,
 }: {
   children: string;
   language?: string;
+  label?: string;
 }) {
+  const { resolvedTheme } = useTheme();
+  const codeBlockTheme = CODE_BLOCK_THEMES[resolvedTheme];
+  const { label: resolvedLabel, syntaxLanguage } = resolveCodeBlockMeta(
+    language,
+    label
+  );
+  const shouldHighlight = syntaxLanguage && syntaxLanguage !== "text";
+  const { error, tokensResult } = useCodeTokens(
+    children,
+    shouldHighlight ? syntaxLanguage : null,
+    codeBlockTheme
+  );
+  const highlightedTokens = tokensResult?.tokens ?? null;
+  const shouldRenderPlainText = !shouldHighlight || error || !highlightedTokens;
+  const codeForegroundColor = tokensResult?.fg;
+
   return (
     <div className="group relative my-4">
-      {language ? (
+      {resolvedLabel ? (
         <div className="rounded-t-lg border border-border border-b-0 bg-muted/50 px-4 py-2">
           <span className="font-mono text-muted-foreground text-xs">
-            {language}
+            {resolvedLabel}
           </span>
         </div>
       ) : null}
-      <pre
-        className={cn(
-          "overflow-x-auto bg-muted p-4 font-mono text-sm leading-relaxed",
-          language ? "rounded-b-lg border border-border" : "rounded-lg"
-        )}
-      >
-        <code>{children}</code>
-      </pre>
+
+      {shouldRenderPlainText ? (
+        <pre
+          className={cn(
+            "overflow-x-auto border border-border bg-muted/50 p-4 font-mono text-sm leading-relaxed",
+            resolvedLabel ? "rounded-b-lg border border-border" : "rounded-lg"
+          )}
+        >
+          <code>{children}</code>
+        </pre>
+      ) : (
+        <pre
+          className={cn(
+            "overflow-x-auto border border-border bg-muted/50 p-4 font-mono text-sm leading-relaxed",
+            resolvedLabel ? "rounded-b-lg border-t-0" : "rounded-lg"
+          )}
+          style={{
+            backgroundColor: "transparent",
+            color: codeForegroundColor ?? undefined,
+            margin: 0,
+          }}
+        >
+          <code>
+            {highlightedTokens.map((line, lineIndex) => {
+              const lineText = line.map((token) => token.content).join("");
+              const lineKey = `${lineIndex}:${lineText}`;
+
+              return (
+                <span className="block" key={lineKey}>
+                  {line.length > 0
+                    ? line.map((token, tokenIndex) => {
+                        const tokenKey = `${lineKey}:${tokenIndex}:${token.content}`;
+
+                        return (
+                          <span
+                            key={tokenKey}
+                            style={tokenStyleToReactStyle(token)}
+                          >
+                            {token.content}
+                          </span>
+                        );
+                      })
+                    : " "}
+                </span>
+              );
+            })}
+          </code>
+        </pre>
+      )}
     </div>
   );
 }

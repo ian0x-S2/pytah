@@ -51,7 +51,10 @@ export function CollapsibleGuidePage() {
         <code>__open</code> and exposes <code>toggleOpen()</code>. Acts as a
         shadow root so inner selections stay contained.
       </Paragraph>
-      <CodeBlock language="src/components/editor/core/nodes/collapsible/container-node.ts">
+      <CodeBlock
+        label="src/components/editor/core/nodes/collapsible/container-node.ts"
+        language="ts"
+      >
         {`import { addClassNamesToElement, IS_CHROME } from "@lexical/utils";
 import {
   $getSiblingCaret, $isElementNode, $rewindSiblingCaret,
@@ -200,7 +203,10 @@ export function $isCollapsibleContainerNode(
         <code>editor.update()</code>. Pressing Enter in the title jumps into the
         content body.
       </Paragraph>
-      <CodeBlock language="src/components/editor/core/nodes/collapsible/title-node.ts">
+      <CodeBlock
+        label="src/components/editor/core/nodes/collapsible/title-node.ts"
+        language="ts"
+      >
         {`import { addClassNamesToElement, IS_CHROME } from "@lexical/utils";
 import type {
   DOMConversionMap, DOMConversionOutput, DOMExportOutput,
@@ -283,7 +289,10 @@ export function $isCollapsibleTitleNode(node: LexicalNode | null | undefined): n
         the browser's Ctrl+F can still find text inside collapsed sections. Acts
         as a shadow root.
       </Paragraph>
-      <CodeBlock language="src/components/editor/core/nodes/collapsible/content-node.ts">
+      <CodeBlock
+        label="src/components/editor/core/nodes/collapsible/content-node.ts"
+        language="ts"
+      >
         {`import { addClassNamesToElement, IS_CHROME } from "@lexical/utils";
 import type {
   DOMConversionMap, DOMConversionOutput, DOMExportOutput,
@@ -354,7 +363,10 @@ export function $isCollapsibleContentNode(node: LexicalNode | null | undefined):
       </CodeBlock>
 
       <SectionHeading id="commands">commands.ts</SectionHeading>
-      <CodeBlock language="src/components/editor/plugins/collapsible/commands.ts">
+      <CodeBlock
+        label="src/components/editor/plugins/collapsible/commands.ts"
+        language="ts"
+      >
         {`import { createCommand } from "lexical";
 
 export interface InsertCollapsiblePayload {
@@ -367,7 +379,10 @@ export const INSERT_COLLAPSIBLE_COMMAND = createCommand<
       </CodeBlock>
 
       <SectionHeading id="utils">utils.ts</SectionHeading>
-      <CodeBlock language="src/components/editor/plugins/collapsible/utils.ts">
+      <CodeBlock
+        label="src/components/editor/plugins/collapsible/utils.ts"
+        language="ts"
+      >
         {`import { $insertNodeToNearestRoot } from "@lexical/utils";
 import {
   $createParagraphNode, $getNodeByKey, $getSelection,
@@ -423,7 +438,10 @@ export const insertCollapsible = (targetNodeKey?: string) => {
         handler to open the body on Enter in the title, and the{" "}
         <code>INSERT_COLLAPSIBLE_COMMAND</code> handler.
       </Paragraph>
-      <CodeBlock language="src/components/editor/plugins/collapsible/plugin.tsx">
+      <CodeBlock
+        label="src/components/editor/plugins/collapsible/plugin.tsx"
+        language="tsx"
+      >
         {`import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { $findMatchingParent, mergeRegister } from "@lexical/utils";
 import {

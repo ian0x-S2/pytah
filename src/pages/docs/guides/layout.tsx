@@ -47,7 +47,10 @@ export function LayoutGuidePage() {
         <code>style.gridTemplateColumns</code> set to the stored template string
         (e.g. <code>"1fr 1fr"</code>). Acts as a shadow root.
       </Paragraph>
-      <CodeBlock language="src/components/editor/core/nodes/layout/container-node.ts">
+      <CodeBlock
+        label="src/components/editor/core/nodes/layout/container-node.ts"
+        language="ts"
+      >
         {`import { addClassNamesToElement } from "@lexical/utils";
 import type {
   DOMConversionMap, DOMConversionOutput, DOMExportOutput, EditorConfig,
@@ -148,7 +151,10 @@ export function $isLayoutContainerNode(node: LexicalNode | null | undefined): no
         at the start of the first column and all columns are empty, the entire
         layout container is removed via <code>collapseAtStart()</code>.
       </Paragraph>
-      <CodeBlock language="src/components/editor/core/nodes/layout/item-node.ts">
+      <CodeBlock
+        label="src/components/editor/core/nodes/layout/item-node.ts"
+        language="ts"
+      >
         {`import { addClassNamesToElement } from "@lexical/utils";
 import type {
   DOMConversionMap, DOMConversionOutput, EditorConfig, LexicalNode, SerializedElementNode,
@@ -208,7 +214,10 @@ export function $isLayoutItemNode(node: LexicalNode | null | undefined): node is
       </CodeBlock>
 
       <SectionHeading id="commands">commands.ts</SectionHeading>
-      <CodeBlock language="src/components/editor/plugins/layout/commands.ts">
+      <CodeBlock
+        label="src/components/editor/plugins/layout/commands.ts"
+        language="ts"
+      >
         {`import { createCommand } from "lexical";
 
 export interface InsertLayoutPayload {
@@ -226,7 +235,10 @@ export const INSERT_LAYOUT_COMMAND = createCommand<InsertLayoutPayload>(
         Predefined grid templates. <code>DEFAULT_LAYOUT_TEMPLATE</code> is used
         by the slash-command executor.
       </Paragraph>
-      <CodeBlock language="src/components/editor/plugins/layout/constants.ts">
+      <CodeBlock
+        label="src/components/editor/plugins/layout/constants.ts"
+        language="ts"
+      >
         {`export interface LayoutPreset {
   description: string;
   label: string;
@@ -278,7 +290,10 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
       </Table>
 
       <SectionHeading id="utils">utils.ts</SectionHeading>
-      <CodeBlock language="src/components/editor/plugins/layout/utils.ts">
+      <CodeBlock
+        label="src/components/editor/plugins/layout/utils.ts"
+        language="ts"
+      >
         {`import { $createParagraphNode, type ElementNode } from "lexical";
 import { $createLayoutContainerNode } from "../../core/nodes/layout/container-node";
 import { $createLayoutItemNode } from "../../core/nodes/layout/item-node";
@@ -307,7 +322,10 @@ export const applyLayoutPreset = (targetElement: ElementNode, templateColumns: s
       </CodeBlock>
 
       <SectionHeading id="plugin">plugin.tsx</SectionHeading>
-      <CodeBlock language="src/components/editor/plugins/layout/plugin.tsx">
+      <CodeBlock
+        label="src/components/editor/plugins/layout/plugin.tsx"
+        language="tsx"
+      >
         {`import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
   $getNodeByKey, $getSelection, $isElementNode,

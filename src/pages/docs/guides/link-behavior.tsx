@@ -44,7 +44,10 @@ export function LinkBehaviorGuidePage() {
         <code>https://</code> automatically; email addresses get the{" "}
         <code>mailto:</code> scheme.
       </Paragraph>
-      <CodeBlock language="src/components/editor/plugins/link-behavior/constants.ts">
+      <CodeBlock
+        label="src/components/editor/plugins/link-behavior/constants.ts"
+        language="ts"
+      >
         {`import { createLinkMatcherWithRegExp } from "@lexical/react/LexicalAutoLinkPlugin";
 
 const URL_MATCHER_PATTERN = /((https?:\\/\\/|www\\.)[^\\s<]+[^<.,:;"')\\]\\s])/i;
@@ -109,7 +112,10 @@ export const AUTO_LINK_MATCHERS = [
           </TableCell>
         </TableRow>
       </Table>
-      <CodeBlock language="src/components/editor/plugins/link-behavior/utils.ts">
+      <CodeBlock
+        label="src/components/editor/plugins/link-behavior/utils.ts"
+        language="ts"
+      >
         {`const ALLOWED_LINK_PROTOCOLS = new Set([
   "http:",
   "https:",
@@ -183,7 +189,10 @@ export const sanitizeEditorLinkUrl = (value: string): string => {
         in edit mode to disable <code>ClickableLinkPlugin</code> (links should
         not navigate while editing).
       </Paragraph>
-      <CodeBlock language="src/components/editor/plugins/link-behavior/plugin.tsx">
+      <CodeBlock
+        label="src/components/editor/plugins/link-behavior/plugin.tsx"
+        language="tsx"
+      >
         {`import { AutoLinkPlugin } from "@lexical/react/LexicalAutoLinkPlugin";
 import { ClickableLinkPlugin } from "@lexical/react/LexicalClickableLinkPlugin";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
@@ -263,7 +272,10 @@ export function LinkBehaviorPlugin({ editable }: LinkBehaviorPluginProps) {
           </TableCell>
         </TableRow>
       </Table>
-      <CodeBlock language="src/components/editor/plugins/link-behavior/floating-link-editor.tsx">
+      <CodeBlock
+        label="src/components/editor/plugins/link-behavior/floating-link-editor.tsx"
+        language="tsx"
+      >
         {`import { $isLinkNode, TOGGLE_LINK_COMMAND } from "@lexical/link";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { $findMatchingParent, mergeRegister } from "@lexical/utils";

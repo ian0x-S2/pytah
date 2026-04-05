@@ -45,7 +45,10 @@ export function ImageGuidePage() {
         component via <code>decorate()</code> and handles HTML paste via{" "}
         <code>importDOM</code>.
       </Paragraph>
-      <CodeBlock language="src/components/editor/core/nodes/image/node.tsx">
+      <CodeBlock
+        label="src/components/editor/core/nodes/image/node.tsx"
+        language="tsx"
+      >
         {`import { addClassNamesToElement } from "@lexical/utils";
 import type {
   DOMConversionMap,
@@ -278,7 +281,10 @@ export function $isImageNode(
       </CodeBlock>
 
       <SectionHeading id="commands">commands.ts</SectionHeading>
-      <CodeBlock language="src/components/editor/plugins/image/commands.ts">
+      <CodeBlock
+        label="src/components/editor/plugins/image/commands.ts"
+        language="ts"
+      >
         {`import type { NodeKey } from "lexical";
 import { createCommand } from "lexical";
 import type { ImageAlignment } from "../../core/nodes/image/node";
@@ -300,7 +306,10 @@ export const INSERT_IMAGE_COMMAND = createCommand<InsertImagePayload>(
         Three small helpers used by the plugin to detect and read image files
         from clipboard / drop events.
       </Paragraph>
-      <CodeBlock language="src/components/editor/plugins/image/utils.ts">
+      <CodeBlock
+        label="src/components/editor/plugins/image/utils.ts"
+        language="ts"
+      >
         {`const IMAGE_MIME_PREFIX = "image/";
 
 export const isImageFile = (file: File): boolean =>
@@ -333,7 +342,10 @@ export const readFileAsDataUrl = async (file: File): Promise<string> =>
         (inserts by URL), <code>DRAG_DROP_PASTE</code> (handles file drops), and{" "}
         <code>PASTE_COMMAND</code> (intercepts image file pastes).
       </Paragraph>
-      <CodeBlock language="src/components/editor/plugins/image/plugin.tsx">
+      <CodeBlock
+        label="src/components/editor/plugins/image/plugin.tsx"
+        language="tsx"
+      >
         {`import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { DRAG_DROP_PASTE, eventFiles } from "@lexical/rich-text";
 import {
@@ -449,7 +461,10 @@ export function ImagePlugin() {
         <code>FORMAT_ELEMENT_COMMAND</code> to change alignment. Mounts{" "}
         <code>ImageResizer</code> when the node is selected.
       </Paragraph>
-      <CodeBlock language="src/components/editor/plugins/image/component.tsx">
+      <CodeBlock
+        label="src/components/editor/plugins/image/component.tsx"
+        language="tsx"
+      >
         {`import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { useLexicalEditable } from "@lexical/react/useLexicalEditable";
 import { useLexicalNodeSelection } from "@lexical/react/useLexicalNodeSelection";
@@ -610,7 +625,10 @@ export function ImageComponent({
         style in real-time, then calls <code>onResizeEnd</code> with the final
         pixel dimensions.
       </Paragraph>
-      <CodeBlock language="src/components/editor/plugins/image/resizer.tsx">
+      <CodeBlock
+        label="src/components/editor/plugins/image/resizer.tsx"
+        language="tsx"
+      >
         {`import { calculateZoomLevel } from "@lexical/utils";
 import type { LexicalEditor } from "lexical";
 import { useRef } from "react";

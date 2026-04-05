@@ -38,7 +38,7 @@ export function PluginsPage() {
         of truth than a copied list because it shows the exact registration
         order running in the app.
       </Paragraph>
-      <CodeBlock language="src/components/editor/ui/content.tsx">
+      <CodeBlock label="src/components/editor/ui/content.tsx" language="tsx">
         {editorContentSource}
       </CodeBlock>
 

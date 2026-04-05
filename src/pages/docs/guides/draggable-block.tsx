@@ -40,7 +40,10 @@ export function DraggableBlockGuidePage() {
         <code>GripVerticalIcon</code> that appears on hover, and a thin primary-
         coloured line shows the drop target position.
       </Paragraph>
-      <CodeBlock language="src/components/editor/plugins/draggable-block/plugin.tsx">
+      <CodeBlock
+        label="src/components/editor/plugins/draggable-block/plugin.tsx"
+        language="tsx"
+      >
         {`import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { DraggableBlockPlugin_EXPERIMENTAL } from "@lexical/react/LexicalDraggableBlockPlugin";
 import { useLexicalEditable } from "@lexical/react/useLexicalEditable";

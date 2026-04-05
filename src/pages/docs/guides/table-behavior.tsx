@@ -45,7 +45,10 @@ export function TableBehaviorGuidePage() {
         are kept separate so they can be called from outside the plugin (e.g.
         from a toolbar).
       </Paragraph>
-      <CodeBlock language="src/components/editor/plugins/table-behavior/actions.ts">
+      <CodeBlock
+        label="src/components/editor/plugins/table-behavior/actions.ts"
+        language="ts"
+      >
         {`import {
   $deleteTableColumnAtSelection,
   $deleteTableRowAtSelection,
@@ -81,7 +84,10 @@ export const deleteSelectedTableColumn = (editor: LexicalEditor) => {
         <code>TableActionMenu</code> is the popover content with insert/delete
         actions.
       </Paragraph>
-      <CodeBlock language="src/components/editor/plugins/table-behavior/plugin.tsx">
+      <CodeBlock
+        label="src/components/editor/plugins/table-behavior/plugin.tsx"
+        language="tsx"
+      >
         {`import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { TablePlugin } from "@lexical/react/LexicalTablePlugin";
 import { useLexicalEditable } from "@lexical/react/useLexicalEditable";

@@ -37,7 +37,10 @@ export function FloatingToolbarGuidePage() {
       />
 
       <SectionHeading id="types">types.ts</SectionHeading>
-      <CodeBlock language="src/components/editor/plugins/floating-toolbar/types.ts">
+      <CodeBlock
+        label="src/components/editor/plugins/floating-toolbar/types.ts"
+        language="ts"
+      >
         {`export interface FloatingToolbarFormatState {
   /** Current background-color CSS value of the selection, or "" if none/mixed. */
   bgColor: string;
@@ -66,7 +69,10 @@ export interface FloatingToolbarState {
       </CodeBlock>
 
       <SectionHeading id="constants">constants.ts</SectionHeading>
-      <CodeBlock language="src/components/editor/plugins/floating-toolbar/constants.ts">
+      <CodeBlock
+        label="src/components/editor/plugins/floating-toolbar/constants.ts"
+        language="ts"
+      >
         {`import type { FloatingToolbarFormatState, FloatingToolbarPosition } from "./types";
 
 export const EMPTY_TOOLBAR_POSITION: FloatingToolbarPosition = { left: 0, top: 0 };
@@ -85,7 +91,10 @@ export const DEFAULT_FORMAT_STATE: FloatingToolbarFormatState = {
         separate file so the floating toolbar and link editor can import it
         without a circular dependency.
       </Paragraph>
-      <CodeBlock language="src/components/editor/plugins/floating-toolbar/link-command.ts">
+      <CodeBlock
+        label="src/components/editor/plugins/floating-toolbar/link-command.ts"
+        language="ts"
+      >
         {`import { createCommand } from "lexical";
 
 export const OPEN_FLOATING_LINK_EDITOR_COMMAND = createCommand(
@@ -99,7 +108,10 @@ export const OPEN_FLOATING_LINK_EDITOR_COMMAND = createCommand(
         Lexical selection. Called inside{" "}
         <code>editor.getEditorState().read()</code>.
       </Paragraph>
-      <CodeBlock language="src/components/editor/plugins/floating-toolbar/selection.ts">
+      <CodeBlock
+        label="src/components/editor/plugins/floating-toolbar/selection.ts"
+        language="ts"
+      >
         {`import { $isCodeNode } from "@lexical/code";
 import { $isAutoLinkNode, $isLinkNode } from "@lexical/link";
 import { $getSelectionStyleValueForProperty } from "@lexical/selection";
@@ -201,7 +213,10 @@ export const readFloatingToolbarState = (): FloatingToolbarState => {
         <code>editor.update()</code>. Imported by the plugin and by the floating
         link editor.
       </Paragraph>
-      <CodeBlock language="src/components/editor/plugins/floating-toolbar/actions.ts">
+      <CodeBlock
+        label="src/components/editor/plugins/floating-toolbar/actions.ts"
+        language="ts"
+      >
         {`import { $createLinkNode, $isAutoLinkNode, TOGGLE_LINK_COMMAND } from "@lexical/link";
 import { $patchStyleText } from "@lexical/selection";
 import { $getSelection, $isRangeSelection, FORMAT_TEXT_COMMAND, type LexicalEditor } from "lexical";
@@ -264,7 +279,10 @@ export const applyBgColor = (editor: LexicalEditor, color: string) => {
         selection. A <code>isColorPickerOpenRef</code> prevents the toolbar from
         disappearing while a color popover is open.
       </Paragraph>
-      <CodeBlock language="src/components/editor/plugins/floating-toolbar/plugin.tsx">
+      <CodeBlock
+        label="src/components/editor/plugins/floating-toolbar/plugin.tsx"
+        language="tsx"
+      >
         {`import { TOGGLE_LINK_COMMAND } from "@lexical/link";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { mergeRegister } from "@lexical/utils";
