@@ -18,7 +18,22 @@ import {
   WrenchIcon,
 } from "lucide-react";
 import { Link, useRoute } from "wouter";
-import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
 import { ThemeToggle } from "./theme-toggle";
 
 interface NavItem {
@@ -86,95 +101,103 @@ function NavLink({ href, icon: Icon, label }: NavItem) {
   const [isActive] = useRoute(href);
 
   return (
-    <Link
-      className={cn(
-        "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
-        isActive
-          ? "bg-accent font-medium text-accent-foreground"
-          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-      )}
-      href={href}
-    >
-      <Icon className="size-4" />
-      {label}
-    </Link>
+    <SidebarMenuItem>
+      <SidebarMenuButton isActive={isActive} render={<Link href={href} />}>
+        <Icon />
+        <span>{label}</span>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
   );
 }
 
-function Sidebar() {
+function DocsSidebar() {
   return (
-    <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col border-border border-r bg-background">
-      <div className="flex items-center justify-between border-border border-b px-4 py-3">
-        <Link className="font-semibold text-foreground text-lg" href="/">
-          Pytah
-        </Link>
-        <ThemeToggle />
-      </div>
-
-      <nav className="flex-1 overflow-y-auto px-3 py-4">
-        <div>
-          <p className="mb-1 px-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">
-            Core Docs
-          </p>
-          <div className="space-y-1">
-            {NAV_ITEMS.map((item) => (
-              <NavLink key={item.href} {...item} />
-            ))}
-          </div>
+    <Sidebar collapsible="offcanvas" variant="sidebar">
+      <SidebarHeader>
+        <div className="flex items-center justify-between px-2 py-1">
+          <Link className="font-semibold text-foreground text-lg" href="/">
+            Pytah
+          </Link>
+          <ThemeToggle />
         </div>
+      </SidebarHeader>
 
-        <div className="mt-6">
-          <p className="mb-1 px-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">
-            Feature Guides
-          </p>
-          <div className="space-y-1">
-            {FEATURE_GUIDE_ITEMS.map((item) => (
-              <NavLink key={item.href} {...item} />
-            ))}
-          </div>
-        </div>
+      <SidebarContent className="overflow-hidden">
+        <ScrollArea className="h-full">
+          <SidebarGroup>
+            <SidebarGroupLabel>Core Docs</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {NAV_ITEMS.map((item) => (
+                  <NavLink key={item.href} {...item} />
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
 
-        <div className="mt-6">
-          <p className="mb-1 px-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">
-            Extension Guides
-          </p>
-          <div className="space-y-1">
-            {EXTENSION_GUIDE_ITEMS.map((item) => (
-              <NavLink key={item.href} {...item} />
-            ))}
-          </div>
-        </div>
-      </nav>
+          <SidebarGroup>
+            <SidebarGroupLabel>Feature Guides</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {FEATURE_GUIDE_ITEMS.map((item) => (
+                  <NavLink key={item.href} {...item} />
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
 
-      <div className="border-border border-t px-3 py-3">
-        <Link
-          className="flex items-center gap-2 rounded-md px-3 py-2 text-muted-foreground text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
-          href="/demo"
-        >
-          <PlayIcon className="size-4" />
-          Live Demo
-        </Link>
-        <a
-          className="flex items-center gap-2 rounded-md px-3 py-2 text-muted-foreground text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
-          href="https://github.com"
-          rel="noopener noreferrer"
-          target="_blank"
-        >
-          <CodeIcon className="size-4" />
-          Source
-        </a>
-      </div>
-    </aside>
+          <SidebarGroup>
+            <SidebarGroupLabel>Extension Guides</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {EXTENSION_GUIDE_ITEMS.map((item) => (
+                  <NavLink key={item.href} {...item} />
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </ScrollArea>
+      </SidebarContent>
+
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton render={<Link href="/demo" />}>
+              <PlayIcon />
+              <span>Live Demo</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              render={
+                // biome-ignore lint/a11y/useAnchorContent: content is injected by useRender at runtime
+                <a
+                  href="https://github.com"
+                  rel="noopener noreferrer"
+                  target="_blank"
+                />
+              }
+            >
+              <CodeIcon />
+              <span>Source</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </Sidebar>
   );
 }
 
 export function DocsLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen">
-      <Sidebar />
-      <main className="min-w-0 flex-1 overflow-y-auto">
+    <SidebarProvider>
+      <DocsSidebar />
+      <SidebarInset>
+        <header className="flex h-10 shrink-0 items-center gap-2 border-border border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+        </header>
         <div className="mx-auto max-w-4xl px-8 py-10">{children}</div>
-      </main>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
