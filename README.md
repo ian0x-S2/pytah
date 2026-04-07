@@ -1,29 +1,27 @@
 # Pytah
 
-Rich text editor playground and reference implementation built with React, Lexical, shadcn/Base UI, and Tailwind CSS v4.
+Pytah is a rich text editor reference implementation and shadcn registry item built with React, Lexical, shadcn/Base UI, and Tailwind CSS v4.
+
+This repository is intentionally both:
+
+- a playground and docs app for exploring the editor experience
+- the canonical source for the editor code and registry output
 
 The project goal is editor quality and copy/paste ergonomics, with a DX direction that treats the editor as a lego-like system: the default experience should work out of the box, but consumers should be able to swap surfaces, toggle built-in behavior, and add plugins or nodes without patching internals.
 
-## Highlights
+## Choose Your Path
 
-- Lexical-based rich editor with HTML and Markdown output
-- Copy/paste-oriented authoring flows
-- Slash command, floating toolbar, draggable blocks, tables, embeds, and layouts
-- Ready-made editor experience plus public composition hooks
-- In-app docs sourced from the real implementation
+If you want to use the editor in another app:
 
-## Stack
+- start with `/docs/overview`
+- then read `/docs/getting-started` and `/docs/composition`
 
-- React 19
-- TypeScript
-- Vite
-- Lexical
-- shadcn/Base UI primitives
-- Tailwind CSS v4
-- Ultracite / Biome
-- Lefthook
+If you want to contribute to the editor core in this repository:
 
-## Getting Started
+- read [`CONTRIBUTING.md`](./CONTRIBUTING.md)
+- then use `/docs/contributing` and `/docs/architecture`
+
+## Quick Start
 
 Install dependencies:
 
@@ -40,26 +38,25 @@ bun run dev
 Open the app locally and use:
 
 - `/demo` for the editor playground
-- `/docs/getting-started` for implementation docs
+- `/docs/overview` for the project mental model and onboarding
 
-## Scripts
+## Highlights
 
-```bash
-bun run dev      # start Vite dev server
-bun run build    # type-check and build production bundle
-bun run check    # run Ultracite checks
-bun run fix      # auto-fix formatting/lint issues
-bun run preview  # preview the production build
-```
+- Lexical-based rich editor with HTML and Markdown output
+- Copy/paste-oriented authoring flows
+- Slash command, floating toolbar, draggable blocks, tables, embeds, and layouts
+- Ready-made editor experience plus public composition hooks
+- In-app docs sourced from the real implementation
 
-## Editor DX
+## Mental Model
 
 The main public surface is `src/components/editor/editor.tsx`.
 
-The editor now supports two modes of use:
+Pytah supports three levels of use:
 
 1. Ready-made product editor
-2. Composable lego-like editor
+2. Composable editor with public extension points
+3. Raw Lexical integration when you need full control
 
 Key public extension points:
 
@@ -69,8 +66,6 @@ Key public extension points:
 - `pluginSlots`: mount extra plugins around the built-in stack
 - `extraNodes`: register additional Lexical nodes
 - `namespace`: customize the Lexical namespace
-
-Example:
 
 ```tsx
 <Editor
@@ -101,13 +96,29 @@ src/
     └── docs/
 ```
 
+## Scripts
+
+```bash
+bun run dev            # start Vite dev server
+bun run build          # generate registry output, type-check, and build production bundle
+bun run check          # run Ultracite checks
+bun run fix            # auto-fix formatting/lint issues
+bun run preview        # preview the production build
+bun run registry:build # regenerate shadcn registry files under public/r/
+bun run registry:smoke # rebuild the registry and run the install smoke test
+bun run deps:check     # check dependency drift
+bun run deps:validate  # validate dependency updates end-to-end
+```
+
 ## Documentation
 
 The documentation site lives inside the app and treats the source code as the canonical reference.
 
 Start with:
 
+- `/docs/overview`
 - `/docs/getting-started`
+- `/docs/contributing`
 - `/docs/architecture`
 - `/docs/plugins`
 

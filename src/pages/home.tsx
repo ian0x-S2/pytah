@@ -15,7 +15,7 @@ export function HomePage() {
           </span>
           <div className="flex items-center gap-1">
             <ThemeToggle />
-            <Link href="/docs/getting-started">
+            <Link href="/docs/overview">
               <Button size="sm" variant="ghost">
                 Docs
               </Button>
@@ -48,7 +48,7 @@ export function HomePage() {
         {/* Left — content */}
         <div className="flex flex-1 flex-col justify-start px-6 pt-8 pb-14 sm:px-8 lg:justify-center lg:py-0 lg:pt-0">
           <p className="mb-4 font-mono text-muted-foreground text-xs uppercase tracking-[0.2em]">
-            Open source · Lexical · shadcn/ui
+            Reference implementation · Registry item · Lexical
           </p>
 
           <h1 className="mb-5 font-semibold text-4xl text-foreground leading-[1.1] tracking-tight sm:text-5xl xl:text-6xl">
@@ -58,13 +58,13 @@ export function HomePage() {
           </h1>
 
           <p className="mb-10 max-w-sm text-muted-foreground text-sm leading-relaxed">
-            A Lexical-powered block editor with slash commands, floating
-            toolbar, drag-and-drop, tables, images, and more. Drop it into any
-            React + shadcn/ui project.
+            A copy-paste-ready Lexical editor reference implementation and
+            shadcn registry item for React + shadcn/ui projects. Explore the
+            demo, lift the editor into your app, or contribute to the core.
           </p>
 
           <div className="flex flex-wrap items-center gap-3">
-            <Link href="/docs/getting-started">
+            <Link href="/docs/overview">
               <Button size="lg">
                 Get Started
                 <ArrowRightIcon className="size-4" />
@@ -75,6 +75,21 @@ export function HomePage() {
                 <PlayIcon className="size-4" />
                 Try the Editor
               </Button>
+            </Link>
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-4 text-muted-foreground text-sm">
+            <Link
+              className="underline-offset-4 transition-colors hover:text-foreground hover:underline"
+              href="/docs/getting-started"
+            >
+              Use in your app
+            </Link>
+            <Link
+              className="underline-offset-4 transition-colors hover:text-foreground hover:underline"
+              href="/docs/contributing"
+            >
+              Contribute to the core
             </Link>
           </div>
         </div>

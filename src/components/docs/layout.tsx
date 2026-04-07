@@ -3,6 +3,7 @@ import {
   BookOpenIcon,
   BoxIcon,
   CodeIcon,
+  CompassIcon,
   GripVerticalIcon,
   ImageIcon,
   LayoutIcon,
@@ -14,6 +15,7 @@ import {
   TableIcon,
   ToggleLeftIcon,
   VideoIcon,
+  WrenchIcon,
 } from "lucide-react";
 import { Link, useRoute } from "wouter";
 import { cn } from "@/lib/utils";
@@ -26,14 +28,16 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
+  { href: "/docs/overview", icon: CompassIcon, label: "Overview" },
   {
     href: "/docs/getting-started",
     icon: BookOpenIcon,
     label: "Getting Started",
   },
+  { href: "/docs/contributing", icon: WrenchIcon, label: "Contributing" },
   { href: "/docs/composition", icon: BlocksIcon, label: "Composition" },
-  { href: "/docs/api", icon: CodeIcon, label: "API" },
   { href: "/docs/architecture", icon: LayoutIcon, label: "Architecture" },
+  { href: "/docs/api", icon: CodeIcon, label: "API" },
   { href: "/docs/components", icon: BoxIcon, label: "Components" },
   { href: "/docs/plugins", icon: PlugIcon, label: "Plugins" },
   { href: "/docs/theming", icon: PaletteIcon, label: "Theming" },
@@ -108,10 +112,15 @@ function Sidebar() {
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-4">
-        <div className="space-y-1">
-          {NAV_ITEMS.map((item) => (
-            <NavLink key={item.href} {...item} />
-          ))}
+        <div>
+          <p className="mb-1 px-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">
+            Core Docs
+          </p>
+          <div className="space-y-1">
+            {NAV_ITEMS.map((item) => (
+              <NavLink key={item.href} {...item} />
+            ))}
+          </div>
         </div>
 
         <div className="mt-6">

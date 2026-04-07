@@ -42,9 +42,14 @@ export function GettingStartedPage() {
     <>
       <PageHeader
         badge="Core Doc"
-        description="Add the Pytah editor to any React + shadcn/ui project via shadcn CLI or manual copy-paste."
+        description="Add the Pytah editor to another React + shadcn/ui project via the registry or manual copy-paste."
         title="Getting Started"
       />
+
+      <Callout title="For consumers of the editor" variant="info">
+        This page is for embedding Pytah into another app. If you are editing
+        the Pytah repository itself, start with <code>/docs/contributing</code>.
+      </Callout>
 
       <SectionHeading id="prerequisites">Prerequisites</SectionHeading>
       <Paragraph>
@@ -66,10 +71,10 @@ export function GettingStartedPage() {
       </Paragraph>
       <CodeBlock language="bash">
         {`# local docs/dev server
-bunx shadcn@latest add http://localhost:5173/r/editor.json
+bun x shadcn@latest add http://localhost:5173/r/editor.json
 
 # same path on your deployed host
-bunx shadcn@latest add https://your-domain.example/r/editor.json`}
+bun x shadcn@latest add https://your-domain.example/r/editor.json`}
       </CodeBlock>
       <Paragraph>
         The path is always <code>/r/editor.json</code>. Only the origin changes
@@ -146,13 +151,6 @@ bunx shadcn@latest add https://your-domain.example/r/editor.json`}
       <Paragraph>
         {compatibility.notes.animate} {compatibility.notes.css}
       </Paragraph>
-      <Callout title="Local maintenance workflow" variant="tip">
-        To review dependency updates locally, run{" "}
-        <code>npm run deps:check</code>. After bumping versions, run{" "}
-        <code>npm run deps:validate</code> to verify linting, build output,
-        registry generation, and the install smoke test.
-      </Callout>
-
       <SectionHeading id="add-tokens">3. Add CSS Tokens</SectionHeading>
       <Paragraph>
         The CLI path adds these automatically. For manual installs, the editor
