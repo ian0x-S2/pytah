@@ -55,6 +55,16 @@ bun run check
 bun run build
 ```
 
+## Feature contract workflow
+
+When adding a new editor feature, use these repository artifacts to keep humans and AI agents aligned on the same architecture contract:
+
+- PR checklist: `.github/pull_request_template.md`
+- feature proposal template: `docs/process/feature-rfc-template.md`
+- review rubric: `docs/process/architecture-review-rubric.md`
+
+Use the RFC template before implementation when the feature changes public composition, adds custom nodes, or introduces a new built-in behavior. Use the rubric during review to verify folder ownership, extension-point usage, feature gating, and slash-command consistency.
+
 ## Registry and dependency workflow
 
 Use these when your change affects the shipped registry output or dependency compatibility:

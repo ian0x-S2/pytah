@@ -173,6 +173,14 @@ The long-term DX goal is a lego-like editor: contributors should prefer exposing
 - avoid barrel files
 - avoid deprecated Lexical React helpers when core Lexical or `@lexical/extension` equivalents exist
 
+### Feature Contract Workflow
+
+- this workflow applies to human contributors and AI agents
+- before implementing a new editor feature, start from `docs/process/feature-rfc-template.md` when the change adds built-in behavior, custom nodes, or changes public composition
+- when opening or preparing a PR, fill the architecture contract in `.github/pull_request_template.md`
+- during review, validate the change with `docs/process/architecture-review-rubric.md`
+- a feature is not considered complete unless its ownership layer, public extension point, optional/default behavior, slash-command impact, tests, docs impact, and `AGENTS.md` impact were checked explicitly
+
 ### Editor UI/UX Conventions
 
 These patterns are established and must be kept consistent across all editor components.
