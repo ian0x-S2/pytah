@@ -162,11 +162,13 @@ The long-term DX goal is a lego-like editor: contributors should prefer exposing
 - keep the default editor opinionated, but make that opinion easy to override through public props instead of requiring edits inside `ui/content.tsx` or `core/config.ts`
 - keep editor foundations in `src/components/editor/core/`, React composition in `src/components/editor/ui/`, and Lexical behaviors in `src/components/editor/plugins/`
 - complex plugins should live in `src/components/editor/plugins/<feature>/`
+- keep `plugin.tsx` as the orchestration entrypoint for a feature; when a plugin grows, move floating UI, selection math, menus, dialogs, and action helpers into neighboring files inside the same feature folder instead of letting one plugin file absorb everything
 - keep `src/components/editor/core/nodes/` feature-first: prefer `core/nodes/<feature>/...` over a flat list of unrelated node files
 - if a feature owns two or more related Lexical nodes, group them under the same `core/nodes/<feature>/` folder and use simple filenames such as `container-node.ts`, `content-node.ts`, `item-node.ts`, or `node.tsx`
 - keep node-only DOM helpers and serialization helpers inside the same node feature folder
 - align `plugins/<feature>/` with `core/nodes/<feature>/` whenever the feature owns custom nodes
 - keep declarative config separate from Lexical mutation logic and React wiring
+- if a built-in behavior plugin can be meaningfully omitted by consumers, wire it through `EditorFeatureFlags` instead of leaving it permanently mounted; when slash commands depend on those plugins, keep the available command list in sync with the enabled features
 - prefer feature-local relative imports inside `src/components/editor/*`
 - avoid barrel files
 - avoid deprecated Lexical React helpers when core Lexical or `@lexical/extension` equivalents exist

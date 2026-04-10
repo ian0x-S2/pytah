@@ -2,15 +2,20 @@ import type { ReactNode } from "react";
 import type { EditorChromeOptions, EditorFeatureFlags } from "./types";
 
 export const DEFAULT_EDITOR_FEATURES = {
+  collapsible: true,
   draggableBlocks: true,
   floatingLinkEditor: true,
   floatingToolbar: true,
   focusOnMount: true,
   history: true,
+  images: true,
+  layouts: true,
   markdownShortcuts: true,
   seedContent: true,
   slashCommand: true,
   tabIndentation: true,
+  tables: true,
+  youtube: true,
 } as const satisfies Required<EditorFeatureFlags>;
 
 export const DEFAULT_EDITOR_CHROME = {

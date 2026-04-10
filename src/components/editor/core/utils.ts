@@ -10,12 +10,7 @@ import {
   type LexicalEditor,
 } from "lexical";
 import { EDITOR_MARKDOWN_TRANSFORMERS } from "../plugins/markdown/transformers";
-
-export interface EditorSnapshot {
-  html: string;
-  markdown: string;
-  text: string;
-}
+import type { EditorSnapshot } from "./types";
 
 export const createEmptyEditorState = (editor: LexicalEditor) => {
   editor.update(() => {

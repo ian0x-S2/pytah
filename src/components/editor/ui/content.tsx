@@ -95,6 +95,77 @@ interface EditorContentProps {
   topToolbar?: EditorChromeSlots["topToolbar"];
 }
 
+interface DefaultEditorPluginsProps {
+  editable: boolean;
+  editorInstance: LexicalEditor | null;
+  features: ResolvedEditorFeatureFlags;
+  initialHtml?: string;
+  initialMarkdown?: string;
+  onSnapshotChange: (snapshot: EditorSnapshot, editor: LexicalEditor) => void;
+}
+
+function DefaultEditorPlugins({
+  editable,
+  editorInstance,
+  features,
+  initialHtml,
+  initialMarkdown,
+  onSnapshotChange,
+}: DefaultEditorPluginsProps) {
+  return (
+    <>
+      {features.history ? <HistoryPlugin /> : null}
+      <CodeHighlightPlugin />
+      <ListPlugin />
+      <CheckListPlugin />
+      <LinkBehaviorPlugin editable={editable} />
+      {features.images ? <ImagePlugin /> : null}
+      {features.youtube ? <YouTubePlugin /> : null}
+      {features.collapsible ? <CollapsiblePlugin /> : null}
+      {features.layouts ? <LayoutPlugin /> : null}
+      <HorizontalRulePlugin />
+      {features.tables ? <TableBehaviorPlugin /> : null}
+      {features.tabIndentation ? <TabIndentationPlugin /> : null}
+      {features.markdownShortcuts ? (
+        <MarkdownShortcutPlugin transformers={EDITOR_MARKDOWN_TRANSFORMERS} />
+      ) : null}
+      <EditablePlugin editable={editable} />
+      <EditorStatePlugin
+        initialHtml={initialHtml}
+        initialMarkdown={initialMarkdown}
+        onChange={onSnapshotChange}
+      />
+      {features.seedContent ? (
+        <SeedContentPlugin editor={editorInstance} />
+      ) : null}
+    </>
+  );
+}
+
+interface EditableEditorPluginsProps {
+  features: ResolvedEditorFeatureFlags;
+  pluginSlots?: EditorPluginSlots;
+}
+
+function EditableEditorPlugins({
+  features,
+  pluginSlots,
+}: EditableEditorPluginsProps) {
+  return (
+    <>
+      {pluginSlots?.beforeEditable}
+      {features.focusOnMount ? <FocusOnMountPlugin /> : null}
+      {features.draggableBlocks ? <DraggableBlockPlugin /> : null}
+      {features.floatingToolbar ? <FloatingToolbarPlugin /> : null}
+      {features.floatingLinkEditor ? <FloatingLinkEditorPlugin /> : null}
+      {features.slashCommand ? (
+        <SlashCommandPlugin features={features} />
+      ) : null}
+      {pluginSlots?.afterEditable}
+    </>
+  );
+}
+
 export function EditorContent({
   contentClassName,
   editable,
@@ -150,40 +221,16 @@ export function EditorContent({
       {!minimal && showFooter ? footerContent : null}
 
       {pluginSlots?.beforeDefault}
-      {features.history ? <HistoryPlugin /> : null}
-      <CodeHighlightPlugin />
-      <ListPlugin />
-      <CheckListPlugin />
-      <LinkBehaviorPlugin editable={editable} />
-      <ImagePlugin />
-      <YouTubePlugin />
-      <CollapsiblePlugin />
-      <LayoutPlugin />
-      <HorizontalRulePlugin />
-      <TableBehaviorPlugin />
-      {features.tabIndentation ? <TabIndentationPlugin /> : null}
-      {features.markdownShortcuts ? (
-        <MarkdownShortcutPlugin transformers={EDITOR_MARKDOWN_TRANSFORMERS} />
-      ) : null}
-      <EditablePlugin editable={editable} />
-      <EditorStatePlugin
+      <DefaultEditorPlugins
+        editable={editable}
+        editorInstance={editorInstance}
+        features={features}
         initialHtml={initialHtml}
         initialMarkdown={initialMarkdown}
-        onChange={onSnapshotChange}
+        onSnapshotChange={onSnapshotChange}
       />
-      {features.seedContent ? (
-        <SeedContentPlugin editor={editorInstance} />
-      ) : null}
       {editable ? (
-        <>
-          {pluginSlots?.beforeEditable}
-          {features.focusOnMount ? <FocusOnMountPlugin /> : null}
-          {features.draggableBlocks ? <DraggableBlockPlugin /> : null}
-          {features.floatingToolbar ? <FloatingToolbarPlugin /> : null}
-          {features.floatingLinkEditor ? <FloatingLinkEditorPlugin /> : null}
-          {features.slashCommand ? <SlashCommandPlugin /> : null}
-          {pluginSlots?.afterEditable}
-        </>
+        <EditableEditorPlugins features={features} pluginSlots={pluginSlots} />
       ) : null}
       {pluginSlots?.afterDefault}
     </>

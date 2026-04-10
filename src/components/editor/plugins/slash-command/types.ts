@@ -1,4 +1,10 @@
 import type { LucideIcon } from "lucide-react";
+import type { EditorFeatureFlags } from "../../core/types";
+
+export type SlashCommandFeatureFlag = keyof Pick<
+  EditorFeatureFlags,
+  "collapsible" | "images" | "layouts" | "tables" | "youtube"
+>;
 
 export type SlashCommandId =
   | "paragraph"
@@ -25,6 +31,7 @@ export interface SlashCommand {
   id: SlashCommandId;
   keywords: string[];
   label: string;
+  requiredFeature?: SlashCommandFeatureFlag;
 }
 
 export interface SlashMenuPosition {

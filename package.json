@@ -14,6 +14,7 @@
     "deps:validate": "bun run check && bun run build && bun run registry:smoke",
     "check": "ultracite check",
     "fix": "ultracite fix",
+    "test": "bun test src/components/editor",
     "prepare": "lefthook install"
   },
   "dependencies": {

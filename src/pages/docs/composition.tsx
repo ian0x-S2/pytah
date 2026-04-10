@@ -121,6 +121,11 @@ export function CompositionPage() {
         Use <code>features</code> to control built-in behavior plugins without
         forking <code>ui/content.tsx</code>.
       </Paragraph>
+      <Paragraph>
+        Feature flags also trim dependent slash-menu entries, so disabling a
+        built-in block capability keeps the visible command list in sync with
+        the mounted plugin stack.
+      </Paragraph>
       <CodeBlock language="typescript">{featureFlagsSource}</CodeBlock>
 
       <SubHeading id="defaults-features">Default Feature Stack</SubHeading>
@@ -132,6 +137,8 @@ export function CompositionPage() {
       <CodeBlock language="tsx">
         {`<Editor
   features={{
+    images: false,
+    layouts: false,
     floatingToolbar: false,
     focusOnMount: false,
     slashCommand: true,

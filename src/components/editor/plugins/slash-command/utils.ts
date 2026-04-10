@@ -1,6 +1,6 @@
 import type { SlashCommand, SlashCommandSelection } from "./types";
 
-const SLASH_QUERY_PATTERN = /^\/(\w*)$/;
+export const SLASH_QUERY_PATTERN = /^\/(\w*)$/;
 
 export const filterSlashCommands = (
   commands: SlashCommand[],

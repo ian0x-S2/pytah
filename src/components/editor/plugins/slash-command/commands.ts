@@ -15,9 +15,11 @@ import {
   TextQuoteIcon,
   TypeIcon,
 } from "lucide-react";
+import type { ResolvedEditorFeatureFlags } from "../../core/composition";
 import type { SlashCommand } from "./types";
+import { SLASH_QUERY_PATTERN } from "./utils";
 
-export const SLASH_COMMAND_PATTERN = /^\/(\w*)$/;
+export const SLASH_COMMAND_PATTERN = SLASH_QUERY_PATTERN;
 
 export const SLASH_COMMANDS: SlashCommand[] = [
   {
@@ -89,6 +91,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     id: "image",
     keywords: ["image", "photo", "media", "picture", "img"],
     label: "Image",
+    requiredFeature: "images",
   },
   {
     description: "Embed a YouTube video",
@@ -96,6 +99,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     id: "youtube",
     keywords: ["youtube", "video", "embed", "yt"],
     label: "YouTube",
+    requiredFeature: "youtube",
   },
   {
     description: "Expandable toggle section",
@@ -103,6 +107,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     id: "collapsible",
     keywords: ["collapsible", "toggle", "details", "accordion"],
     label: "Collapsible",
+    requiredFeature: "collapsible",
   },
   {
     description: "Multi-column content layout",
@@ -110,6 +115,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     id: "columns",
     keywords: ["columns", "layout", "grid", "multi-column"],
     label: "Columns",
+    requiredFeature: "layouts",
   },
   {
     description: "Simple editable table",
@@ -117,6 +123,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     id: "table",
     keywords: ["table", "grid", "cells", "columns", "rows"],
     label: "Table",
+    requiredFeature: "tables",
   },
   {
     description: "Horizontal rule separator",
@@ -126,3 +133,13 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     label: "Divider",
   },
 ];
+
+export const getEnabledSlashCommands = (
+  features: ResolvedEditorFeatureFlags
+): SlashCommand[] => {
+  return SLASH_COMMANDS.filter((command) => {
+    return command.requiredFeature === undefined
+      ? true
+      : features[command.requiredFeature];
+  });
+};

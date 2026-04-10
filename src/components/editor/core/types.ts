@@ -29,15 +29,20 @@ export interface EditorShellContext {
 }
 
 export interface EditorFeatureFlags {
+  collapsible?: boolean;
   draggableBlocks?: boolean;
   floatingLinkEditor?: boolean;
   floatingToolbar?: boolean;
   focusOnMount?: boolean;
   history?: boolean;
+  images?: boolean;
+  layouts?: boolean;
   markdownShortcuts?: boolean;
   seedContent?: boolean;
   slashCommand?: boolean;
   tabIndentation?: boolean;
+  tables?: boolean;
+  youtube?: boolean;
 }
 
 export interface EditorChromeOptions {

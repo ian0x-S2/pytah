@@ -201,7 +201,12 @@ export function CustomEditorExample() {
     <Editor
       chrome={{ header: false, outputs: false }}
       extraNodes={[MyCalloutNode]}
-      features={{ floatingToolbar: false, slashCommand: true }}
+      features={{
+        floatingToolbar: false,
+        images: false,
+        slashCommand: true,
+        youtube: false,
+      }}
       pluginSlots={{
         afterEditable: <MyAnalyticsPlugin />,
       }}

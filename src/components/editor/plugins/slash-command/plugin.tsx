@@ -34,15 +34,17 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import type { ResolvedEditorFeatureFlags } from "../../core/composition";
 import { INSERT_IMAGE_COMMAND } from "../image/commands";
 import { readFileAsDataUrl } from "../image/utils";
 import { INSERT_LAYOUT_COMMAND } from "../layout/commands";
-import { LAYOUT_PRESETS } from "../layout/constants";
 import { INSERT_YOUTUBE_COMMAND } from "../youtube/commands";
 import { parseYouTubeUrl } from "../youtube/utils";
-import { SLASH_COMMANDS } from "./commands";
+import { createSlashMenuAnchor, getSelectionRectangle } from "./anchor";
+import { getEnabledSlashCommands } from "./commands";
 import { SLASH_COMMAND_EXECUTORS } from "./executors";
-import type { SlashCommandId, SlashMenuAnchor } from "./types";
+import { SlashLayoutDialog } from "./layout-dialog";
+import type { SlashCommandId } from "./types";
 import {
   filterSlashCommands,
   getFirstCommandId,
@@ -52,143 +54,21 @@ import {
   hasSelectedCommand,
 } from "./utils";
 
-const TEMPLATE_COLUMN_SEPARATOR = /\s+/;
 const SLASH_MENU_COLLISION_AVOIDANCE = {
   align: "none",
   fallbackAxisSide: "none",
   side: "flip",
 } as const;
 
-const getFirstTextDescendant = (element: HTMLElement): HTMLElement => {
-  let inner = element;
-
-  while (inner.firstElementChild instanceof HTMLElement) {
-    inner = inner.firstElementChild;
-  }
-
-  return inner;
-};
-
-const getSelectionRectangle = (
-  editor: ReturnType<typeof useLexicalComposerContext>[0]
-): DOMRect | null => {
-  const nativeSelection = window.getSelection();
-  const rootElement = editor.getRootElement();
-
-  if (
-    !(
-      nativeSelection &&
-      nativeSelection.rangeCount > 0 &&
-      rootElement?.contains(nativeSelection.anchorNode)
-    )
-  ) {
-    return null;
-  }
-
-  const range = nativeSelection.getRangeAt(0);
-  const firstClientRect = range.getClientRects().item(0);
-  const rectangle =
-    nativeSelection.anchorNode === rootElement
-      ? getFirstTextDescendant(rootElement).getBoundingClientRect()
-      : (firstClientRect ?? range.getBoundingClientRect());
-  const fallbackRectangle =
-    nativeSelection.focusNode?.parentElement?.getBoundingClientRect();
-  const nextRectangle =
-    rectangle.width === 0 && rectangle.height === 0 && fallbackRectangle
-      ? fallbackRectangle
-      : rectangle;
-
-  if (nextRectangle.width === 0 && nextRectangle.height === 0) {
-    return null;
-  }
-
-  return nextRectangle;
-};
-
-const createSlashMenuAnchor = (
-  editor: ReturnType<typeof useLexicalComposerContext>[0]
-): SlashMenuAnchor => {
-  return {
-    getBoundingClientRect: () => {
-      const rectangle = getSelectionRectangle(editor);
-
-      if (!rectangle) {
-        return new DOMRect();
-      }
-
-      return new DOMRect(
-        rectangle.left,
-        rectangle.top,
-        Math.max(rectangle.width, 1),
-        Math.max(rectangle.height, 1)
-      );
-    },
-    getClientRects: () => {
-      const rect = getSelectionRectangle(editor);
-
-      if (!rect) {
-        return {
-          item: () => null,
-          length: 0,
-          [Symbol.iterator](): IterableIterator<DOMRect> {
-            return [][Symbol.iterator]();
-          },
-        } as DOMRectList;
-      }
-
-      const anchorRect = new DOMRect(
-        rect.left,
-        rect.top,
-        Math.max(rect.width, 1),
-        Math.max(rect.height, 1)
-      );
-
-      return {
-        0: anchorRect,
-        item: (index: number) => {
-          return index === 0 ? anchorRect : null;
-        },
-        length: 1,
-        *[Symbol.iterator](): IterableIterator<DOMRect> {
-          yield anchorRect;
-        },
-      } as DOMRectList;
-    },
-  };
-};
-
-const getLayoutPreviewColumns = (templateColumns: string) => {
-  return templateColumns.split(TEMPLATE_COLUMN_SEPARATOR).filter(Boolean);
-};
-
-function LayoutPresetPreview({ templateColumns }: { templateColumns: string }) {
-  const columns = getLayoutPreviewColumns(templateColumns);
-  const columnOccurrences = new Map<string, number>();
-
-  return (
-    <div className="grid h-14 w-full gap-2 rounded-xl border border-border/70 bg-muted/40 p-2">
-      <div
-        className="grid h-full gap-2"
-        style={{ gridTemplateColumns: templateColumns }}
-      >
-        {columns.map((column) => {
-          const currentCount = columnOccurrences.get(column) ?? 0;
-          columnOccurrences.set(column, currentCount + 1);
-
-          return (
-            <div
-              className="rounded-md border border-border/70 bg-background/90 shadow-xs"
-              key={`${templateColumns}-${column}-${currentCount}`}
-            />
-          );
-        })}
-      </div>
-    </div>
-  );
+interface SlashCommandPluginProps {
+  features: ResolvedEditorFeatureFlags;
 }
 
-export function SlashCommandPlugin() {
+export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
   const [editor] = useLexicalComposerContext();
+  const availableCommands = useMemo(() => {
+    return getEnabledSlashCommands(features);
+  }, [features]);
   const [isOpen, setIsOpen] = useState(false);
   const [imageAltText, setImageAltText] = useState("");
   const [imageFileName, setImageFileName] = useState("");
@@ -209,13 +89,13 @@ export function SlashCommandPlugin() {
   const [query, setQuery] = useState("");
   const [selectedCommandId, setSelectedCommandId] = useState<
     SlashCommandId | ""
-  >(getFirstCommandId(SLASH_COMMANDS));
+  >(getFirstCommandId(availableCommands));
   const [youTubeUrl, setYouTubeUrl] = useState("");
   const commandListRef = useRef<HTMLDivElement | null>(null);
 
   const filteredCommands = useMemo(() => {
-    return filterSlashCommands(SLASH_COMMANDS, query);
-  }, [query]);
+    return filterSlashCommands(availableCommands, query);
+  }, [availableCommands, query]);
 
   const selectedIndex = useMemo(() => {
     return getSelectedCommandIndex(filteredCommands, selectedCommandId);
@@ -560,7 +440,7 @@ export function SlashCommandPlugin() {
           event?.preventDefault();
 
           if (isLayoutPresetOpen) {
-            executeLayoutPreset(LAYOUT_PRESETS[0]?.value ?? "1fr 1fr");
+            executeLayoutPreset("1fr 1fr");
             return true;
           }
 
@@ -687,72 +567,15 @@ export function SlashCommandPlugin() {
         </PopoverPrimitive.Portal>
       </PopoverPrimitive.Root>
 
-      <Dialog onOpenChange={setIsLayoutPresetOpen} open={isLayoutPresetOpen}>
-        <DialogContent
-          className="max-h-[calc(100vh-2rem)] overflow-hidden p-0 sm:max-w-2xl"
-          showCloseButton
-        >
-          <DialogHeader className="px-5 pt-5 pb-0 sm:px-6 sm:pt-6">
-            <DialogTitle>Choose columns layout</DialogTitle>
-            <DialogDescription>
-              Pick one of the official Lexical-style column presets.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="max-h-[min(70vh,34rem)] overflow-y-auto px-4 pt-2 pb-4 sm:px-6 sm:pb-6">
-            <div className="grid gap-3 sm:grid-cols-2">
-              {LAYOUT_PRESETS.map((preset) => (
-                <Button
-                  className="h-auto min-h-32 justify-start rounded-2xl border border-border/80 px-4 py-4 text-left hover:bg-muted/60"
-                  key={preset.value}
-                  onClick={() => executeLayoutPreset(preset.value)}
-                  type="button"
-                  variant="ghost"
-                >
-                  <span className="flex w-full flex-col items-start gap-3">
-                    <LayoutPresetPreview templateColumns={preset.value} />
-                    <span className="flex flex-col items-start gap-1">
-                      <span className="font-medium text-foreground text-sm">
-                        {preset.label}
-                      </span>
-                      <span className="text-muted-foreground text-xs">
-                        {preset.description}
-                      </span>
-                      <span className="font-mono text-[11px] text-muted-foreground/80">
-                        {preset.value}
-                      </span>
-                    </span>
-                  </span>
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          <DialogFooter
-            className="mt-0 px-4 py-3 sm:px-6"
-            showCloseButton={false}
-          >
-            <Button
-              onClick={() => {
-                setPendingLayoutTargetKey(null);
-                setIsLayoutPresetOpen(false);
-              }}
-              type="button"
-              variant="outline"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() =>
-                executeLayoutPreset(LAYOUT_PRESETS[0]?.value ?? "1fr 1fr")
-              }
-              type="button"
-            >
-              Use default
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <SlashLayoutDialog
+        onCancel={() => {
+          setPendingLayoutTargetKey(null);
+          setIsLayoutPresetOpen(false);
+        }}
+        onOpenChange={setIsLayoutPresetOpen}
+        onSelectPreset={executeLayoutPreset}
+        open={isLayoutPresetOpen}
+      />
 
       <Dialog
         onOpenChange={(open) => {
