@@ -11,6 +11,7 @@ export interface ButtonPosition {
 }
 
 export interface TableMenuContext {
+  cellKey: NodeKey;
   position: ButtonPosition;
   selectionCounts: SelectionCounts;
 }

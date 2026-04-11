@@ -10,7 +10,7 @@ import {
   SELECTION_CHANGE_COMMAND,
 } from "lexical";
 import { ChevronDownIcon } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,7 +20,11 @@ import {
 } from "@/components/ui/popover";
 import { TableActionMenu } from "./menu";
 import { DEFAULT_SELECTION_COUNTS, readTableMenuContext } from "./selection";
-import type { ButtonPosition, SelectionCounts } from "./types";
+import type {
+  ButtonPosition,
+  SelectionCounts,
+  TableMenuContext,
+} from "./types";
 
 function TableCellActionMenuContainer({
   anchorElem,
@@ -34,22 +38,82 @@ function TableCellActionMenuContainer({
   const [selectionCounts, setSelectionCounts] = useState<SelectionCounts>(
     DEFAULT_SELECTION_COUNTS
   );
+  const isMenuOpenRef = useRef(false);
+  const isMenuClosingRef = useRef(false);
+  const activeCellKeyRef = useRef<TableMenuContext["cellKey"] | null>(null);
+
+  const setMenuOpen = useCallback((open: boolean) => {
+    isMenuOpenRef.current = open;
+    setIsMenuOpen(open);
+  }, []);
+
+  const applyMenuContext = useCallback((context: TableMenuContext) => {
+    activeCellKeyRef.current = context.cellKey;
+    setPosition(context.position);
+    setSelectionCounts(context.selectionCounts);
+    setIsVisible(true);
+  }, []);
+
+  const hideMenu = useCallback(() => {
+    activeCellKeyRef.current = null;
+    setIsVisible(false);
+    setSelectionCounts(DEFAULT_SELECTION_COUNTS);
+  }, []);
+
+  const closeMenuAtCurrentPosition = useCallback(() => {
+    isMenuClosingRef.current = true;
+    setMenuOpen(false);
+  }, [setMenuOpen]);
+
+  const syncMenuToSelection = useCallback(() => {
+    editor.getEditorState().read(() => {
+      const context = readTableMenuContext(editor, anchorElem);
+
+      if (!context) {
+        hideMenu();
+        return;
+      }
+
+      applyMenuContext(context);
+    });
+  }, [anchorElem, applyMenuContext, editor, hideMenu]);
 
   const updateMenu = useCallback(() => {
     editor.getEditorState().read(() => {
       const context = readTableMenuContext(editor, anchorElem);
-      if (!context) {
-        setIsVisible(false);
-        setIsMenuOpen(false);
-        setSelectionCounts(DEFAULT_SELECTION_COUNTS);
+
+      if (isMenuClosingRef.current) {
         return;
       }
 
-      setPosition(context.position);
-      setSelectionCounts(context.selectionCounts);
-      setIsVisible(true);
+      if (!context) {
+        if (isMenuOpenRef.current) {
+          closeMenuAtCurrentPosition();
+          return;
+        }
+
+        hideMenu();
+        return;
+      }
+
+      if (
+        isMenuOpenRef.current &&
+        activeCellKeyRef.current &&
+        context.cellKey !== activeCellKeyRef.current
+      ) {
+        closeMenuAtCurrentPosition();
+        return;
+      }
+
+      applyMenuContext(context);
     });
-  }, [anchorElem, editor]);
+  }, [
+    anchorElem,
+    applyMenuContext,
+    closeMenuAtCurrentPosition,
+    editor,
+    hideMenu,
+  ]);
 
   useEffect(() => {
     const onPointerUp = () => {
@@ -105,24 +169,46 @@ function TableCellActionMenuContainer({
         return;
       }
 
-      setIsMenuOpen(false);
+      closeMenuAtCurrentPosition();
     };
 
     window.addEventListener("click", handleClickOutside);
     return () => {
       window.removeEventListener("click", handleClickOutside);
     };
-  }, [anchorElem, isMenuOpen]);
+  }, [anchorElem, closeMenuAtCurrentPosition, isMenuOpen]);
 
   return createPortal(
     <div
       className={
-        isVisible ? "absolute z-40" : "pointer-events-none absolute z-40 hidden"
+        isVisible
+          ? "absolute z-40"
+          : "pointer-events-none invisible absolute z-40"
       }
       data-table-actions-root="true"
       style={{ left: position.left, top: position.top }}
     >
-      <Popover onOpenChange={setIsMenuOpen} open={isMenuOpen}>
+      <Popover
+        onOpenChange={(open) => {
+          setMenuOpen(open);
+
+          if (open) {
+            isMenuClosingRef.current = false;
+            return;
+          }
+
+          isMenuClosingRef.current = true;
+        }}
+        onOpenChangeComplete={(open) => {
+          if (open) {
+            return;
+          }
+
+          isMenuClosingRef.current = false;
+          syncMenuToSelection();
+        }}
+        open={isMenuOpen}
+      >
         <PopoverTrigger
           render={
             <Button
@@ -130,6 +216,9 @@ function TableCellActionMenuContainer({
               className="size-5"
               onMouseDown={(event) => {
                 event.preventDefault();
+                event.stopPropagation();
+              }}
+              onPointerDown={(event) => {
                 event.stopPropagation();
               }}
               size="icon-xs"
@@ -146,7 +235,7 @@ function TableCellActionMenuContainer({
           sideOffset={8}
         >
           <TableActionMenu
-            onClose={() => setIsMenuOpen(false)}
+            onClose={closeMenuAtCurrentPosition}
             selectionCounts={selectionCounts}
           />
         </PopoverContent>

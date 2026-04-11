@@ -97,6 +97,7 @@ export const readTableMenuContext = (
   const buttonSize = 20;
 
   return {
+    cellKey: tableCellNode.getKey(),
     position: {
       left: cellRect.right - anchorRect.left - buttonSize - 6,
       top:

@@ -104,7 +104,7 @@ import {
   type LexicalEditor, SELECTION_CHANGE_COMMAND,
 } from "lexical";
 import { ChevronDownIcon, Columns2Icon, Rows3Icon, Trash2Icon } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -113,7 +113,7 @@ import { Separator } from "@/components/ui/separator";
 // ---- types ----
 interface SelectionCounts { columns: number; rows: number; }
 interface ButtonPosition { left: number; top: number; }
-interface TableMenuContext { position: ButtonPosition; selectionCounts: SelectionCounts; }
+interface TableMenuContext { cellKey: string; position: ButtonPosition; selectionCounts: SelectionCounts; }
 const DEFAULT_SELECTION_COUNTS: SelectionCounts = { columns: 1, rows: 1 };
 
 // ---- helpers ----
@@ -134,6 +134,7 @@ const readTableMenuContext = (editor: LexicalEditor, anchorElem: HTMLElement): T
   const anchorRect = anchorElem.getBoundingClientRect();
   const buttonSize = 20;
   return {
+    cellKey: tableCellNode.getKey(),
     position: {
       left: cellRect.right - anchorRect.left - buttonSize - 6,
       top: cellRect.top - anchorRect.top + Math.round((cellRect.height - buttonSize) / 2),
@@ -213,16 +214,61 @@ function TableCellActionMenuContainer({ anchorElem }: { anchorElem: HTMLElement 
   const [isVisible, setIsVisible] = useState(false);
   const [position, setPosition] = useState<ButtonPosition>({ left: 0, top: 0 });
   const [selectionCounts, setSelectionCounts] = useState<SelectionCounts>(DEFAULT_SELECTION_COUNTS);
+  const isMenuOpenRef = useRef(false);
+  const isMenuClosingRef = useRef(false);
+  const activeCellKeyRef = useRef<TableMenuContext["cellKey"] | null>(null);
+
+  const setMenuOpen = useCallback((open: boolean) => {
+    isMenuOpenRef.current = open;
+    setIsMenuOpen(open);
+  }, []);
+
+  const applyMenuContext = useCallback((context: TableMenuContext) => {
+    activeCellKeyRef.current = context.cellKey;
+    setPosition(context.position);
+    setSelectionCounts(context.selectionCounts);
+    setIsVisible(true);
+  }, []);
+
+  const hideMenu = useCallback(() => {
+    activeCellKeyRef.current = null;
+    setIsVisible(false);
+    setSelectionCounts(DEFAULT_SELECTION_COUNTS);
+  }, []);
+
+  const closeMenuAtCurrentPosition = useCallback(() => {
+    isMenuClosingRef.current = true;
+    setMenuOpen(false);
+  }, [setMenuOpen]);
+
+  const syncMenuToSelection = useCallback(() => {
+    editor.getEditorState().read(() => {
+      const context = readTableMenuContext(editor, anchorElem);
+      if (!context) { hideMenu(); return; }
+      applyMenuContext(context);
+    });
+  }, [anchorElem, applyMenuContext, editor, hideMenu]);
 
   const updateMenu = useCallback(() => {
     editor.getEditorState().read(() => {
       const context = readTableMenuContext(editor, anchorElem);
-      if (!context) { setIsVisible(false); setIsMenuOpen(false); setSelectionCounts(DEFAULT_SELECTION_COUNTS); return; }
-      setPosition(context.position);
-      setSelectionCounts(context.selectionCounts);
-      setIsVisible(true);
+
+      if (isMenuClosingRef.current) return;
+
+      if (!context) {
+        if (isMenuOpenRef.current) { closeMenuAtCurrentPosition(); return; }
+        hideMenu();
+        return;
+      }
+
+      if (isMenuOpenRef.current && activeCellKeyRef.current && context.cellKey !== activeCellKeyRef.current) {
+        closeMenuAtCurrentPosition();
+        return;
+      }
+
+      applyMenuContext(context);
     });
-  }, [anchorElem, editor]);
+  }, [anchorElem, applyMenuContext, closeMenuAtCurrentPosition, editor, hideMenu]);
 
   useEffect(() => {
     const onPointerUp = () => { window.setTimeout(updateMenu, 0); };
@@ -250,25 +296,38 @@ function TableCellActionMenuContainer({ anchorElem }: { anchorElem: HTMLElement 
       if (!(target && isDOMNode(target))) return;
       const menuRoot = anchorElem.querySelector("[data-table-actions-root='true']");
       if (menuRoot?.contains(target)) return;
-      setIsMenuOpen(false);
+      closeMenuAtCurrentPosition();
     };
     window.addEventListener("click", handleClickOutside);
     return () => { window.removeEventListener("click", handleClickOutside); };
-  }, [anchorElem, isMenuOpen]);
+  }, [anchorElem, closeMenuAtCurrentPosition, isMenuOpen]);
 
   return createPortal(
     <div
-      className={isVisible ? "absolute z-40" : "pointer-events-none absolute z-40 hidden"}
+      className={isVisible ? "absolute z-40" : "pointer-events-none invisible absolute z-40"}
       data-table-actions-root="true"
       style={{ left: position.left, top: position.top }}
     >
-      <Popover onOpenChange={setIsMenuOpen} open={isMenuOpen}>
+      <Popover
+        onOpenChange={(open) => {
+          setMenuOpen(open);
+          if (open) { isMenuClosingRef.current = false; return; }
+          isMenuClosingRef.current = true;
+        }}
+        onOpenChangeComplete={(open) => {
+          if (open) return;
+          isMenuClosingRef.current = false;
+          syncMenuToSelection();
+        }}
+        open={isMenuOpen}
+      >
         <PopoverTrigger
           render={
             <Button
               aria-label="Open table actions"
               className="size-5"
               onMouseDown={(event) => { event.preventDefault(); event.stopPropagation(); }}
+              onPointerDown={(event) => { event.stopPropagation(); }}
               size="icon-xs"
               variant="outline"
             />
@@ -277,7 +336,7 @@ function TableCellActionMenuContainer({ anchorElem }: { anchorElem: HTMLElement 
           <ChevronDownIcon className="size-2.5" />
         </PopoverTrigger>
         <PopoverContent align="start" className="w-56 p-0" side="right" sideOffset={8}>
-          <TableActionMenu onClose={() => setIsMenuOpen(false)} selectionCounts={selectionCounts} />
+          <TableActionMenu onClose={closeMenuAtCurrentPosition} selectionCounts={selectionCounts} />
         </PopoverContent>
       </Popover>
     </div>,
