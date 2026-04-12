@@ -186,7 +186,7 @@ export function ImageComponent({
           <div
             className={
               isFocused
-                ? "rounded-2xl ring-2 ring-primary/60 ring-offset-2 ring-offset-background"
+                ? "rounded-2xl ring-1 ring-primary/40 ring-offset-2 ring-offset-background"
                 : "rounded-2xl"
             }
           >

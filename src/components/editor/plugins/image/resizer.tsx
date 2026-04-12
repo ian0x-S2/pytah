@@ -29,10 +29,10 @@ interface ResizeState {
 const CORNER_DIRECTIONS: ResizeDirection[] = ["ne", "se", "sw", "nw"];
 
 const CORNER_CLASSES: Record<ResizeDirection, string> = {
-  ne: "right-0 top-0 translate-x-1/2 -translate-y-1/2 cursor-nesw-resize border-t-2 border-r-2",
-  se: "bottom-0 right-0 translate-x-1/2 translate-y-1/2 cursor-nwse-resize border-b-2 border-r-2",
-  sw: "bottom-0 left-0 -translate-x-1/2 translate-y-1/2 cursor-nesw-resize border-b-2 border-l-2",
-  nw: "left-0 top-0 -translate-x-1/2 -translate-y-1/2 cursor-nwse-resize border-t-2 border-l-2",
+  ne: "right-0 top-0 translate-x-1/2 -translate-y-1/2 cursor-nesw-resize",
+  se: "bottom-0 right-0 translate-x-1/2 translate-y-1/2 cursor-nwse-resize",
+  sw: "bottom-0 left-0 -translate-x-1/2 translate-y-1/2 cursor-nesw-resize",
+  nw: "left-0 top-0 -translate-x-1/2 -translate-y-1/2 cursor-nwse-resize",
 };
 
 const clamp = (value: number, min: number, max: number) =>
@@ -195,7 +195,7 @@ export function ImageResizer({
     >
       {CORNER_DIRECTIONS.map((direction) => (
         <div
-          className={`absolute size-2.5 rounded-full bg-primary/70 ${CORNER_CLASSES[direction]}`}
+          className={`absolute size-2 rounded-full border border-background/20 bg-foreground shadow-sm ${CORNER_CLASSES[direction]}`}
           key={direction}
           onPointerDown={(event) => handlePointerDown(event, direction)}
         />
