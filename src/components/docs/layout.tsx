@@ -17,7 +17,7 @@ import {
   VideoIcon,
   WrenchIcon,
 } from "lucide-react";
-import { Link, useRoute } from "wouter";
+import { Link, useLocation, useRoute } from "wouter";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Sidebar,
@@ -188,15 +188,33 @@ function DocsSidebar() {
   );
 }
 
+function useCurrentPageLabel() {
+  const [path] = useLocation();
+  const allItems = [
+    ...NAV_ITEMS,
+    ...FEATURE_GUIDE_ITEMS,
+    ...EXTENSION_GUIDE_ITEMS,
+  ];
+  return allItems.find((item) => path.startsWith(item.href))?.label ?? null;
+}
+
 export function DocsLayout({ children }: { children: React.ReactNode }) {
+  const pageLabel = useCurrentPageLabel();
   return (
     <SidebarProvider>
       <DocsSidebar />
       <SidebarInset>
         <header className="flex h-10 shrink-0 items-center gap-2 border-border border-b px-4">
           <SidebarTrigger className="-ml-1" />
+          {pageLabel ? (
+            <span className="truncate font-medium text-foreground text-sm">
+              {pageLabel}
+            </span>
+          ) : null}
         </header>
-        <div className="mx-auto max-w-4xl px-8 py-10">{children}</div>
+        <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 md:px-8">
+          {children}
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );

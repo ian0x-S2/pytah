@@ -217,7 +217,7 @@ export function PageHeader({
           {badge}
         </div>
       ) : null}
-      <h1 className="font-bold text-3xl text-foreground tracking-tight">
+      <h1 className="font-bold text-2xl text-foreground tracking-tight sm:text-3xl">
         {title}
       </h1>
       <p className="max-w-2xl text-muted-foreground">{description}</p>
@@ -235,7 +235,7 @@ export function SectionHeading({
 }) {
   return (
     <h2
-      className="mt-10 mb-4 font-semibold text-2xl text-foreground tracking-tight first:mt-0"
+      className="mt-6 mb-4 font-semibold text-2xl text-foreground tracking-tight first:mt-0 sm:mt-10"
       id={id}
     >
       {children}
@@ -296,8 +296,8 @@ export function CodeBlock({
   return (
     <div className="group relative my-4">
       {resolvedLabel ? (
-        <div className="rounded-t-lg border border-border border-b-0 bg-muted/50 px-4 py-2">
-          <span className="font-mono text-muted-foreground text-xs">
+        <div className="overflow-x-hidden rounded-t-lg border border-border border-b-0 bg-muted/50 px-4 py-2">
+          <span className="truncate font-mono text-muted-foreground text-xs">
             {resolvedLabel}
           </span>
         </div>
@@ -420,7 +420,7 @@ export function Callout({
 
 export function FileTree({ items }: { items: string[] }) {
   return (
-    <div className="my-4 rounded-lg border border-border bg-muted/30 p-4 font-mono text-sm">
+    <div className="my-4 overflow-x-auto rounded-lg border border-border bg-muted/30 p-4 font-mono text-sm">
       {items.map((item) => (
         <div className="py-0.5 text-foreground/80" key={item}>
           {item}
