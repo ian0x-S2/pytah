@@ -54,7 +54,13 @@ export function BlockTypeToolbarPlugin() {
   const updateCurrentBlockType = useCallback(() => {
     editor.getEditorState().read(() => {
       const blockType = getBlockTypeFromSelection();
-      setCurrentBlockType(blockType ?? "paragraph");
+      const resolvedBlockType = blockType ?? "paragraph";
+
+      setCurrentBlockType((currentBlockType) => {
+        return currentBlockType === resolvedBlockType
+          ? currentBlockType
+          : resolvedBlockType;
+      });
     });
   }, [editor]);
 

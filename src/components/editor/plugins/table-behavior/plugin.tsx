@@ -19,7 +19,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { TableActionMenu } from "./menu";
-import { DEFAULT_SELECTION_COUNTS, readTableMenuContext } from "./selection";
+import {
+  areSelectionCountsEqual,
+  DEFAULT_SELECTION_COUNTS,
+  readTableMenuContext,
+} from "./selection";
 import type {
   ButtonPosition,
   SelectionCounts,
@@ -41,6 +45,7 @@ function TableCellActionMenuContainer({
   const isMenuOpenRef = useRef(false);
   const isMenuClosingRef = useRef(false);
   const activeCellKeyRef = useRef<TableMenuContext["cellKey"] | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
 
   const setMenuOpen = useCallback((open: boolean) => {
     isMenuOpenRef.current = open;
@@ -49,15 +54,32 @@ function TableCellActionMenuContainer({
 
   const applyMenuContext = useCallback((context: TableMenuContext) => {
     activeCellKeyRef.current = context.cellKey;
-    setPosition(context.position);
-    setSelectionCounts(context.selectionCounts);
-    setIsVisible(true);
+    setPosition((currentPosition) => {
+      return currentPosition.left === context.position.left &&
+        currentPosition.top === context.position.top
+        ? currentPosition
+        : context.position;
+    });
+    setSelectionCounts((currentCounts) => {
+      return areSelectionCountsEqual(currentCounts, context.selectionCounts)
+        ? currentCounts
+        : context.selectionCounts;
+    });
+    setIsVisible((currentIsVisible) =>
+      currentIsVisible ? currentIsVisible : true
+    );
   }, []);
 
   const hideMenu = useCallback(() => {
     activeCellKeyRef.current = null;
-    setIsVisible(false);
-    setSelectionCounts(DEFAULT_SELECTION_COUNTS);
+    setIsVisible((currentIsVisible) =>
+      currentIsVisible ? false : currentIsVisible
+    );
+    setSelectionCounts((currentCounts) => {
+      return areSelectionCountsEqual(currentCounts, DEFAULT_SELECTION_COUNTS)
+        ? currentCounts
+        : DEFAULT_SELECTION_COUNTS;
+    });
   }, []);
 
   const closeMenuAtCurrentPosition = useCallback(() => {
@@ -115,21 +137,32 @@ function TableCellActionMenuContainer({
     hideMenu,
   ]);
 
+  const scheduleMenuUpdate = useCallback(() => {
+    if (animationFrameRef.current !== null) {
+      return;
+    }
+
+    animationFrameRef.current = window.requestAnimationFrame(() => {
+      animationFrameRef.current = null;
+      updateMenu();
+    });
+  }, [updateMenu]);
+
   useEffect(() => {
     const onPointerUp = () => {
-      window.setTimeout(updateMenu, 0);
+      window.setTimeout(scheduleMenuUpdate, 0);
     };
 
-    updateMenu();
+    scheduleMenuUpdate();
 
     return mergeRegister(
       editor.registerUpdateListener(() => {
-        updateMenu();
+        scheduleMenuUpdate();
       }),
       editor.registerCommand(
         SELECTION_CHANGE_COMMAND,
         () => {
-          updateMenu();
+          scheduleMenuUpdate();
           return false;
         },
         COMMAND_PRIORITY_CRITICAL
@@ -139,17 +172,25 @@ function TableCellActionMenuContainer({
         rootElement?.addEventListener("pointerup", onPointerUp);
       })
     );
-  }, [editor, updateMenu]);
+  }, [editor, scheduleMenuUpdate]);
 
   useEffect(() => {
-    window.addEventListener("resize", updateMenu);
-    window.addEventListener("scroll", updateMenu, true);
+    window.addEventListener("resize", scheduleMenuUpdate);
+    window.addEventListener("scroll", scheduleMenuUpdate, true);
 
     return () => {
-      window.removeEventListener("resize", updateMenu);
-      window.removeEventListener("scroll", updateMenu, true);
+      window.removeEventListener("resize", scheduleMenuUpdate);
+      window.removeEventListener("scroll", scheduleMenuUpdate, true);
     };
-  }, [updateMenu]);
+  }, [scheduleMenuUpdate]);
+
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current !== null) {
+        window.cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!isMenuOpen) {

@@ -25,7 +25,11 @@ import { LINK_PLACEHOLDER_URL } from "../link-behavior/utils";
 import { applyBgColor, applyTextColor, toggleToolbarFormat } from "./actions";
 import { DEFAULT_FORMAT_STATE, EMPTY_TOOLBAR_POSITION } from "./constants";
 import { OPEN_FLOATING_LINK_EDITOR_COMMAND } from "./link-command";
-import { readFloatingToolbarState } from "./selection";
+import {
+  areFloatingToolbarFormatsEqual,
+  areFloatingToolbarPositionsEqual,
+  readFloatingToolbarState,
+} from "./selection";
 import type {
   FloatingToolbarFormatState,
   FloatingToolbarPosition,
@@ -50,6 +54,7 @@ export function FloatingToolbarPlugin() {
   );
   const [formats, setFormats] =
     useState<FloatingToolbarFormatState>(DEFAULT_FORMAT_STATE);
+  const animationFrameRef = useRef<number | null>(null);
 
   /*
    * When a color picker popover is open we skip visibility/position updates so
@@ -60,33 +65,70 @@ export function FloatingToolbarPlugin() {
   const isColorPickerOpenRef = useRef(false);
 
   const updateToolbar = useCallback(() => {
-    const toolbarState = readFloatingToolbarState();
+    editor.getEditorState().read(() => {
+      const toolbarState = readFloatingToolbarState();
 
-    setFormats(toolbarState.formats);
+      setFormats((currentFormats) => {
+        return areFloatingToolbarFormatsEqual(
+          currentFormats,
+          toolbarState.formats
+        )
+          ? currentFormats
+          : toolbarState.formats;
+      });
 
-    if (!isColorPickerOpenRef.current) {
-      setIsVisible(toolbarState.isVisible);
-      setPosition(toolbarState.position);
+      if (!isColorPickerOpenRef.current) {
+        setIsVisible((currentIsVisible) => {
+          return currentIsVisible === toolbarState.isVisible
+            ? currentIsVisible
+            : toolbarState.isVisible;
+        });
+        setPosition((currentPosition) => {
+          return areFloatingToolbarPositionsEqual(
+            currentPosition,
+            toolbarState.position
+          )
+            ? currentPosition
+            : toolbarState.position;
+        });
+      }
+    });
+  }, [editor]);
+
+  const scheduleToolbarUpdate = useCallback(() => {
+    if (animationFrameRef.current !== null) {
+      return;
     }
-  }, []);
+
+    animationFrameRef.current = window.requestAnimationFrame(() => {
+      animationFrameRef.current = null;
+      updateToolbar();
+    });
+  }, [updateToolbar]);
 
   useEffect(() => {
     return mergeRegister(
       editor.registerCommand(
         SELECTION_CHANGE_COMMAND,
         () => {
-          updateToolbar();
+          scheduleToolbarUpdate();
           return false;
         },
         COMMAND_PRIORITY_LOW
       ),
-      editor.registerUpdateListener(({ editorState }) => {
-        editorState.read(() => {
-          updateToolbar();
-        });
+      editor.registerUpdateListener(() => {
+        scheduleToolbarUpdate();
       })
     );
-  }, [editor, updateToolbar]);
+  }, [editor, scheduleToolbarUpdate]);
+
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current !== null) {
+        window.cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
 
   const handleLinkToggle = useCallback(() => {
     if (formats.isLink) {

@@ -15,6 +15,32 @@ import type {
   FloatingToolbarState,
 } from "./types";
 
+export const areFloatingToolbarFormatsEqual = (
+  left: FloatingToolbarFormatState,
+  right: FloatingToolbarFormatState
+) => {
+  return (
+    left.bgColor === right.bgColor &&
+    left.isBold === right.isBold &&
+    left.isCode === right.isCode &&
+    left.isHighlight === right.isHighlight &&
+    left.isItalic === right.isItalic &&
+    left.isLink === right.isLink &&
+    left.isStrikethrough === right.isStrikethrough &&
+    left.isSubscript === right.isSubscript &&
+    left.isSuperscript === right.isSuperscript &&
+    left.isUnderline === right.isUnderline &&
+    left.textColor === right.textColor
+  );
+};
+
+export const areFloatingToolbarPositionsEqual = (
+  left: FloatingToolbarPosition,
+  right: FloatingToolbarPosition
+) => {
+  return left.left === right.left && left.top === right.top;
+};
+
 export const getFloatingToolbarSelectedNode = (selection: RangeSelection) => {
   const anchorNode = selection.anchor.getNode();
   const focusNode = selection.focus.getNode();

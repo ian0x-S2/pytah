@@ -92,6 +92,7 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
   >(getFirstCommandId(availableCommands));
   const [youTubeUrl, setYouTubeUrl] = useState("");
   const commandListRef = useRef<HTMLDivElement | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
 
   const filteredCommands = useMemo(() => {
     return filterSlashCommands(availableCommands, query);
@@ -112,14 +113,18 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
 
     if (!isCollapsedRangeSelection) {
       setIsOpen(false);
-      setIsLayoutPresetOpen(false);
+      setIsLayoutPresetOpen((currentOpen) =>
+        currentOpen ? false : currentOpen
+      );
       return;
     }
 
     const node = selection.anchor.getNode();
     if (!$isTextNode(node)) {
       setIsOpen(false);
-      setIsLayoutPresetOpen(false);
+      setIsLayoutPresetOpen((currentOpen) =>
+        currentOpen ? false : currentOpen
+      );
       return;
     }
 
@@ -130,7 +135,9 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
 
     if (nextQuery === null) {
       setIsOpen(false);
-      setIsLayoutPresetOpen(false);
+      setIsLayoutPresetOpen((currentOpen) =>
+        currentOpen ? false : currentOpen
+      );
       return;
     }
 
@@ -139,9 +146,24 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
       return;
     }
 
-    setQuery(nextQuery);
-    setIsOpen(true);
+    setQuery((currentQuery) =>
+      currentQuery === nextQuery ? currentQuery : nextQuery
+    );
+    setIsOpen((currentOpen) => (currentOpen ? currentOpen : true));
   }, [editor]);
+
+  const scheduleSlashMenuUpdate = useCallback(() => {
+    if (animationFrameRef.current !== null) {
+      return;
+    }
+
+    animationFrameRef.current = window.requestAnimationFrame(() => {
+      animationFrameRef.current = null;
+      editor.getEditorState().read(() => {
+        updateSlashMenu();
+      });
+    });
+  }, [editor, updateSlashMenu]);
 
   const resetImageDialog = useCallback(() => {
     setImageAltText("");
@@ -377,18 +399,24 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
       return;
     }
 
-    return editor.registerUpdateListener(({ editorState }) => {
-      editorState.read(() => {
-        updateSlashMenu();
-      });
+    return editor.registerUpdateListener(() => {
+      scheduleSlashMenuUpdate();
     });
   }, [
     editor,
     isImageDialogOpen,
     isLayoutPresetOpen,
     isYouTubeDialogOpen,
-    updateSlashMenu,
+    scheduleSlashMenuUpdate,
   ]);
+
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current !== null) {
+        window.cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!isOpen) {

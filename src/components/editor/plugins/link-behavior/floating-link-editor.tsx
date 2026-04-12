@@ -16,7 +16,10 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { OPEN_FLOATING_LINK_EDITOR_COMMAND } from "../floating-toolbar/link-command";
-import { getFloatingToolbarSelectedNode } from "../floating-toolbar/selection";
+import {
+  areFloatingToolbarPositionsEqual,
+  getFloatingToolbarSelectedNode,
+} from "../floating-toolbar/selection";
 import { FloatingLinkEditorPanel } from "./floating-link-editor-panel";
 import {
   EMPTY_POSITION,
@@ -38,38 +41,70 @@ export function FloatingLinkEditorPlugin() {
   const [editedLinkUrl, setEditedLinkUrl] = useState(LINK_PLACEHOLDER_URL);
   const [position, setPosition] =
     useState<FloatingLinkEditorPosition>(EMPTY_POSITION);
+  const animationFrameRef = useRef<number | null>(null);
 
   const updateLinkEditor = useCallback(() => {
     const nextIsLink = selectionContainsLink();
     const nextLinkUrl = nextIsLink ? readSelectedLinkUrl() : "";
     const nextPosition = getLinkEditorPosition(editor);
 
-    setIsLink(nextIsLink);
-    setLinkUrl(nextLinkUrl);
+    setIsLink((currentIsLink) =>
+      currentIsLink === nextIsLink ? currentIsLink : nextIsLink
+    );
+    setLinkUrl((currentLinkUrl) =>
+      currentLinkUrl === nextLinkUrl ? currentLinkUrl : nextLinkUrl
+    );
 
     if (!isLinkEditMode) {
-      setEditedLinkUrl(nextLinkUrl || LINK_PLACEHOLDER_URL);
+      const nextEditedLinkUrl = nextLinkUrl || LINK_PLACEHOLDER_URL;
+      setEditedLinkUrl((currentEditedLinkUrl) =>
+        currentEditedLinkUrl === nextEditedLinkUrl
+          ? currentEditedLinkUrl
+          : nextEditedLinkUrl
+      );
     }
 
     if (nextPosition) {
-      setPosition(nextPosition);
+      setPosition((currentPosition) => {
+        return areFloatingToolbarPositionsEqual(currentPosition, nextPosition)
+          ? currentPosition
+          : nextPosition;
+      });
       return;
     }
 
-    setIsLinkEditMode(false);
+    setPosition((currentPosition) => {
+      return areFloatingToolbarPositionsEqual(currentPosition, EMPTY_POSITION)
+        ? currentPosition
+        : EMPTY_POSITION;
+    });
+    setIsLinkEditMode((currentIsLinkEditMode) =>
+      currentIsLinkEditMode ? false : currentIsLinkEditMode
+    );
   }, [editor, isLinkEditMode]);
+
+  const scheduleLinkEditorUpdate = useCallback(() => {
+    if (animationFrameRef.current !== null) {
+      return;
+    }
+
+    animationFrameRef.current = window.requestAnimationFrame(() => {
+      animationFrameRef.current = null;
+      editor.getEditorState().read(() => {
+        updateLinkEditor();
+      });
+    });
+  }, [editor, updateLinkEditor]);
 
   useEffect(() => {
     return mergeRegister(
-      editor.registerUpdateListener(({ editorState }) => {
-        editorState.read(() => {
-          updateLinkEditor();
-        });
+      editor.registerUpdateListener(() => {
+        scheduleLinkEditorUpdate();
       }),
       editor.registerCommand(
         SELECTION_CHANGE_COMMAND,
         () => {
-          updateLinkEditor();
+          scheduleLinkEditorUpdate();
           return false;
         },
         COMMAND_PRIORITY_LOW
@@ -79,7 +114,7 @@ export function FloatingLinkEditorPlugin() {
         () => {
           setIsLinkEditMode(true);
           setEditedLinkUrl(readSelectedLinkUrl() || LINK_PLACEHOLDER_URL);
-          updateLinkEditor();
+          scheduleLinkEditorUpdate();
           return true;
         },
         COMMAND_PRIORITY_HIGH
@@ -139,13 +174,11 @@ export function FloatingLinkEditorPlugin() {
         COMMAND_PRIORITY_LOW
       )
     );
-  }, [editor, isLink, updateLinkEditor]);
+  }, [editor, isLink, scheduleLinkEditorUpdate]);
 
   useEffect(() => {
-    editor.getEditorState().read(() => {
-      updateLinkEditor();
-    });
-  }, [editor, updateLinkEditor]);
+    scheduleLinkEditorUpdate();
+  }, [scheduleLinkEditorUpdate]);
 
   useEffect(() => {
     if (isLinkEditMode) {
@@ -156,9 +189,7 @@ export function FloatingLinkEditorPlugin() {
 
   useEffect(() => {
     const handleWindowChange = () => {
-      editor.getEditorState().read(() => {
-        updateLinkEditor();
-      });
+      scheduleLinkEditorUpdate();
     };
 
     window.addEventListener("resize", handleWindowChange);
@@ -168,7 +199,15 @@ export function FloatingLinkEditorPlugin() {
       window.removeEventListener("resize", handleWindowChange);
       window.removeEventListener("scroll", handleWindowChange, true);
     };
-  }, [editor, updateLinkEditor]);
+  }, [scheduleLinkEditorUpdate]);
+
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current !== null) {
+        window.cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const floatingElement = editorRef.current;

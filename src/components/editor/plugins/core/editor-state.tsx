@@ -9,19 +9,22 @@ import {
   createEmptyEditorState,
   loadMarkdownContent,
   readEditorSnapshot,
+  readEditorTextContent,
   replaceEditorHtmlContent,
 } from "../../core/utils";
 
 export interface EditorStatePluginProps {
   initialHtml?: string;
   initialMarkdown?: string;
-  onChange?: (snapshot: EditorSnapshot, editor: LexicalEditor) => void;
+  onChange?: (textContent: string, editor: LexicalEditor) => void;
+  onSnapshotReady?: (snapshot: EditorSnapshot, editor: LexicalEditor) => void;
 }
 
 export function EditorStatePlugin({
   initialHtml,
   initialMarkdown,
   onChange,
+  onSnapshotReady,
 }: EditorStatePluginProps) {
   const [editor] = useLexicalComposerContext();
 
@@ -43,11 +46,8 @@ export function EditorStatePlugin({
     <OnChangePlugin
       ignoreSelectionChange
       onChange={(_, activeEditor) => {
-        if (!onChange) {
-          return;
-        }
-
-        onChange(readEditorSnapshot(activeEditor), activeEditor);
+        onChange?.(readEditorTextContent(activeEditor), activeEditor);
+        onSnapshotReady?.(readEditorSnapshot(activeEditor), activeEditor);
       }}
     />
   );

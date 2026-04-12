@@ -41,6 +41,16 @@ export const readEditorSnapshot = (editor: LexicalEditor): EditorSnapshot => {
   return snapshot;
 };
 
+export const readEditorTextContent = (editor: LexicalEditor): string => {
+  let textContent = "";
+
+  editor.getEditorState().read(() => {
+    textContent = $getRoot().getTextContent();
+  });
+
+  return textContent;
+};
+
 export const loadMarkdownContent = (
   editor: LexicalEditor,
   markdown: string

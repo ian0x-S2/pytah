@@ -70,7 +70,10 @@ import {
 } from "../floating-toolbar/actions";
 import { DEFAULT_FORMAT_STATE } from "../floating-toolbar/constants";
 import { OPEN_FLOATING_LINK_EDITOR_COMMAND } from "../floating-toolbar/link-command";
-import { readInlineFormats } from "../floating-toolbar/selection";
+import {
+  areFloatingToolbarFormatsEqual,
+  readInlineFormats,
+} from "../floating-toolbar/selection";
 import type { FloatingToolbarFormatState } from "../floating-toolbar/types";
 import { LINK_PLACEHOLDER_URL } from "../link-behavior/utils";
 import { DEFAULT_INSERT_TABLE_PAYLOAD } from "../table-behavior/constants";
@@ -145,8 +148,20 @@ export function FullToolbarPlugin({ className }: FullToolbarPluginProps) {
   const update = useCallback(() => {
     editor.getEditorState().read(() => {
       const nextBlockType = getBlockTypeFromSelection();
-      setBlockType(nextBlockType ?? "paragraph");
-      setFormats(readInlineFormats());
+      const resolvedBlockType = nextBlockType ?? "paragraph";
+
+      setBlockType((currentBlockType) => {
+        return currentBlockType === resolvedBlockType
+          ? currentBlockType
+          : resolvedBlockType;
+      });
+
+      const nextFormats = readInlineFormats();
+      setFormats((currentFormats) => {
+        return areFloatingToolbarFormatsEqual(currentFormats, nextFormats)
+          ? currentFormats
+          : nextFormats;
+      });
     });
   }, [editor]);
 

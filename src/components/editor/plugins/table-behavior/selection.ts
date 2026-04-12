@@ -19,6 +19,13 @@ export const DEFAULT_SELECTION_COUNTS: SelectionCounts = {
   rows: 1,
 };
 
+export const areSelectionCountsEqual = (
+  left: SelectionCounts,
+  right: SelectionCounts
+) => {
+  return left.columns === right.columns && left.rows === right.rows;
+};
+
 export const EMPTY_TABLE_SELECTION_STATE: TableSelectionState = {
   columnCount: 0,
   columnIndex: -1,

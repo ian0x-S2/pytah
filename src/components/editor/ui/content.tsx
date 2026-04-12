@@ -86,7 +86,8 @@ interface EditorContentProps {
   initialHtml?: string;
   initialMarkdown?: string;
   minimal?: boolean;
-  onSnapshotChange: (snapshot: EditorSnapshot, editor: LexicalEditor) => void;
+  onSnapshotChange: (textContent: string, editor: LexicalEditor) => void;
+  onSnapshotReady?: (snapshot: EditorSnapshot, editor: LexicalEditor) => void;
   placeholder: string;
   pluginSlots?: EditorPluginSlots;
   showFooter: boolean;
@@ -101,7 +102,8 @@ interface DefaultEditorPluginsProps {
   features: ResolvedEditorFeatureFlags;
   initialHtml?: string;
   initialMarkdown?: string;
-  onSnapshotChange: (snapshot: EditorSnapshot, editor: LexicalEditor) => void;
+  onSnapshotChange: (textContent: string, editor: LexicalEditor) => void;
+  onSnapshotReady?: (snapshot: EditorSnapshot, editor: LexicalEditor) => void;
 }
 
 function DefaultEditorPlugins({
@@ -111,6 +113,7 @@ function DefaultEditorPlugins({
   initialHtml,
   initialMarkdown,
   onSnapshotChange,
+  onSnapshotReady,
 }: DefaultEditorPluginsProps) {
   return (
     <>
@@ -134,6 +137,7 @@ function DefaultEditorPlugins({
         initialHtml={initialHtml}
         initialMarkdown={initialMarkdown}
         onChange={onSnapshotChange}
+        onSnapshotReady={onSnapshotReady}
       />
       {features.seedContent ? (
         <SeedContentPlugin editor={editorInstance} />
@@ -176,6 +180,7 @@ export function EditorContent({
   initialMarkdown,
   minimal = false,
   onSnapshotChange,
+  onSnapshotReady,
   placeholder,
   pluginSlots,
   showFooter,
@@ -228,6 +233,7 @@ export function EditorContent({
         initialHtml={initialHtml}
         initialMarkdown={initialMarkdown}
         onSnapshotChange={onSnapshotChange}
+        onSnapshotReady={onSnapshotReady}
       />
       {editable ? (
         <EditableEditorPlugins features={features} pluginSlots={pluginSlots} />

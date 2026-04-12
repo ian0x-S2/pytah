@@ -3,7 +3,7 @@
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import type { LexicalEditor } from "lexical";
 import type { ReactNode } from "react";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
   copyEditorOutput,
@@ -115,7 +115,8 @@ export function Editor({
   slots,
   toolbar = false,
 }: EditorProps) {
-  const [snapshot, setSnapshot] = useState<EditorSnapshot>({
+  const [textContent, setTextContent] = useState("");
+  const [serializedSnapshot, setSerializedSnapshot] = useState<EditorSnapshot>({
     html: "",
     markdown: "",
     text: "",
@@ -133,22 +134,47 @@ export function Editor({
     nodes: extraNodes,
   });
 
+  const snapshot = useMemo<EditorSnapshot>(() => {
+    return {
+      ...serializedSnapshot,
+      text: textContent,
+    };
+  }, [serializedSnapshot, textContent]);
+
   const handleSnapshotChange = useCallback(
+    (nextText: string, editor: LexicalEditor) => {
+      setTextContent(nextText);
+      setEditorInstance((currentEditor) => currentEditor ?? editor);
+    },
+    []
+  );
+
+  const handleSnapshotReady = useCallback(
     (nextSnapshot: EditorSnapshot, editor: LexicalEditor) => {
-      setSnapshot(nextSnapshot);
-      setEditorInstance(editor);
+      setSerializedSnapshot((currentSnapshot) => {
+        if (
+          currentSnapshot.html === nextSnapshot.html &&
+          currentSnapshot.markdown === nextSnapshot.markdown &&
+          currentSnapshot.text === nextSnapshot.text
+        ) {
+          return currentSnapshot;
+        }
+
+        return nextSnapshot;
+      });
+      setEditorInstance((currentEditor) => currentEditor ?? editor);
       onChange?.(nextSnapshot, editor);
     },
     [onChange]
   );
 
   const handleCopyMarkdown = useCallback(async () => {
-    await copyEditorOutput(snapshot.markdown);
-  }, [snapshot.markdown]);
+    await copyEditorOutput(serializedSnapshot.markdown);
+  }, [serializedSnapshot.markdown]);
 
   const handleCopyHtml = useCallback(async () => {
-    await copyEditorOutput(snapshot.html);
-  }, [snapshot.html]);
+    await copyEditorOutput(serializedSnapshot.html);
+  }, [serializedSnapshot.html]);
 
   const handleReset = useCallback(() => {
     if (!editorInstance) {
@@ -156,8 +182,11 @@ export function Editor({
     }
 
     resetEditorContent(editorInstance);
-    setSnapshot(readEditorSnapshot(editorInstance));
-  }, [editorInstance]);
+    const nextSnapshot = readEditorSnapshot(editorInstance);
+    setTextContent(nextSnapshot.text);
+    setSerializedSnapshot(nextSnapshot);
+    onChange?.(nextSnapshot, editorInstance);
+  }, [editorInstance, onChange]);
 
   const handleLoadHtmlExample = useCallback(() => {
     if (!editorInstance) {
@@ -165,8 +194,11 @@ export function Editor({
     }
 
     loadEditorHtmlExample(editorInstance);
-    setSnapshot(readEditorSnapshot(editorInstance));
-  }, [editorInstance]);
+    const nextSnapshot = readEditorSnapshot(editorInstance);
+    setTextContent(nextSnapshot.text);
+    setSerializedSnapshot(nextSnapshot);
+    onChange?.(nextSnapshot, editorInstance);
+  }, [editorInstance, onChange]);
 
   const handleLoadMarkdownExample = useCallback(() => {
     if (!editorInstance) {
@@ -174,8 +206,11 @@ export function Editor({
     }
 
     loadEditorMarkdownExample(editorInstance);
-    setSnapshot(readEditorSnapshot(editorInstance));
-  }, [editorInstance]);
+    const nextSnapshot = readEditorSnapshot(editorInstance);
+    setTextContent(nextSnapshot.text);
+    setSerializedSnapshot(nextSnapshot);
+    onChange?.(nextSnapshot, editorInstance);
+  }, [editorInstance, onChange]);
 
   const actionBarControls: EditorActionBarControls = {
     onLoadHtml: handleLoadHtmlExample,
@@ -194,6 +229,7 @@ export function Editor({
       initialMarkdown={initialMarkdown}
       minimal={minimal}
       onSnapshotChange={handleSnapshotChange}
+      onSnapshotReady={handleSnapshotReady}
       placeholder={placeholder}
       pluginSlots={pluginSlots}
       showFooter={!minimal && resolvedChrome.footer}
