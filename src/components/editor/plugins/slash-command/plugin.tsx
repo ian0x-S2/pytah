@@ -14,7 +14,7 @@ import {
   KEY_ESCAPE_COMMAND,
 } from "lexical";
 import type { ChangeEvent } from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -44,7 +44,11 @@ import { createSlashMenuAnchor, getSelectionRectangle } from "./anchor";
 import { getEnabledSlashCommands } from "./commands";
 import { SLASH_COMMAND_EXECUTORS } from "./executors";
 import { SlashLayoutDialog } from "./layout-dialog";
-import type { SlashCommandId } from "./types";
+import type {
+  SlashCommand,
+  SlashCommandId,
+  SlashCommandSelection,
+} from "./types";
 import {
   filterSlashCommands,
   getFirstCommandId,
@@ -64,39 +68,145 @@ interface SlashCommandPluginProps {
   features: ResolvedEditorFeatureFlags;
 }
 
+interface SlashCommandState {
+  imageAltText: string;
+  imageFileName: string;
+  imageFileSrc: string | null;
+  imageUrl: string;
+  isImageDialogOpen: boolean;
+  isLayoutPresetOpen: boolean;
+  isOpen: boolean;
+  isYouTubeDialogOpen: boolean;
+  pendingImageTargetKey: string | null;
+  pendingLayoutTargetKey: string | null;
+  pendingYouTubeTargetKey: string | null;
+  query: string;
+  rawSelectedCommandId: SlashCommandSelection;
+  youTubeUrl: string;
+}
+
+type SlashCommandAction =
+  | { type: "patch"; payload: Partial<SlashCommandState> }
+  | {
+      type: "move-selected-command";
+      payload: {
+        commands: SlashCommand[];
+        direction: "down" | "up";
+      };
+    }
+  | {
+      type: "set-image-file";
+      payload: {
+        fileName: string;
+        src: string;
+      };
+    };
+
+const createInitialSlashCommandState = (
+  rawSelectedCommandId: SlashCommandSelection
+): SlashCommandState => ({
+  imageAltText: "",
+  imageFileName: "",
+  imageFileSrc: null,
+  imageUrl: "",
+  isImageDialogOpen: false,
+  isLayoutPresetOpen: false,
+  isOpen: false,
+  isYouTubeDialogOpen: false,
+  pendingImageTargetKey: null,
+  pendingLayoutTargetKey: null,
+  pendingYouTubeTargetKey: null,
+  query: "",
+  rawSelectedCommandId,
+  youTubeUrl: "",
+});
+
+const applySlashCommandPatch = (
+  state: SlashCommandState,
+  patch: Partial<SlashCommandState>
+): SlashCommandState => {
+  for (const key of Object.keys(patch) as Array<keyof SlashCommandState>) {
+    if (state[key] !== patch[key]) {
+      return { ...state, ...patch };
+    }
+  }
+
+  return state;
+};
+
+const slashCommandReducer = (
+  state: SlashCommandState,
+  action: SlashCommandAction
+): SlashCommandState => {
+  switch (action.type) {
+    case "patch": {
+      return applySlashCommandPatch(state, action.payload);
+    }
+    case "move-selected-command": {
+      return applySlashCommandPatch(state, {
+        rawSelectedCommandId: getNeighborCommandId(
+          action.payload.commands,
+          state.rawSelectedCommandId,
+          action.payload.direction
+        ),
+      });
+    }
+    case "set-image-file": {
+      return applySlashCommandPatch(state, {
+        imageAltText: state.imageAltText || action.payload.fileName,
+        imageFileName: action.payload.fileName,
+        imageFileSrc: action.payload.src,
+        imageUrl: "",
+      });
+    }
+    default: {
+      return state;
+    }
+  }
+};
+
 export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
   const [editor] = useLexicalComposerContext();
   const availableCommands = useMemo(() => {
     return getEnabledSlashCommands(features);
   }, [features]);
-  const [isOpen, setIsOpen] = useState(false);
-  const [imageAltText, setImageAltText] = useState("");
-  const [imageFileName, setImageFileName] = useState("");
-  const [imageFileSrc, setImageFileSrc] = useState<string | null>(null);
-  const [imageUrl, setImageUrl] = useState("");
-  const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
-  const [isLayoutPresetOpen, setIsLayoutPresetOpen] = useState(false);
-  const [isYouTubeDialogOpen, setIsYouTubeDialogOpen] = useState(false);
-  const [pendingImageTargetKey, setPendingImageTargetKey] = useState<
-    string | null
-  >(null);
-  const [pendingLayoutTargetKey, setPendingLayoutTargetKey] = useState<
-    string | null
-  >(null);
-  const [pendingYouTubeTargetKey, setPendingYouTubeTargetKey] = useState<
-    string | null
-  >(null);
-  const [query, setQuery] = useState("");
-  const [selectedCommandId, setSelectedCommandId] = useState<
-    SlashCommandId | ""
-  >(getFirstCommandId(availableCommands));
-  const [youTubeUrl, setYouTubeUrl] = useState("");
+  const [state, dispatch] = useReducer(
+    slashCommandReducer,
+    getFirstCommandId(availableCommands),
+    createInitialSlashCommandState
+  );
+  const {
+    imageAltText,
+    imageFileName,
+    imageFileSrc,
+    imageUrl,
+    isImageDialogOpen,
+    isLayoutPresetOpen,
+    isOpen,
+    isYouTubeDialogOpen,
+    pendingImageTargetKey,
+    pendingLayoutTargetKey,
+    pendingYouTubeTargetKey,
+    query,
+    rawSelectedCommandId,
+    youTubeUrl,
+  } = state;
   const commandListRef = useRef<HTMLDivElement | null>(null);
   const animationFrameRef = useRef<number | null>(null);
 
   const filteredCommands = useMemo(() => {
     return filterSlashCommands(availableCommands, query);
   }, [availableCommands, query]);
+
+  const selectedCommandId = useMemo<SlashCommandId | "">(() => {
+    if (filteredCommands.length === 0) {
+      return "";
+    }
+
+    return hasSelectedCommand(filteredCommands, rawSelectedCommandId)
+      ? rawSelectedCommandId
+      : getFirstCommandId(filteredCommands);
+  }, [filteredCommands, rawSelectedCommandId]);
 
   const selectedIndex = useMemo(() => {
     return getSelectedCommandIndex(filteredCommands, selectedCommandId);
@@ -112,19 +222,19 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
       $isRangeSelection(selection) && selection.isCollapsed();
 
     if (!isCollapsedRangeSelection) {
-      setIsOpen(false);
-      setIsLayoutPresetOpen((currentOpen) =>
-        currentOpen ? false : currentOpen
-      );
+      dispatch({
+        type: "patch",
+        payload: { isLayoutPresetOpen: false, isOpen: false },
+      });
       return;
     }
 
     const node = selection.anchor.getNode();
     if (!$isTextNode(node)) {
-      setIsOpen(false);
-      setIsLayoutPresetOpen((currentOpen) =>
-        currentOpen ? false : currentOpen
-      );
+      dispatch({
+        type: "patch",
+        payload: { isLayoutPresetOpen: false, isOpen: false },
+      });
       return;
     }
 
@@ -134,22 +244,22 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
     const nextQuery = getSlashQueryMatch(textUpToCursor);
 
     if (nextQuery === null) {
-      setIsOpen(false);
-      setIsLayoutPresetOpen((currentOpen) =>
-        currentOpen ? false : currentOpen
-      );
+      dispatch({
+        type: "patch",
+        payload: { isLayoutPresetOpen: false, isOpen: false },
+      });
       return;
     }
 
     if (!getSelectionRectangle(editor)) {
-      setIsOpen(false);
+      dispatch({ type: "patch", payload: { isOpen: false } });
       return;
     }
 
-    setQuery((currentQuery) =>
-      currentQuery === nextQuery ? currentQuery : nextQuery
-    );
-    setIsOpen((currentOpen) => (currentOpen ? currentOpen : true));
+    dispatch({
+      type: "patch",
+      payload: { isOpen: true, query: nextQuery },
+    });
   }, [editor]);
 
   const scheduleSlashMenuUpdate = useCallback(() => {
@@ -166,18 +276,28 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
   }, [editor, updateSlashMenu]);
 
   const resetImageDialog = useCallback(() => {
-    setImageAltText("");
-    setImageFileName("");
-    setImageFileSrc(null);
-    setImageUrl("");
-    setPendingImageTargetKey(null);
-    setIsImageDialogOpen(false);
+    dispatch({
+      type: "patch",
+      payload: {
+        imageAltText: "",
+        imageFileName: "",
+        imageFileSrc: null,
+        imageUrl: "",
+        isImageDialogOpen: false,
+        pendingImageTargetKey: null,
+      },
+    });
   }, []);
 
   const resetYouTubeDialog = useCallback(() => {
-    setYouTubeUrl("");
-    setPendingYouTubeTargetKey(null);
-    setIsYouTubeDialogOpen(false);
+    dispatch({
+      type: "patch",
+      payload: {
+        isYouTubeDialogOpen: false,
+        pendingYouTubeTargetKey: null,
+        youTubeUrl: "",
+      },
+    });
   }, []);
 
   const handleImageFileChange = useCallback(
@@ -186,21 +306,25 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
       event.target.value = "";
 
       if (!file) {
-        setImageFileName("");
-        setImageFileSrc(null);
+        dispatch({
+          type: "patch",
+          payload: { imageFileName: "", imageFileSrc: null },
+        });
         return;
       }
 
       readFileAsDataUrl(file)
         .then((src) => {
-          setImageAltText((currentAltText) => currentAltText || file.name);
-          setImageFileName(file.name);
-          setImageFileSrc(src);
-          setImageUrl("");
+          dispatch({
+            type: "set-image-file",
+            payload: { fileName: file.name, src },
+          });
         })
         .catch(() => {
-          setImageFileName("");
-          setImageFileSrc(null);
+          dispatch({
+            type: "patch",
+            payload: { imageFileName: "", imageFileSrc: null },
+          });
         });
     },
     []
@@ -213,6 +337,8 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
         commandId === "image" ||
         commandId === "youtube"
       ) {
+        let targetNodeKey: string | null = null;
+
         editor.getEditorState().read(() => {
           const selection = $getSelection();
           if (!$isRangeSelection(selection)) {
@@ -224,30 +350,37 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
             return;
           }
 
-          const targetNodeKey = node.getTopLevelElementOrThrow().getKey();
-
-          if (commandId === "columns") {
-            setPendingLayoutTargetKey(targetNodeKey);
-            return;
-          }
-
-          if (commandId === "youtube") {
-            setPendingYouTubeTargetKey(targetNodeKey);
-            return;
-          }
-
-          setPendingImageTargetKey(targetNodeKey);
+          targetNodeKey = node.getTopLevelElementOrThrow().getKey();
         });
 
         if (commandId === "columns") {
-          setIsLayoutPresetOpen(true);
+          dispatch({
+            type: "patch",
+            payload: {
+              isLayoutPresetOpen: true,
+              isOpen: false,
+              pendingLayoutTargetKey: targetNodeKey,
+            },
+          });
         } else if (commandId === "youtube") {
-          setIsYouTubeDialogOpen(true);
+          dispatch({
+            type: "patch",
+            payload: {
+              isOpen: false,
+              isYouTubeDialogOpen: true,
+              pendingYouTubeTargetKey: targetNodeKey,
+            },
+          });
         } else {
-          setIsImageDialogOpen(true);
+          dispatch({
+            type: "patch",
+            payload: {
+              isImageDialogOpen: true,
+              isOpen: false,
+              pendingImageTargetKey: targetNodeKey,
+            },
+          });
         }
-
-        setIsOpen(false);
         return;
       }
 
@@ -268,7 +401,7 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
         SLASH_COMMAND_EXECUTORS[commandId](element);
       });
 
-      setIsOpen(false);
+      dispatch({ type: "patch", payload: { isOpen: false } });
     },
     [editor]
   );
@@ -284,9 +417,14 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
         templateColumns,
       });
 
-      setPendingLayoutTargetKey(null);
-      setIsLayoutPresetOpen(false);
-      setIsOpen(false);
+      dispatch({
+        type: "patch",
+        payload: {
+          isLayoutPresetOpen: false,
+          isOpen: false,
+          pendingLayoutTargetKey: null,
+        },
+      });
     },
     [editor, pendingLayoutTargetKey]
   );
@@ -303,16 +441,19 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
       targetNodeKey: pendingImageTargetKey,
     });
 
-    resetImageDialog();
-    setIsOpen(false);
-  }, [
-    editor,
-    imageAltText,
-    imageFileSrc,
-    imageUrl,
-    pendingImageTargetKey,
-    resetImageDialog,
-  ]);
+    dispatch({
+      type: "patch",
+      payload: {
+        imageAltText: "",
+        imageFileName: "",
+        imageFileSrc: null,
+        imageUrl: "",
+        isImageDialogOpen: false,
+        isOpen: false,
+        pendingImageTargetKey: null,
+      },
+    });
+  }, [editor, imageAltText, imageFileSrc, imageUrl, pendingImageTargetKey]);
 
   const submitYouTube = useCallback(() => {
     if (!pendingYouTubeTargetKey) {
@@ -329,39 +470,16 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
       videoId,
     });
 
-    resetYouTubeDialog();
-    setIsOpen(false);
-  }, [editor, pendingYouTubeTargetKey, resetYouTubeDialog, youTubeUrl]);
-
-  useEffect(() => {
-    if (filteredCommands.length === 0) {
-      setSelectedCommandId("");
-      return;
-    }
-
-    if (!hasSelectedCommand(filteredCommands, selectedCommandId)) {
-      setSelectedCommandId(getFirstCommandId(filteredCommands));
-    }
-  }, [filteredCommands, selectedCommandId]);
-
-  useEffect(() => {
-    if (
-      !isOpen ||
-      isImageDialogOpen ||
-      isLayoutPresetOpen ||
-      isYouTubeDialogOpen
-    ) {
-      return;
-    }
-
-    setSelectedCommandId(getFirstCommandId(filteredCommands));
-  }, [
-    filteredCommands,
-    isImageDialogOpen,
-    isLayoutPresetOpen,
-    isOpen,
-    isYouTubeDialogOpen,
-  ]);
+    dispatch({
+      type: "patch",
+      payload: {
+        isOpen: false,
+        isYouTubeDialogOpen: false,
+        pendingYouTubeTargetKey: null,
+        youTubeUrl: "",
+      },
+    });
+  }, [editor, pendingYouTubeTargetKey, youTubeUrl]);
 
   useEffect(() => {
     if (
@@ -418,6 +536,28 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
     };
   }, []);
 
+  const handleImageUrlInputRef = useCallback(
+    (element: HTMLInputElement | null) => {
+      if (!(element && isImageDialogOpen)) {
+        return;
+      }
+
+      element.focus();
+    },
+    [isImageDialogOpen]
+  );
+
+  const handleYouTubeUrlInputRef = useCallback(
+    (element: HTMLInputElement | null) => {
+      if (!(element && isYouTubeDialogOpen)) {
+        return;
+      }
+
+      element.focus();
+    },
+    [isYouTubeDialogOpen]
+  );
+
   useEffect(() => {
     if (!isOpen) {
       return;
@@ -432,12 +572,9 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
           }
 
           event.preventDefault();
-          setSelectedCommandId((currentSelection) => {
-            return getNeighborCommandId(
-              filteredCommands,
-              currentSelection,
-              "down"
-            );
+          dispatch({
+            type: "move-selected-command",
+            payload: { commands: filteredCommands, direction: "down" },
           });
           return true;
         },
@@ -451,12 +588,9 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
           }
 
           event.preventDefault();
-          setSelectedCommandId((currentSelection) => {
-            return getNeighborCommandId(
-              filteredCommands,
-              currentSelection,
-              "up"
-            );
+          dispatch({
+            type: "move-selected-command",
+            payload: { commands: filteredCommands, direction: "up" },
           });
           return true;
         },
@@ -499,7 +633,13 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
           }
 
           if (isLayoutPresetOpen) {
-            setIsLayoutPresetOpen(false);
+            dispatch({
+              type: "patch",
+              payload: {
+                isLayoutPresetOpen: false,
+                pendingLayoutTargetKey: null,
+              },
+            });
             return true;
           }
 
@@ -508,7 +648,7 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
             return true;
           }
 
-          setIsOpen(false);
+          dispatch({ type: "patch", payload: { isOpen: false } });
           return true;
         },
         COMMAND_PRIORITY_HIGH
@@ -556,7 +696,10 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
             >
               <Command
                 onValueChange={(value) =>
-                  setSelectedCommandId(value as SlashCommandId)
+                  dispatch({
+                    type: "patch",
+                    payload: { rawSelectedCommandId: value as SlashCommandId },
+                  })
                 }
                 shouldFilter={false}
                 value={selectedCommandId}
@@ -571,7 +714,12 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
                             : ""
                         }
                         key={command.id}
-                        onMouseEnter={() => setSelectedCommandId(command.id)}
+                        onMouseEnter={() =>
+                          dispatch({
+                            type: "patch",
+                            payload: { rawSelectedCommandId: command.id },
+                          })
+                        }
                         onSelect={() => executeCommand(command.id)}
                         value={command.id}
                       >
@@ -597,10 +745,22 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
 
       <SlashLayoutDialog
         onCancel={() => {
-          setPendingLayoutTargetKey(null);
-          setIsLayoutPresetOpen(false);
+          dispatch({
+            type: "patch",
+            payload: {
+              isLayoutPresetOpen: false,
+              pendingLayoutTargetKey: null,
+            },
+          });
         }}
-        onOpenChange={setIsLayoutPresetOpen}
+        onOpenChange={(open) =>
+          dispatch({
+            type: "patch",
+            payload: open
+              ? { isLayoutPresetOpen: true }
+              : { isLayoutPresetOpen: false, pendingLayoutTargetKey: null },
+          })
+        }
         onSelectPreset={executeLayoutPreset}
         open={isLayoutPresetOpen}
       />
@@ -633,10 +793,15 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
                 Image URL
               </label>
               <Input
-                autoFocus
                 id="slash-image-url"
-                onChange={(event) => setImageUrl(event.target.value)}
+                onChange={(event) =>
+                  dispatch({
+                    type: "patch",
+                    payload: { imageUrl: event.target.value },
+                  })
+                }
                 placeholder="https://example.com/image.jpg"
+                ref={handleImageUrlInputRef}
                 type="url"
                 value={imageUrl}
               />
@@ -665,7 +830,12 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
               </label>
               <Textarea
                 id="slash-image-alt"
-                onChange={(event) => setImageAltText(event.target.value)}
+                onChange={(event) =>
+                  dispatch({
+                    type: "patch",
+                    payload: { imageAltText: event.target.value },
+                  })
+                }
                 placeholder="Describe the image for accessibility"
                 rows={3}
                 value={imageAltText}
@@ -722,10 +892,15 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
                 YouTube URL
               </label>
               <Input
-                autoFocus
                 id="slash-youtube-url"
-                onChange={(event) => setYouTubeUrl(event.target.value)}
+                onChange={(event) =>
+                  dispatch({
+                    type: "patch",
+                    payload: { youTubeUrl: event.target.value },
+                  })
+                }
                 placeholder="https://www.youtube.com/watch?v=jNQXAC9IVRw"
+                ref={handleYouTubeUrlInputRef}
                 type="url"
                 value={youTubeUrl}
               />

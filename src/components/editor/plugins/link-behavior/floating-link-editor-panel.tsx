@@ -6,7 +6,6 @@ import {
   Trash2Icon,
   XIcon,
 } from "lucide-react";
-import type { RefObject } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -20,7 +19,7 @@ import { sanitizeEditorLinkUrl } from "./utils";
 interface FloatingLinkEditorPanelProps {
   editedLinkUrl: string;
   editor: LexicalEditor;
-  inputRef: RefObject<HTMLInputElement | null>;
+  inputRef: (element: HTMLInputElement | null) => void;
   isLinkEditMode: boolean;
   linkUrl: string;
   onEditedLinkUrlChange: (value: string) => void;

@@ -29,6 +29,14 @@ let docsHighlighterPromise: Promise<
 
 const codeTokenCache = new Map<string, TokensResult>();
 
+const EMPTY_CODE_TOKENS_STATE = {
+  error: false,
+  tokensResult: null,
+} as const satisfies {
+  error: boolean;
+  tokensResult: TokensResult | null;
+};
+
 function getDocsHighlighter() {
   docsHighlighterPromise ??= getSingletonHighlighter({
     langs: [...CODE_BLOCK_LANGUAGES],
@@ -59,30 +67,34 @@ const CODE_LANGUAGE_ALIASES = {
 type CodeLanguage =
   (typeof CODE_LANGUAGE_ALIASES)[keyof typeof CODE_LANGUAGE_ALIASES];
 
+const getCodeTokenCacheKey = (
+  code: string,
+  language: CodeBlockSyntaxLanguage | null,
+  theme: CodeBlockTheme
+) => {
+  return language ? `${theme}:${language}:${code}` : null;
+};
+
 function useCodeTokens(
   code: string,
   language: CodeBlockSyntaxLanguage | null,
   theme: CodeBlockTheme
 ) {
-  const [state, setState] = useState<{
+  const cacheKey = getCodeTokenCacheKey(code, language, theme);
+  const cachedTokens = cacheKey ? (codeTokenCache.get(cacheKey) ?? null) : null;
+
+  const [asyncState, setAsyncState] = useState<{
+    cacheKey: string | null;
     error: boolean;
     tokensResult: TokensResult | null;
   }>({
+    cacheKey: null,
     error: false,
     tokensResult: null,
   });
 
   useEffect(() => {
-    if (!language) {
-      setState({ error: false, tokensResult: null });
-      return;
-    }
-
-    const cacheKey = `${theme}:${language}:${code}`;
-    const cachedTokens = codeTokenCache.get(cacheKey);
-
-    if (cachedTokens) {
-      setState({ error: false, tokensResult: cachedTokens });
+    if (!(language && cacheKey && !cachedTokens)) {
       return;
     }
 
@@ -101,20 +113,35 @@ function useCodeTokens(
         }
 
         codeTokenCache.set(cacheKey, tokensResult);
-        setState({ error: false, tokensResult });
+        setAsyncState({ cacheKey, error: false, tokensResult });
       })
       .catch(() => {
         if (!cancelled) {
-          setState({ error: true, tokensResult: null });
+          setAsyncState({ cacheKey, error: true, tokensResult: null });
         }
       });
 
     return () => {
       cancelled = true;
     };
-  }, [code, language, theme]);
+  }, [cacheKey, cachedTokens, code, language, theme]);
 
-  return state;
+  if (!cacheKey) {
+    return EMPTY_CODE_TOKENS_STATE;
+  }
+
+  if (cachedTokens) {
+    return { error: false, tokensResult: cachedTokens };
+  }
+
+  if (asyncState.cacheKey === cacheKey) {
+    return {
+      error: asyncState.error,
+      tokensResult: asyncState.tokensResult,
+    };
+  }
+
+  return EMPTY_CODE_TOKENS_STATE;
 }
 
 function tokenStyleToReactStyle(token: ThemedToken) {

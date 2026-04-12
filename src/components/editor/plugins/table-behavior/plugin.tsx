@@ -45,7 +45,6 @@ function TableCellActionMenuContainer({
   const isMenuOpenRef = useRef(false);
   const isMenuClosingRef = useRef(false);
   const activeCellKeyRef = useRef<TableMenuContext["cellKey"] | null>(null);
-  const animationFrameRef = useRef<number | null>(null);
 
   const setMenuOpen = useCallback((open: boolean) => {
     isMenuOpenRef.current = open;
@@ -137,32 +136,21 @@ function TableCellActionMenuContainer({
     hideMenu,
   ]);
 
-  const scheduleMenuUpdate = useCallback(() => {
-    if (animationFrameRef.current !== null) {
-      return;
-    }
-
-    animationFrameRef.current = window.requestAnimationFrame(() => {
-      animationFrameRef.current = null;
-      updateMenu();
-    });
-  }, [updateMenu]);
-
   useEffect(() => {
     const onPointerUp = () => {
-      window.setTimeout(scheduleMenuUpdate, 0);
+      window.setTimeout(updateMenu, 0);
     };
 
-    scheduleMenuUpdate();
+    updateMenu();
 
     return mergeRegister(
       editor.registerUpdateListener(() => {
-        scheduleMenuUpdate();
+        updateMenu();
       }),
       editor.registerCommand(
         SELECTION_CHANGE_COMMAND,
         () => {
-          scheduleMenuUpdate();
+          updateMenu();
           return false;
         },
         COMMAND_PRIORITY_CRITICAL
@@ -172,25 +160,17 @@ function TableCellActionMenuContainer({
         rootElement?.addEventListener("pointerup", onPointerUp);
       })
     );
-  }, [editor, scheduleMenuUpdate]);
+  }, [editor, updateMenu]);
 
   useEffect(() => {
-    window.addEventListener("resize", scheduleMenuUpdate);
-    window.addEventListener("scroll", scheduleMenuUpdate, true);
+    window.addEventListener("resize", updateMenu);
+    window.addEventListener("scroll", updateMenu, true);
 
     return () => {
-      window.removeEventListener("resize", scheduleMenuUpdate);
-      window.removeEventListener("scroll", scheduleMenuUpdate, true);
+      window.removeEventListener("resize", updateMenu);
+      window.removeEventListener("scroll", updateMenu, true);
     };
-  }, [scheduleMenuUpdate]);
-
-  useEffect(() => {
-    return () => {
-      if (animationFrameRef.current !== null) {
-        window.cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
-  }, []);
+  }, [updateMenu]);
 
   useEffect(() => {
     if (!isMenuOpen) {

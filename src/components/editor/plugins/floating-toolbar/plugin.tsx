@@ -54,7 +54,6 @@ export function FloatingToolbarPlugin() {
   );
   const [formats, setFormats] =
     useState<FloatingToolbarFormatState>(DEFAULT_FORMAT_STATE);
-  const animationFrameRef = useRef<number | null>(null);
 
   /*
    * When a color picker popover is open we skip visibility/position updates so
@@ -95,40 +94,21 @@ export function FloatingToolbarPlugin() {
     });
   }, [editor]);
 
-  const scheduleToolbarUpdate = useCallback(() => {
-    if (animationFrameRef.current !== null) {
-      return;
-    }
-
-    animationFrameRef.current = window.requestAnimationFrame(() => {
-      animationFrameRef.current = null;
-      updateToolbar();
-    });
-  }, [updateToolbar]);
-
   useEffect(() => {
     return mergeRegister(
       editor.registerCommand(
         SELECTION_CHANGE_COMMAND,
         () => {
-          scheduleToolbarUpdate();
+          updateToolbar();
           return false;
         },
         COMMAND_PRIORITY_LOW
       ),
       editor.registerUpdateListener(() => {
-        scheduleToolbarUpdate();
+        updateToolbar();
       })
     );
-  }, [editor, scheduleToolbarUpdate]);
-
-  useEffect(() => {
-    return () => {
-      if (animationFrameRef.current !== null) {
-        window.cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
-  }, []);
+  }, [editor, updateToolbar]);
 
   const handleLinkToggle = useCallback(() => {
     if (formats.isLink) {

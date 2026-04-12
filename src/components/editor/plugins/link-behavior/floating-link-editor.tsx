@@ -13,7 +13,7 @@ import {
   KEY_ESCAPE_COMMAND,
   SELECTION_CHANGE_COMMAND,
 } from "lexical";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef } from "react";
 import { createPortal } from "react-dom";
 import { OPEN_FLOATING_LINK_EDITOR_COMMAND } from "../floating-toolbar/link-command";
 import {
@@ -30,58 +30,119 @@ import {
 } from "./floating-link-editor-position";
 import { LINK_PLACEHOLDER_URL } from "./utils";
 
+interface FloatingLinkEditorState {
+  editedLinkUrl: string;
+  isLink: boolean;
+  isLinkEditMode: boolean;
+  linkUrl: string;
+  position: FloatingLinkEditorPosition;
+}
+
+type FloatingLinkEditorAction =
+  | {
+      type: "sync";
+      payload: {
+        isLink: boolean;
+        linkUrl: string;
+        position: FloatingLinkEditorPosition;
+      };
+    }
+  | {
+      type: "open-edit-mode";
+      payload?: {
+        editedLinkUrl?: string;
+      };
+    }
+  | { type: "close-edit-mode" }
+  | { type: "close-link-editor" }
+  | { type: "set-edited-link-url"; payload: string };
+
+const INITIAL_STATE: FloatingLinkEditorState = {
+  editedLinkUrl: LINK_PLACEHOLDER_URL,
+  isLink: false,
+  isLinkEditMode: false,
+  linkUrl: "",
+  position: EMPTY_POSITION,
+};
+
+const floatingLinkEditorReducer = (
+  state: FloatingLinkEditorState,
+  action: FloatingLinkEditorAction
+): FloatingLinkEditorState => {
+  switch (action.type) {
+    case "sync": {
+      const { isLink, linkUrl, position } = action.payload;
+      const nextPosition = areFloatingToolbarPositionsEqual(
+        state.position,
+        position
+      )
+        ? state.position
+        : position;
+
+      return {
+        ...state,
+        editedLinkUrl: state.isLinkEditMode
+          ? state.editedLinkUrl
+          : linkUrl || LINK_PLACEHOLDER_URL,
+        isLink,
+        isLinkEditMode:
+          position === EMPTY_POSITION ? false : state.isLinkEditMode,
+        linkUrl,
+        position: nextPosition,
+      };
+    }
+    case "open-edit-mode": {
+      return {
+        ...state,
+        editedLinkUrl:
+          action.payload?.editedLinkUrl ??
+          (state.linkUrl || LINK_PLACEHOLDER_URL),
+        isLinkEditMode: true,
+      };
+    }
+    case "close-edit-mode": {
+      return state.isLinkEditMode ? { ...state, isLinkEditMode: false } : state;
+    }
+    case "close-link-editor": {
+      return state.isLink || state.isLinkEditMode
+        ? { ...state, isLink: false, isLinkEditMode: false }
+        : state;
+    }
+    case "set-edited-link-url": {
+      return state.editedLinkUrl === action.payload
+        ? state
+        : { ...state, editedLinkUrl: action.payload };
+    }
+    default: {
+      return state;
+    }
+  }
+};
+
 export function FloatingLinkEditorPlugin() {
   const [editor] = useLexicalComposerContext();
   const editorRef = useRef<HTMLDivElement | null>(null);
-  const inputRef = useRef<HTMLInputElement | null>(null);
-
-  const [isLink, setIsLink] = useState(false);
-  const [isLinkEditMode, setIsLinkEditMode] = useState(false);
-  const [linkUrl, setLinkUrl] = useState("");
-  const [editedLinkUrl, setEditedLinkUrl] = useState(LINK_PLACEHOLDER_URL);
-  const [position, setPosition] =
-    useState<FloatingLinkEditorPosition>(EMPTY_POSITION);
   const animationFrameRef = useRef<number | null>(null);
+  const [state, dispatch] = useReducer(
+    floatingLinkEditorReducer,
+    INITIAL_STATE
+  );
+  const { editedLinkUrl, isLink, isLinkEditMode, linkUrl, position } = state;
 
   const updateLinkEditor = useCallback(() => {
     const nextIsLink = selectionContainsLink();
     const nextLinkUrl = nextIsLink ? readSelectedLinkUrl() : "";
-    const nextPosition = getLinkEditorPosition(editor);
+    const nextPosition = getLinkEditorPosition(editor) ?? EMPTY_POSITION;
 
-    setIsLink((currentIsLink) =>
-      currentIsLink === nextIsLink ? currentIsLink : nextIsLink
-    );
-    setLinkUrl((currentLinkUrl) =>
-      currentLinkUrl === nextLinkUrl ? currentLinkUrl : nextLinkUrl
-    );
-
-    if (!isLinkEditMode) {
-      const nextEditedLinkUrl = nextLinkUrl || LINK_PLACEHOLDER_URL;
-      setEditedLinkUrl((currentEditedLinkUrl) =>
-        currentEditedLinkUrl === nextEditedLinkUrl
-          ? currentEditedLinkUrl
-          : nextEditedLinkUrl
-      );
-    }
-
-    if (nextPosition) {
-      setPosition((currentPosition) => {
-        return areFloatingToolbarPositionsEqual(currentPosition, nextPosition)
-          ? currentPosition
-          : nextPosition;
-      });
-      return;
-    }
-
-    setPosition((currentPosition) => {
-      return areFloatingToolbarPositionsEqual(currentPosition, EMPTY_POSITION)
-        ? currentPosition
-        : EMPTY_POSITION;
+    dispatch({
+      type: "sync",
+      payload: {
+        isLink: nextIsLink,
+        linkUrl: nextLinkUrl,
+        position: nextPosition,
+      },
     });
-    setIsLinkEditMode((currentIsLinkEditMode) =>
-      currentIsLinkEditMode ? false : currentIsLinkEditMode
-    );
-  }, [editor, isLinkEditMode]);
+  }, [editor]);
 
   const scheduleLinkEditorUpdate = useCallback(() => {
     if (animationFrameRef.current !== null) {
@@ -112,8 +173,12 @@ export function FloatingLinkEditorPlugin() {
       editor.registerCommand(
         OPEN_FLOATING_LINK_EDITOR_COMMAND,
         () => {
-          setIsLinkEditMode(true);
-          setEditedLinkUrl(readSelectedLinkUrl() || LINK_PLACEHOLDER_URL);
+          dispatch({
+            type: "open-edit-mode",
+            payload: {
+              editedLinkUrl: readSelectedLinkUrl() || LINK_PLACEHOLDER_URL,
+            },
+          });
           scheduleLinkEditorUpdate();
           return true;
         },
@@ -130,12 +195,15 @@ export function FloatingLinkEditorPlugin() {
           event.preventDefault();
 
           if (selectionContainsLink()) {
-            setIsLinkEditMode(false);
+            dispatch({ type: "close-edit-mode" });
             editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
             return true;
           }
 
-          setIsLinkEditMode(true);
+          dispatch({
+            type: "open-edit-mode",
+            payload: { editedLinkUrl: LINK_PLACEHOLDER_URL },
+          });
           editor.dispatchCommand(TOGGLE_LINK_COMMAND, LINK_PLACEHOLDER_URL);
           return true;
         },
@@ -148,8 +216,7 @@ export function FloatingLinkEditorPlugin() {
             return false;
           }
 
-          setIsLink(false);
-          setIsLinkEditMode(false);
+          dispatch({ type: "close-link-editor" });
           return true;
         },
         COMMAND_PRIORITY_HIGH
@@ -179,13 +246,6 @@ export function FloatingLinkEditorPlugin() {
   useEffect(() => {
     scheduleLinkEditorUpdate();
   }, [scheduleLinkEditorUpdate]);
-
-  useEffect(() => {
-    if (isLinkEditMode) {
-      inputRef.current?.focus();
-      inputRef.current?.select();
-    }
-  }, [isLinkEditMode]);
 
   useEffect(() => {
     const handleWindowChange = () => {
@@ -220,8 +280,7 @@ export function FloatingLinkEditorPlugin() {
         !floatingElement.contains(event.relatedTarget as Node | null) &&
         isLink
       ) {
-        setIsLink(false);
-        setIsLinkEditMode(false);
+        dispatch({ type: "close-link-editor" });
       }
     };
 
@@ -230,6 +289,18 @@ export function FloatingLinkEditorPlugin() {
       floatingElement.removeEventListener("focusout", handleFocusOut);
     };
   }, [isLink]);
+
+  const handleInputRef = useCallback(
+    (element: HTMLInputElement | null) => {
+      if (!(element && isLinkEditMode)) {
+        return;
+      }
+
+      element.focus();
+      element.select();
+    },
+    [isLinkEditMode]
+  );
 
   if (!isLink) {
     return null;
@@ -247,15 +318,14 @@ export function FloatingLinkEditorPlugin() {
       <FloatingLinkEditorPanel
         editedLinkUrl={editedLinkUrl}
         editor={editor}
-        inputRef={inputRef}
+        inputRef={handleInputRef}
         isLinkEditMode={isLinkEditMode}
         linkUrl={linkUrl}
-        onEditedLinkUrlChange={setEditedLinkUrl}
-        onRequestCloseEditMode={() => setIsLinkEditMode(false)}
-        onRequestEditMode={() => {
-          setEditedLinkUrl(linkUrl || LINK_PLACEHOLDER_URL);
-          setIsLinkEditMode(true);
-        }}
+        onEditedLinkUrlChange={(value) =>
+          dispatch({ type: "set-edited-link-url", payload: value })
+        }
+        onRequestCloseEditMode={() => dispatch({ type: "close-edit-mode" })}
+        onRequestEditMode={() => dispatch({ type: "open-edit-mode" })}
       />
     </div>,
     document.body

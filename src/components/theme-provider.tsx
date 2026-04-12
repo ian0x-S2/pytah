@@ -28,10 +28,6 @@ function getSystemTheme(): "light" | "dark" {
     : "light";
 }
 
-function resolveTheme(theme: Theme): "light" | "dark" {
-  return theme === "system" ? getSystemTheme() : theme;
-}
-
 function readStoredTheme(): Theme {
   if (typeof window === "undefined") {
     return "system";
@@ -56,9 +52,10 @@ function applyThemeToDOM(resolved: "light" | "dark"): void {
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(readStoredTheme);
-  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">(() =>
-    resolveTheme(theme)
+  const [systemTheme, setSystemTheme] = useState<"light" | "dark">(
+    getSystemTheme
   );
+  const resolvedTheme = theme === "system" ? systemTheme : theme;
 
   const setTheme = useCallback((next: Theme) => {
     localStorage.setItem(STORAGE_KEY, next);
@@ -66,10 +63,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const resolved = resolveTheme(theme);
-    setResolvedTheme(resolved);
-    applyThemeToDOM(resolved);
-  }, [theme]);
+    applyThemeToDOM(resolvedTheme);
+  }, [resolvedTheme]);
 
   useEffect(() => {
     if (theme !== "system") {
@@ -79,9 +74,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
     const handleChange = () => {
-      const resolved = getSystemTheme();
-      setResolvedTheme(resolved);
-      applyThemeToDOM(resolved);
+      setSystemTheme(getSystemTheme());
     };
 
     mediaQuery.addEventListener("change", handleChange);

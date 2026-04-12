@@ -40,7 +40,14 @@ import {
   UnderlineIcon,
   UndoIcon,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -127,16 +134,81 @@ interface FullToolbarPluginProps {
   className?: string;
 }
 
+interface FullToolbarUiState {
+  activeBlockTypeIndex: number;
+  activeInsertIndex: number;
+  blockTypeOpen: boolean;
+  insertOpen: boolean;
+}
+
+type FullToolbarUiAction =
+  | { type: "set-active-block-type-index"; payload: number }
+  | { type: "set-active-insert-index"; payload: number }
+  | {
+      type: "set-block-type-open";
+      payload: { activeBlockTypeIndex?: number; open: boolean };
+    }
+  | {
+      type: "set-insert-open";
+      payload: { activeInsertIndex?: number; open: boolean };
+    };
+
+const INITIAL_UI_STATE: FullToolbarUiState = {
+  activeBlockTypeIndex: 0,
+  activeInsertIndex: 0,
+  blockTypeOpen: false,
+  insertOpen: false,
+};
+
+const fullToolbarUiReducer = (
+  state: FullToolbarUiState,
+  action: FullToolbarUiAction
+): FullToolbarUiState => {
+  switch (action.type) {
+    case "set-active-block-type-index": {
+      return state.activeBlockTypeIndex === action.payload
+        ? state
+        : { ...state, activeBlockTypeIndex: action.payload };
+    }
+    case "set-active-insert-index": {
+      return state.activeInsertIndex === action.payload
+        ? state
+        : { ...state, activeInsertIndex: action.payload };
+    }
+    case "set-block-type-open": {
+      return {
+        ...state,
+        activeBlockTypeIndex:
+          action.payload.activeBlockTypeIndex ?? state.activeBlockTypeIndex,
+        blockTypeOpen: action.payload.open,
+      };
+    }
+    case "set-insert-open": {
+      return {
+        ...state,
+        activeInsertIndex:
+          action.payload.activeInsertIndex ?? state.activeInsertIndex,
+        insertOpen: action.payload.open,
+      };
+    }
+    default: {
+      return state;
+    }
+  }
+};
+
 export function FullToolbarPlugin({ className }: FullToolbarPluginProps) {
   const [editor] = useLexicalComposerContext();
 
   const [blockType, setBlockType] = useState<BlockTypeValue>("paragraph");
-  const [blockTypeOpen, setBlockTypeOpen] = useState(false);
-  const [activeBlockTypeIndex, setActiveBlockTypeIndex] = useState(0);
-  const [insertOpen, setInsertOpen] = useState(false);
-  const [activeInsertIndex, setActiveInsertIndex] = useState(0);
   const [formats, setFormats] =
     useState<FloatingToolbarFormatState>(DEFAULT_FORMAT_STATE);
+  const [uiState, dispatchUi] = useReducer(
+    fullToolbarUiReducer,
+    INITIAL_UI_STATE
+  );
+  const { activeBlockTypeIndex, activeInsertIndex, blockTypeOpen, insertOpen } =
+    uiState;
   const blockTypeOptionRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const insertOptionRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
@@ -185,7 +257,7 @@ export function FullToolbarPlugin({ className }: FullToolbarPluginProps) {
     (value: BlockTypeValue) => {
       applyBlockType(editor, value);
       setBlockType(value);
-      setBlockTypeOpen(false);
+      dispatchUi({ type: "set-block-type-open", payload: { open: false } });
     },
     [editor]
   );
@@ -198,27 +270,38 @@ export function FullToolbarPlugin({ className }: FullToolbarPluginProps) {
           0
         );
 
-        setActiveBlockTypeIndex(initialIndex);
+        dispatchUi({
+          type: "set-block-type-open",
+          payload: { activeBlockTypeIndex: initialIndex, open },
+        });
+        return;
       }
 
-      setBlockTypeOpen(open);
+      dispatchUi({ type: "set-block-type-open", payload: { open } });
     },
     [blockType]
   );
 
   const handleInsertOpenChange = useCallback((open: boolean) => {
     if (open) {
-      setActiveInsertIndex(0);
+      dispatchUi({
+        type: "set-insert-open",
+        payload: { activeInsertIndex: 0, open },
+      });
+      return;
     }
 
-    setInsertOpen(open);
+    dispatchUi({ type: "set-insert-open", payload: { open } });
   }, []);
 
   const focusBlockTypeOption = useCallback((index: number) => {
     const optionCount = BLOCK_OPTIONS.length;
     const nextIndex = (index + optionCount) % optionCount;
 
-    setActiveBlockTypeIndex(nextIndex);
+    dispatchUi({
+      type: "set-active-block-type-index",
+      payload: nextIndex,
+    });
     blockTypeOptionRefs.current[nextIndex]?.focus();
   }, []);
 
@@ -298,17 +381,17 @@ export function FullToolbarPlugin({ className }: FullToolbarPluginProps) {
 
   const insertTable = useCallback(() => {
     editor.dispatchCommand(INSERT_TABLE_COMMAND, DEFAULT_INSERT_TABLE_PAYLOAD);
-    setInsertOpen(false);
+    dispatchUi({ type: "set-insert-open", payload: { open: false } });
   }, [editor]);
 
   const insertDivider = useCallback(() => {
     editor.dispatchCommand(INSERT_HORIZONTAL_RULE_COMMAND, undefined);
-    setInsertOpen(false);
+    dispatchUi({ type: "set-insert-open", payload: { open: false } });
   }, [editor]);
 
   const insertCollapsible = useCallback(() => {
     editor.dispatchCommand(INSERT_COLLAPSIBLE_COMMAND, undefined);
-    setInsertOpen(false);
+    dispatchUi({ type: "set-insert-open", payload: { open: false } });
   }, [editor]);
 
   const insertActions = useMemo(
@@ -341,7 +424,7 @@ export function FullToolbarPlugin({ className }: FullToolbarPluginProps) {
       const optionCount = insertActions.length;
       const nextIndex = (index + optionCount) % optionCount;
 
-      setActiveInsertIndex(nextIndex);
+      dispatchUi({ type: "set-active-insert-index", payload: nextIndex });
       insertOptionRefs.current[nextIndex]?.focus();
     },
     [insertActions.length]
@@ -456,8 +539,18 @@ export function FullToolbarPlugin({ className }: FullToolbarPluginProps) {
                   )}
                   key={option.value}
                   onClick={() => handleBlockTypeChange(option.value)}
-                  onFocus={() => setActiveBlockTypeIndex(optionIndex)}
-                  onMouseEnter={() => setActiveBlockTypeIndex(optionIndex)}
+                  onFocus={() =>
+                    dispatchUi({
+                      type: "set-active-block-type-index",
+                      payload: optionIndex,
+                    })
+                  }
+                  onMouseEnter={() =>
+                    dispatchUi({
+                      type: "set-active-block-type-index",
+                      payload: optionIndex,
+                    })
+                  }
                   ref={(element) => {
                     blockTypeOptionRefs.current[optionIndex] = element;
                   }}
@@ -630,14 +723,25 @@ export function FullToolbarPlugin({ className }: FullToolbarPluginProps) {
 
               return (
                 <button
+                  aria-selected={isActive}
                   className={cn(
                     "flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none",
                     isActive && "bg-accent"
                   )}
                   key={action.label}
                   onClick={action.onSelect}
-                  onFocus={() => setActiveInsertIndex(optionIndex)}
-                  onMouseEnter={() => setActiveInsertIndex(optionIndex)}
+                  onFocus={() =>
+                    dispatchUi({
+                      type: "set-active-insert-index",
+                      payload: optionIndex,
+                    })
+                  }
+                  onMouseEnter={() =>
+                    dispatchUi({
+                      type: "set-active-insert-index",
+                      payload: optionIndex,
+                    })
+                  }
                   ref={(element) => {
                     insertOptionRefs.current[optionIndex] = element;
                   }}
