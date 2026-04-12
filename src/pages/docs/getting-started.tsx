@@ -1,41 +1,37 @@
 import {
   Callout,
   CodeBlock,
+  extractExportedInterface,
+  extractMarkedSource,
   PageHeader,
   Paragraph,
   SectionHeading,
   SubHeading,
-  sliceSource,
 } from "@/components/docs/primitives";
 import compatibility from "@/components/editor/core/compatibility.json";
 import editorTypesSource from "@/components/editor/core/types.ts?raw";
 import indexCssSource from "@/index.css?raw";
-import demoPageSource from "@/pages/demo.tsx?raw";
+import { DEMO_EDITOR_USAGE_EXAMPLE } from "@/pages/demo";
 
-const editorUsageExample = sliceSource(demoPageSource, {
-  end: "          <Editor editable={editable} minimal toolbar={toolbar} />",
-  start: 'import { Editor } from "@/components/editor/editor";',
-});
+const editorPropsSource = extractExportedInterface(
+  editorTypesSource,
+  "EditorProps"
+);
 
-const editorPropsSource = sliceSource(editorTypesSource, {
-  end: "}",
-  start: "export interface EditorProps {",
-});
+const highlightTokensSource = extractMarkedSource(
+  indexCssSource,
+  "highlight-tokens-light"
+);
 
-const highlightTokensSource = sliceSource(indexCssSource, {
-  end: "  --highlight-foreground: oklch(0.145 0 0);",
-  start: "  --highlight: oklch(0.97 0.05 90);",
-});
+const darkHighlightTokensSource = extractMarkedSource(
+  indexCssSource,
+  "highlight-tokens-dark"
+);
 
-const darkHighlightTokensSource = sliceSource(indexCssSource, {
-  end: "  --highlight-foreground: oklch(0.985 0 0);",
-  start: "  --highlight: oklch(0.35 0.06 85);",
-});
-
-const tailwindThemeBridgeSource = sliceSource(indexCssSource, {
-  end: "  --color-highlight-foreground: var(--highlight-foreground);",
-  start: "  --color-highlight: var(--highlight);",
-});
+const tailwindThemeBridgeSource = extractMarkedSource(
+  indexCssSource,
+  "highlight-theme-bridge"
+);
 
 export function GettingStartedPage() {
   return (
@@ -182,7 +178,7 @@ ${tailwindThemeBridgeSource}
         real integration in this repository. It toggles edit mode and mounts the
         editor in minimal mode:
       </Paragraph>
-      <CodeBlock language="tsx">{editorUsageExample}</CodeBlock>
+      <CodeBlock language="tsx">{DEMO_EDITOR_USAGE_EXAMPLE}</CodeBlock>
 
       <SubHeading id="composition">Composition First</SubHeading>
       <Paragraph>

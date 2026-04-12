@@ -21,6 +21,17 @@ const TOOLBAR_LABELS: Record<string, string> = {
   full: "Full",
 };
 
+export const DEMO_EDITOR_USAGE_EXAMPLE = `import { useState } from "react";
+import type { EditorToolbar } from "@/components/editor/core/types";
+import { Editor } from "@/components/editor/editor";
+
+export function DemoEditorExample() {
+  const [editable, setEditable] = useState(true);
+  const [toolbar, setToolbar] = useState<EditorToolbar>(false);
+
+  return <Editor editable={editable} minimal toolbar={toolbar} />;
+}`;
+
 export function DemoPage() {
   const [editable, setEditable] = useState(true);
   const [zen, setZen] = useState(false);

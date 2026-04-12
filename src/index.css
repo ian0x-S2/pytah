@@ -41,8 +41,10 @@
   --color-ring: var(--ring);
 
   /* --- Editor-specific tokens --- */
+  /* docs:start highlight-theme-bridge */
   --color-highlight: var(--highlight);
   --color-highlight-foreground: var(--highlight-foreground);
+  /* docs:end highlight-theme-bridge */
 
   /* --- Chart tokens --- */
   --color-chart-1: var(--chart-1);
@@ -136,8 +138,10 @@
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
+  /* docs:start highlight-tokens-light */
   --highlight: oklch(0.97 0.05 90);
   --highlight-foreground: oklch(0.145 0 0);
+  /* docs:end highlight-tokens-light */
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -173,8 +177,10 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
+  /* docs:start highlight-tokens-dark */
   --highlight: oklch(0.35 0.06 85);
   --highlight-foreground: oklch(0.985 0 0);
+  /* docs:end highlight-tokens-dark */
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);

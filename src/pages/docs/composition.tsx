@@ -1,11 +1,12 @@
 import {
   Callout,
   CodeBlock,
+  extractExportedConst,
+  extractExportedInterface,
   PageHeader,
   Paragraph,
   SectionHeading,
   SubHeading,
-  sliceSource,
   Table,
   TableCell,
   TableRow,
@@ -13,35 +14,35 @@ import {
 import compositionSource from "@/components/editor/core/composition.ts?raw";
 import editorTypesSource from "@/components/editor/core/types.ts?raw";
 
-const featureFlagsSource = sliceSource(editorTypesSource, {
-  end: "}",
-  start: "export interface EditorFeatureFlags {",
-});
+const featureFlagsSource = extractExportedInterface(
+  editorTypesSource,
+  "EditorFeatureFlags"
+);
 
-const chromeOptionsSource = sliceSource(editorTypesSource, {
-  end: "}",
-  start: "export interface EditorChromeOptions {",
-});
+const chromeOptionsSource = extractExportedInterface(
+  editorTypesSource,
+  "EditorChromeOptions"
+);
 
-const pluginSlotsSource = sliceSource(editorTypesSource, {
-  end: "}",
-  start: "export interface EditorPluginSlots {",
-});
+const pluginSlotsSource = extractExportedInterface(
+  editorTypesSource,
+  "EditorPluginSlots"
+);
 
-const chromeSlotsSource = sliceSource(editorTypesSource, {
-  end: "}",
-  start: "export interface EditorChromeSlots {",
-});
+const chromeSlotsSource = extractExportedInterface(
+  editorTypesSource,
+  "EditorChromeSlots"
+);
 
-const defaultFeaturesSource = sliceSource(compositionSource, {
-  end: "} as const satisfies Required<EditorFeatureFlags>;",
-  start: "export const DEFAULT_EDITOR_FEATURES = {",
-});
+const defaultFeaturesSource = extractExportedConst(
+  compositionSource,
+  "DEFAULT_EDITOR_FEATURES"
+);
 
-const defaultChromeSource = sliceSource(compositionSource, {
-  end: "} as const satisfies Required<EditorChromeOptions>;",
-  start: "export const DEFAULT_EDITOR_CHROME = {",
-});
+const defaultChromeSource = extractExportedConst(
+  compositionSource,
+  "DEFAULT_EDITOR_CHROME"
+);
 
 export function CompositionPage() {
   return (

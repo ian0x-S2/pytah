@@ -1,7 +1,10 @@
 import {
+  GuideFilesSection,
+  GuideSourceSection,
+} from "@/components/docs/guide-primitives";
+import {
   Callout,
   CodeBlock,
-  FileTree,
   PageHeader,
   Paragraph,
   SectionHeading,
@@ -17,38 +20,32 @@ import linkBehaviorUtilsSource from "@/components/editor/plugins/link-behavior/u
 
 function LinkBehaviorFilesSection() {
   return (
-    <>
-      <SectionHeading id="files">Files</SectionHeading>
-      <FileTree
-        items={[
-          "src/components/editor/plugins/link-behavior/",
-          "  constants.ts              ← AUTO_LINK_MATCHERS",
-          "  utils.ts                  ← URL normalize / validate / sanitize",
-          "  plugin.tsx                ← LinkBehaviorPlugin composition",
-          "  floating-link-editor.tsx  ← FloatingLinkEditorPlugin",
-        ]}
-      />
-    </>
+    <GuideFilesSection
+      items={[
+        "src/components/editor/plugins/link-behavior/",
+        "  constants.ts              ← AUTO_LINK_MATCHERS",
+        "  utils.ts                  ← URL normalize / validate / sanitize",
+        "  plugin.tsx                ← LinkBehaviorPlugin composition",
+        "  floating-link-editor.tsx  ← FloatingLinkEditorPlugin",
+      ]}
+    />
   );
 }
 
 function LinkBehaviorConstantsSection() {
   return (
-    <>
-      <SectionHeading id="constants">constants.ts</SectionHeading>
-      <Paragraph>
-        Two <code>AutoLinkPlugin</code> matchers — one for URLs and one for
-        email addresses. Plain <code>www.</code> URLs are normalised to{" "}
-        <code>https://</code> automatically; email addresses get the{" "}
-        <code>mailto:</code> scheme.
-      </Paragraph>
-      <CodeBlock
-        label="src/components/editor/plugins/link-behavior/constants.ts"
-        language="ts"
-      >
-        {linkBehaviorConstantsSource}
-      </CodeBlock>
-    </>
+    <GuideSourceSection
+      code={linkBehaviorConstantsSource}
+      id="constants"
+      language="ts"
+      path="src/components/editor/plugins/link-behavior/constants.ts"
+      title="constants.ts"
+    >
+      Two <code>AutoLinkPlugin</code> matchers — one for URLs and one for email
+      addresses. Plain <code>www.</code> URLs are normalised to{" "}
+      <code>https://</code>
+      automatically; email addresses get the <code>mailto:</code> scheme.
+    </GuideSourceSection>
   );
 }
 
@@ -112,21 +109,18 @@ function LinkBehaviorUtilsSection() {
 
 function LinkBehaviorPluginSection() {
   return (
-    <>
-      <SectionHeading id="plugin">plugin.tsx</SectionHeading>
-      <Paragraph>
-        <code>LinkBehaviorPlugin</code> is a thin composition of three Lexical
-        React plugins. Pass <code>editable={"{true}"}</code> when the editor is
-        in edit mode to disable <code>ClickableLinkPlugin</code> (links should
-        not navigate while editing).
-      </Paragraph>
-      <CodeBlock
-        label="src/components/editor/plugins/link-behavior/plugin.tsx"
-        language="tsx"
-      >
-        {linkBehaviorPluginSource}
-      </CodeBlock>
-    </>
+    <GuideSourceSection
+      code={linkBehaviorPluginSource}
+      id="plugin"
+      language="tsx"
+      path="src/components/editor/plugins/link-behavior/plugin.tsx"
+      title="plugin.tsx"
+    >
+      <code>LinkBehaviorPlugin</code> is a thin composition of three Lexical
+      React plugins. Pass <code>editable={"{true}"}</code> when the editor is in
+      edit mode to disable <code>ClickableLinkPlugin</code> (links should not
+      navigate while editing).
+    </GuideSourceSection>
   );
 }
 

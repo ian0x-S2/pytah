@@ -25,28 +25,15 @@ Use these routes while you work:
 - `/docs/contributing` for the contributor workflow in the app docs
 - `/docs/architecture` when tracing which layer owns a feature
 
-## Repository mental model
+## Canonical contributor reference
 
-`src/components/editor/editor.tsx` is the public composition root for the editor.
+The in-app docs are the canonical source for contributor guidance that tends to drift:
 
-Use this rule of thumb when deciding where to change code:
+- `/docs/overview` for the repository mental model
+- `/docs/architecture` for layer ownership and internal structure
+- `/docs/contributing` for the day-to-day workflow and validation expectations
 
-| If you need to change... | Start here | Why |
-| --- | --- | --- |
-| the public editor API or top-level wiring | `src/components/editor/editor.tsx` and `src/components/editor/core/types.ts` | This is where product defaults and public extension points meet |
-| built-in editor behavior | `src/components/editor/plugins/<feature>/` | Plugins own Lexical commands, listeners, and behavior-specific UI |
-| the editor chrome or React surfaces | `src/components/editor/ui/` | This layer owns toolbars, panels, and content composition |
-| a custom Lexical node | `src/components/editor/core/nodes/<feature>/` | Nodes and related helpers stay feature-local |
-| source-driven docs | `src/pages/docs/`, `README.md`, and this file | Repo context should stay consistent across entry points |
-
-## Default change checklist
-
-Before opening a PR, keep these invariants intact:
-
-- editable and read-only modes must both keep working
-- HTML and Markdown copy/paste quality must remain intact
-- new capabilities should prefer public extension points over one-off internal forks
-- docs should stay aligned with the real source when API or architecture changes
+Keep those pages up to date first when contributor guidance changes. This file is the GitHub entry point, not the detailed source of truth.
 
 Run the standard validation flow:
 

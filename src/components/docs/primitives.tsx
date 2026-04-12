@@ -197,31 +197,54 @@ function resolveCodeBlockMeta(language?: string, label?: string) {
   };
 }
 
-interface SourceSliceOptions {
-  end: string;
-  includeEnd?: boolean;
-  start: string;
+const escapeRegex = (value: string) => {
+  return value.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&");
+};
+
+const matchSource = (
+  source: string,
+  expression: RegExp,
+  errorMessage: string
+) => {
+  const match = source.match(expression)?.[0];
+
+  if (!match) {
+    throw new Error(errorMessage);
+  }
+
+  return match.trim();
+};
+
+export function extractMarkedSource(source: string, marker: string) {
+  return matchSource(
+    source,
+    new RegExp(
+      `/\\* docs:start ${escapeRegex(marker)} \\*/([\\s\\S]*?)/\\* docs:end ${escapeRegex(marker)} \\*/`
+    ),
+    `Marked source was not found for: ${marker}`
+  )
+    .replace(new RegExp(`^/\\* docs:start ${escapeRegex(marker)} \\*/\\n?`), "")
+    .replace(new RegExp(`\\n?/\\* docs:end ${escapeRegex(marker)} \\*/$`), "")
+    .trim();
 }
 
-export function sliceSource(
-  source: string,
-  { end, includeEnd = true, start }: SourceSliceOptions
-) {
-  const startIndex = source.indexOf(start);
+export function extractExportedInterface(source: string, name: string) {
+  return matchSource(
+    source,
+    new RegExp(
+      `export interface ${escapeRegex(name)}\\s*\\{[\\s\\S]*?^\\}`,
+      "m"
+    ),
+    `Interface source was not found for: ${name}`
+  );
+}
 
-  if (startIndex < 0) {
-    throw new Error(`Source slice start marker was not found: ${start}`);
-  }
-
-  const endMarkerIndex = source.indexOf(end, startIndex);
-
-  if (endMarkerIndex < 0) {
-    throw new Error(`Source slice end marker was not found: ${end}`);
-  }
-
-  const endIndex = includeEnd ? endMarkerIndex + end.length : endMarkerIndex;
-
-  return source.slice(startIndex, endIndex).trim();
+export function extractExportedConst(source: string, name: string) {
+  return matchSource(
+    source,
+    new RegExp(`export const ${escapeRegex(name)}\\s*=\\s*[\\s\\S]*?;`, "m"),
+    `Const source was not found for: ${name}`
+  );
 }
 
 export function PageHeader({

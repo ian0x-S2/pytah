@@ -1,7 +1,10 @@
 import {
+  GuideFilesSection,
+  GuideSourceSection,
+} from "@/components/docs/guide-primitives";
+import {
   Callout,
   CodeBlock,
-  FileTree,
   PageHeader,
   Paragraph,
   SectionHeading,
@@ -27,8 +30,7 @@ export function SlashCommandGuidePage() {
         <code>Composition</code> and <code>API</code> pages.
       </Callout>
 
-      <SectionHeading id="files">Files</SectionHeading>
-      <FileTree
+      <GuideFilesSection
         items={[
           "src/components/editor/plugins/slash-command/",
           "  types.ts       ← SlashCommand shape + SlashCommandId union",
@@ -39,57 +41,53 @@ export function SlashCommandGuidePage() {
         ]}
       />
 
-      <SectionHeading id="types">types.ts</SectionHeading>
-      <Paragraph>
+      <GuideSourceSection
+        code={slashCommandTypesSource}
+        id="types"
+        language="ts"
+        path="src/components/editor/plugins/slash-command/types.ts"
+        title="types.ts"
+      >
         The <code>SlashCommandId</code> union is the single source of truth for
         every supported command. The docs below render the actual source files,
         so the page stays aligned with the implementation.
-      </Paragraph>
-      <CodeBlock
-        label="src/components/editor/plugins/slash-command/types.ts"
-        language="ts"
-      >
-        {slashCommandTypesSource}
-      </CodeBlock>
+      </GuideSourceSection>
 
-      <SectionHeading id="commands">commands.ts</SectionHeading>
-      <Paragraph>
+      <GuideSourceSection
+        code={slashCommandCommandsSource}
+        id="commands"
+        language="ts"
+        path="src/components/editor/plugins/slash-command/commands.ts"
+        title="commands.ts"
+      >
         <code>SLASH_COMMANDS</code> is the ordered list rendered in the menu.
         Each entry's <code>keywords</code> array drives fuzzy filtering.
-      </Paragraph>
-      <CodeBlock
-        label="src/components/editor/plugins/slash-command/commands.ts"
-        language="ts"
-      >
-        {slashCommandCommandsSource}
-      </CodeBlock>
+      </GuideSourceSection>
 
-      <SectionHeading id="utils">utils.ts</SectionHeading>
-      <Paragraph>
+      <GuideSourceSection
+        code={slashCommandUtilsSource}
+        id="utils"
+        language="ts"
+        path="src/components/editor/plugins/slash-command/utils.ts"
+        title="utils.ts"
+      >
         Pure helper functions used by the plugin: filtering by query, navigating
         up/down, and extracting the slash query from the text immediately before
         the cursor.
-      </Paragraph>
-      <CodeBlock
-        label="src/components/editor/plugins/slash-command/utils.ts"
-        language="ts"
-      >
-        {slashCommandUtilsSource}
-      </CodeBlock>
+      </GuideSourceSection>
 
-      <SectionHeading id="executors">executors.ts</SectionHeading>
-      <Paragraph>
+      <GuideSourceSection
+        code={slashCommandExecutorsSource}
+        id="executors"
+        language="ts"
+        path="src/components/editor/plugins/slash-command/executors.ts"
+        title="executors.ts"
+      >
         Maps every <code>SlashCommandId</code> to a function that mutates the
         Lexical tree. All functions receive the{" "}
         <em>current top-level element</em>
         that contains the cursor, and replace or transform it in-place.
-      </Paragraph>
-      <CodeBlock
-        label="src/components/editor/plugins/slash-command/executors.ts"
-        language="ts"
-      >
-        {slashCommandExecutorsSource}
-      </CodeBlock>
+      </GuideSourceSection>
 
       <SectionHeading id="extending">Adding a New Command</SectionHeading>
       <Paragraph>

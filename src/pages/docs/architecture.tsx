@@ -1,3 +1,4 @@
+import { WhereToChangeTable } from "@/components/docs/contributor-reference";
 import {
   Callout,
   FileTree,
@@ -5,9 +6,6 @@ import {
   Paragraph,
   SectionHeading,
   SubHeading,
-  Table,
-  TableCell,
-  TableRow,
 } from "@/components/docs/primitives";
 
 export function ArchitecturePage() {
@@ -99,59 +97,7 @@ export function ArchitecturePage() {
         When you are editing the core, start in the layer that owns the concern
         instead of reaching for <code>ui/content.tsx</code> first.
       </Paragraph>
-      <Table headers={["Need", "Start in", "Why"]}>
-        <TableRow>
-          <TableCell>Change a public prop or extension point</TableCell>
-          <TableCell>
-            <code>editor.tsx</code> and <code>core/types.ts</code>
-          </TableCell>
-          <TableCell>
-            Public contracts live where the ready-made editor and composition
-            API meet.
-          </TableCell>
-        </TableRow>
-        <TableRow>
-          <TableCell>Add or adjust built-in behavior</TableCell>
-          <TableCell>
-            <code>plugins/&lt;feature&gt;/</code>
-          </TableCell>
-          <TableCell>
-            Feature behavior belongs with its Lexical commands, transforms, and
-            feature-local UI.
-          </TableCell>
-        </TableRow>
-        <TableRow>
-          <TableCell>Change toolbars, panels, or shell UI</TableCell>
-          <TableCell>
-            <code>ui/</code>
-          </TableCell>
-          <TableCell>
-            The React composition layer owns the visual surfaces around the
-            editor.
-          </TableCell>
-        </TableRow>
-        <TableRow>
-          <TableCell>Add a new node or serialization helper</TableCell>
-          <TableCell>
-            <code>core/nodes/&lt;feature&gt;/</code>
-          </TableCell>
-          <TableCell>
-            Node code stays feature-local and should align with its owning
-            plugin when a feature spans both layers.
-          </TableCell>
-        </TableRow>
-        <TableRow>
-          <TableCell>Update onboarding or examples</TableCell>
-          <TableCell>
-            <code>src/pages/docs/</code>, <code>README.md</code>, and{" "}
-            <code>CONTRIBUTING.md</code>
-          </TableCell>
-          <TableCell>
-            Repo context should stay consistent across the app docs and GitHub
-            landing page.
-          </TableCell>
-        </TableRow>
-      </Table>
+      <WhereToChangeTable />
 
       <SectionHeading id="data-flow">Data Flow</SectionHeading>
       <Paragraph>

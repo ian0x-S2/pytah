@@ -1,38 +1,38 @@
 import {
   Callout,
   CodeBlock,
+  extractExportedInterface,
   PageHeader,
   Paragraph,
   SectionHeading,
   SubHeading,
-  sliceSource,
 } from "@/components/docs/primitives";
 import editorTypesSource from "@/components/editor/core/types.ts?raw";
 
-const actionBarControlsSource = sliceSource(editorTypesSource, {
-  end: "}",
-  start: "export interface EditorActionBarControls {",
-});
+const actionBarControlsSource = extractExportedInterface(
+  editorTypesSource,
+  "EditorActionBarControls"
+);
 
-const footerContextSource = sliceSource(editorTypesSource, {
-  end: "}",
-  start: "export interface EditorFooterContext {",
-});
+const footerContextSource = extractExportedInterface(
+  editorTypesSource,
+  "EditorFooterContext"
+);
 
-const outputContextSource = sliceSource(editorTypesSource, {
-  end: "}",
-  start: "export interface EditorOutputContext {",
-});
+const outputContextSource = extractExportedInterface(
+  editorTypesSource,
+  "EditorOutputContext"
+);
 
-const shellContextSource = sliceSource(editorTypesSource, {
-  end: "}",
-  start: "export interface EditorShellContext {",
-});
+const shellContextSource = extractExportedInterface(
+  editorTypesSource,
+  "EditorShellContext"
+);
 
-const editorPropsSource = sliceSource(editorTypesSource, {
-  end: "}",
-  start: "export interface EditorProps {",
-});
+const editorPropsSource = extractExportedInterface(
+  editorTypesSource,
+  "EditorProps"
+);
 
 export function ApiPage() {
   return (

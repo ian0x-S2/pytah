@@ -1,3 +1,4 @@
+import { RepositoryMentalModelTable } from "@/components/docs/contributor-reference";
 import {
   Callout,
   PageHeader,
@@ -116,64 +117,7 @@ export function OverviewPage() {
         <code>src/components/editor/editor.tsx</code> is the public composition
         root. Everything else exists to support or extend that surface.
       </Paragraph>
-      <Table headers={["Area", "Owns", "Start there when..."]}>
-        <TableRow>
-          <TableCell>
-            <code>src/components/editor/editor.tsx</code>
-          </TableCell>
-          <TableCell>
-            top-level editor composition and public defaults
-          </TableCell>
-          <TableCell>
-            you need to understand how the product editor is wired together
-          </TableCell>
-        </TableRow>
-        <TableRow>
-          <TableCell>
-            <code>src/components/editor/core/</code>
-          </TableCell>
-          <TableCell>
-            config, types, nodes, utilities, and composition helpers
-          </TableCell>
-          <TableCell>
-            you are changing editor contracts, node registration, or shared
-            internals
-          </TableCell>
-        </TableRow>
-        <TableRow>
-          <TableCell>
-            <code>src/components/editor/plugins/</code>
-          </TableCell>
-          <TableCell>
-            Lexical behavior plugins and feature-specific wiring
-          </TableCell>
-          <TableCell>
-            you are changing commands, listeners, or feature behavior
-          </TableCell>
-        </TableRow>
-        <TableRow>
-          <TableCell>
-            <code>src/components/editor/ui/</code>
-          </TableCell>
-          <TableCell>
-            toolbars, panels, shells, and other React surfaces
-          </TableCell>
-          <TableCell>
-            you are changing the editor chrome or composition UI
-          </TableCell>
-        </TableRow>
-        <TableRow>
-          <TableCell>
-            <code>src/pages/docs/</code>
-          </TableCell>
-          <TableCell>
-            consumer-facing documentation sourced from the codebase
-          </TableCell>
-          <TableCell>
-            you are updating onboarding, examples, or the public mental model
-          </TableCell>
-        </TableRow>
-      </Table>
+      <RepositoryMentalModelTable />
     </>
   );
 }
