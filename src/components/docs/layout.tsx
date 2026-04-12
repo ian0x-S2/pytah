@@ -1,4 +1,5 @@
 import { CodeIcon, PlayIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useRoute } from "wouter";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -23,6 +24,21 @@ import {
 } from "@/pages/docs/manifest";
 import { ThemeToggle } from "./theme-toggle";
 
+function LocalClock() {
+  const [time, setTime] = useState(() => new Date());
+
+  useEffect(() => {
+    const id = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <span className="hidden items-center text-muted-foreground text-xs tabular-nums sm:inline-flex">
+      {time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+    </span>
+  );
+}
+
 function NavLink({ href, icon: Icon, label }: DocsPageDefinition) {
   const [isActive] = useRoute(href);
 
@@ -40,11 +56,10 @@ function DocsSidebar() {
   return (
     <Sidebar collapsible="offcanvas" variant="sidebar">
       <SidebarHeader>
-        <div className="flex items-center justify-between px-2 py-1">
+        <div className="flex items-center px-2 py-1">
           <Link className="font-semibold text-foreground text-lg" href="/">
             Pytah
           </Link>
-          <ThemeToggle />
         </div>
       </SidebarHeader>
 
@@ -105,15 +120,28 @@ export function DocsLayout({ children }: { children: React.ReactNode }) {
     <SidebarProvider>
       <DocsSidebar />
       <SidebarInset>
-        <header className="flex h-10 shrink-0 items-center gap-2 border-border border-b px-4">
+        <header className="sticky top-0 z-10 flex h-11 shrink-0 items-center gap-2 border-border border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
           <SidebarTrigger className="-ml-1" />
           {pageLabel ? (
-            <span className="truncate font-medium text-foreground text-sm">
+            <span className="min-w-0 flex-1 truncate font-medium text-foreground text-sm">
               {pageLabel}
             </span>
-          ) : null}
+          ) : (
+            <span className="flex-1" />
+          )}
+          <div className="flex items-center gap-2">
+            <LocalClock />
+            <Link
+              className="hidden items-center gap-1.5 rounded-md px-2.5 py-1 text-muted-foreground text-xs transition-colors hover:bg-muted hover:text-foreground sm:inline-flex"
+              href="/demo"
+            >
+              <PlayIcon className="size-3.5" />
+              <span>Demo</span>
+            </Link>
+            <ThemeToggle />
+          </div>
         </header>
-        <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 md:px-8">
+        <div className="mx-auto w-full max-w-4xl overflow-x-clip px-4 py-10 sm:px-6 md:px-8">
           {children}
         </div>
       </SidebarInset>
