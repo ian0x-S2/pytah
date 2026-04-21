@@ -16,6 +16,7 @@ import {
   renderEditorSlot,
   resolveEditorChrome,
   resolveEditorFeatures,
+  shouldRenderEditorShell,
 } from "./core/composition";
 import { createEditorConfig } from "./core/config";
 import { DEFAULT_PLACEHOLDER } from "./core/constants";
@@ -66,7 +67,13 @@ const getEditorShell = (
   content: ReactNode,
   slots?: EditorChromeSlots
 ): ReactNode => {
-  if (minimal || !chrome.shell) {
+  if (
+    !shouldRenderEditorShell({
+      chromeShell: chrome.shell,
+      minimal,
+      shellSlot: slots?.shell,
+    })
+  ) {
     return content;
   }
 

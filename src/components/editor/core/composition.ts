@@ -57,3 +57,26 @@ export const renderEditorSlot = <T>(
 
   return slot;
 };
+
+export const shouldRenderEditorShell = ({
+  chromeShell,
+  minimal,
+  shellSlot,
+}: {
+  chromeShell: boolean;
+  minimal: boolean;
+  shellSlot:
+    | ReactNode
+    | ((context: { children: ReactNode }) => ReactNode)
+    | undefined;
+}) => {
+  if (shellSlot !== undefined) {
+    return true;
+  }
+
+  if (minimal) {
+    return false;
+  }
+
+  return chromeShell;
+};

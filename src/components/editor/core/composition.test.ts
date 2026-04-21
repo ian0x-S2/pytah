@@ -6,6 +6,7 @@ import {
   renderEditorSlot,
   resolveEditorChrome,
   resolveEditorFeatures,
+  shouldRenderEditorShell,
 } from "./composition";
 
 describe("editor composition", () => {
@@ -42,5 +43,24 @@ describe("editor composition", () => {
       6
     );
     strictEqual(renderEditorSlot(undefined, { value: 1 }), undefined);
+  });
+
+  test("allows custom shell slot in minimal mode", () => {
+    strictEqual(
+      shouldRenderEditorShell({
+        chromeShell: false,
+        minimal: true,
+        shellSlot: "custom-shell",
+      }),
+      true
+    );
+    strictEqual(
+      shouldRenderEditorShell({
+        chromeShell: true,
+        minimal: true,
+        shellSlot: undefined,
+      }),
+      false
+    );
   });
 });

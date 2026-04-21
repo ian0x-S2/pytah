@@ -1,6 +1,7 @@
 import {
   BookOpenIcon,
   EyeIcon,
+  ListTreeIcon,
   MaximizeIcon,
   MinimizeIcon,
   PanelTopIcon,
@@ -11,6 +12,7 @@ import { Link } from "wouter";
 import { ThemeToggle } from "@/components/docs/theme-toggle";
 import type { EditorToolbar } from "@/components/editor/core/types";
 import { Editor } from "@/components/editor/editor";
+import { EditorWithToc } from "@/components/editor/editor-with-toc";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -24,18 +26,24 @@ const TOOLBAR_LABELS: Record<string, string> = {
 export const DEMO_EDITOR_USAGE_EXAMPLE = `import { useState } from "react";
 import type { EditorToolbar } from "@/components/editor/core/types";
 import { Editor } from "@/components/editor/editor";
+import { EditorWithToc } from "@/components/editor/editor-with-toc";
 
 export function DemoEditorExample() {
   const [editable, setEditable] = useState(true);
   const [toolbar, setToolbar] = useState<EditorToolbar>(false);
+  const [showToc, setShowToc] = useState(false);
 
-  return <Editor editable={editable} minimal toolbar={toolbar} />;
+  const EditorComponent = showToc ? EditorWithToc : Editor;
+  return <EditorComponent editable={editable} minimal toolbar={toolbar} />;
 }`;
 
 export function DemoPage() {
   const [editable, setEditable] = useState(true);
   const [zen, setZen] = useState(false);
   const [toolbar, setToolbar] = useState<EditorToolbar>(false);
+  const [showToc, setShowToc] = useState(false);
+
+  const tocVisible = showToc && !zen;
 
   const cycleToolbar = () => {
     setToolbar((prev) => {
@@ -53,7 +61,7 @@ export function DemoPage() {
           zen && "pointer-events-none opacity-0"
         )}
       >
-        <div className="mx-auto flex max-w-[720px] items-center justify-between px-4 py-2">
+        <div className="mx-auto flex max-w-[900px] items-center justify-between px-4 py-2">
           <div className="flex items-center gap-3">
             <Link
               className="font-semibold text-foreground text-sm tracking-tight"
@@ -66,6 +74,15 @@ export function DemoPage() {
           </div>
           <div className="flex items-center gap-1">
             <ThemeToggle />
+            <Button
+              className="gap-1.5"
+              onClick={() => setShowToc((prev) => !prev)}
+              size="sm"
+              variant={showToc ? "secondary" : "ghost"}
+            >
+              <ListTreeIcon className="size-3.5" />
+              TOC
+            </Button>
             <Button
               className="gap-1.5"
               onClick={cycleToolbar}
@@ -117,24 +134,30 @@ export function DemoPage() {
       </header>
 
       {/* Document page */}
-      <main className="mx-auto w-full max-w-[720px] flex-1">
-        {/* Notion-style page title */}
-        {!zen && (
-          <div className="px-8 pt-16 pb-4">
-            <div className="mb-4 select-none text-5xl leading-none">📄</div>
-            <h1 className="font-bold text-[40px] text-foreground leading-tight tracking-tight">
-              Note Editor
-            </h1>
-            <p className="mt-3 text-muted-foreground text-sm leading-relaxed">
-              Try slash commands, format text, add tables and images. Everything
-              exports to clean HTML and Markdown.
-            </p>
-          </div>
-        )}
+      <main className="mx-auto w-full max-w-[900px] flex-1">
+        <div>
+          {/* Notion-style page title */}
+          {!zen && (
+            <div className="px-8 pt-16 pb-4">
+              <div className="mb-4 select-none text-5xl leading-none">📄</div>
+              <h1 className="font-bold text-[40px] text-foreground leading-tight tracking-tight">
+                Note Editor
+              </h1>
+              <p className="mt-3 text-muted-foreground text-sm leading-relaxed">
+                Try slash commands, format text, add tables and images.
+                Everything exports to clean HTML and Markdown.
+              </p>
+            </div>
+          )}
 
-        {/* Editor flows as the page body — no card, no border */}
-        <div className={cn(zen && "pt-20")}>
-          <Editor editable={editable} minimal toolbar={toolbar} />
+          {/* Editor flows as the page body — no card, no border */}
+          <div className={cn(zen && "pt-20")}>
+            {tocVisible ? (
+              <EditorWithToc editable={editable} minimal toolbar={toolbar} />
+            ) : (
+              <Editor editable={editable} minimal toolbar={toolbar} />
+            )}
+          </div>
         </div>
       </main>
 
