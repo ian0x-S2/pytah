@@ -42,6 +42,7 @@ Write code that is **accessible, performant, type-safe, and maintainable**. Focu
 
 ### React & JSX
 
+- **React Compiler**: This project has the React Compiler enabled. Avoid manual memoization with `useMemo`, `useCallback`, and `React.memo` as the compiler handles this automatically. Only use them when explicitly required by external libraries or specific performance edge cases.
 - Use function components over class components
 - Call hooks at the top level only, never conditionally
 - Specify all dependencies in hook dependency arrays correctly
