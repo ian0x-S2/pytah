@@ -27,9 +27,8 @@ import { Separator } from "@/components/ui/separator";
 import { Toggle } from "@/components/ui/toggle";
 import { cn } from "@/lib/utils";
 import { ColorSwatches } from "../../ui/color-swatches";
-import { BLOCK_OPTIONS } from "../block-type-toolbar/options";
+import { BlockTypeDrop } from "../block-type-toolbar/block-type-drop";
 import type { BlockTypeValue } from "../block-type-toolbar/types";
-import { applyBlockType } from "../block-type-toolbar/utils";
 import {
   applyBgColor,
   applyTextColor,
@@ -37,7 +36,6 @@ import {
 } from "../floating-toolbar/actions";
 import { OPEN_FLOATING_LINK_EDITOR_COMMAND } from "../floating-toolbar/link-command";
 import { LINK_PLACEHOLDER_URL } from "../link-behavior/utils";
-import { BlockTypePopover } from "./block-type-popover";
 import { ALIGN_ACTIONS, INLINE_FORMAT_ACTIONS } from "./constants";
 import { InsertPopover } from "./insert-popover";
 import { fullToolbarUiReducer } from "./reducer";
@@ -55,30 +53,10 @@ export function FullToolbarPlugin({ className }: FullToolbarPluginProps) {
     fullToolbarUiReducer,
     INITIAL_UI_STATE
   );
-  const { activeBlockTypeIndex, activeInsertIndex, blockTypeOpen, insertOpen } =
-    uiState;
+  const { activeInsertIndex, insertOpen } = uiState;
 
   const handleBlockTypeChange = (value: BlockTypeValue) => {
-    applyBlockType(editor, value);
     setBlockType(value);
-    dispatchUi({ type: "set-block-type-open", payload: { open: false } });
-  };
-
-  const handleBlockTypeOpenChange = (open: boolean) => {
-    if (open) {
-      const initialIndex = Math.max(
-        BLOCK_OPTIONS.findIndex((option) => option.value === blockType),
-        0
-      );
-
-      dispatchUi({
-        type: "set-block-type-open",
-        payload: { activeBlockTypeIndex: initialIndex, open },
-      });
-      return;
-    }
-
-    dispatchUi({ type: "set-block-type-open", payload: { open } });
   };
 
   const handleLinkToggle = () => {
@@ -117,13 +95,10 @@ export function FullToolbarPlugin({ className }: FullToolbarPluginProps) {
 
       <Separator className="mx-0.5 h-4" orientation="vertical" />
 
-      <BlockTypePopover
-        activeBlockTypeIndex={activeBlockTypeIndex}
+      <BlockTypeDrop
         blockType={blockType}
-        blockTypeOpen={blockTypeOpen}
-        dispatchUi={dispatchUi}
+        editor={editor}
         onBlockTypeChange={handleBlockTypeChange}
-        onOpenChange={handleBlockTypeOpenChange}
       />
 
       <Separator className="mx-0.5 h-4" orientation="vertical" />

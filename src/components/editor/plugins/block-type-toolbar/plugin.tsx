@@ -15,8 +15,6 @@ import {
   AlignCenterIcon,
   AlignLeftIcon,
   AlignRightIcon,
-  CheckIcon,
-  ChevronDownIcon,
   IndentDecreaseIcon,
   IndentIncreaseIcon,
   RedoIcon,
@@ -24,29 +22,15 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
-import { BLOCK_ICONS, BLOCK_LABELS, BLOCK_OPTIONS } from "./options";
+import { BlockTypeDrop } from "./block-type-drop";
 import type { BlockTypeValue } from "./types";
-import {
-  applyBlockType,
-  getBlockTypeFromSelection,
-  getCurrentBlockOption,
-} from "./utils";
+import { getBlockTypeFromSelection } from "./utils";
 
 export function BlockTypeToolbarPlugin() {
   const [editor] = useLexicalComposerContext();
   const [currentBlockType, setCurrentBlockType] =
     useState<BlockTypeValue>("paragraph");
-
-  const currentOption = getCurrentBlockOption(currentBlockType, BLOCK_OPTIONS);
-  const CurrentIcon = BLOCK_ICONS[currentOption?.value ?? "paragraph"];
 
   useEffect(() => {
     function updateCurrentBlockType() {
@@ -73,53 +57,13 @@ export function BlockTypeToolbarPlugin() {
     );
   }, [editor]);
 
-  function handleBlockTypeChange(blockType: BlockTypeValue) {
-    applyBlockType(editor, blockType);
-    setCurrentBlockType(blockType);
-  }
-
   return (
     <div className="flex items-center gap-1">
-      <DropdownMenu>
-        <DropdownMenuTrigger render={<Button size="sm" variant="outline" />}>
-          <CurrentIcon className="size-4" />
-          <span>{currentOption?.label ?? BLOCK_LABELS.paragraph}</span>
-          <ChevronDownIcon className="size-4 text-muted-foreground" />
-        </DropdownMenuTrigger>
-
-        <DropdownMenuContent className="w-72">
-          {BLOCK_OPTIONS.map((option) => {
-            const Icon = BLOCK_ICONS[option.value];
-            const isSelected = option.value === currentBlockType;
-
-            return (
-              <DropdownMenuItem
-                className={cn(
-                  "items-start gap-3 px-3 py-2",
-                  isSelected && "bg-accent/40"
-                )}
-                key={option.value}
-                onClick={() => handleBlockTypeChange(option.value)}
-              >
-                <span className="mt-0.5 rounded-sm bg-muted p-1 text-muted-foreground">
-                  <Icon className="size-4" />
-                </span>
-                <span className="flex flex-col">
-                  <span className="font-medium text-foreground text-sm">
-                    {option.label}
-                  </span>
-                  <span className="text-muted-foreground text-xs">
-                    {option.description}
-                  </span>
-                </span>
-                {isSelected && (
-                  <CheckIcon className="ml-auto size-3.5 shrink-0 self-center text-muted-foreground" />
-                )}
-              </DropdownMenuItem>
-            );
-          })}
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <BlockTypeDrop
+        blockType={currentBlockType}
+        editor={editor}
+        onBlockTypeChange={setCurrentBlockType}
+      />
 
       <Separator className="mx-1 h-5" orientation="vertical" />
 

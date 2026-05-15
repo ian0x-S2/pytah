@@ -10,21 +10,6 @@ import {
   StrikethroughIcon,
   UnderlineIcon,
 } from "lucide-react";
-import type { BlockTypeValue } from "../block-type-toolbar/types";
-
-/** Short abbreviations shown in the block-type pill. */
-export const BLOCK_ABBR: Record<BlockTypeValue, string> = {
-  bullet: "•",
-  check: "□",
-  code: "<>",
-  h1: "H1",
-  h2: "H2",
-  h3: "H3",
-  number: "1.",
-  paragraph: "P",
-  quote: "❝",
-  table: "⊞",
-};
 
 export const INLINE_FORMAT_ACTIONS = [
   { format: "bold", icon: BoldIcon, key: "isBold", label: "Bold" },
