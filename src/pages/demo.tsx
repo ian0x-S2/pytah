@@ -53,7 +53,7 @@ export function DemoPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex min-h-screen flex-col bg-background pb-10">
       {/* Minimal navigation header */}
       <header
         className={cn(
