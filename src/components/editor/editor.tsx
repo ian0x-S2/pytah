@@ -3,7 +3,7 @@
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import type { LexicalEditor } from "lexical";
 import type { ReactNode } from "react";
-import { useCallback, useMemo, useState } from "react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import {
   copyEditorOutput,
@@ -141,49 +141,44 @@ export function Editor({
     nodes: extraNodes,
   });
 
-  const snapshot = useMemo<EditorSnapshot>(() => {
-    return {
-      ...serializedSnapshot,
-      text: textContent,
-    };
-  }, [serializedSnapshot, textContent]);
+  const snapshot: EditorSnapshot = {
+    ...serializedSnapshot,
+    text: textContent,
+  };
 
-  const handleSnapshotChange = useCallback(
-    (nextText: string, editor: LexicalEditor) => {
-      setTextContent(nextText);
-      setEditorInstance((currentEditor) => currentEditor ?? editor);
-    },
-    []
-  );
+  const handleSnapshotChange = (nextText: string, editor: LexicalEditor) => {
+    setTextContent(nextText);
+    setEditorInstance((currentEditor) => currentEditor ?? editor);
+  };
 
-  const handleSnapshotReady = useCallback(
-    (nextSnapshot: EditorSnapshot, editor: LexicalEditor) => {
-      setSerializedSnapshot((currentSnapshot) => {
-        if (
-          currentSnapshot.html === nextSnapshot.html &&
-          currentSnapshot.markdown === nextSnapshot.markdown &&
-          currentSnapshot.text === nextSnapshot.text
-        ) {
-          return currentSnapshot;
-        }
+  const handleSnapshotReady = (
+    nextSnapshot: EditorSnapshot,
+    editor: LexicalEditor
+  ) => {
+    setSerializedSnapshot((currentSnapshot) => {
+      if (
+        currentSnapshot.html === nextSnapshot.html &&
+        currentSnapshot.markdown === nextSnapshot.markdown &&
+        currentSnapshot.text === nextSnapshot.text
+      ) {
+        return currentSnapshot;
+      }
 
-        return nextSnapshot;
-      });
-      setEditorInstance((currentEditor) => currentEditor ?? editor);
-      onChange?.(nextSnapshot, editor);
-    },
-    [onChange]
-  );
+      return nextSnapshot;
+    });
+    setEditorInstance((currentEditor) => currentEditor ?? editor);
+    onChange?.(nextSnapshot, editor);
+  };
 
-  const handleCopyMarkdown = useCallback(async () => {
+  const handleCopyMarkdown = async () => {
     await copyEditorOutput(serializedSnapshot.markdown);
-  }, [serializedSnapshot.markdown]);
+  };
 
-  const handleCopyHtml = useCallback(async () => {
+  const handleCopyHtml = async () => {
     await copyEditorOutput(serializedSnapshot.html);
-  }, [serializedSnapshot.html]);
+  };
 
-  const handleReset = useCallback(() => {
+  const handleReset = () => {
     if (!editorInstance) {
       return;
     }
@@ -193,9 +188,9 @@ export function Editor({
     setTextContent(nextSnapshot.text);
     setSerializedSnapshot(nextSnapshot);
     onChange?.(nextSnapshot, editorInstance);
-  }, [editorInstance, onChange]);
+  };
 
-  const handleLoadHtmlExample = useCallback(() => {
+  const handleLoadHtmlExample = () => {
     if (!editorInstance) {
       return;
     }
@@ -205,9 +200,9 @@ export function Editor({
     setTextContent(nextSnapshot.text);
     setSerializedSnapshot(nextSnapshot);
     onChange?.(nextSnapshot, editorInstance);
-  }, [editorInstance, onChange]);
+  };
 
-  const handleLoadMarkdownExample = useCallback(() => {
+  const handleLoadMarkdownExample = () => {
     if (!editorInstance) {
       return;
     }
@@ -217,7 +212,7 @@ export function Editor({
     setTextContent(nextSnapshot.text);
     setSerializedSnapshot(nextSnapshot);
     onChange?.(nextSnapshot, editorInstance);
-  }, [editorInstance, onChange]);
+  };
 
   const actionBarControls: EditorActionBarControls = {
     onLoadHtml: handleLoadHtmlExample,

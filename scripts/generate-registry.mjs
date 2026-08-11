@@ -25,6 +25,7 @@ const editorUiFiles = [
   "button.tsx",
   "command.tsx",
   "dialog.tsx",
+  "dropdown-menu.tsx",
   "input.tsx",
   "input-group.tsx",
   "popover.tsx",
@@ -37,6 +38,7 @@ const registryDependencyNames = [
   "@base-ui/react",
   "@lexical/clipboard",
   "@lexical/code",
+  "@lexical/code-shiki",
   "@lexical/extension",
   "@lexical/history",
   "@lexical/html",
@@ -96,6 +98,10 @@ const collectSourceFiles = async (directory) => {
     }
 
     if (!(entry.name.endsWith(".ts") || entry.name.endsWith(".tsx"))) {
+      continue;
+    }
+
+    if (entry.name.endsWith(".test.ts") || entry.name.endsWith(".test.tsx")) {
       continue;
     }
 
@@ -187,6 +193,20 @@ const getLibEntries = () => {
         "core",
         "compatibility.json"
       ),
+    }),
+    createRegistryFileEntry({
+      absolutePath: path.join(
+        projectRoot,
+        "src",
+        "components",
+        "theme-provider.tsx"
+      ),
+      registryPath: path.posix.join(
+        registryPathPrefix,
+        "components",
+        "theme-provider.tsx"
+      ),
+      target: path.posix.join("src", "components", "theme-provider.tsx"),
     }),
   ]);
 };

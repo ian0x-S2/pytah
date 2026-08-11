@@ -172,7 +172,7 @@ const updateTsConfigApp = async (projectDirectory) => {
   const source = await readFile(tsconfigPath, "utf8");
   const updatedSource = source.replace(
     '    "jsx": "react-jsx",\n',
-    '    "jsx": "react-jsx",\n    "baseUrl": ".",\n    "paths": {\n      "@/*": ["./src/*"]\n    },\n'
+    '    "jsx": "react-jsx",\n    "paths": {\n      "@/*": ["./src/*"]\n    },\n'
   );
 
   if (updatedSource === source) {
