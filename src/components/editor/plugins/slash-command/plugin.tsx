@@ -533,6 +533,7 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
       if (animationFrameRef.current !== null) {
         window.cancelAnimationFrame(animationFrameRef.current);
       }
+      animationFrameRef.current = null;
     };
   }, []);
 
