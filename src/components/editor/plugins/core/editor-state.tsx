@@ -6,7 +6,6 @@ import type { LexicalEditor } from "lexical";
 import { useEffect } from "react";
 import type { EditorSnapshot } from "../../core/types";
 import {
-  createEmptyEditorState,
   loadMarkdownContent,
   readEditorSnapshot,
   readEditorTextContent,
@@ -36,10 +35,7 @@ export function EditorStatePlugin({
 
     if (initialHtml) {
       replaceEditorHtmlContent(editor, initialHtml);
-      return;
     }
-
-    createEmptyEditorState(editor);
   }, [editor, initialHtml, initialMarkdown]);
 
   return (

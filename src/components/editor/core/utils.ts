@@ -57,7 +57,7 @@ export const loadMarkdownContent = (
 ) => {
   editor.update(() => {
     $convertFromMarkdownString(markdown, EDITOR_MARKDOWN_TRANSFORMERS);
-    $getRoot().selectEnd();
+    $getRoot().selectStart();
   });
 };
 
@@ -77,11 +77,11 @@ export const replaceEditorHtmlContent = (
       const paragraph = $createParagraphNode();
       paragraph.append($createTextNode(""));
       root.append(paragraph);
-      paragraph.selectEnd();
+      paragraph.selectStart();
       return;
     }
 
     root.append(...nodes);
-    root.selectEnd();
+    root.selectStart();
   });
 };
