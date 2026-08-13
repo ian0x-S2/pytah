@@ -68,7 +68,18 @@ export function PluginsPage() {
             initial highlight on the active editor block (or the first option
             when none matches)
           </TableCell>
-          <TableCell>Button, Popover, Separator</TableCell>
+          <TableCell>Button, DropdownMenu, Separator</TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell>
+            <strong>full-toolbar</strong>
+          </TableCell>
+          <TableCell>
+            Full top toolbar providing block types, inline styles (bold, italic,
+            underline, strikethrough, code), text/background color pickers, link
+            actions, alignment, and indentation
+          </TableCell>
+          <TableCell>Button, DropdownMenu, Separator, Popover</TableCell>
         </TableRow>
         <TableRow>
           <TableCell>
@@ -86,9 +97,19 @@ export function PluginsPage() {
           </TableCell>
           <TableCell>
             Slash menu (type /) for inserting blocks, images, tables, YouTube
-            embeds, column layouts, and collapsible sections
+            embeds, column layouts, math equations, and collapsible sections
           </TableCell>
           <TableCell>Command, Dialog, Button, Input, Textarea</TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell>
+            <strong>toc</strong>
+          </TableCell>
+          <TableCell>
+            Table of contents / outline indicator in the editor margin with
+            mini-dash indicators and hover popover for heading navigation
+          </TableCell>
+          <TableCell>Popover, Button</TableCell>
         </TableRow>
         <TableRow>
           <TableCell>
@@ -175,6 +196,14 @@ export function PluginsPage() {
         </TableRow>
         <TableRow>
           <TableCell>
+            <strong>code-highlight</strong>
+          </TableCell>
+          <TableCell>
+            Syntax highlighting for code blocks powered by Shiki
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell>
             <strong>collapsible</strong>
           </TableCell>
           <TableCell>
@@ -189,6 +218,15 @@ export function PluginsPage() {
         </TableRow>
         <TableRow>
           <TableCell>
+            <strong>math</strong>
+          </TableCell>
+          <TableCell>
+            KaTeX math block and inline equation commands and Markdown
+            transformers ($...$ and $$...$$)
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell>
             <strong>youtube</strong>
           </TableCell>
           <TableCell>YouTube embed insert command and URL parsing</TableCell>
@@ -198,7 +236,8 @@ export function PluginsPage() {
             <strong>markdown</strong>
           </TableCell>
           <TableCell>
-            Custom Markdown transformers for images, YouTube embeds, and tables
+            Custom Markdown transformers for images, YouTube embeds, math, and
+            tables
           </TableCell>
         </TableRow>
       </Table>
