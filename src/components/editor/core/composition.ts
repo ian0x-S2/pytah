@@ -11,6 +11,7 @@ export const DEFAULT_EDITOR_FEATURES = {
   images: true,
   layouts: true,
   markdownShortcuts: true,
+  math: true,
   seedContent: true,
   slashCommand: true,
   tabIndentation: true,

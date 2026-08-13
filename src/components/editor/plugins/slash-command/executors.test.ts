@@ -146,4 +146,31 @@ describe("slash command executors", () => {
       );
     });
   });
+
+  test("replaces a paragraph with a math block and trailing paragraph", async () => {
+    const editor = createTestEditor();
+    await initializeEditor(editor);
+
+    editor.update(() => {
+      const root = $getRoot();
+      const paragraph = root.getFirstChildOrThrow();
+
+      if (!$isParagraphNode(paragraph)) {
+        throw new Error("Expected initial paragraph node");
+      }
+
+      SLASH_COMMAND_EXECUTORS.math(paragraph);
+    });
+
+    await flushEditorUpdates();
+
+    editor.getEditorState().read(() => {
+      const root = $getRoot();
+      strictEqual(root.getChildrenSize(), 2);
+      const mathNode = root.getFirstChildOrThrow();
+      strictEqual(mathNode.getType(), "math");
+      const trailingParagraph = root.getLastChildOrThrow();
+      strictEqual(trailingParagraph.getType(), "paragraph");
+    });
+  });
 });

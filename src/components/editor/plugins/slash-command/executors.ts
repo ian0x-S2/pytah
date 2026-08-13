@@ -21,6 +21,7 @@ import {
   $isParagraphNode,
   type ElementNode,
 } from "lexical";
+import { $createMathNode } from "../../core/nodes/math/node";
 import { replaceElementWithCollapsible } from "../collapsible/utils";
 import { DEFAULT_LAYOUT_TEMPLATE } from "../layout/constants";
 import { applyLayoutPreset } from "../layout/utils";
@@ -129,6 +130,18 @@ const applyCollapsibleCommand = (targetElement: ElementNode) => {
   replaceElementWithCollapsible(targetElement);
 };
 
+const applyMathCommand = (targetElement: ElementNode) => {
+  const mathNode = $createMathNode({
+    equation: "f(x) = c",
+    inline: false,
+  });
+  const paragraph = $createParagraphNode();
+
+  targetElement.replace(mathNode);
+  mathNode.insertAfter(paragraph);
+  paragraph.select();
+};
+
 export const SLASH_COMMAND_EXECUTORS: Record<
   SlashCommandId,
   (element: ElementNode) => void
@@ -143,6 +156,7 @@ export const SLASH_COMMAND_EXECUTORS: Record<
   h3: (element) => applyHeadingCommand(element, "h3"),
   hr: applyDividerCommand,
   image: applyParagraphCommand,
+  math: applyMathCommand,
   number: (element) => applyListCommand(element, "number"),
   paragraph: applyParagraphCommand,
   quote: applyQuoteCommand,

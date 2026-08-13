@@ -36,6 +36,7 @@ import { LayoutPlugin } from "../plugins/layout/plugin";
 import { FloatingLinkEditorPlugin } from "../plugins/link-behavior/floating-link-editor";
 import { LinkBehaviorPlugin } from "../plugins/link-behavior/plugin";
 import { EDITOR_MARKDOWN_TRANSFORMERS } from "../plugins/markdown/transformers";
+import { MathPlugin } from "../plugins/math/plugin";
 import { SlashCommandPlugin } from "../plugins/slash-command/plugin";
 import { TableBehaviorPlugin } from "../plugins/table-behavior/plugin";
 import { YouTubePlugin } from "../plugins/youtube/plugin";
@@ -124,6 +125,7 @@ function DefaultEditorPlugins({
       <LinkBehaviorPlugin editable={editable} />
       {features.images ? <ImagePlugin /> : null}
       {features.youtube ? <YouTubePlugin /> : null}
+      {features.math ? <MathPlugin /> : null}
       {features.collapsible ? <CollapsiblePlugin /> : null}
       {features.layouts ? <LayoutPlugin /> : null}
       <HorizontalRulePlugin />

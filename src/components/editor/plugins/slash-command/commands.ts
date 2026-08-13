@@ -1,4 +1,5 @@
 import {
+  CalculatorIcon,
   ChevronRightIcon,
   CodeIcon,
   Heading1Icon,
@@ -84,6 +85,14 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     id: "check",
     keywords: ["check", "checklist", "todo", "task"],
     label: "Checklist",
+  },
+  {
+    description: "Insert TeX math equation",
+    icon: CalculatorIcon,
+    id: "math",
+    keywords: ["math", "latex", "katex", "equation", "formula", "tex"],
+    label: "Math Block",
+    requiredFeature: "math",
   },
   {
     description: "Insert an image from URL",

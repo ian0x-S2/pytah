@@ -11,6 +11,7 @@ import { CollapsibleTitleNode } from "./nodes/collapsible/title-node";
 import { ImageNode } from "./nodes/image/node";
 import { LayoutContainerNode } from "./nodes/layout/container-node";
 import { LayoutItemNode } from "./nodes/layout/item-node";
+import { MathNode } from "./nodes/math/node";
 import { YouTubeNode } from "./nodes/youtube/node";
 import { editorTheme } from "./theme";
 
@@ -30,6 +31,7 @@ export const DEFAULT_EDITOR_NODES = [
   HorizontalRuleNode,
   ImageNode,
   YouTubeNode,
+  MathNode,
   CollapsibleContainerNode,
   CollapsibleTitleNode,
   CollapsibleContentNode,

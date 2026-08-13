@@ -23,20 +23,6 @@ const TOOLBAR_LABELS: Record<string, string> = {
   full: "Full",
 };
 
-export const DEMO_EDITOR_USAGE_EXAMPLE = `import { useState } from "react";
-import type { EditorToolbar } from "@/components/editor/core/types";
-import { Editor } from "@/components/editor/editor";
-import { EditorWithToc } from "@/components/editor/editor-with-toc";
-
-export function DemoEditorExample() {
-  const [editable, setEditable] = useState(true);
-  const [toolbar, setToolbar] = useState<EditorToolbar>(false);
-  const [showToc, setShowToc] = useState(false);
-
-  const EditorComponent = showToc ? EditorWithToc : Editor;
-  return <EditorComponent editable={editable} minimal toolbar={toolbar} />;
-}`;
-
 export function DemoPage() {
   const [editable, setEditable] = useState(true);
   const [zen, setZen] = useState(false);
@@ -61,7 +47,7 @@ export function DemoPage() {
           zen && "pointer-events-none opacity-0"
         )}
       >
-        <div className="mx-auto flex max-w-[900px] items-center justify-between px-4 py-2">
+        <div className="mx-auto flex max-w-225 items-center justify-between px-4 py-2">
           <div className="flex items-center gap-3">
             <Link
               className="font-semibold text-foreground text-sm tracking-tight"

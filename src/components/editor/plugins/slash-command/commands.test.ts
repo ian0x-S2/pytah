@@ -10,6 +10,7 @@ describe("slash command feature gating", () => {
         collapsible: false,
         images: false,
         layouts: false,
+        math: false,
         tables: false,
         youtube: false,
       })

@@ -38,6 +38,7 @@ export interface EditorFeatureFlags {
   images?: boolean;
   layouts?: boolean;
   markdownShortcuts?: boolean;
+  math?: boolean;
   seedContent?: boolean;
   slashCommand?: boolean;
   tabIndentation?: boolean;

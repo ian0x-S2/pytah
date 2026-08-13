@@ -3,7 +3,7 @@ import type { EditorFeatureFlags } from "../../core/types";
 
 export type SlashCommandFeatureFlag = keyof Pick<
   EditorFeatureFlags,
-  "collapsible" | "images" | "layouts" | "tables" | "youtube"
+  "collapsible" | "images" | "layouts" | "math" | "tables" | "youtube"
 >;
 
 export type SlashCommandId =
@@ -16,6 +16,7 @@ export type SlashCommandId =
   | "bullet"
   | "number"
   | "check"
+  | "math"
   | "image"
   | "youtube"
   | "collapsible"

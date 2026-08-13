@@ -11,7 +11,7 @@ import {
 import compatibility from "@/components/editor/core/compatibility.json";
 import editorTypesSource from "@/components/editor/core/types.ts?raw";
 import indexCssSource from "@/index.css?raw";
-import { DEMO_EDITOR_USAGE_EXAMPLE } from "@/pages/demo";
+import { DEMO_EDITOR_USAGE_EXAMPLE } from "@/pages/demo-code";
 
 const editorPropsSource = extractExportedInterface(
   editorTypesSource,
