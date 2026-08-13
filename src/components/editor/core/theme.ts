@@ -8,9 +8,12 @@ export const editorTheme: EditorThemeClasses = {
   root: "outline-none min-h-[200px] px-1",
   paragraph: "mb-1 leading-7 text-foreground",
   heading: {
-    h1: "text-4xl font-extrabold tracking-tight mb-4 mt-8 text-foreground first:mt-0",
-    h2: "text-3xl font-semibold tracking-tight mb-3 mt-6 text-foreground first:mt-0",
-    h3: "text-2xl font-semibold tracking-tight mb-2 mt-4 text-foreground first:mt-0",
+    h1: "text-4xl font-extrabold tracking-tight mt-12 mb-5 text-foreground first:mt-0 scroll-mt-24",
+    h2: "text-3xl font-semibold tracking-tight mt-10 mb-4 text-foreground first:mt-0 scroll-mt-24",
+    h3: "text-2xl font-semibold tracking-tight mt-8 mb-3 text-foreground first:mt-0 scroll-mt-24",
+    h4: "text-xl font-semibold tracking-tight mt-6 mb-2 text-foreground first:mt-0 scroll-mt-24",
+    h5: "text-lg font-semibold tracking-tight mt-5 mb-2 text-foreground first:mt-0 scroll-mt-24",
+    h6: "text-base font-semibold tracking-tight mt-4 mb-2 text-foreground first:mt-0 scroll-mt-24",
   },
   quote:
     "border-l-2 border-foreground/20 pl-4 italic text-muted-foreground my-3",

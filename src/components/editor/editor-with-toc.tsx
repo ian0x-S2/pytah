@@ -34,7 +34,7 @@ export function EditorWithToc({
         shell: ({ children }) => (
           <>
             <div className="min-w-0">{children}</div>
-            <div className="pointer-events-none fixed top-20 right-8 hidden xl:block">
+            <div className="pointer-events-none fixed top-24 right-6 z-30 hidden xl:block">
               <div className="pointer-events-auto">
                 {toc ?? <EditorTableOfContents className={tocClassName} />}
               </div>

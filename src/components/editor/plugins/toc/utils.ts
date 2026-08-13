@@ -8,6 +8,7 @@ import {
   type NodeKey,
 } from "lexical";
 import {
+  ACTIVE_HEADING_TOP_OFFSET,
   DEFAULT_HEADING_STYLE,
   DEFAULT_SCROLL_TOP_OFFSET,
   HEADING_STYLES,
@@ -113,7 +114,7 @@ export const scrollAndFocusHeading = (
   });
 };
 
-const isNearBottom = (scrollParent: HTMLElement | Window): boolean => {
+const isAtAbsoluteBottom = (scrollParent: HTMLElement | Window): boolean => {
   const isWindow = scrollParent === window;
   const scrollTop = isWindow
     ? window.scrollY
@@ -125,7 +126,8 @@ const isNearBottom = (scrollParent: HTMLElement | Window): boolean => {
     ? window.innerHeight
     : (scrollParent as HTMLElement).clientHeight;
 
-  return scrollHeight - (scrollTop + clientHeight) < 40;
+  const maxScroll = scrollHeight - clientHeight;
+  return maxScroll > 0 && maxScroll - scrollTop <= 40;
 };
 
 const getTargetLine = (
@@ -137,6 +139,70 @@ const getTargetLine = (
   }
   const parentRect = (scrollParent as HTMLElement).getBoundingClientRect();
   return parentRect.top + offset;
+};
+
+const findHighestActiveHeadingKey = (
+  entries: readonly TableOfContentsEntry[],
+  editor: LexicalEditor,
+  targetLine: number,
+  currentActiveKey: NodeKey | null,
+  scrollDirection: "up" | "down"
+): NodeKey | null => {
+  let activeKey: NodeKey | null = null;
+  const hysteresisBuffer = 20;
+
+  for (const [key] of entries) {
+    const element = editor.getElementByKey(key);
+    if (!(element instanceof HTMLElement && element.isConnected)) {
+      continue;
+    }
+
+    const isCurrentlyActive = currentActiveKey === key;
+    const threshold =
+      isCurrentlyActive && scrollDirection === "up"
+        ? targetLine + hysteresisBuffer
+        : targetLine;
+
+    if (element.getBoundingClientRect().top <= threshold) {
+      activeKey = key;
+      continue;
+    }
+
+    break;
+  }
+
+  return activeKey;
+};
+
+const resolveAbsoluteBottomHeadingKey = (
+  entries: readonly TableOfContentsEntry[],
+  editor: LexicalEditor,
+  scrollParent: HTMLElement | Window
+): NodeKey | null => {
+  if (!isAtAbsoluteBottom(scrollParent)) {
+    return null;
+  }
+
+  const lastKey = entries.at(-1)?.[0];
+  if (!lastKey) {
+    return null;
+  }
+
+  const lastElement = editor.getElementByKey(lastKey);
+  if (!(lastElement instanceof HTMLElement)) {
+    return null;
+  }
+
+  const clientHeight =
+    scrollParent === window
+      ? window.innerHeight
+      : (scrollParent as HTMLElement).clientHeight;
+
+  if (lastElement.getBoundingClientRect().top <= clientHeight) {
+    return lastKey;
+  }
+
+  return null;
 };
 
 export const resolveActiveHeadingKey = (
@@ -154,43 +220,29 @@ export const resolveActiveHeadingKey = (
   }
 
   const scrollParent = options?.scrollParent ?? window;
-  if (isNearBottom(scrollParent)) {
-    return entries.at(-1)?.[0] ?? null;
-  }
-
   const offset = options?.offset ?? getScrollTopOffset();
   const currentActiveKey = options?.currentActiveKey ?? null;
   const scrollDirection = options?.scrollDirection ?? "down";
-  const targetLine = getTargetLine(scrollParent, offset);
+  const targetLine = getTargetLine(
+    scrollParent,
+    offset + ACTIVE_HEADING_TOP_OFFSET
+  );
 
-  let activeKey: NodeKey | null = null;
-  const hysteresisBuffer = 15; // px buffer to prevent flickering
+  const activeKey = findHighestActiveHeadingKey(
+    entries,
+    editor,
+    targetLine,
+    currentActiveKey,
+    scrollDirection
+  );
 
-  for (const [key] of entries) {
-    const element = editor.getElementByKey(key);
-    if (!(element instanceof HTMLElement && element.isConnected)) {
-      continue;
-    }
+  const bottomKey = resolveAbsoluteBottomHeadingKey(
+    entries,
+    editor,
+    scrollParent
+  );
 
-    const rect = element.getBoundingClientRect();
-    const top = rect.top;
-
-    // Apply hysteresis: if this heading is currently active, we allow it to remain active slightly longer when scrolling up.
-    const isCurrentlyActive = currentActiveKey === key;
-    const threshold =
-      isCurrentlyActive && scrollDirection === "up"
-        ? targetLine + hysteresisBuffer
-        : targetLine;
-
-    if (top <= threshold) {
-      activeKey = key;
-      continue;
-    }
-
-    return activeKey ?? key;
-  }
-
-  return activeKey ?? entries.at(-1)?.[0] ?? null;
+  return bottomKey ?? activeKey ?? entries[0]?.[0] ?? null;
 };
 
 export const resolveSelectedHeadingKey = (): NodeKey | null => {
