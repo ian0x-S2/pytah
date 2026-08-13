@@ -250,9 +250,13 @@ const main = async () => {
   console.log(`Creating smoke app in ${projectDirectory}`);
 
   try {
-    await run("bun", ["create", "vite", "app", "--template", "react-ts"], {
-      cwd: tempRoot,
-    });
+    await run(
+      "bun",
+      ["create", "vite", "app", "--template", "react-ts", "--no-interactive"],
+      {
+        cwd: tempRoot,
+      }
+    );
     await run("bun", ["install"], { cwd: projectDirectory });
     await run(
       "bun",
