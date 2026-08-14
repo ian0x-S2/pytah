@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { HighlighterGeneric, ThemedToken, TokensResult } from "shiki";
 import { getSingletonHighlighter, getTokenStyleObject } from "shiki";
-import { useTheme } from "@/components/theme-provider";
+import { useTheme } from "@/components/theme-context";
 import { cn } from "@/lib/utils";
 
 const CODE_BLOCK_THEMES = {
@@ -26,6 +26,10 @@ type CodeBlockSyntaxLanguage = (typeof CODE_BLOCK_LANGUAGES)[number];
 let docsHighlighterPromise: Promise<
   HighlighterGeneric<CodeBlockSyntaxLanguage, CodeBlockTheme>
 > | null = null;
+let loadedDocsHighlighter: HighlighterGeneric<
+  CodeBlockSyntaxLanguage,
+  CodeBlockTheme
+> | null = null;
 
 const codeTokenCache = new Map<string, TokensResult>();
 
@@ -38,12 +42,43 @@ const EMPTY_CODE_TOKENS_STATE = {
 };
 
 function getDocsHighlighter() {
+  if (loadedDocsHighlighter) {
+    return Promise.resolve(loadedDocsHighlighter);
+  }
+
   docsHighlighterPromise ??= getSingletonHighlighter({
     langs: [...CODE_BLOCK_LANGUAGES],
     themes: [CODE_BLOCK_THEMES.light, CODE_BLOCK_THEMES.dark],
-  }) as Promise<HighlighterGeneric<CodeBlockSyntaxLanguage, CodeBlockTheme>>;
+  }).then((highlighter) => {
+    loadedDocsHighlighter = highlighter as HighlighterGeneric<
+      CodeBlockSyntaxLanguage,
+      CodeBlockTheme
+    >;
+    return loadedDocsHighlighter;
+  });
 
   return docsHighlighterPromise;
+}
+
+function tokenizeSnippetAllThemes(
+  highlighter: HighlighterGeneric<CodeBlockSyntaxLanguage, CodeBlockTheme>,
+  code: string,
+  language: CodeBlockSyntaxLanguage
+) {
+  for (const t of [CODE_BLOCK_THEMES.light, CODE_BLOCK_THEMES.dark]) {
+    const key = getCodeTokenCacheKey(code, language, t);
+    if (key && !codeTokenCache.has(key)) {
+      try {
+        const tokensResult = highlighter.codeToTokens(code, {
+          lang: language,
+          theme: t,
+        });
+        codeTokenCache.set(key, tokensResult);
+      } catch {
+        // ignore errors
+      }
+    }
+  }
 }
 
 const CODE_LANGUAGE_ALIASES = {
@@ -81,6 +116,16 @@ function useCodeTokens(
   theme: CodeBlockTheme
 ) {
   const cacheKey = getCodeTokenCacheKey(code, language, theme);
+
+  if (
+    loadedDocsHighlighter &&
+    language &&
+    cacheKey &&
+    !codeTokenCache.has(cacheKey)
+  ) {
+    tokenizeSnippetAllThemes(loadedDocsHighlighter, code, language);
+  }
+
   const cachedTokens = cacheKey ? (codeTokenCache.get(cacheKey) ?? null) : null;
 
   const [asyncState, setAsyncState] = useState<{
@@ -101,18 +146,13 @@ function useCodeTokens(
     let cancelled = false;
 
     getDocsHighlighter()
-      .then((highlighter) =>
-        highlighter.codeToTokens(code, {
-          lang: language,
-          theme,
-        })
-      )
-      .then((tokensResult) => {
+      .then((highlighter) => {
+        tokenizeSnippetAllThemes(highlighter, code, language);
         if (cancelled) {
           return;
         }
 
-        codeTokenCache.set(cacheKey, tokensResult);
+        const tokensResult = codeTokenCache.get(cacheKey) ?? null;
         setAsyncState({ cacheKey, error: false, tokensResult });
       })
       .catch(() => {
@@ -124,7 +164,7 @@ function useCodeTokens(
     return () => {
       cancelled = true;
     };
-  }, [cacheKey, cachedTokens, code, language, theme]);
+  }, [cacheKey, cachedTokens, code, language]);
 
   if (!cacheKey) {
     return EMPTY_CODE_TOKENS_STATE;
@@ -134,7 +174,7 @@ function useCodeTokens(
     return { error: false, tokensResult: cachedTokens };
   }
 
-  if (asyncState.cacheKey === cacheKey) {
+  if (asyncState.cacheKey === cacheKey && asyncState.tokensResult) {
     return {
       error: asyncState.error,
       tokensResult: asyncState.tokensResult,
@@ -195,56 +235,6 @@ function resolveCodeBlockMeta(language?: string, label?: string) {
     label,
     syntaxLanguage: inferCodeLanguageFromLabel(label),
   };
-}
-
-const escapeRegex = (value: string) => {
-  return value.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&");
-};
-
-const matchSource = (
-  source: string,
-  expression: RegExp,
-  errorMessage: string
-) => {
-  const match = source.match(expression)?.[0];
-
-  if (!match) {
-    throw new Error(errorMessage);
-  }
-
-  return match.trim();
-};
-
-export function extractMarkedSource(source: string, marker: string) {
-  return matchSource(
-    source,
-    new RegExp(
-      `/\\* docs:start ${escapeRegex(marker)} \\*/([\\s\\S]*?)/\\* docs:end ${escapeRegex(marker)} \\*/`
-    ),
-    `Marked source was not found for: ${marker}`
-  )
-    .replace(new RegExp(`^/\\* docs:start ${escapeRegex(marker)} \\*/\\n?`), "")
-    .replace(new RegExp(`\\n?/\\* docs:end ${escapeRegex(marker)} \\*/$`), "")
-    .trim();
-}
-
-export function extractExportedInterface(source: string, name: string) {
-  return matchSource(
-    source,
-    new RegExp(
-      `export interface ${escapeRegex(name)}\\s*\\{[\\s\\S]*?^\\}`,
-      "m"
-    ),
-    `Interface source was not found for: ${name}`
-  );
-}
-
-export function extractExportedConst(source: string, name: string) {
-  return matchSource(
-    source,
-    new RegExp(`export const ${escapeRegex(name)}\\s*=\\s*[\\s\\S]*?;`, "m"),
-    `Const source was not found for: ${name}`
-  );
 }
 
 export function PageHeader({

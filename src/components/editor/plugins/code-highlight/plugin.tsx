@@ -1,11 +1,11 @@
 "use client";
 
-import { CodeNode } from "@lexical/code";
+import { $isCodeNode, CodeNode } from "@lexical/code";
 import { registerCodeHighlighting } from "@lexical/code-shiki";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { $nodesOfType } from "lexical";
+import { $getRoot, $isElementNode, type LexicalNode } from "lexical";
 import { useEffect } from "react";
-import { useTheme } from "@/components/theme-provider";
+import { useTheme } from "@/components/theme-context";
 
 const CODE_BLOCK_THEME_BY_MODE = {
   dark: "github-dark",
@@ -32,9 +32,19 @@ export function CodeHighlightPlugin() {
   useEffect(() => {
     editor.update(
       () => {
-        for (const codeNode of $nodesOfType(CodeNode)) {
-          if (codeNode.getTheme() !== codeBlockTheme) {
-            codeNode.setTheme(codeBlockTheme);
+        const queue: LexicalNode[] = [$getRoot()];
+        while (queue.length > 0) {
+          const node = queue.shift();
+          if (!node) {
+            continue;
+          }
+
+          if ($isCodeNode(node) && node.getTheme() !== codeBlockTheme) {
+            node.setTheme(codeBlockTheme);
+          }
+
+          if ($isElementNode(node)) {
+            queue.push(...node.getChildren());
           }
         }
       },

@@ -1,8 +1,6 @@
 import {
   Callout,
   CodeBlock,
-  extractExportedConst,
-  extractExportedInterface,
   PageHeader,
   Paragraph,
   SectionHeading,
@@ -11,6 +9,10 @@ import {
   TableCell,
   TableRow,
 } from "@/components/docs/primitives";
+import {
+  extractExportedConst,
+  extractExportedInterface,
+} from "@/components/docs/source-utils";
 import compositionSource from "@/components/editor/core/composition.ts?raw";
 import editorTypesSource from "@/components/editor/core/types.ts?raw";
 

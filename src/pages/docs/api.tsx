@@ -1,12 +1,12 @@
 import {
   Callout,
   CodeBlock,
-  extractExportedInterface,
   PageHeader,
   Paragraph,
   SectionHeading,
   SubHeading,
 } from "@/components/docs/primitives";
+import { extractExportedInterface } from "@/components/docs/source-utils";
 import editorTypesSource from "@/components/editor/core/types.ts?raw";
 
 const actionBarControlsSource = extractExportedInterface(

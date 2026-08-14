@@ -1,13 +1,15 @@
 import {
   Callout,
   CodeBlock,
-  extractExportedInterface,
-  extractMarkedSource,
   PageHeader,
   Paragraph,
   SectionHeading,
   SubHeading,
 } from "@/components/docs/primitives";
+import {
+  extractExportedInterface,
+  extractMarkedSource,
+} from "@/components/docs/source-utils";
 import compatibility from "@/components/editor/core/compatibility.json";
 import editorTypesSource from "@/components/editor/core/types.ts?raw";
 import indexCssSource from "@/index.css?raw";
