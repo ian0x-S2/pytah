@@ -107,7 +107,7 @@ export const scrollAndFocusHeading = (
     { discrete: true }
   );
 
-  editor.focus();
+  editor.getRootElement()?.focus({ preventScroll: true });
 
   window.requestAnimationFrame(() => {
     scrollToHeading(headingElement);

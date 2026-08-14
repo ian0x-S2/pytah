@@ -57,7 +57,18 @@ export const loadMarkdownContent = (
 ) => {
   editor.update(() => {
     $convertFromMarkdownString(markdown, EDITOR_MARKDOWN_TRANSFORMERS);
-    $getRoot().selectStart();
+    const root = $getRoot();
+    const firstDescendant = root.getFirstDescendant();
+    if (firstDescendant) {
+      firstDescendant.selectStart();
+    } else {
+      const firstChild = root.getFirstChild();
+      if (firstChild) {
+        firstChild.selectStart();
+      } else {
+        root.selectStart();
+      }
+    }
   });
 };
 
@@ -82,6 +93,16 @@ export const replaceEditorHtmlContent = (
     }
 
     root.append(...nodes);
-    root.selectStart();
+    const firstDescendant = root.getFirstDescendant();
+    if (firstDescendant) {
+      firstDescendant.selectStart();
+    } else {
+      const firstChild = root.getFirstChild();
+      if (firstChild) {
+        firstChild.selectStart();
+      } else {
+        root.selectStart();
+      }
+    }
   });
 };

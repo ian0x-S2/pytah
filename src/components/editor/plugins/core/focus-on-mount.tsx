@@ -9,12 +9,25 @@ export function FocusOnMountPlugin() {
 
   useEffect(() => {
     const animationFrameId = window.requestAnimationFrame(() => {
-      editor.focus(
-        () => {
-          $getRoot().selectStart();
-        },
-        { defaultSelection: "rootStart" }
-      );
+      editor.update(() => {
+        const root = $getRoot();
+        const firstDescendant = root.getFirstDescendant();
+        if (firstDescendant) {
+          firstDescendant.selectStart();
+        } else {
+          const firstChild = root.getFirstChild();
+          if (firstChild) {
+            firstChild.selectStart();
+          } else {
+            root.selectStart();
+          }
+        }
+      });
+
+      const rootElement = editor.getRootElement();
+      if (rootElement) {
+        rootElement.focus({ preventScroll: true });
+      }
     });
 
     return () => {

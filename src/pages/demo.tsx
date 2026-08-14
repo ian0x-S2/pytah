@@ -7,11 +7,10 @@ import {
   PanelTopIcon,
   PencilIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { ThemeToggle } from "@/components/docs/theme-toggle";
 import type { EditorToolbar } from "@/components/editor/core/types";
-import { Editor } from "@/components/editor/editor";
 import { EditorWithToc } from "@/components/editor/editor-with-toc";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -28,6 +27,10 @@ export function DemoPage() {
   const [zen, setZen] = useState(false);
   const [toolbar, setToolbar] = useState<EditorToolbar>(false);
   const [showToc, setShowToc] = useState(false);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   const tocVisible = showToc && !zen;
 
@@ -120,7 +123,7 @@ export function DemoPage() {
       </header>
 
       {/* Document page */}
-      <main className="mx-auto w-full max-w-[900px] flex-1">
+      <main className="mx-auto w-full max-w-225 flex-1">
         <div>
           {/* Notion-style page title */}
           {!zen && (
@@ -138,11 +141,12 @@ export function DemoPage() {
 
           {/* Editor flows as the page body — no card, no border */}
           <div className={cn(zen && "pt-20")}>
-            {tocVisible ? (
-              <EditorWithToc editable={editable} minimal toolbar={toolbar} />
-            ) : (
-              <Editor editable={editable} minimal toolbar={toolbar} />
-            )}
+            <EditorWithToc
+              editable={editable}
+              minimal
+              toc={tocVisible ? undefined : null}
+              toolbar={toolbar}
+            />
           </div>
         </div>
       </main>

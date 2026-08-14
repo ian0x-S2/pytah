@@ -239,7 +239,7 @@ export function useActiveHeading(
         },
         { discrete: true }
       );
-      editor.focus();
+      editor.getRootElement()?.focus({ preventScroll: true });
 
       // Recalculate layout targets
       updateScrollParent();
