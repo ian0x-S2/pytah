@@ -63,7 +63,10 @@ export const editorTheme: EditorThemeClasses = {
     italic: "italic",
     underline: "underline underline-offset-4",
     strikethrough: "line-through",
-    underlineStrikethrough: "underline line-through",
+    // Tailwind's `underline` and `line-through` both set `text-decoration-line`,
+    // so Lexical's combined format needs a single utility that applies both lines.
+    underlineStrikethrough:
+      "[text-decoration-line:underline_line-through] underline-offset-4",
     highlight: "rounded-sm bg-highlight px-0.5 text-highlight-foreground",
     code: "bg-muted text-foreground px-1.5 py-0.5 rounded-md font-mono text-[0.875em]",
   },
