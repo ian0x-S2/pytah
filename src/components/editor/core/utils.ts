@@ -51,30 +51,45 @@ export const readEditorTextContent = (editor: LexicalEditor): string => {
   return textContent;
 };
 
+export interface EditorContentLoadOptions {
+  /** Place the caret at the start of the loaded content. Defaults to `true`. */
+  select?: boolean;
+}
+
+const selectStartOfRoot = () => {
+  const root = $getRoot();
+  const firstDescendant = root.getFirstDescendant();
+  if (firstDescendant) {
+    firstDescendant.selectStart();
+    return;
+  }
+
+  const firstChild = root.getFirstChild();
+  if (firstChild) {
+    firstChild.selectStart();
+    return;
+  }
+
+  root.selectStart();
+};
+
 export const loadMarkdownContent = (
   editor: LexicalEditor,
-  markdown: string
+  markdown: string,
+  options?: EditorContentLoadOptions
 ) => {
   editor.update(() => {
     $convertFromMarkdownString(markdown, EDITOR_MARKDOWN_TRANSFORMERS);
-    const root = $getRoot();
-    const firstDescendant = root.getFirstDescendant();
-    if (firstDescendant) {
-      firstDescendant.selectStart();
-    } else {
-      const firstChild = root.getFirstChild();
-      if (firstChild) {
-        firstChild.selectStart();
-      } else {
-        root.selectStart();
-      }
+    if (options?.select !== false) {
+      selectStartOfRoot();
     }
   });
 };
 
 export const replaceEditorHtmlContent = (
   editor: LexicalEditor,
-  html: string
+  html: string,
+  options?: EditorContentLoadOptions
 ) => {
   editor.update(() => {
     const parser = new DOMParser();
@@ -88,21 +103,15 @@ export const replaceEditorHtmlContent = (
       const paragraph = $createParagraphNode();
       paragraph.append($createTextNode(""));
       root.append(paragraph);
-      paragraph.selectStart();
+      if (options?.select !== false) {
+        paragraph.selectStart();
+      }
       return;
     }
 
     root.append(...nodes);
-    const firstDescendant = root.getFirstDescendant();
-    if (firstDescendant) {
-      firstDescendant.selectStart();
-    } else {
-      const firstChild = root.getFirstChild();
-      if (firstChild) {
-        firstChild.selectStart();
-      } else {
-        root.selectStart();
-      }
+    if (options?.select !== false) {
+      selectStartOfRoot();
     }
   });
 };

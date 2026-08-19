@@ -29,7 +29,13 @@ export function DemoPage() {
   const [showToc, setShowToc] = useState(false);
 
   useEffect(() => {
+    const restoreScrollRestoration = history.scrollRestoration;
+    history.scrollRestoration = "manual";
     window.scrollTo(0, 0);
+
+    return () => {
+      history.scrollRestoration = restoreScrollRestoration;
+    };
   }, []);
 
   const tocVisible = showToc && !zen;

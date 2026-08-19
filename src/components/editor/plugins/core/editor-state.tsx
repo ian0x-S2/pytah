@@ -29,12 +29,12 @@ export function EditorStatePlugin({
 
   useEffect(() => {
     if (initialMarkdown) {
-      loadMarkdownContent(editor, initialMarkdown);
+      loadMarkdownContent(editor, initialMarkdown, { select: false });
       return;
     }
 
     if (initialHtml) {
-      replaceEditorHtmlContent(editor, initialHtml);
+      replaceEditorHtmlContent(editor, initialHtml, { select: false });
     }
   }, [editor, initialHtml, initialMarkdown]);
 

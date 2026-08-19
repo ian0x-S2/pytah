@@ -26,7 +26,7 @@ export function SeedContentPlugin({
       return;
     }
 
-    loadMarkdownContent(editor, DEFAULT_EDITOR_MARKDOWN);
+    loadMarkdownContent(editor, DEFAULT_EDITOR_MARKDOWN, { select: false });
   }, [editor]);
 
   return null;
