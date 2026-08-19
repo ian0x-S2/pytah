@@ -9,12 +9,6 @@ import {
 } from "@lexical/table";
 import { $getSelection, $isRangeSelection, type LexicalEditor } from "lexical";
 
-export const insertTableRow = (editor: LexicalEditor, insertAfter: boolean) => {
-  editor.update(() => {
-    $insertTableRowAtSelection(insertAfter);
-  });
-};
-
 export const insertTableRows = (
   editor: LexicalEditor,
   insertAfter: boolean,
@@ -24,15 +18,6 @@ export const insertTableRows = (
     for (let index = 0; index < count; index += 1) {
       $insertTableRowAtSelection(insertAfter);
     }
-  });
-};
-
-export const insertTableColumn = (
-  editor: LexicalEditor,
-  insertAfter: boolean
-) => {
-  editor.update(() => {
-    $insertTableColumnAtSelection(insertAfter);
   });
 };
 

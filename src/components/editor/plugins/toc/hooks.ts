@@ -51,7 +51,6 @@ export function useActiveHeading(
     stateRef.current = state;
   }, [state]);
 
-  const observerRef = useRef<IntersectionObserver | null>(null);
   const rafRef = useRef<number>(0);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -174,14 +173,13 @@ export function useActiveHeading(
     const keysChanged = keysStr !== prevKeysStrRef.current;
     prevKeysStrRef.current = keysStr;
 
-    if (keysChanged) {
-      observerRef.current?.disconnect();
+    let observer: IntersectionObserver | null = null;
 
-      const observer = new IntersectionObserver(syncActiveHeading, {
+    if (keysChanged) {
+      observer = new IntersectionObserver(syncActiveHeading, {
         rootMargin: OBSERVER_ROOT_MARGIN,
         threshold: 0,
       });
-      observerRef.current = observer;
 
       for (const [key] of entriesRef.current) {
         const element = editor.getElementByKey(key);
@@ -206,9 +204,7 @@ export function useActiveHeading(
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
-      if (keysChanged) {
-        observerRef.current?.disconnect();
-      }
+      observer?.disconnect();
       window.removeEventListener("scroll", syncActiveHeading, {
         capture: true,
       });

@@ -15,12 +15,3 @@ export interface TableMenuContext {
   position: ButtonPosition;
   selectionCounts: SelectionCounts;
 }
-
-export interface TableSelectionState {
-  columnCount: number;
-  columnIndex: number;
-  isActive: boolean;
-  rowCount: number;
-  rowIndex: number;
-  tableKey: NodeKey | null;
-}

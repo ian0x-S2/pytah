@@ -1,7 +1,6 @@
 import type { TableOfContentsEntry } from "@lexical/react/LexicalTableOfContentsPlugin";
 import { $isHeadingNode } from "@lexical/rich-text";
 import {
-  $getNodeByKey,
   $getSelection,
   $isRangeSelection,
   type LexicalEditor,
@@ -9,15 +8,8 @@ import {
 } from "lexical";
 import {
   ACTIVE_HEADING_TOP_OFFSET,
-  DEFAULT_HEADING_STYLE,
   DEFAULT_SCROLL_TOP_OFFSET,
-  HEADING_STYLES,
 } from "./constants";
-import type { TocState } from "./types";
-
-export const getHeadingStyle = (tag: string) => {
-  return HEADING_STYLES[tag] ?? DEFAULT_HEADING_STYLE;
-};
 
 export const getScrollParent = (
   element: HTMLElement | null
@@ -89,29 +81,6 @@ export const scrollToHeading = (
       top: Math.max(0, top),
     });
   }
-};
-
-export const scrollAndFocusHeading = (
-  editor: LexicalEditor,
-  headingKey: NodeKey
-) => {
-  const headingElement = editor.getElementByKey(headingKey);
-  if (!(headingElement instanceof HTMLElement)) {
-    return;
-  }
-
-  editor.update(
-    () => {
-      $getNodeByKey(headingKey)?.selectStart();
-    },
-    { discrete: true }
-  );
-
-  editor.getRootElement()?.focus({ preventScroll: true });
-
-  window.requestAnimationFrame(() => {
-    scrollToHeading(headingElement);
-  });
 };
 
 const isAtAbsoluteBottom = (scrollParent: HTMLElement | Window): boolean => {
@@ -259,11 +228,4 @@ export const resolveSelectedHeadingKey = (): NodeKey | null => {
   }
 
   return topLevelElement.getKey();
-};
-
-export const areTocStatesEqual = (left: TocState, right: TocState) => {
-  return (
-    left.activeKey === right.activeKey &&
-    left.selectedHeadingKey === right.selectedHeadingKey
-  );
 };

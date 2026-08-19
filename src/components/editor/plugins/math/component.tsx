@@ -31,6 +31,15 @@ interface MathComponentProps {
   nodeKey: NodeKey;
 }
 
+const escapeHtml = (value: string) => {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+};
+
 export function MathComponent({
   equation,
   inline,
@@ -71,7 +80,7 @@ export function MathComponent({
         throwOnError: false,
       });
     } catch (_err) {
-      return `<span class="text-destructive">${equation || "math"}</span>`;
+      return `<span class="text-destructive">${escapeHtml(equation || "math")}</span>`;
     }
   }, [equation, inline]);
 
@@ -83,7 +92,7 @@ export function MathComponent({
         throwOnError: false,
       });
     } catch (_err) {
-      return `<span class="text-destructive">${draftEquation || "math"}</span>`;
+      return `<span class="text-destructive">${escapeHtml(draftEquation || "math")}</span>`;
     }
   }, [draftEquation, draftInline]);
 
@@ -255,6 +264,7 @@ export function MathComponent({
               </div>
 
               <textarea
+                aria-label="TeX equation"
                 className="w-full rounded-md border border-input bg-background px-3 py-1.5 font-mono text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 onChange={(e) => setDraftEquation(e.target.value)}
                 onKeyDown={(e) => {
@@ -272,7 +282,7 @@ export function MathComponent({
                 value={draftEquation}
               />
 
-              <div className="flex min-h-[36px] items-center justify-center overflow-x-auto rounded-md border border-border/40 bg-muted/20 p-2">
+              <div className="flex min-h-9 items-center justify-center overflow-x-auto rounded-md border border-border/40 bg-muted/20 p-2">
                 {/* biome-ignore lint/security/noDangerouslySetInnerHtml: KaTeX output HTML is sanitized equation preview */}
                 <span dangerouslySetInnerHTML={{ __html: previewHtml }} />
               </div>
