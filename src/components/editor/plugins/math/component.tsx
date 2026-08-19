@@ -147,6 +147,16 @@ export function MathComponent({
       }
     });
     setIsEditing(false);
+
+    // Re-select the edited math node so that, when the popover closes and the
+    // ContentEditable regains focus, the browser keeps scroll anchored on the
+    // node the user was editing instead of jumping back to the collapsed caret
+    // elsewhere in the document.
+    clearSelection();
+    setSelected(true);
+    requestAnimationFrame(() => {
+      editor.getRootElement()?.focus({ preventScroll: true });
+    });
   };
 
   const handleDelete = () => {
