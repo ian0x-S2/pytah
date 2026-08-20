@@ -6,6 +6,7 @@ import {
   Callout,
   CodeBlock,
   PageHeader,
+  Paragraph,
   SubHeading,
 } from "@/components/docs/primitives";
 import tableBehaviorActionsSource from "@/components/editor/plugins/table-behavior/actions.ts?raw";
@@ -70,10 +71,22 @@ export function TableBehaviorGuidePage() {
       </GuideSourceSection>
 
       <SubHeading>Registration</SubHeading>
+      <Paragraph>
+        Table behavior ships behind the <code>tables</code> feature flag. To add
+        it to a custom composition, contribute a descriptor via{" "}
+        <code>extraFeatures</code>:
+      </Paragraph>
       <CodeBlock language="tsx">
-        {`// ui/content.tsx
-import { TableBehaviorPlugin } from "../plugins/table-behavior/plugin";
-<TableBehaviorPlugin />`}
+        {`<Editor
+  extraFeatures={[
+    {
+      id: "tables",
+      plugin: TableBehaviorPlugin,
+      transformers: [TABLE_MARKDOWN_TRANSFORMER],
+      slashCommandIds: ["table"],
+    },
+  ]}
+/>`}
       </CodeBlock>
 
       <Callout title="Anchor element" variant="tip">

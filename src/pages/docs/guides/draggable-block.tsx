@@ -51,13 +51,19 @@ export function DraggableBlockGuidePage() {
 
       <SectionHeading id="registration">Registration</SectionHeading>
       <Paragraph>
-        Mount <code>DraggableBlockPlugin</code> inside your composer. No custom
-        nodes are required — the plugin works with any top-level block.
+        Draggable blocks ship behind the <code>draggableBlocks</code> feature
+        flag (editor-only). To add it to a custom composition, contribute a
+        descriptor via <code>extraFeatures</code>:
       </Paragraph>
       <CodeBlock language="tsx">
-        {`// ui/content.tsx — mount the plugin
-import { DraggableBlockPlugin } from "../plugins/draggable-block/plugin";
-<DraggableBlockPlugin />`}
+        {`<Editor
+  extraFeatures={[
+    {
+      id: "draggableBlocks",
+      plugin: DraggableBlockPlugin,
+    },
+  ]}
+/>`}
       </CodeBlock>
 
       <Callout title="Editor-only" variant="tip">

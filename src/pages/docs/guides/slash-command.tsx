@@ -90,6 +90,13 @@ export function SlashCommandGuidePage() {
       </GuideSourceSection>
 
       <SectionHeading id="extending">Adding a New Command</SectionHeading>
+      <Callout title="Consumers should use extraFeatures" variant="info">
+        To add a command together with its node and plugin without editing
+        internals, contribute one <code>extraFeatures</code> descriptor and list
+        the command id in its <code>slashCommandIds</code>. Editing the three
+        slash-command files below is only for contributing a <em>built-in</em>{" "}
+        command shipped in the default registry.
+      </Callout>
       <Paragraph>
         The flow is still the same: extend the ID union, add a command entry,
         and register the executor. The source blocks above are the canonical

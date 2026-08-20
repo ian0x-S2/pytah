@@ -1,4 +1,5 @@
 import { $generateHtmlFromNodes, $generateNodesFromDOM } from "@lexical/html";
+import type { Transformer } from "@lexical/markdown";
 import {
   $convertFromMarkdownString,
   $convertToMarkdownString,
@@ -9,7 +10,7 @@ import {
   $getRoot,
   type LexicalEditor,
 } from "lexical";
-import { EDITOR_MARKDOWN_TRANSFORMERS } from "../plugins/markdown/transformers";
+import { BUILTIN_MARKDOWN_TRANSFORMERS } from "../plugins/markdown/transformers";
 import type { EditorSnapshot } from "./types";
 
 export const createEmptyEditorState = (editor: LexicalEditor) => {
@@ -23,7 +24,13 @@ export const createEmptyEditorState = (editor: LexicalEditor) => {
   });
 };
 
-export const readEditorSnapshot = (editor: LexicalEditor): EditorSnapshot => {
+/** Fallback transformers used when no feature-derived set is supplied. */
+const DEFAULT_MARKDOWN_TRANSFORMERS = [...BUILTIN_MARKDOWN_TRANSFORMERS];
+
+export const readEditorSnapshot = (
+  editor: LexicalEditor,
+  transformers: readonly Transformer[] = DEFAULT_MARKDOWN_TRANSFORMERS
+): EditorSnapshot => {
   let snapshot: EditorSnapshot = {
     html: "",
     markdown: "",
@@ -33,7 +40,7 @@ export const readEditorSnapshot = (editor: LexicalEditor): EditorSnapshot => {
   editor.getEditorState().read(() => {
     snapshot = {
       html: $generateHtmlFromNodes(editor),
-      markdown: $convertToMarkdownString(EDITOR_MARKDOWN_TRANSFORMERS),
+      markdown: $convertToMarkdownString([...transformers]),
       text: $getRoot().getTextContent(),
     };
   });
@@ -76,10 +83,14 @@ const selectStartOfRoot = () => {
 export const loadMarkdownContent = (
   editor: LexicalEditor,
   markdown: string,
-  options?: EditorContentLoadOptions
+  options?: EditorContentLoadOptions & {
+    transformers?: readonly Transformer[];
+  }
 ) => {
+  const transformers = options?.transformers ?? DEFAULT_MARKDOWN_TRANSFORMERS;
+
   editor.update(() => {
-    $convertFromMarkdownString(markdown, EDITOR_MARKDOWN_TRANSFORMERS);
+    $convertFromMarkdownString(markdown, [...transformers]);
     if (options?.select !== false) {
       selectStartOfRoot();
     }

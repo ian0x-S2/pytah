@@ -1,10 +1,4 @@
 import type { LucideIcon } from "lucide-react";
-import type { EditorFeatureFlags } from "../../core/types";
-
-export type SlashCommandFeatureFlag = keyof Pick<
-  EditorFeatureFlags,
-  "collapsible" | "images" | "layouts" | "math" | "tables" | "youtube"
->;
 
 export type SlashCommandId =
   | "paragraph"
@@ -27,12 +21,13 @@ export type SlashCommandId =
 export type SlashCommandSelection = SlashCommandId | "";
 
 export interface SlashCommand {
+  /** Always show regardless of feature toggles (base block types). */
+  alwaysOn?: boolean;
   description: string;
   icon: LucideIcon;
   id: SlashCommandId;
   keywords: string[];
   label: string;
-  requiredFeature?: SlashCommandFeatureFlag;
 }
 
 export interface SlashMenuPosition {

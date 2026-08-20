@@ -1,6 +1,7 @@
+import type { Transformer } from "@lexical/markdown";
 import type { InitialConfigType } from "@lexical/react/LexicalComposer";
 import type { LexicalEditor } from "lexical";
-import type { ReactNode } from "react";
+import type { ComponentType, ReactNode } from "react";
 
 export interface EditorSnapshot {
   html: string;
@@ -46,6 +47,24 @@ export interface EditorFeatureFlags {
   youtube?: boolean;
 }
 
+/**
+ * A feature contributed by a consumer at composition time. Each capability is
+ * described once and its nodes, plugin, transformers and slash commands are
+ * wired together by the composition surface — no internal file edits needed.
+ */
+export interface ExtraEditorFeature {
+  /** Unique id of the feature (must not collide with built-in flags). */
+  id: string;
+  /** Lexical nodes contributed by the feature. */
+  nodes?: NonNullable<InitialConfigType["nodes"]>;
+  /** The behavior plugin to mount on the editor. */
+  plugin?: ComponentType;
+  /** Slash-command ids this feature adds to the shared insert menu. */
+  slashCommandIds?: string[];
+  /** Markdown transformers contributed by the feature. */
+  transformers?: Transformer[];
+}
+
 export interface EditorChromeOptions {
   actionBar?: boolean;
   footer?: boolean;
@@ -85,6 +104,7 @@ export interface EditorProps {
   className?: string;
   contentClassName?: string;
   editable?: boolean;
+  extraFeatures?: ExtraEditorFeature[];
   extraNodes?: NonNullable<InitialConfigType["nodes"]>;
   features?: EditorFeatureFlags;
   initialHtml?: string;

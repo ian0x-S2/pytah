@@ -86,17 +86,22 @@ export function YouTubeGuidePage() {
 
       <SectionHeading id="registration">Registration</SectionHeading>
       <Paragraph>
-        Register <code>YouTubeNode</code> in the Lexical config and mount{" "}
-        <code>YouTubePlugin</code> inside your composer:
+        YouTube embeds ship behind the <code>youtube</code> feature flag. To add
+        the capability to a custom composition, contribute a descriptor via{" "}
+        <code>extraFeatures</code>:
       </Paragraph>
       <CodeBlock language="tsx">
-        {`// core/config.ts — add to the nodes array
-import { YouTubeNode } from "./nodes/youtube/node";
-nodes: [..., YouTubeNode]
-
-// ui/content.tsx — mount the plugin
-import { YouTubePlugin } from "../plugins/youtube/plugin";
-<YouTubePlugin />`}
+        {`<Editor
+  extraFeatures={[
+    {
+      id: "youtube",
+      plugin: YouTubePlugin,
+      nodes: [YouTubeNode],
+      transformers: [YOUTUBE_MARKDOWN_TRANSFORMER],
+      slashCommandIds: ["youtube"],
+    },
+  ]}
+/>`}
       </CodeBlock>
 
       <SubHeading>Inserting a video programmatically</SubHeading>

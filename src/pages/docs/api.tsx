@@ -98,6 +98,26 @@ export function ApiPage() {
         {"<Editor extraNodes={[CalloutNode]} />"}
       </CodeBlock>
 
+      <SubHeading id="extra-features">Contribute a Whole Feature</SubHeading>
+      <CodeBlock language="tsx">
+        {`<Editor
+  extraFeatures={[
+    {
+      id: "callout",
+      plugin: CalloutPlugin,
+      nodes: [CalloutNode],
+      transformers: [CALLOUT_TRANSFORMER],
+      slashCommandIds: ["callout"],
+    },
+  ]}
+/>`}
+      </CodeBlock>
+      <Paragraph>
+        Each descriptor bundles the plugin, nodes, markdown transformers, and
+        slash-command ids for one capability, wired together by the composition
+        surface.
+      </Paragraph>
+
       <SubHeading id="multiple-editors">Multiple Editors</SubHeading>
       <CodeBlock language="tsx">
         {`<>

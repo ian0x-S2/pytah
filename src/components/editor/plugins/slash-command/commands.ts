@@ -16,7 +16,6 @@ import {
   TextQuoteIcon,
   TypeIcon,
 } from "lucide-react";
-import type { ResolvedEditorFeatureFlags } from "../../core/composition";
 import type { SlashCommand } from "./types";
 
 export const SLASH_COMMANDS: SlashCommand[] = [
@@ -26,6 +25,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     id: "paragraph",
     keywords: ["text", "plain", "p"],
     label: "Paragraph",
+    alwaysOn: true,
   },
   {
     description: "Large section heading",
@@ -33,6 +33,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     id: "h1",
     keywords: ["title", "heading", "h1"],
     label: "Heading 1",
+    alwaysOn: true,
   },
   {
     description: "Medium section heading",
@@ -40,6 +41,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     id: "h2",
     keywords: ["subtitle", "heading", "h2"],
     label: "Heading 2",
+    alwaysOn: true,
   },
   {
     description: "Small section heading",
@@ -47,6 +49,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     id: "h3",
     keywords: ["heading", "h3"],
     label: "Heading 3",
+    alwaysOn: true,
   },
   {
     description: "Capture a quote",
@@ -54,6 +57,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     id: "quote",
     keywords: ["blockquote", "quote", "citation"],
     label: "Blockquote",
+    alwaysOn: true,
   },
   {
     description: "Write a code snippet",
@@ -61,6 +65,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     id: "code",
     keywords: ["code", "snippet", "pre"],
     label: "Code Block",
+    alwaysOn: true,
   },
   {
     description: "Unordered list",
@@ -68,6 +73,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     id: "bullet",
     keywords: ["list", "bullet", "unordered", "ul"],
     label: "Bullet List",
+    alwaysOn: true,
   },
   {
     description: "Ordered list",
@@ -75,6 +81,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     id: "number",
     keywords: ["list", "ordered", "numbered", "ol"],
     label: "Numbered List",
+    alwaysOn: true,
   },
   {
     description: "Todo list with checkboxes",
@@ -82,6 +89,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     id: "check",
     keywords: ["check", "checklist", "todo", "task"],
     label: "Checklist",
+    alwaysOn: true,
   },
   {
     description: "Insert TeX math equation",
@@ -89,7 +97,6 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     id: "math",
     keywords: ["math", "latex", "katex", "equation", "formula", "tex"],
     label: "Math Block",
-    requiredFeature: "math",
   },
   {
     description: "Insert an image from URL",
@@ -97,7 +104,6 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     id: "image",
     keywords: ["image", "photo", "media", "picture", "img"],
     label: "Image",
-    requiredFeature: "images",
   },
   {
     description: "Embed a YouTube video",
@@ -105,7 +111,6 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     id: "youtube",
     keywords: ["youtube", "video", "embed", "yt"],
     label: "YouTube",
-    requiredFeature: "youtube",
   },
   {
     description: "Expandable toggle section",
@@ -113,7 +118,6 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     id: "collapsible",
     keywords: ["collapsible", "toggle", "details", "accordion"],
     label: "Collapsible",
-    requiredFeature: "collapsible",
   },
   {
     description: "Multi-column content layout",
@@ -121,7 +125,6 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     id: "columns",
     keywords: ["columns", "layout", "grid", "multi-column"],
     label: "Columns",
-    requiredFeature: "layouts",
   },
   {
     description: "Simple editable table",
@@ -129,7 +132,6 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     id: "table",
     keywords: ["table", "grid", "cells", "columns", "rows"],
     label: "Table",
-    requiredFeature: "tables",
   },
   {
     description: "Horizontal rule separator",
@@ -137,15 +139,28 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     id: "hr",
     keywords: ["divider", "separator", "hr", "line"],
     label: "Divider",
+    alwaysOn: true,
   },
 ];
 
-export const getEnabledSlashCommands = (
-  features: ResolvedEditorFeatureFlags
+/**
+ * Slash commands that are always shown regardless of feature toggles. These
+ * are the base block types (paragraph, headings, lists, quote, code, divider)
+ * that every editor ships. Feature-gated commands are contributed through the
+ * resolved `ids` argument instead.
+ */
+const ALWAYS_ON_SLASH_COMMANDS = SLASH_COMMANDS.filter(
+  (command) => command.alwaysOn
+);
+
+export const getSlashCommandsForIds = (
+  ids: readonly string[]
 ): SlashCommand[] => {
-  return SLASH_COMMANDS.filter((command) => {
-    return command.requiredFeature === undefined
-      ? true
-      : features[command.requiredFeature];
+  const idSet = new Set<string>(ids);
+
+  const featureCommands = SLASH_COMMANDS.filter((command) => {
+    return !command.alwaysOn && idSet.has(command.id);
   });
+
+  return [...ALWAYS_ON_SLASH_COMMANDS, ...featureCommands];
 };

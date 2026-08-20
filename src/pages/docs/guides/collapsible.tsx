@@ -6,6 +6,7 @@ import {
   Callout,
   CodeBlock,
   PageHeader,
+  Paragraph,
   SubHeading,
 } from "@/components/docs/primitives";
 import collapsibleContainerNodeSource from "@/components/editor/core/nodes/collapsible/container-node.ts?raw";
@@ -119,16 +120,26 @@ export function CollapsibleGuidePage() {
       </GuideSourceSection>
 
       <SubHeading>Registration</SubHeading>
+      <Paragraph>
+        The collapsible capability ships behind the <code>collapsible</code>{" "}
+        feature flag. To add it to a custom composition, contribute a descriptor
+        via <code>extraFeatures</code>:
+      </Paragraph>
       <CodeBlock language="tsx">
-        {`// core/config.ts — nodes array
-import { CollapsibleContainerNode } from "./nodes/collapsible/container-node";
-import { CollapsibleTitleNode }     from "./nodes/collapsible/title-node";
-import { CollapsibleContentNode }   from "./nodes/collapsible/content-node";
-nodes: [..., CollapsibleContainerNode, CollapsibleTitleNode, CollapsibleContentNode]
-
-// ui/content.tsx — plugins
-import { CollapsiblePlugin } from "../plugins/collapsible/plugin";
-<CollapsiblePlugin />`}
+        {`<Editor
+  extraFeatures={[
+    {
+      id: "collapsible",
+      plugin: CollapsiblePlugin,
+      nodes: [
+        CollapsibleContainerNode,
+        CollapsibleTitleNode,
+        CollapsibleContentNode,
+      ],
+      slashCommandIds: ["collapsible"],
+    },
+  ]}
+/>`}
       </CodeBlock>
 
       <SubHeading>Inserting programmatically</SubHeading>

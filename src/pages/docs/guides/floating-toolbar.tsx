@@ -6,6 +6,7 @@ import {
   Callout,
   CodeBlock,
   PageHeader,
+  Paragraph,
   SubHeading,
 } from "@/components/docs/primitives";
 import floatingToolbarActionsSource from "@/components/editor/plugins/floating-toolbar/actions.ts?raw";
@@ -109,10 +110,20 @@ export function FloatingToolbarGuidePage() {
       </GuideSourceSection>
 
       <SubHeading>How to mount it</SubHeading>
+      <Paragraph>
+        The floating toolbar ships behind the <code>floatingToolbar</code>{" "}
+        feature flag. To add it to a custom composition, contribute a descriptor
+        via <code>extraFeatures</code>:
+      </Paragraph>
       <CodeBlock language="tsx">
-        {`// ui/content.tsx
-import { FloatingToolbarPlugin } from "../plugins/floating-toolbar/plugin";
-<FloatingToolbarPlugin />`}
+        {`<Editor
+  extraFeatures={[
+    {
+      id: "floatingToolbar",
+      plugin: FloatingToolbarPlugin,
+    },
+  ]}
+/>`}
       </CodeBlock>
 
       <Callout title="Color picker stability" variant="tip">

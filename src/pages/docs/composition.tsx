@@ -84,6 +84,18 @@ export function CompositionPage() {
         </TableRow>
         <TableRow>
           <TableCell>
+            <strong>Custom feature contribution</strong>
+          </TableCell>
+          <TableCell>
+            Add a whole capability (nodes, plugin, transformers, slash commands)
+            without editing internals
+          </TableCell>
+          <TableCell>
+            <code>extraFeatures</code>
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell>
             <strong>Chrome composition</strong>
           </TableCell>
           <TableCell>Show, hide, or replace visual editor surfaces</TableCell>
@@ -122,7 +134,10 @@ export function CompositionPage() {
       <SectionHeading id="features">Feature Flags</SectionHeading>
       <Paragraph>
         Use <code>features</code> to control built-in behavior plugins without
-        forking <code>ui/content.tsx</code>.
+        forking <code>ui/content.tsx</code>. Each flag is backed by an{" "}
+        <code>EditorFeature</code> descriptor in <code>core/features.tsx</code>,
+        so toggling it drives that feature's nodes, plugin, transformers, and
+        slash commands together — never piecemeal.
       </Paragraph>
       <Paragraph>
         Feature flags also trim dependent slash-menu entries, so disabling a
@@ -133,7 +148,10 @@ export function CompositionPage() {
 
       <SubHeading id="defaults-features">Default Feature Stack</SubHeading>
       <Paragraph>
-        These are the built-in behavior defaults resolved by the editor.
+        These are the built-in, flag-resolved defaults. Each flag maps to an{" "}
+        <code>EditorFeature</code> in <code>core/features.tsx</code>, which is
+        the single source of truth for that capability's nodes, plugin,
+        transformers, and slash commands.
       </Paragraph>
       <CodeBlock language="typescript">{defaultFeaturesSource}</CodeBlock>
 
@@ -148,6 +166,34 @@ export function CompositionPage() {
   }}
 />`}
       </CodeBlock>
+
+      <SectionHeading id="extra-features">
+        Contributing a Feature
+      </SectionHeading>
+      <Paragraph>
+        Use <code>extraFeatures</code> to add a whole capability as a single
+        descriptor. Each <code>ExtraEditorFeature</code> bundles its optional
+        plugin, owned Lexical nodes, markdown transformers, and slash-command
+        ids — the composition surface wires them together automatically, keeping
+        the mounted stack in sync with the visible command list.
+      </Paragraph>
+      <CodeBlock language="tsx">
+        {`<Editor
+  extraFeatures={[
+    {
+      id: "callout",
+      plugin: CalloutPlugin,
+      nodes: [CalloutNode],
+      transformers: [CALLOUT_TRANSFORMER],
+      slashCommandIds: ["callout"],
+    },
+  ]}
+/>`}
+      </CodeBlock>
+      <Paragraph>
+        This is the intended alternative to patching <code>ui/content.tsx</code>{" "}
+        or the built-in <code>core/features.tsx</code> registry from outside.
+      </Paragraph>
 
       <SectionHeading id="chrome">Chrome</SectionHeading>
       <Paragraph>
@@ -226,6 +272,12 @@ export function CompositionPage() {
           <TableCell>Disable built-in behavior</TableCell>
           <TableCell>
             <code>features</code>
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell>Contribute a whole custom feature</TableCell>
+          <TableCell>
+            <code>extraFeatures</code>
           </TableCell>
         </TableRow>
         <TableRow>

@@ -5,12 +5,17 @@ import type {
   MultilineElementTransformer,
   TextMatchTransformer,
 } from "@lexical/markdown";
+import { DEFAULT_EDITOR_FEATURES } from "../../core/composition";
 import { createEditorConfig } from "../../core/config";
+import { resolveFeatureNodes } from "../../core/features";
 import { $createMathNode, MathNode } from "../../core/nodes/math/node";
 import { EDITOR_MARKDOWN_TRANSFORMERS } from "../markdown/transformers";
 
 const createTestEditor = () => {
-  const config = createEditorConfig({ editable: true });
+  const config = createEditorConfig({
+    editable: true,
+    featureNodes: resolveFeatureNodes(DEFAULT_EDITOR_FEATURES),
+  });
   return createHeadlessEditor({
     editable: config.editable,
     namespace: config.namespace,

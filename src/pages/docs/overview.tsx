@@ -94,7 +94,8 @@ export function OverviewPage() {
           </TableCell>
           <TableCell>
             <code>features</code>, <code>chrome</code>, <code>slots</code>,{" "}
-            <code>pluginSlots</code>, <code>extraNodes</code>
+            <code>pluginSlots</code>, <code>extraNodes</code>,{" "}
+            <code>extraFeatures</code>
           </TableCell>
         </TableRow>
         <TableRow>

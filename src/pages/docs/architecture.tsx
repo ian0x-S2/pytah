@@ -60,11 +60,12 @@ export function ArchitecturePage() {
           "├── core/                   # Foundation layer",
           "│   ├── actions.ts          # Editor commands (copy, reset, load)",
           "│   ├── composition.ts      # Feature/chrome defaults + slot helpers",
-          "│   ├── config.ts           # Lexical initial config + node registration",
+          "│   ├── config.ts           # Lexical base nodes + initial config",
           "│   ├── constants.ts        # Shared constants",
+          "│   ├── features.tsx        # EditorFeature registry (nodes/plugin/transformers/slash ids)",
           "│   ├── theme.ts            # Lexical EditorThemeClasses (Tailwind)",
           "│   ├── types.ts            # Shared TypeScript types",
-          "│   ├── utils.ts            # HTML/Markdown serialization helpers",
+          "│   ├── utils.ts            # HTML/Markdown serialization helpers (transformers-threaded)",
           "│   └── nodes/              # Custom Lexical node definitions",
           "│       ├── collapsible/    # CollapsibleContainer + CollapsibleContent + CollapsibleTitle",
           "│       ├── image/          # ImageNode (decorator)",
@@ -137,6 +138,12 @@ export function ArchitecturePage() {
         internals, while <code>pluginSlots</code> mounts additional React
         plugins around the built-in plugin stack. <code>extraNodes</code> adds
         custom Lexical nodes without editing <code>core/config.ts</code>.
+      </Paragraph>
+      <Paragraph>
+        For whole-feature contribution, <code>extraFeatures</code> accepts one
+        descriptor per capability (id, plugin, nodes, transformers, slash
+        commands), mirroring the built-in <code>EditorFeature</code> registry in{" "}
+        <code>core/features.tsx</code>.
       </Paragraph>
       <Paragraph>
         See the dedicated <code>Composition</code> and <code>API</code> pages

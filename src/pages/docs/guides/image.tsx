@@ -119,18 +119,30 @@ export function ImageGuidePage() {
 
       <SectionHeading id="registration">Registration</SectionHeading>
       <Paragraph>
-        Register <code>ImageNode</code> in your Lexical config and mount{" "}
-        <code>ImagePlugin</code> inside your composer:
+        The image capability ships in the default editor behind the{" "}
+        <code>images</code> feature flag. To add it (or any whole capability) to
+        a custom composition, contribute a descriptor via{" "}
+        <code>extraFeatures</code> — no edits to <code>core/config.ts</code> or{" "}
+        <code>ui/content.tsx</code>:
       </Paragraph>
       <CodeBlock language="tsx">
-        {`// core/config.ts — add to the nodes array
-import { ImageNode } from "./nodes/image/node";
-nodes: [..., ImageNode]
-
-// ui/content.tsx — mount the plugin
-import { ImagePlugin } from "../plugins/image/plugin";
-<ImagePlugin />`}
+        {`<Editor
+  extraFeatures={[
+    {
+      id: "images",
+      plugin: ImagePlugin,
+      nodes: [ImageNode],
+      transformers: [IMAGE_MARKDOWN_TRANSFORMER],
+      slashCommandIds: ["image"],
+    },
+  ]}
+/>`}
       </CodeBlock>
+      <Paragraph>
+        Built-in capabilities are registered the same way in{" "}
+        <code>core/features.tsx</code>, so a flag toggles the node, plugin,
+        transformers, and slash command together.
+      </Paragraph>
 
       <SubHeading>Inserting an image programmatically</SubHeading>
       <CodeBlock language="tsx">

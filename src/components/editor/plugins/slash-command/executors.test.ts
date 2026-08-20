@@ -7,13 +7,18 @@ import {
   $isParagraphNode,
   type LexicalNode,
 } from "lexical";
+import { DEFAULT_EDITOR_FEATURES } from "../../core/composition";
 import { createEditorConfig } from "../../core/config";
+import { resolveFeatureNodes } from "../../core/features";
 import { createEmptyEditorState } from "../../core/utils";
 import { DEFAULT_LAYOUT_TEMPLATE } from "../layout/constants";
 import { SLASH_COMMAND_EXECUTORS } from "./executors";
 
 const createTestEditor = () => {
-  const config = createEditorConfig({ editable: true });
+  const config = createEditorConfig({
+    editable: true,
+    featureNodes: resolveFeatureNodes(DEFAULT_EDITOR_FEATURES),
+  });
 
   return createHeadlessEditor({
     editable: config.editable,

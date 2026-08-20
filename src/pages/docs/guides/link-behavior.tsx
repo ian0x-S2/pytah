@@ -200,15 +200,21 @@ function LinkBehaviorRegistrationSection() {
     <>
       <SectionHeading id="registration">Registration</SectionHeading>
       <Paragraph>
-        No custom nodes are required. Mount both plugins inside your composer:
+        No custom nodes are required. <code>LinkBehaviorPlugin</code> is part of
+        the always-mounted default stack, and the floating link editor ships
+        behind the <code>floatingLinkEditor</code> feature flag. To add the
+        floating editor to a custom composition, contribute a descriptor via{" "}
+        <code>extraFeatures</code>:
       </Paragraph>
       <CodeBlock language="tsx">
-        {`// ui/content.tsx — mount the plugins
-import { LinkBehaviorPlugin } from "../plugins/link-behavior/plugin";
-import { FloatingLinkEditorPlugin } from "../plugins/link-behavior/floating-link-editor";
-
-<LinkBehaviorPlugin editable={isEditable} />
-<FloatingLinkEditorPlugin />`}
+        {`<Editor
+  extraFeatures={[
+    {
+      id: "floatingLinkEditor",
+      plugin: FloatingLinkEditorPlugin,
+    },
+  ]}
+/>`}
       </CodeBlock>
       <Callout title="Keyboard shortcut" variant="tip">
         Cmd/Ctrl+K is handled entirely inside{" "}

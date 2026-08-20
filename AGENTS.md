@@ -168,8 +168,14 @@ The long-term DX goal is a lego-like editor: contributors should prefer exposing
 - keep node-only DOM helpers and serialization helpers inside the same node feature folder
 - align `plugins/<feature>/` with `core/nodes/<feature>/` whenever the feature owns custom nodes
 - keep declarative config separate from Lexical mutation logic and React wiring
-- if a built-in behavior plugin can be meaningfully omitted by consumers, wire it through `EditorFeatureFlags` instead of leaving it permanently mounted; when slash commands depend on those plugins, keep the available command list in sync with the enabled features
-- prefer feature-local relative imports inside `src/components/editor/*`
+
+#### Feature registry (the default is a list of lego pieces)
+
+- built-in capabilities live in `core/features.tsx` as `EditorFeature` descriptors; one feature bundles its flag name, owned nodes, behavior plugin, markdown transformers, and the slash-command ids it contributes — that is the single source of truth for what the default editor ships
+- the editor config (`core/config.ts`) and the mounted plugin stack (`ui/content.tsx`) both derive from `core/features.tsx`: a toggled flag toggles that feature's nodes, plugin, transformers, and slash commands together, never piecemeal
+- to add a built-in feature: add an `EditorFeature` to `EDITOR_FEATURES` and give it a flag in `EditorFeatureFlags` (and a default in `DEFAULT_EDITOR_FEATURES`); do not hardcode new plugin mounts, node registrations, transformers, or slash commands in scattered files
+- to add a consumer feature without editing internals: use the `extraFeatures` prop on `Editor`, which accepts `ExtraEditorFeature` descriptors (id, plugin, nodes, transformers, slashCommandIds)
+- keep always-on plugins (history/list/code/link/horizontal-rule/editable/editor-state) and flag-only toggles (markdownShortcuts, tabIndentation) mounted in `ui/content.tsx` — only features that own nodes, transformers, or slash commands belong in the `EditorFeature` registry
 - avoid barrel files
 - avoid deprecated Lexical React helpers when core Lexical or `@lexical/extension` equivalents exist
 
@@ -241,7 +247,9 @@ When changing this codebase, keep these facts in mind:
 - editor DX is a first-class product concern: changes should move the codebase toward reusable, lego-like composition rather than tighter coupling
 - slash command behavior is a core UX surface and must keep highlight, initial focus and scroll synchronization correct
 - editable and read-only modes must both remain functional
-- default composition should remain easy to use, but advanced consumers should be able to opt out of chrome, swap surfaces, and add plugins or nodes without patching internals
+- default composition should remain easy to use, but advanced consumers should be able to opt out of chrome, swap surfaces, and add plugins or nodes without patching internals — the `extraFeatures` prop is the documented extension surface for whole-feature contribution
+- slash-command entries are gated through the feature registry: `resolveSlashCommandIds` computes the ids from enabled features, and the slash menu renders only those commands, so no manual list sync is needed
+- markdown transformers are feature-scoped and threaded to the editor via the resolved `transformers` set; do not hardcode the full transformer list in `core/utils.ts` or `ui/content.tsx`
 - `src/pages/docs/` should treat the application source as the canonical reference for code examples and API shapes
 - when docs need to show real code, prefer importing source with `?raw` or reading from shared exported metadata instead of duplicating snippets manually
 - keep prose and editorial explanation in docs manual, but avoid copying implementation code, prop shapes, command registries, or token definitions when they already exist elsewhere in `src/`

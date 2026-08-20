@@ -380,7 +380,10 @@ export function $isMyFeatureNode(
         Custom nodes must be declared in the editor config before Lexical can
         serialize or deserialize them. For most consumers, use the public
         <code>extraNodes</code> prop instead of editing{" "}
-        <code>src/components/editor/core/config.ts</code>.
+        <code>src/components/editor/core/config.ts</code>. If the node belongs
+        to a whole capability (with a plugin, transformers, and slash command),
+        prefer the <code>extraFeatures</code> prop so all of it is wired by one
+        descriptor.
       </Paragraph>
       <CodeBlock language="ts">
         {`import { Editor } from "@/components/editor/editor";
@@ -401,10 +404,56 @@ export function MyEditor() {
         Extending the Slash Command Menu
       </SectionHeading>
       <Paragraph>
-        The slash command menu is driven by three files in{" "}
-        <code>plugins/slash-command/</code>. Adding a new command is a
-        three-step change — no plugin.tsx edits required for simple block
-        insertions.
+        For consumers, the supported way to add a slash command (together with
+        its nodes, plugin, and markdown transformers) is the{" "}
+        <code>extraFeatures</code> prop on <code>Editor</code>. Declare an{" "}
+        <code>ExtraEditorFeature</code> once and the composition surface wires
+        everything for you — no edits inside the slash-command folder.
+      </Paragraph>
+
+      <SubHeading>
+        Consumer path — <code>extraFeatures</code>
+      </SubHeading>
+      <Paragraph>
+        A feature descriptor bundles the ID, optional behavior plugin, Lexical
+        nodes, markdown transformers, and the slash-command ids it contributes.
+        The menu picks up any id you add.
+      </Paragraph>
+      <CodeBlock language="tsx">
+        {`import { Editor } from "@/components/editor/editor";
+import { MyCalloutNode } from "./my-callout-node";
+import { MyCalloutPlugin } from "./my-callout-plugin";
+
+export function MyEditor() {
+  return (
+    <Editor
+      extraFeatures={[
+        {
+          id: "callout",
+          plugin: MyCalloutPlugin,
+          nodes: [MyCalloutNode],
+          transformers: [CALL_OUT_TRANSFORMER],
+          slashCommandIds: ["callout"],
+        },
+      ]}
+    />
+  );
+}`}
+      </CodeBlock>
+
+      <SubHeading>Built-in authoring path — the three-file contract</SubHeading>
+      <Paragraph>
+        When contributing a <em>built-in</em> command (shipped in the default
+        editor), add its id to <code>EDITOR_FEATURES</code> in{" "}
+        <code>core/features.tsx</code> instead of reaching into the
+        slash-command internals. The command menu is driven by the feature
+        registry: the plugin, nodes, and transformers for the same capability
+        live in its own feature folder.
+      </Paragraph>
+      <Paragraph>
+        The slash-command folder still holds three files that describe each
+        command. Editing them is only required when the command itself needs
+        bespoke behavior that the feature descriptor can't express.
       </Paragraph>
 
       <Table headers={["File", "What you add"]}>

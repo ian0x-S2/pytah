@@ -20,6 +20,13 @@ import {
 } from "./core/composition";
 import { createEditorConfig } from "./core/config";
 import { DEFAULT_PLACEHOLDER } from "./core/constants";
+import {
+  computeEditorTransformers,
+  computeFeatureNodes,
+  type LexicalNodeList,
+  resolveExtraFeaturePlugins,
+  resolveSlashCommandIdsWithExtras,
+} from "./core/features";
 import type {
   EditorActionBarControls,
   EditorChromeSlots,
@@ -110,6 +117,7 @@ export function Editor({
   chrome,
   contentClassName,
   editable = true,
+  extraFeatures,
   extraNodes,
   features,
   initialHtml,
@@ -135,10 +143,25 @@ export function Editor({
   const resolvedChrome = resolveEditorChrome(chrome);
   const resolvedFeatures = resolveEditorFeatures(features);
 
+  const featureNodes: LexicalNodeList = computeFeatureNodes(
+    resolvedFeatures,
+    extraFeatures
+  );
+  const transformers = computeEditorTransformers(
+    resolvedFeatures,
+    extraFeatures
+  );
+  const commandIds = resolveSlashCommandIdsWithExtras(
+    resolvedFeatures,
+    extraFeatures
+  );
+  const extraFeaturePlugins = resolveExtraFeaturePlugins(extraFeatures);
+
   const initialConfig = createEditorConfig({
     editable,
     namespace,
-    nodes: extraNodes,
+    featureNodes,
+    extraNodes,
   });
 
   const snapshot: EditorSnapshot = {
@@ -184,7 +207,7 @@ export function Editor({
     }
 
     resetEditorContent(editorInstance);
-    const nextSnapshot = readEditorSnapshot(editorInstance);
+    const nextSnapshot = readEditorSnapshot(editorInstance, transformers);
     setTextContent(nextSnapshot.text);
     setSerializedSnapshot(nextSnapshot);
     onChange?.(nextSnapshot, editorInstance);
@@ -196,7 +219,7 @@ export function Editor({
     }
 
     loadEditorHtmlExample(editorInstance);
-    const nextSnapshot = readEditorSnapshot(editorInstance);
+    const nextSnapshot = readEditorSnapshot(editorInstance, transformers);
     setTextContent(nextSnapshot.text);
     setSerializedSnapshot(nextSnapshot);
     onChange?.(nextSnapshot, editorInstance);
@@ -208,7 +231,7 @@ export function Editor({
     }
 
     loadEditorMarkdownExample(editorInstance);
-    const nextSnapshot = readEditorSnapshot(editorInstance);
+    const nextSnapshot = readEditorSnapshot(editorInstance, transformers);
     setTextContent(nextSnapshot.text);
     setSerializedSnapshot(nextSnapshot);
     onChange?.(nextSnapshot, editorInstance);
@@ -222,9 +245,10 @@ export function Editor({
 
   const defaultContent = (
     <EditorContent
+      commandIds={commandIds}
       contentClassName={contentClassName}
       editable={editable}
-      editorInstance={editorInstance}
+      extraFeaturePlugins={extraFeaturePlugins}
       features={resolvedFeatures}
       footerSlot={slots?.footer}
       initialHtml={initialHtml}
@@ -238,6 +262,7 @@ export function Editor({
       snapshot={snapshot}
       toolbar={toolbar}
       topToolbar={slots?.topToolbar}
+      transformers={transformers}
     />
   );
 

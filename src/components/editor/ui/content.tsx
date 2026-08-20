@@ -1,5 +1,6 @@
 "use client";
 
+import type { Transformer } from "@lexical/markdown";
 import { CheckListPlugin } from "@lexical/react/LexicalCheckListPlugin";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
@@ -9,11 +10,17 @@ import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPl
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { TabIndentationPlugin } from "@lexical/react/LexicalTabIndentationPlugin";
 import type { LexicalEditor } from "lexical";
+import type { ComponentType } from "react";
 import { cn } from "@/lib/utils";
 import {
   type ResolvedEditorFeatureFlags,
   renderEditorSlot,
 } from "../core/composition";
+import {
+  EDITOR_FEATURES,
+  renderSeedContentPlugin,
+  renderSlashCommandPlugin,
+} from "../core/features";
 import type {
   EditorChromeSlots,
   EditorPluginSlots,
@@ -22,24 +29,11 @@ import type {
 } from "../core/types";
 import { BlockTypeToolbarPlugin } from "../plugins/block-type-toolbar/plugin";
 import { CodeHighlightPlugin } from "../plugins/code-highlight/plugin";
-import { CollapsiblePlugin } from "../plugins/collapsible/plugin";
 import { EditablePlugin } from "../plugins/core/editable";
 import { EditorStatePlugin } from "../plugins/core/editor-state";
-import { FocusOnMountPlugin } from "../plugins/core/focus-on-mount";
 import { HorizontalRulePlugin } from "../plugins/core/horizontal-rule";
-import { SeedContentPlugin } from "../plugins/core/seed-content";
-import { DraggableBlockPlugin } from "../plugins/draggable-block/plugin";
-import { FloatingToolbarPlugin } from "../plugins/floating-toolbar/plugin";
 import { FullToolbarPlugin } from "../plugins/full-toolbar/plugin";
-import { ImagePlugin } from "../plugins/image/plugin";
-import { LayoutPlugin } from "../plugins/layout/plugin";
-import { FloatingLinkEditorPlugin } from "../plugins/link-behavior/floating-link-editor";
 import { LinkBehaviorPlugin } from "../plugins/link-behavior/plugin";
-import { EDITOR_MARKDOWN_TRANSFORMERS } from "../plugins/markdown/transformers";
-import { MathPlugin } from "../plugins/math/plugin";
-import { SlashCommandPlugin } from "../plugins/slash-command/plugin";
-import { TableBehaviorPlugin } from "../plugins/table-behavior/plugin";
-import { YouTubePlugin } from "../plugins/youtube/plugin";
 import { EditorFooter } from "./chrome";
 
 interface EditorTopToolbarProps {
@@ -79,9 +73,10 @@ function EditorTopToolbar({
 }
 
 interface EditorContentProps {
+  commandIds: readonly string[];
   contentClassName?: string;
   editable: boolean;
-  editorInstance: LexicalEditor | null;
+  extraFeaturePlugins: readonly { id: string; plugin: ComponentType }[];
   features: ResolvedEditorFeatureFlags;
   footerSlot?: EditorChromeSlots["footer"];
   initialHtml?: string;
@@ -95,27 +90,34 @@ interface EditorContentProps {
   snapshot: EditorSnapshot;
   toolbar: EditorToolbar;
   topToolbar?: EditorChromeSlots["topToolbar"];
+  transformers: readonly Transformer[];
 }
 
 interface DefaultEditorPluginsProps {
   editable: boolean;
-  editorInstance: LexicalEditor | null;
+  extraFeaturePlugins: readonly { id: string; plugin: ComponentType }[];
   features: ResolvedEditorFeatureFlags;
   initialHtml?: string;
   initialMarkdown?: string;
   onSnapshotChange: (textContent: string, editor: LexicalEditor) => void;
   onSnapshotReady?: (snapshot: EditorSnapshot, editor: LexicalEditor) => void;
+  transformers: readonly Transformer[];
 }
 
 function DefaultEditorPlugins({
   editable,
-  editorInstance,
+  extraFeaturePlugins,
   features,
   initialHtml,
   initialMarkdown,
   onSnapshotChange,
   onSnapshotReady,
+  transformers,
 }: DefaultEditorPluginsProps) {
+  const featurePlugins = EDITOR_FEATURES.filter((feature) => {
+    return feature.plugin && !feature.editableOnly && features[feature.flag];
+  });
+
   return (
     <>
       {features.history ? <HistoryPlugin /> : null}
@@ -123,16 +125,17 @@ function DefaultEditorPlugins({
       <ListPlugin />
       <CheckListPlugin />
       <LinkBehaviorPlugin editable={editable} />
-      {features.images ? <ImagePlugin /> : null}
-      {features.youtube ? <YouTubePlugin /> : null}
-      {features.math ? <MathPlugin /> : null}
-      {features.collapsible ? <CollapsiblePlugin /> : null}
-      {features.layouts ? <LayoutPlugin /> : null}
+      {featurePlugins.map((feature) => {
+        const Plugin = feature.plugin;
+        if (Plugin === undefined) {
+          return null;
+        }
+        return <Plugin key={feature.flag} />;
+      })}
       <HorizontalRulePlugin />
-      {features.tables ? <TableBehaviorPlugin /> : null}
       {features.tabIndentation ? <TabIndentationPlugin /> : null}
       {features.markdownShortcuts ? (
-        <MarkdownShortcutPlugin transformers={EDITOR_MARKDOWN_TRANSFORMERS} />
+        <MarkdownShortcutPlugin transformers={[...transformers]} />
       ) : null}
       <EditablePlugin editable={editable} />
       <EditorStatePlugin
@@ -140,42 +143,54 @@ function DefaultEditorPlugins({
         initialMarkdown={initialMarkdown}
         onChange={onSnapshotChange}
         onSnapshotReady={onSnapshotReady}
+        transformers={transformers}
       />
-      {features.seedContent ? (
-        <SeedContentPlugin editor={editorInstance} />
-      ) : null}
+      {features.seedContent ? renderSeedContentPlugin(transformers) : null}
+      {extraFeaturePlugins.map(({ id, plugin: Plugin }) => {
+        return <Plugin key={id} />;
+      })}
     </>
   );
 }
 
 interface EditableEditorPluginsProps {
+  commandIds: readonly string[];
   features: ResolvedEditorFeatureFlags;
   pluginSlots?: EditorPluginSlots;
 }
 
 function EditableEditorPlugins({
+  commandIds,
   features,
   pluginSlots,
 }: EditableEditorPluginsProps) {
+  const editablePlugins = EDITOR_FEATURES.filter((feature) => {
+    return feature.editableOnly && features[feature.flag];
+  });
+
   return (
     <>
       {pluginSlots?.beforeEditable}
-      {features.focusOnMount ? <FocusOnMountPlugin /> : null}
-      {features.draggableBlocks ? <DraggableBlockPlugin /> : null}
-      {features.floatingToolbar ? <FloatingToolbarPlugin /> : null}
-      {features.floatingLinkEditor ? <FloatingLinkEditorPlugin /> : null}
-      {features.slashCommand ? (
-        <SlashCommandPlugin features={features} />
-      ) : null}
+      {editablePlugins.map((feature) => {
+        if (feature.plugin) {
+          const Plugin = feature.plugin;
+          return <Plugin key={feature.flag} />;
+        }
+        if (feature.flag === "slashCommand") {
+          return renderSlashCommandPlugin(commandIds);
+        }
+        return null;
+      })}
       {pluginSlots?.afterEditable}
     </>
   );
 }
 
 export function EditorContent({
+  commandIds,
   contentClassName,
   editable,
-  editorInstance,
+  extraFeaturePlugins,
   features,
   footerSlot,
   initialHtml,
@@ -189,6 +204,7 @@ export function EditorContent({
   snapshot,
   topToolbar,
   toolbar,
+  transformers,
 }: EditorContentProps) {
   const footerContent =
     footerSlot === undefined ? (
@@ -230,15 +246,20 @@ export function EditorContent({
       {pluginSlots?.beforeDefault}
       <DefaultEditorPlugins
         editable={editable}
-        editorInstance={editorInstance}
+        extraFeaturePlugins={extraFeaturePlugins}
         features={features}
         initialHtml={initialHtml}
         initialMarkdown={initialMarkdown}
         onSnapshotChange={onSnapshotChange}
         onSnapshotReady={onSnapshotReady}
+        transformers={transformers}
       />
       {editable ? (
-        <EditableEditorPlugins features={features} pluginSlots={pluginSlots} />
+        <EditableEditorPlugins
+          commandIds={commandIds}
+          features={features}
+          pluginSlots={pluginSlots}
+        />
       ) : null}
       {pluginSlots?.afterDefault}
     </>

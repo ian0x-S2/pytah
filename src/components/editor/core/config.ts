@@ -5,21 +5,19 @@ import { ListItemNode, ListNode } from "@lexical/list";
 import type { InitialConfigType } from "@lexical/react/LexicalComposer";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
-import { CollapsibleContainerNode } from "./nodes/collapsible/container-node";
-import { CollapsibleContentNode } from "./nodes/collapsible/content-node";
-import { CollapsibleTitleNode } from "./nodes/collapsible/title-node";
-import { ImageNode } from "./nodes/image/node";
-import { LayoutContainerNode } from "./nodes/layout/container-node";
-import { LayoutItemNode } from "./nodes/layout/item-node";
-import { MathNode } from "./nodes/math/node";
-import { YouTubeNode } from "./nodes/youtube/node";
+import type { LexicalNodeList } from "./features";
 import { editorTheme } from "./theme";
 
 function onError(error: Error) {
   console.error("[Editor]", error);
 }
 
-export const DEFAULT_EDITOR_NODES = [
+/**
+ * Lexical nodes that are always registered regardless of feature toggles.
+ * Feature-owned nodes (image, youtube, math, collapsible, layout) are resolved
+ * separately from the feature registry and appended through `featureNodes`.
+ */
+export const BASE_EDITOR_NODES = [
   HeadingNode,
   QuoteNode,
   ListNode,
@@ -29,14 +27,6 @@ export const DEFAULT_EDITOR_NODES = [
   LinkNode,
   AutoLinkNode,
   HorizontalRuleNode,
-  ImageNode,
-  YouTubeNode,
-  MathNode,
-  CollapsibleContainerNode,
-  CollapsibleTitleNode,
-  CollapsibleContentNode,
-  LayoutContainerNode,
-  LayoutItemNode,
   TableNode,
   TableRowNode,
   TableCellNode,
@@ -44,19 +34,25 @@ export const DEFAULT_EDITOR_NODES = [
 
 interface CreateEditorConfigOptions {
   editable: boolean;
+  /** Consumer-provided nodes appended after everything else. */
+  extraNodes?: NonNullable<InitialConfigType["nodes"]>;
+  /** Nodes contributed by enabled feature descriptors. */
+  featureNodes?: LexicalNodeList;
   namespace?: string;
-  nodes?: NonNullable<InitialConfigType["nodes"]>;
 }
 
 export const createEditorConfig = ({
   editable,
   namespace = "PytahEditor",
-  nodes,
+  featureNodes = [],
+  extraNodes,
 }: CreateEditorConfigOptions): InitialConfigType => {
+  const nodes = [...BASE_EDITOR_NODES, ...featureNodes, ...(extraNodes ?? [])];
+
   return {
     editable,
     namespace,
-    nodes: nodes ? [...DEFAULT_EDITOR_NODES, ...nodes] : DEFAULT_EDITOR_NODES,
+    nodes,
     onError,
     theme: editorTheme,
   };

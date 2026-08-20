@@ -6,6 +6,7 @@ import {
   Callout,
   CodeBlock,
   PageHeader,
+  Paragraph,
   SubHeading,
   Table,
   TableCell,
@@ -140,15 +141,22 @@ export function LayoutGuidePage() {
       />
 
       <SubHeading>Registration</SubHeading>
+      <Paragraph>
+        Layouts ship behind the <code>layouts</code> feature flag. To add the
+        capability to a custom composition, contribute a descriptor via{" "}
+        <code>extraFeatures</code>:
+      </Paragraph>
       <CodeBlock language="tsx">
-        {`// core/config.ts
-import { LayoutContainerNode } from "./nodes/layout/container-node";
-import { LayoutItemNode }      from "./nodes/layout/item-node";
-nodes: [..., LayoutContainerNode, LayoutItemNode]
-
-// ui/content.tsx
-import { LayoutPlugin } from "../plugins/layout/plugin";
-<LayoutPlugin />`}
+        {`<Editor
+  extraFeatures={[
+    {
+      id: "layouts",
+      plugin: LayoutPlugin,
+      nodes: [LayoutContainerNode, LayoutItemNode],
+      slashCommandIds: ["columns"],
+    },
+  ]}
+/>`}
       </CodeBlock>
 
       <SubHeading>Inserting a layout programmatically</SubHeading>

@@ -62,6 +62,18 @@ const WHERE_TO_CHANGE_ROWS: ThreeColumnRow[] = [
       "Feature behavior belongs with its Lexical commands, transforms, and feature-local UI.",
   },
   {
+    first:
+      "Register a whole capability (nodes + plugin + transformers + slash ids)",
+    key: "feature-registry",
+    second: (
+      <>
+        <code>core/features.tsx</code> (or the <code>extraFeatures</code> prop)
+      </>
+    ),
+    third:
+      "The EditorFeature registry is the single source of truth: toggling a flag drives its nodes, plugin, transformers, and slash commands together.",
+  },
+  {
     first: "Change toolbars, panels, or shell UI",
     key: "chrome-ui",
     second: <code>ui/</code>,

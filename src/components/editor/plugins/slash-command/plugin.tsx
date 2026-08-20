@@ -23,14 +23,13 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
-import type { ResolvedEditorFeatureFlags } from "../../core/composition";
 import { INSERT_IMAGE_COMMAND } from "../image/commands";
 import { readFileAsDataUrl } from "../image/utils";
 import { INSERT_LAYOUT_COMMAND } from "../layout/commands";
 import { INSERT_YOUTUBE_COMMAND } from "../youtube/commands";
 import { parseYouTubeUrl } from "../youtube/utils";
 import { createSlashMenuAnchor, getSelectionRectangle } from "./anchor";
-import { getEnabledSlashCommands } from "./commands";
+import { getSlashCommandsForIds } from "./commands";
 import { SLASH_COMMAND_EXECUTORS } from "./executors";
 import { InsertImageDialog } from "./insert-image-dialog";
 import { InsertYouTubeDialog } from "./insert-youtube-dialog";
@@ -55,8 +54,10 @@ const SLASH_MENU_COLLISION_AVOIDANCE = {
   side: "flip",
 } as const;
 
-interface SlashCommandPluginProps {
-  features: ResolvedEditorFeatureFlags;
+export interface SlashCommandPluginProps {
+  /** The ids whose commands should be shown in the menu, resolved from the
+   * enabled feature set by the composition surface. */
+  commandIds: readonly string[];
 }
 
 interface SlashCommandState {
@@ -156,9 +157,9 @@ const slashCommandReducer = (
   }
 };
 
-export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
+export function SlashCommandPlugin({ commandIds }: SlashCommandPluginProps) {
   const [editor] = useLexicalComposerContext();
-  const availableCommands = getEnabledSlashCommands(features);
+  const availableCommands = getSlashCommandsForIds(commandIds);
   const [state, dispatch] = useReducer(
     slashCommandReducer,
     getFirstCommandId(availableCommands),
@@ -672,23 +673,14 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
               finalFocus={false}
               initialFocus={false}
             >
-              <Command
-                onValueChange={(value) =>
-                  dispatch({
-                    type: "patch",
-                    payload: { rawSelectedCommandId: value as SlashCommandId },
-                  })
-                }
-                shouldFilter={false}
-                value={selectedCommandId}
-              >
+              <Command shouldFilter={false}>
                 <CommandList ref={commandListRef}>
                   <CommandGroup heading="Blocks">
                     {filteredCommands.map((command, index) => (
                       <CommandItem
                         className={
                           index === selectedIndex
-                            ? "bg-muted text-foreground"
+                            ? "bg-accent text-accent-foreground"
                             : ""
                         }
                         key={command.id}

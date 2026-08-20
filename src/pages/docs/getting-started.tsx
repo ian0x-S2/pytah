@@ -229,12 +229,13 @@ export function CustomEditorExample() {
 
       <Paragraph>The most important composition hooks are:</Paragraph>
       <CodeBlock language="tsx">
-        {`features    // enable/disable built-in behavior plugins
-chrome      // show/hide default shell/header/footer/action bar/output panels
-slots       // replace default visual surfaces
-pluginSlots // mount extra plugins around the built-in plugin stack
-extraNodes  // register additional Lexical nodes
-namespace   // customize the Lexical namespace when embedding multiple editors`}
+        {`features        // enable/disable built-in behavior plugins
+chrome          // show/hide default shell/header/footer/action bar/output panels
+slots           // replace default visual surfaces
+pluginSlots     // mount extra plugins around the built-in plugin stack
+extraNodes      // register additional Lexical nodes
+extraFeatures   // contribute a whole capability (nodes + plugin + transformers + slash commands)
+namespace       // customize the Lexical namespace when embedding multiple editors`}
       </CodeBlock>
 
       <Paragraph>
