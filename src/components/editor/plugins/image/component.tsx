@@ -16,7 +16,7 @@ import {
   KEY_DELETE_COMMAND,
   type NodeKey,
 } from "lexical";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { $isImageNode, type ImageAlignment } from "../../core/nodes/image/node";
 import { ImageResizer } from "./resizer";
 
@@ -46,7 +46,7 @@ export function ImageComponent({
   const imageRef = useRef<HTMLImageElement | null>(null);
   const [isResizing, setIsResizing] = useState(false);
   const effectiveWidth = width === "inherit" ? DEFAULT_IMAGE_WIDTH : width;
-  const isInNodeSelection = useMemo(() => {
+  const isInNodeSelection = (() => {
     if (!isSelected) {
       return false;
     }
@@ -55,7 +55,7 @@ export function ImageComponent({
       const selection = $getSelection();
       return $isNodeSelection(selection) && selection.has(nodeKey);
     });
-  }, [editor, isSelected, nodeKey]);
+  })();
   const isFocused = (isSelected || isResizing) && editable;
   let figureClassName = "my-4 w-fit max-w-full";
   let alignmentClassName = "inline-flex max-w-full";

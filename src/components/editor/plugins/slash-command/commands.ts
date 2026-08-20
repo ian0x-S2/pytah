@@ -18,9 +18,6 @@ import {
 } from "lucide-react";
 import type { ResolvedEditorFeatureFlags } from "../../core/composition";
 import type { SlashCommand } from "./types";
-import { SLASH_QUERY_PATTERN } from "./utils";
-
-export const SLASH_COMMAND_PATTERN = SLASH_QUERY_PATTERN;
 
 export const SLASH_COMMANDS: SlashCommand[] = [
   {

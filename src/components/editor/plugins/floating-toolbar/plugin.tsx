@@ -15,7 +15,7 @@ import {
   StrikethroughIcon,
   UnderlineIcon,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Separator } from "@/components/ui/separator";
 import { Toggle } from "@/components/ui/toggle";
@@ -63,7 +63,7 @@ export function FloatingToolbarPlugin() {
    */
   const isColorPickerOpenRef = useRef(false);
 
-  const updateToolbar = useCallback(() => {
+  const updateToolbar = useEffectEvent(() => {
     editor.getEditorState().read(() => {
       const toolbarState = readFloatingToolbarState();
 
@@ -92,7 +92,7 @@ export function FloatingToolbarPlugin() {
         });
       }
     });
-  }, [editor]);
+  });
 
   useEffect(() => {
     return mergeRegister(
@@ -108,9 +108,9 @@ export function FloatingToolbarPlugin() {
         updateToolbar();
       })
     );
-  }, [editor, updateToolbar]);
+  }, [editor]);
 
-  const handleLinkToggle = useCallback(() => {
+  const handleLinkToggle = () => {
     if (formats.isLink) {
       editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
       return;
@@ -118,11 +118,11 @@ export function FloatingToolbarPlugin() {
 
     editor.dispatchCommand(TOGGLE_LINK_COMMAND, LINK_PLACEHOLDER_URL);
     editor.dispatchCommand(OPEN_FLOATING_LINK_EDITOR_COMMAND, undefined);
-  }, [editor, formats.isLink]);
+  };
 
-  const handleColorPickerOpenChange = useCallback((open: boolean) => {
+  const handleColorPickerOpenChange = (open: boolean) => {
     isColorPickerOpenRef.current = open;
-  }, []);
+  };
 
   if (!isVisible) {
     return null;

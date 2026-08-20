@@ -5,7 +5,9 @@ import { BoxGeometry, EdgesGeometry, type Group } from "three";
 function RotatingCube() {
   const groupRef = useRef<Group | null>(null);
 
-  // Pre-generate box geometry & edges geometry
+  // Pre-generate box geometry & edges geometry exactly once. Three.js geometry
+  // construction is expensive and must not run on every render even though the
+  // React Compiler would memoize it, so keep the explicit useMemo here.
   const [boxGeo, edgesGeo] = useMemo(() => {
     const box = new BoxGeometry(1.6, 1.6, 1.6);
     const edges = new EdgesGeometry(box);

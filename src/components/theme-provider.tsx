@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   applyThemeToDOM,
   getSystemTheme,
@@ -16,10 +16,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   );
   const resolvedTheme = theme === "system" ? systemTheme : theme;
 
-  const setTheme = useCallback((next: Theme) => {
+  const setTheme = (next: Theme) => {
     localStorage.setItem(STORAGE_KEY, next);
     setThemeState(next);
-  }, []);
+  };
 
   useEffect(() => {
     applyThemeToDOM(resolvedTheme);
@@ -42,10 +42,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     };
   }, [theme]);
 
-  const value = useMemo<ThemeProviderState>(
-    () => ({ resolvedTheme, setTheme, theme }),
-    [resolvedTheme, setTheme, theme]
-  );
+  const value: ThemeProviderState = { resolvedTheme, setTheme, theme };
 
   return (
     <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>

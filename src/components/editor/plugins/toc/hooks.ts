@@ -3,7 +3,7 @@
 import type { TableOfContentsEntry } from "@lexical/react/LexicalTableOfContentsPlugin";
 import { mergeRegister } from "@lexical/utils";
 import { $getNodeByKey, type LexicalEditor, type NodeKey } from "lexical";
-import { useCallback, useEffect, useReducer, useRef } from "react";
+import { useEffect, useEffectEvent, useReducer, useRef } from "react";
 import { OBSERVER_ROOT_MARGIN } from "./constants";
 import type { TocState } from "./types";
 import {
@@ -71,13 +71,13 @@ export function useActiveHeading(
   const cachedOffset = useRef(24);
 
   // Resolve scroll parent of editor
-  const updateScrollParent = useCallback(() => {
+  const updateScrollParent = () => {
     const rootEl = editor.getRootElement();
     scrollParentRef.current = rootEl ? getScrollParent(rootEl) : window;
-  }, [editor]);
+  };
 
   // Find fixed/sticky headers once and cache them
-  const updateStickyHeaders = useCallback(() => {
+  const updateStickyHeaders = () => {
     const headers = Array.from(document.querySelectorAll("header"));
     const sticky: HTMLElement[] = [];
     for (const header of headers) {
@@ -89,10 +89,10 @@ export function useActiveHeading(
       }
     }
     stickyHeadersRef.current = sticky;
-  }, []);
+  };
 
   // Compute the current scroll top offset dynamically but extremely fast
-  const updateCachedOffset = useCallback(() => {
+  const updateCachedOffset = () => {
     let maxHeaderBottom = 0;
     for (const header of stickyHeadersRef.current) {
       maxHeaderBottom = Math.max(
@@ -101,17 +101,17 @@ export function useActiveHeading(
       );
     }
     cachedOffset.current = Math.max(24, Math.round(maxHeaderBottom + 16));
-  }, []);
+  };
 
   // Update layout info on resize
-  const handleResize = useCallback(() => {
+  const handleResize = useEffectEvent(() => {
     updateScrollParent();
     updateStickyHeaders();
     updateCachedOffset();
-  }, [updateScrollParent, updateStickyHeaders, updateCachedOffset]);
+  });
 
   // Sync active heading logic
-  const syncActiveHeading = useCallback(() => {
+  const syncActiveHeading = useEffectEvent(() => {
     if (isProgrammaticScrolling.current) {
       return;
     }
@@ -145,7 +145,7 @@ export function useActiveHeading(
         }),
       });
     });
-  }, [editor, updateCachedOffset]);
+  });
 
   // Handle selected heading (cursor selection)
   useEffect(() => {
@@ -210,83 +210,80 @@ export function useActiveHeading(
       });
       window.removeEventListener("resize", handleResize);
     };
-  }, [keysStr, editor, syncActiveHeading, handleResize]);
+  }, [keysStr, editor]);
 
   // Scroll to heading click handler
-  const handleHeadingClick = useCallback(
-    (key: NodeKey) => {
-      const headingElement = editor.getElementByKey(key);
-      if (!(headingElement instanceof HTMLElement)) {
-        return;
+  const handleHeadingClick = (key: NodeKey) => {
+    const headingElement = editor.getElementByKey(key);
+    if (!(headingElement instanceof HTMLElement)) {
+      return;
+    }
+
+    // Stop any pending animation frames
+    cancelAnimationFrame(rafRef.current);
+
+    // Instantly update active heading highlight in the UI for premium UX
+    isProgrammaticScrolling.current = true;
+    dispatch({ type: "set_active", payload: key });
+    dispatch({ type: "set_selected", payload: key });
+
+    // Focus editor and place cursor
+    editor.update(
+      () => {
+        $getNodeByKey(key)?.selectStart();
+      },
+      { discrete: true }
+    );
+    editor.getRootElement()?.focus({ preventScroll: true });
+
+    // Recalculate layout targets
+    updateScrollParent();
+    updateStickyHeaders();
+    updateCachedOffset();
+
+    const scrollParent = scrollParentRef.current;
+    const offset = cachedOffset.current;
+
+    const onScrollEnd = () => {
+      isProgrammaticScrolling.current = false;
+      cleanup();
+    };
+
+    const handleUserInterrupt = () => {
+      isProgrammaticScrolling.current = false;
+      cleanup();
+    };
+
+    const cleanup = () => {
+      scrollParent.removeEventListener("scrollend", onScrollEnd);
+      window.removeEventListener("wheel", handleUserInterrupt);
+      window.removeEventListener("touchmove", handleUserInterrupt);
+      window.removeEventListener("keydown", handleUserInterrupt);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
       }
+    };
 
-      // Stop any pending animation frames
-      cancelAnimationFrame(rafRef.current);
+    // Listen for scrollend or user interruption to restore scroll tracking
+    scrollParent.addEventListener("scrollend", onScrollEnd, { once: true });
+    window.addEventListener("wheel", handleUserInterrupt, { passive: true });
+    window.addEventListener("touchmove", handleUserInterrupt, {
+      passive: true,
+    });
+    window.addEventListener("keydown", handleUserInterrupt, {
+      passive: true,
+    });
 
-      // Instantly update active heading highlight in the UI for premium UX
-      isProgrammaticScrolling.current = true;
-      dispatch({ type: "set_active", payload: key });
-      dispatch({ type: "set_selected", payload: key });
+    // Safety timeout in case scrollend doesn't trigger
+    timeoutRef.current = setTimeout(() => {
+      if (isProgrammaticScrolling.current) {
+        onScrollEnd();
+      }
+    }, 800);
 
-      // Focus editor and place cursor
-      editor.update(
-        () => {
-          $getNodeByKey(key)?.selectStart();
-        },
-        { discrete: true }
-      );
-      editor.getRootElement()?.focus({ preventScroll: true });
-
-      // Recalculate layout targets
-      updateScrollParent();
-      updateStickyHeaders();
-      updateCachedOffset();
-
-      const scrollParent = scrollParentRef.current;
-      const offset = cachedOffset.current;
-
-      const onScrollEnd = () => {
-        isProgrammaticScrolling.current = false;
-        cleanup();
-      };
-
-      const handleUserInterrupt = () => {
-        isProgrammaticScrolling.current = false;
-        cleanup();
-      };
-
-      const cleanup = () => {
-        scrollParent.removeEventListener("scrollend", onScrollEnd);
-        window.removeEventListener("wheel", handleUserInterrupt);
-        window.removeEventListener("touchmove", handleUserInterrupt);
-        window.removeEventListener("keydown", handleUserInterrupt);
-        if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current);
-        }
-      };
-
-      // Listen for scrollend or user interruption to restore scroll tracking
-      scrollParent.addEventListener("scrollend", onScrollEnd, { once: true });
-      window.addEventListener("wheel", handleUserInterrupt, { passive: true });
-      window.addEventListener("touchmove", handleUserInterrupt, {
-        passive: true,
-      });
-      window.addEventListener("keydown", handleUserInterrupt, {
-        passive: true,
-      });
-
-      // Safety timeout in case scrollend doesn't trigger
-      timeoutRef.current = setTimeout(() => {
-        if (isProgrammaticScrolling.current) {
-          onScrollEnd();
-        }
-      }, 800);
-
-      // Perform smooth scroll
-      scrollToHeading(headingElement, offset);
-    },
-    [editor, updateScrollParent, updateStickyHeaders, updateCachedOffset]
-  );
+    // Perform smooth scroll
+    scrollToHeading(headingElement, offset);
+  };
 
   return {
     activeKey: state.activeKey,

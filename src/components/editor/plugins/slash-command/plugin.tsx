@@ -14,8 +14,7 @@ import {
   KEY_ESCAPE_COMMAND,
 } from "lexical";
 import type { ChangeEvent } from "react";
-import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
-import { Button } from "@/components/ui/button";
+import { useEffect, useEffectEvent, useReducer, useRef } from "react";
 import {
   Command,
   CommandEmpty,
@@ -23,16 +22,6 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import type { ResolvedEditorFeatureFlags } from "../../core/composition";
 import { INSERT_IMAGE_COMMAND } from "../image/commands";
@@ -43,6 +32,8 @@ import { parseYouTubeUrl } from "../youtube/utils";
 import { createSlashMenuAnchor, getSelectionRectangle } from "./anchor";
 import { getEnabledSlashCommands } from "./commands";
 import { SLASH_COMMAND_EXECUTORS } from "./executors";
+import { InsertImageDialog } from "./insert-image-dialog";
+import { InsertYouTubeDialog } from "./insert-youtube-dialog";
 import { SlashLayoutDialog } from "./layout-dialog";
 import type {
   SlashCommand,
@@ -167,9 +158,7 @@ const slashCommandReducer = (
 
 export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
   const [editor] = useLexicalComposerContext();
-  const availableCommands = useMemo(() => {
-    return getEnabledSlashCommands(features);
-  }, [features]);
+  const availableCommands = getEnabledSlashCommands(features);
   const [state, dispatch] = useReducer(
     slashCommandReducer,
     getFirstCommandId(availableCommands),
@@ -194,11 +183,9 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
   const commandListRef = useRef<HTMLDivElement | null>(null);
   const animationFrameRef = useRef<number | null>(null);
 
-  const filteredCommands = useMemo(() => {
-    return filterSlashCommands(availableCommands, query);
-  }, [availableCommands, query]);
+  const filteredCommands = filterSlashCommands(availableCommands, query);
 
-  const selectedCommandId = useMemo<SlashCommandId | "">(() => {
+  const selectedCommandId: SlashCommandId | "" = (() => {
     if (filteredCommands.length === 0) {
       return "";
     }
@@ -206,17 +193,16 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
     return hasSelectedCommand(filteredCommands, rawSelectedCommandId)
       ? rawSelectedCommandId
       : getFirstCommandId(filteredCommands);
-  }, [filteredCommands, rawSelectedCommandId]);
+  })();
 
-  const selectedIndex = useMemo(() => {
-    return getSelectedCommandIndex(filteredCommands, selectedCommandId);
-  }, [filteredCommands, selectedCommandId]);
+  const selectedIndex = getSelectedCommandIndex(
+    filteredCommands,
+    selectedCommandId
+  );
 
-  const anchor = useMemo(() => {
-    return createSlashMenuAnchor(editor);
-  }, [editor]);
+  const anchor = createSlashMenuAnchor(editor);
 
-  const updateSlashMenu = useCallback(() => {
+  const updateSlashMenu = () => {
     const selection = $getSelection();
     const isCollapsedRangeSelection =
       $isRangeSelection(selection) && selection.isCollapsed();
@@ -260,9 +246,9 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
       type: "patch",
       payload: { isOpen: true, query: nextQuery },
     });
-  }, [editor]);
+  };
 
-  const scheduleSlashMenuUpdate = useCallback(() => {
+  const scheduleSlashMenuUpdate = useEffectEvent(() => {
     if (animationFrameRef.current !== null) {
       return;
     }
@@ -273,9 +259,9 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
         updateSlashMenu();
       });
     });
-  }, [editor, updateSlashMenu]);
+  });
 
-  const resetImageDialog = useCallback(() => {
+  const resetImageDialog = () => {
     dispatch({
       type: "patch",
       payload: {
@@ -287,9 +273,9 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
         pendingImageTargetKey: null,
       },
     });
-  }, []);
+  };
 
-  const resetYouTubeDialog = useCallback(() => {
+  const resetYouTubeDialog = () => {
     dispatch({
       type: "patch",
       payload: {
@@ -298,93 +284,44 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
         youTubeUrl: "",
       },
     });
-  }, []);
+  };
 
-  const handleImageFileChange = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      event.target.value = "";
+  const handleImageFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
 
-      if (!file) {
+    if (!file) {
+      dispatch({
+        type: "patch",
+        payload: { imageFileName: "", imageFileSrc: null },
+      });
+      return;
+    }
+
+    readFileAsDataUrl(file)
+      .then((src) => {
+        dispatch({
+          type: "set-image-file",
+          payload: { fileName: file.name, src },
+        });
+      })
+      .catch(() => {
         dispatch({
           type: "patch",
           payload: { imageFileName: "", imageFileSrc: null },
         });
-        return;
-      }
+      });
+  };
 
-      readFileAsDataUrl(file)
-        .then((src) => {
-          dispatch({
-            type: "set-image-file",
-            payload: { fileName: file.name, src },
-          });
-        })
-        .catch(() => {
-          dispatch({
-            type: "patch",
-            payload: { imageFileName: "", imageFileSrc: null },
-          });
-        });
-    },
-    []
-  );
+  const executeCommand = (commandId: SlashCommandId) => {
+    if (
+      commandId === "columns" ||
+      commandId === "image" ||
+      commandId === "youtube"
+    ) {
+      let targetNodeKey: string | null = null;
 
-  const executeCommand = useCallback(
-    (commandId: SlashCommandId) => {
-      if (
-        commandId === "columns" ||
-        commandId === "image" ||
-        commandId === "youtube"
-      ) {
-        let targetNodeKey: string | null = null;
-
-        editor.getEditorState().read(() => {
-          const selection = $getSelection();
-          if (!$isRangeSelection(selection)) {
-            return;
-          }
-
-          const node = selection.anchor.getNode();
-          if (!$isTextNode(node)) {
-            return;
-          }
-
-          targetNodeKey = node.getTopLevelElementOrThrow().getKey();
-        });
-
-        if (commandId === "columns") {
-          dispatch({
-            type: "patch",
-            payload: {
-              isLayoutPresetOpen: true,
-              isOpen: false,
-              pendingLayoutTargetKey: targetNodeKey,
-            },
-          });
-        } else if (commandId === "youtube") {
-          dispatch({
-            type: "patch",
-            payload: {
-              isOpen: false,
-              isYouTubeDialogOpen: true,
-              pendingYouTubeTargetKey: targetNodeKey,
-            },
-          });
-        } else {
-          dispatch({
-            type: "patch",
-            payload: {
-              isImageDialogOpen: true,
-              isOpen: false,
-              pendingImageTargetKey: targetNodeKey,
-            },
-          });
-        }
-        return;
-      }
-
-      editor.update(() => {
+      editor.getEditorState().read(() => {
         const selection = $getSelection();
         if (!$isRangeSelection(selection)) {
           return;
@@ -395,41 +332,81 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
           return;
         }
 
-        node.setTextContent("");
-
-        const element = node.getTopLevelElementOrThrow();
-        SLASH_COMMAND_EXECUTORS[commandId](element);
+        targetNodeKey = node.getTopLevelElementOrThrow().getKey();
       });
 
-      dispatch({ type: "patch", payload: { isOpen: false } });
-    },
-    [editor]
-  );
+      if (commandId === "columns") {
+        dispatch({
+          type: "patch",
+          payload: {
+            isLayoutPresetOpen: true,
+            isOpen: false,
+            pendingLayoutTargetKey: targetNodeKey,
+          },
+        });
+      } else if (commandId === "youtube") {
+        dispatch({
+          type: "patch",
+          payload: {
+            isOpen: false,
+            isYouTubeDialogOpen: true,
+            pendingYouTubeTargetKey: targetNodeKey,
+          },
+        });
+      } else {
+        dispatch({
+          type: "patch",
+          payload: {
+            isImageDialogOpen: true,
+            isOpen: false,
+            pendingImageTargetKey: targetNodeKey,
+          },
+        });
+      }
+      return;
+    }
 
-  const executeLayoutPreset = useCallback(
-    (templateColumns: string) => {
-      if (!pendingLayoutTargetKey) {
+    editor.update(() => {
+      const selection = $getSelection();
+      if (!$isRangeSelection(selection)) {
         return;
       }
 
-      editor.dispatchCommand(INSERT_LAYOUT_COMMAND, {
-        targetNodeKey: pendingLayoutTargetKey,
-        templateColumns,
-      });
+      const node = selection.anchor.getNode();
+      if (!$isTextNode(node)) {
+        return;
+      }
 
-      dispatch({
-        type: "patch",
-        payload: {
-          isLayoutPresetOpen: false,
-          isOpen: false,
-          pendingLayoutTargetKey: null,
-        },
-      });
-    },
-    [editor, pendingLayoutTargetKey]
-  );
+      node.setTextContent("");
 
-  const submitImage = useCallback(() => {
+      const element = node.getTopLevelElementOrThrow();
+      SLASH_COMMAND_EXECUTORS[commandId](element);
+    });
+
+    dispatch({ type: "patch", payload: { isOpen: false } });
+  };
+
+  const executeLayoutPreset = (templateColumns: string) => {
+    if (!pendingLayoutTargetKey) {
+      return;
+    }
+
+    editor.dispatchCommand(INSERT_LAYOUT_COMMAND, {
+      targetNodeKey: pendingLayoutTargetKey,
+      templateColumns,
+    });
+
+    dispatch({
+      type: "patch",
+      payload: {
+        isLayoutPresetOpen: false,
+        isOpen: false,
+        pendingLayoutTargetKey: null,
+      },
+    });
+  };
+
+  const submitImage = () => {
     const nextImageSrc = imageFileSrc ?? imageUrl.trim();
     if (!(nextImageSrc && pendingImageTargetKey)) {
       return;
@@ -453,9 +430,9 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
         pendingImageTargetKey: null,
       },
     });
-  }, [editor, imageAltText, imageFileSrc, imageUrl, pendingImageTargetKey]);
+  };
 
-  const submitYouTube = useCallback(() => {
+  const submitYouTube = () => {
     if (!pendingYouTubeTargetKey) {
       return;
     }
@@ -479,7 +456,7 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
         youTubeUrl: "",
       },
     });
-  }, [editor, pendingYouTubeTargetKey, youTubeUrl]);
+  };
 
   useEffect(() => {
     if (
@@ -520,13 +497,7 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
     return editor.registerUpdateListener(() => {
       scheduleSlashMenuUpdate();
     });
-  }, [
-    editor,
-    isImageDialogOpen,
-    isLayoutPresetOpen,
-    isYouTubeDialogOpen,
-    scheduleSlashMenuUpdate,
-  ]);
+  }, [editor, isImageDialogOpen, isLayoutPresetOpen, isYouTubeDialogOpen]);
 
   useEffect(() => {
     return () => {
@@ -537,26 +508,83 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
     };
   }, []);
 
-  const handleImageUrlInputRef = useCallback(
-    (element: HTMLInputElement | null) => {
-      if (!(element && isImageDialogOpen)) {
-        return;
+  const onKeyCommand = useEffectEvent(
+    (command: "arrow-down" | "arrow-up" | "enter" | "escape") => {
+      const handleEnter = () => {
+        if (isLayoutPresetOpen) {
+          executeLayoutPreset("1fr 1fr");
+          return;
+        }
+
+        if (isImageDialogOpen) {
+          submitImage();
+          return;
+        }
+
+        if (isYouTubeDialogOpen) {
+          submitYouTube();
+          return;
+        }
+
+        const selectedCommand = filteredCommands[selectedIndex];
+        if (selectedCommand) {
+          executeCommand(selectedCommand.id);
+        }
+      };
+
+      const handleEscape = () => {
+        if (isImageDialogOpen) {
+          resetImageDialog();
+          return;
+        }
+
+        if (isLayoutPresetOpen) {
+          dispatch({
+            type: "patch",
+            payload: {
+              isLayoutPresetOpen: false,
+              pendingLayoutTargetKey: null,
+            },
+          });
+          return;
+        }
+
+        if (isYouTubeDialogOpen) {
+          resetYouTubeDialog();
+          return;
+        }
+
+        dispatch({ type: "patch", payload: { isOpen: false } });
+      };
+
+      switch (command) {
+        case "arrow-down": {
+          dispatch({
+            type: "move-selected-command",
+            payload: { commands: filteredCommands, direction: "down" },
+          });
+          return;
+        }
+        case "arrow-up": {
+          dispatch({
+            type: "move-selected-command",
+            payload: { commands: filteredCommands, direction: "up" },
+          });
+          return;
+        }
+        case "enter": {
+          handleEnter();
+          return;
+        }
+        case "escape": {
+          handleEscape();
+          return;
+        }
+        default: {
+          return;
+        }
       }
-
-      element.focus();
-    },
-    [isImageDialogOpen]
-  );
-
-  const handleYouTubeUrlInputRef = useCallback(
-    (element: HTMLInputElement | null) => {
-      if (!(element && isYouTubeDialogOpen)) {
-        return;
-      }
-
-      element.focus();
-    },
-    [isYouTubeDialogOpen]
+    }
   );
 
   useEffect(() => {
@@ -564,19 +592,19 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
       return;
     }
 
+    const isDialogOpen =
+      isImageDialogOpen || isLayoutPresetOpen || isYouTubeDialogOpen;
+
     return mergeRegister(
       editor.registerCommand(
         KEY_ARROW_DOWN_COMMAND,
         (event) => {
-          if (isImageDialogOpen || isLayoutPresetOpen || isYouTubeDialogOpen) {
+          if (isDialogOpen) {
             return true;
           }
 
           event.preventDefault();
-          dispatch({
-            type: "move-selected-command",
-            payload: { commands: filteredCommands, direction: "down" },
-          });
+          onKeyCommand("arrow-down");
           return true;
         },
         COMMAND_PRIORITY_HIGH
@@ -584,15 +612,12 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
       editor.registerCommand(
         KEY_ARROW_UP_COMMAND,
         (event) => {
-          if (isImageDialogOpen || isLayoutPresetOpen || isYouTubeDialogOpen) {
+          if (isDialogOpen) {
             return true;
           }
 
           event.preventDefault();
-          dispatch({
-            type: "move-selected-command",
-            payload: { commands: filteredCommands, direction: "up" },
-          });
+          onKeyCommand("arrow-up");
           return true;
         },
         COMMAND_PRIORITY_HIGH
@@ -601,26 +626,7 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
         KEY_ENTER_COMMAND,
         (event) => {
           event?.preventDefault();
-
-          if (isLayoutPresetOpen) {
-            executeLayoutPreset("1fr 1fr");
-            return true;
-          }
-
-          if (isImageDialogOpen) {
-            submitImage();
-            return true;
-          }
-
-          if (isYouTubeDialogOpen) {
-            submitYouTube();
-            return true;
-          }
-
-          const selectedCommand = filteredCommands[selectedIndex];
-          if (selectedCommand) {
-            executeCommand(selectedCommand.id);
-          }
+          onKeyCommand("enter");
           return true;
         },
         COMMAND_PRIORITY_HIGH
@@ -628,28 +634,7 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
       editor.registerCommand(
         KEY_ESCAPE_COMMAND,
         () => {
-          if (isImageDialogOpen) {
-            resetImageDialog();
-            return true;
-          }
-
-          if (isLayoutPresetOpen) {
-            dispatch({
-              type: "patch",
-              payload: {
-                isLayoutPresetOpen: false,
-                pendingLayoutTargetKey: null,
-              },
-            });
-            return true;
-          }
-
-          if (isYouTubeDialogOpen) {
-            resetYouTubeDialog();
-            return true;
-          }
-
-          dispatch({ type: "patch", payload: { isOpen: false } });
+          onKeyCommand("escape");
           return true;
         },
         COMMAND_PRIORITY_HIGH
@@ -657,18 +642,10 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
     );
   }, [
     editor,
-    executeCommand,
-    executeLayoutPreset,
-    filteredCommands,
+    isOpen,
     isImageDialogOpen,
     isLayoutPresetOpen,
-    isOpen,
     isYouTubeDialogOpen,
-    resetYouTubeDialog,
-    resetImageDialog,
-    selectedIndex,
-    submitImage,
-    submitYouTube,
   ]);
 
   return (
@@ -766,165 +743,32 @@ export function SlashCommandPlugin({ features }: SlashCommandPluginProps) {
         open={isLayoutPresetOpen}
       />
 
-      <Dialog
-        onOpenChange={(open) => {
-          if (!open) {
-            resetImageDialog();
-          }
-        }}
+      <InsertImageDialog
+        imageAltText={imageAltText}
+        imageFileName={imageFileName}
+        imageFileSrc={imageFileSrc}
+        imageUrl={imageUrl}
+        onAltTextChange={(value) =>
+          dispatch({ type: "patch", payload: { imageAltText: value } })
+        }
+        onCancel={resetImageDialog}
+        onImageFileChange={handleImageFileChange}
+        onSubmit={submitImage}
+        onUrlChange={(value) =>
+          dispatch({ type: "patch", payload: { imageUrl: value } })
+        }
         open={isImageDialogOpen}
-      >
-        <DialogContent className="sm:max-w-lg" showCloseButton>
-          <DialogHeader>
-            <DialogTitle>Insert image</DialogTitle>
-            <DialogDescription>
-              Add an external image URL and optional alt text.
-            </DialogDescription>
-          </DialogHeader>
+      />
 
-          <form
-            className="space-y-4"
-            onSubmit={(event) => {
-              event.preventDefault();
-              submitImage();
-            }}
-          >
-            <div className="grid gap-2">
-              <label className="font-medium text-sm" htmlFor="slash-image-url">
-                Image URL
-              </label>
-              <Input
-                id="slash-image-url"
-                onChange={(event) =>
-                  dispatch({
-                    type: "patch",
-                    payload: { imageUrl: event.target.value },
-                  })
-                }
-                placeholder="https://example.com/image.jpg"
-                ref={handleImageUrlInputRef}
-                type="url"
-                value={imageUrl}
-              />
-            </div>
-
-            <div className="grid gap-2">
-              <label className="font-medium text-sm" htmlFor="slash-image-file">
-                Local file
-              </label>
-              <Input
-                accept="image/*"
-                id="slash-image-file"
-                onChange={handleImageFileChange}
-                type="file"
-              />
-              {imageFileName ? (
-                <p className="text-muted-foreground text-xs">
-                  Selected: {imageFileName}
-                </p>
-              ) : null}
-            </div>
-
-            <div className="grid gap-2">
-              <label className="font-medium text-sm" htmlFor="slash-image-alt">
-                Alt text
-              </label>
-              <Textarea
-                id="slash-image-alt"
-                onChange={(event) =>
-                  dispatch({
-                    type: "patch",
-                    payload: { imageAltText: event.target.value },
-                  })
-                }
-                placeholder="Describe the image for accessibility"
-                rows={3}
-                value={imageAltText}
-              />
-            </div>
-
-            <DialogFooter showCloseButton={false}>
-              <Button
-                onClick={resetImageDialog}
-                type="button"
-                variant="outline"
-              >
-                Cancel
-              </Button>
-              <Button
-                disabled={!(imageFileSrc || imageUrl.trim())}
-                type="submit"
-              >
-                Insert image
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        onOpenChange={(open) => {
-          if (!open) {
-            resetYouTubeDialog();
-          }
-        }}
+      <InsertYouTubeDialog
+        onCancel={resetYouTubeDialog}
+        onSubmit={submitYouTube}
+        onUrlChange={(value) =>
+          dispatch({ type: "patch", payload: { youTubeUrl: value } })
+        }
         open={isYouTubeDialogOpen}
-      >
-        <DialogContent className="sm:max-w-lg" showCloseButton>
-          <DialogHeader>
-            <DialogTitle>Embed YouTube video</DialogTitle>
-            <DialogDescription>
-              Paste a YouTube URL and it will be embedded as a video block.
-            </DialogDescription>
-          </DialogHeader>
-
-          <form
-            className="space-y-4"
-            onSubmit={(event) => {
-              event.preventDefault();
-              submitYouTube();
-            }}
-          >
-            <div className="grid gap-2">
-              <label
-                className="font-medium text-sm"
-                htmlFor="slash-youtube-url"
-              >
-                YouTube URL
-              </label>
-              <Input
-                id="slash-youtube-url"
-                onChange={(event) =>
-                  dispatch({
-                    type: "patch",
-                    payload: { youTubeUrl: event.target.value },
-                  })
-                }
-                placeholder="https://www.youtube.com/watch?v=jNQXAC9IVRw"
-                ref={handleYouTubeUrlInputRef}
-                type="url"
-                value={youTubeUrl}
-              />
-              <p className="text-muted-foreground text-xs">
-                Supports `youtube.com`, `youtu.be`, and embed links.
-              </p>
-            </div>
-
-            <DialogFooter showCloseButton={false}>
-              <Button
-                onClick={resetYouTubeDialog}
-                type="button"
-                variant="outline"
-              >
-                Cancel
-              </Button>
-              <Button disabled={!parseYouTubeUrl(youTubeUrl)} type="submit">
-                Embed video
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+        youTubeUrl={youTubeUrl}
+      />
     </>
   );
 }

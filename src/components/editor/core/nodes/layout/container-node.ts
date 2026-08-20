@@ -4,7 +4,6 @@ import type {
   DOMConversionOutput,
   DOMExportOutput,
   EditorConfig,
-  LexicalNode,
   LexicalUpdateJSON,
   NodeKey,
   SerializedElementNode,
@@ -137,10 +136,4 @@ export function $createLayoutContainerNode(
   templateColumns = ""
 ): LayoutContainerNode {
   return new LayoutContainerNode(templateColumns);
-}
-
-export function $isLayoutContainerNode(
-  node: LexicalNode | null | undefined
-): node is LayoutContainerNode {
-  return node instanceof LayoutContainerNode;
 }

@@ -13,7 +13,7 @@ import {
   KEY_ESCAPE_COMMAND,
   SELECTION_CHANGE_COMMAND,
 } from "lexical";
-import { useCallback, useEffect, useReducer, useRef } from "react";
+import { useEffect, useEffectEvent, useReducer, useRef } from "react";
 import { createPortal } from "react-dom";
 import { OPEN_FLOATING_LINK_EDITOR_COMMAND } from "../floating-toolbar/link-command";
 import {
@@ -129,7 +129,7 @@ export function FloatingLinkEditorPlugin() {
   );
   const { editedLinkUrl, isLink, isLinkEditMode, linkUrl, position } = state;
 
-  const updateLinkEditor = useCallback(() => {
+  const updateLinkEditor = () => {
     const nextIsLink = selectionContainsLink();
     const nextLinkUrl = nextIsLink ? readSelectedLinkUrl() : "";
     const nextPosition = getLinkEditorPosition(editor) ?? EMPTY_POSITION;
@@ -142,9 +142,9 @@ export function FloatingLinkEditorPlugin() {
         position: nextPosition,
       },
     });
-  }, [editor]);
+  };
 
-  const scheduleLinkEditorUpdate = useCallback(() => {
+  const scheduleLinkEditorUpdate = useEffectEvent(() => {
     if (animationFrameRef.current !== null) {
       return;
     }
@@ -155,7 +155,7 @@ export function FloatingLinkEditorPlugin() {
         updateLinkEditor();
       });
     });
-  }, [editor, updateLinkEditor]);
+  });
 
   useEffect(() => {
     return mergeRegister(
@@ -241,11 +241,11 @@ export function FloatingLinkEditorPlugin() {
         COMMAND_PRIORITY_LOW
       )
     );
-  }, [editor, isLink, scheduleLinkEditorUpdate]);
+  }, [editor, isLink]);
 
   useEffect(() => {
     scheduleLinkEditorUpdate();
-  }, [scheduleLinkEditorUpdate]);
+  }, []);
 
   useEffect(() => {
     const handleWindowChange = () => {
@@ -259,7 +259,7 @@ export function FloatingLinkEditorPlugin() {
       window.removeEventListener("resize", handleWindowChange);
       window.removeEventListener("scroll", handleWindowChange, true);
     };
-  }, [scheduleLinkEditorUpdate]);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -290,17 +290,14 @@ export function FloatingLinkEditorPlugin() {
     };
   }, [isLink]);
 
-  const handleInputRef = useCallback(
-    (element: HTMLInputElement | null) => {
-      if (!(element && isLinkEditMode)) {
-        return;
-      }
+  const handleInputRef = (element: HTMLInputElement | null) => {
+    if (!(element && isLinkEditMode)) {
+      return;
+    }
 
-      element.focus();
-      element.select();
-    },
-    [isLinkEditMode]
-  );
+    element.focus();
+    element.select();
+  };
 
   if (!isLink) {
     return null;

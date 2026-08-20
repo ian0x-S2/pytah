@@ -55,13 +55,11 @@ export function MathComponent({
   const mathRef = useRef<HTMLSpanElement | HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  useEffect(() => {
+  const openEditor = () => {
     setDraftEquation(equation);
-  }, [equation]);
-
-  useEffect(() => {
     setDraftInline(inline);
-  }, [inline]);
+    setIsEditing(true);
+  };
 
   useEffect(() => {
     if (isEditing) {
@@ -189,7 +187,11 @@ export function MathComponent({
       <Popover
         onOpenChange={(open) => {
           if (editable) {
-            setIsEditing(open);
+            if (open) {
+              openEditor();
+            } else {
+              setIsEditing(false);
+            }
           }
         }}
         open={isEditing && editable}
@@ -208,13 +210,13 @@ export function MathComponent({
               dangerouslySetInnerHTML={{ __html: html }}
               onClick={() => {
                 if (editable) {
-                  setIsEditing(true);
+                  openEditor();
                 }
               }}
               onKeyDown={(e) => {
                 if (editable && (e.key === "Enter" || e.key === " ")) {
                   e.preventDefault();
-                  setIsEditing(true);
+                  openEditor();
                 }
               }}
               role="button"

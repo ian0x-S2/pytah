@@ -10,7 +10,7 @@ import {
   SELECTION_CHANGE_COMMAND,
 } from "lexical";
 import { ChevronDownIcon } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,12 +46,12 @@ function TableCellActionMenuContainer({
   const isMenuClosingRef = useRef(false);
   const activeCellKeyRef = useRef<TableMenuContext["cellKey"] | null>(null);
 
-  const setMenuOpen = useCallback((open: boolean) => {
+  const setMenuOpen = (open: boolean) => {
     isMenuOpenRef.current = open;
     setIsMenuOpen(open);
-  }, []);
+  };
 
-  const applyMenuContext = useCallback((context: TableMenuContext) => {
+  const applyMenuContext = (context: TableMenuContext) => {
     activeCellKeyRef.current = context.cellKey;
     setPosition((currentPosition) => {
       return currentPosition.left === context.position.left &&
@@ -67,9 +67,9 @@ function TableCellActionMenuContainer({
     setIsVisible((currentIsVisible) =>
       currentIsVisible ? currentIsVisible : true
     );
-  }, []);
+  };
 
-  const hideMenu = useCallback(() => {
+  const hideMenu = () => {
     activeCellKeyRef.current = null;
     setIsVisible((currentIsVisible) =>
       currentIsVisible ? false : currentIsVisible
@@ -79,14 +79,14 @@ function TableCellActionMenuContainer({
         ? currentCounts
         : DEFAULT_SELECTION_COUNTS;
     });
-  }, []);
+  };
 
-  const closeMenuAtCurrentPosition = useCallback(() => {
+  const closeMenuAtCurrentPosition = () => {
     isMenuClosingRef.current = true;
     setMenuOpen(false);
-  }, [setMenuOpen]);
+  };
 
-  const syncMenuToSelection = useCallback(() => {
+  const syncMenuToSelection = () => {
     editor.getEditorState().read(() => {
       const context = readTableMenuContext(editor, anchorElem);
 
@@ -97,9 +97,9 @@ function TableCellActionMenuContainer({
 
       applyMenuContext(context);
     });
-  }, [anchorElem, applyMenuContext, editor, hideMenu]);
+  };
 
-  const updateMenu = useCallback(() => {
+  const updateMenu = useEffectEvent(() => {
     editor.getEditorState().read(() => {
       const context = readTableMenuContext(editor, anchorElem);
 
@@ -128,13 +128,7 @@ function TableCellActionMenuContainer({
 
       applyMenuContext(context);
     });
-  }, [
-    anchorElem,
-    applyMenuContext,
-    closeMenuAtCurrentPosition,
-    editor,
-    hideMenu,
-  ]);
+  });
 
   useEffect(() => {
     const onPointerUp = () => {
@@ -160,17 +154,37 @@ function TableCellActionMenuContainer({
         rootElement?.addEventListener("pointerup", onPointerUp);
       })
     );
-  }, [editor, updateMenu]);
+  }, [editor]);
 
   useEffect(() => {
-    window.addEventListener("resize", updateMenu);
-    window.addEventListener("scroll", updateMenu, true);
+    const handleViewportChange = () => {
+      updateMenu();
+    };
+
+    window.addEventListener("resize", handleViewportChange);
+    window.addEventListener("scroll", handleViewportChange, true);
 
     return () => {
-      window.removeEventListener("resize", updateMenu);
-      window.removeEventListener("scroll", updateMenu, true);
+      window.removeEventListener("resize", handleViewportChange);
+      window.removeEventListener("scroll", handleViewportChange, true);
     };
-  }, [updateMenu]);
+  }, []);
+
+  const onMenuClickOutside = useEffectEvent((event: MouseEvent) => {
+    const target = event.target;
+    if (!(target && isDOMNode(target))) {
+      return;
+    }
+
+    const menuRoot = anchorElem.querySelector(
+      "[data-table-actions-root='true']"
+    );
+    if (menuRoot?.contains(target)) {
+      return;
+    }
+
+    closeMenuAtCurrentPosition();
+  });
 
   useEffect(() => {
     if (!isMenuOpen) {
@@ -178,26 +192,14 @@ function TableCellActionMenuContainer({
     }
 
     const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target;
-      if (!(target && isDOMNode(target))) {
-        return;
-      }
-
-      const menuRoot = anchorElem.querySelector(
-        "[data-table-actions-root='true']"
-      );
-      if (menuRoot?.contains(target)) {
-        return;
-      }
-
-      closeMenuAtCurrentPosition();
+      onMenuClickOutside(event);
     };
 
     window.addEventListener("click", handleClickOutside);
     return () => {
       window.removeEventListener("click", handleClickOutside);
     };
-  }, [anchorElem, closeMenuAtCurrentPosition, isMenuOpen]);
+  }, [isMenuOpen]);
 
   return createPortal(
     <div

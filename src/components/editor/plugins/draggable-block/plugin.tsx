@@ -4,7 +4,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { DraggableBlockPlugin_EXPERIMENTAL } from "@lexical/react/LexicalDraggableBlockPlugin";
 import { useLexicalEditable } from "@lexical/react/useLexicalEditable";
 import { GripVerticalIcon } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const DRAG_MENU_CLASS_NAME = "editor-draggable-block-menu";
 
@@ -21,11 +21,8 @@ export function DraggableBlockPlugin() {
     });
   }, [editor]);
 
-  const isOnMenu = useCallback(
-    (element: HTMLElement) =>
-      Boolean(element.closest(`.${DRAG_MENU_CLASS_NAME}`)),
-    []
-  );
+  const isOnMenu = (element: HTMLElement) =>
+    Boolean(element.closest(`.${DRAG_MENU_CLASS_NAME}`));
 
   if (!(isEditable && anchorElem)) {
     return null;
