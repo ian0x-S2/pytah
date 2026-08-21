@@ -9,6 +9,7 @@ const SETTLE_RETRY_DELAY_MS = 150;
 export function FocusOnMountPlugin() {
   const [editor] = useLexicalComposerContext();
   const retryTimersRef = useRef<number[]>([]);
+  const didPlaceCaretRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -21,6 +22,20 @@ export function FocusOnMountPlugin() {
     };
 
     const placeMountCaret = () => {
+      // Idempotent: once the mount caret is placed, never move it again.
+      // Late triggers (window load, fonts.ready, fallback timer, retries)
+      // would otherwise yank the caret back to the start of the first block
+      // even after the user has already moved it.
+      if (didPlaceCaretRef.current) {
+        return true;
+      }
+
+      const rootElement = editor.getRootElement();
+      if (rootElement?.contains(document.activeElement)) {
+        didPlaceCaretRef.current = true;
+        return true;
+      }
+
       const hasContent = editor
         .getEditorState()
         .read(() => $getRoot().getFirstDescendant() !== null);
@@ -43,10 +58,10 @@ export function FocusOnMountPlugin() {
         }
       });
 
-      const rootElement = editor.getRootElement();
       if (rootElement) {
         rootElement.focus({ preventScroll: true });
       }
+      didPlaceCaretRef.current = true;
 
       return true;
     };
