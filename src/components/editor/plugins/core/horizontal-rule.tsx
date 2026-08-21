@@ -18,14 +18,19 @@ import {
   $getNodeFromDOMNode,
   $getSelection,
   $isNodeSelection,
+  $isParagraphNode,
   $isRangeSelection,
+  $isRootOrShadowRoot,
+  $isTextNode,
   $setSelection,
   CLICK_COMMAND,
   COMMAND_PRIORITY_EDITOR,
   COMMAND_PRIORITY_LOW,
+  KEY_ENTER_COMMAND,
   type LexicalNode,
 } from "lexical";
 import { useEffect } from "react";
+import { $replaceWithHorizontalRule } from "../markdown/transformers";
 
 const toggleNodeSelection = (node: LexicalNode, shiftKey = false) => {
   const selection = $getSelection();
@@ -116,6 +121,49 @@ const registerHorizontalRuleClickCommand = (
   );
 };
 
+const registerHorizontalRuleEnterShortcut = (
+  editor: ReturnType<typeof useLexicalComposerContext>[0]
+) => {
+  return editor.registerCommand(
+    KEY_ENTER_COMMAND,
+    (event) => {
+      if (event?.shiftKey) {
+        return false;
+      }
+
+      const selection = $getSelection();
+      if (!($isRangeSelection(selection) && selection.isCollapsed())) {
+        return false;
+      }
+
+      const anchorNode = selection.anchor.getNode();
+      if (!$isTextNode(anchorNode)) {
+        return false;
+      }
+
+      const parentNode = anchorNode.getParent();
+      if (
+        parentNode === null ||
+        !$isParagraphNode(parentNode) ||
+        !$isRootOrShadowRoot(parentNode.getParent()) ||
+        parentNode.getChildrenSize() !== 1 ||
+        parentNode.getFirstChild() !== anchorNode ||
+        parentNode.getTextContent() !== "---" ||
+        selection.anchor.offset !== anchorNode.getTextContent().length
+      ) {
+        return false;
+      }
+
+      $replaceWithHorizontalRule(parentNode, true);
+      if (event !== null) {
+        event.preventDefault();
+      }
+      return true;
+    },
+    COMMAND_PRIORITY_LOW
+  );
+};
+
 const registerHorizontalRuleMutationListener = (
   editor: ReturnType<typeof useLexicalComposerContext>[0],
   selectedClassName: string
@@ -142,6 +190,7 @@ export function HorizontalRulePlugin() {
     return mergeRegister(
       registerHorizontalRuleInsertCommand(editor),
       registerHorizontalRuleClickCommand(editor),
+      registerHorizontalRuleEnterShortcut(editor),
       registerHorizontalRuleMutationListener(editor, hrSelectedClassName)
     );
   }, [editor]);

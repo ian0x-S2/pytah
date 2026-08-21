@@ -1,3 +1,8 @@
+import {
+  $createHorizontalRuleNode,
+  $isHorizontalRuleNode,
+  HorizontalRuleNode,
+} from "@lexical/extension";
 import type { TextMatchTransformer } from "@lexical/markdown";
 import {
   CHECK_LIST,
@@ -17,7 +22,12 @@ import {
   TableNode,
   TableRowNode,
 } from "@lexical/table";
-import { $createParagraphNode, $createTextNode } from "lexical";
+import {
+  $createParagraphNode,
+  $createTextNode,
+  $isParagraphNode,
+  type ElementNode,
+} from "lexical";
 import {
   $createImageNode,
   $isImageNode,
@@ -284,14 +294,61 @@ const TABLE_TRANSFORMER: MultilineElementTransformer = {
   type: "multiline-element",
 };
 
+const HORIZONTAL_RULE_REGEXP = /^---\s?$/;
+
+/**
+ * Replaces a paragraph with a horizontal rule node. When `trailingParagraph`
+ * is true the caret is repositioned into the following editable paragraph,
+ * creating one when the rule is the last top-level node, so the cursor stays
+ * usable after a `---` shortcut.
+ */
+export const $replaceWithHorizontalRule = (
+  parentNode: ElementNode,
+  trailingParagraph: boolean
+): HorizontalRuleNode => {
+  const rule = $createHorizontalRuleNode();
+  parentNode.replace(rule);
+
+  if (trailingParagraph) {
+    const nextSibling = rule.getNextSibling();
+    if (nextSibling !== null && $isParagraphNode(nextSibling)) {
+      nextSibling.selectStart();
+    } else {
+      const paragraph = $createParagraphNode();
+      rule.insertAfter(paragraph);
+      paragraph.selectStart();
+    }
+  }
+
+  return rule;
+};
+
+const HORIZONTAL_RULE_TRANSFORMER: ElementTransformer = {
+  dependencies: [HorizontalRuleNode],
+  export: (node) => {
+    if (!$isHorizontalRuleNode(node)) {
+      return null;
+    }
+
+    return "---";
+  },
+  regExp: HORIZONTAL_RULE_REGEXP,
+  replace: (parentNode, _children, _match, isImport) => {
+    $replaceWithHorizontalRule(parentNode, !isImport);
+  },
+  type: "element",
+};
+
 export const TABLE_MARKDOWN_TRANSFORMER = TABLE_TRANSFORMER;
 export const MATH_BLOCK_MARKDOWN_TRANSFORMER = MATH_BLOCK_TRANSFORMER;
 export const MATH_INLINE_MARKDOWN_TRANSFORMER = MATH_INLINE_TRANSFORMER;
 export const IMAGE_MARKDOWN_TRANSFORMER = IMAGE_TRANSFORMER;
 export const YOUTUBE_MARKDOWN_TRANSFORMER = YOUTUBE_TRANSFORMER;
+export const HORIZONTAL_RULE_MARKDOWN_TRANSFORMER = HORIZONTAL_RULE_TRANSFORMER;
 
 export const BUILTIN_MARKDOWN_TRANSFORMERS = [
   CHECK_LIST,
+  HORIZONTAL_RULE_TRANSFORMER,
   ...ELEMENT_TRANSFORMERS,
   ...MULTILINE_ELEMENT_TRANSFORMERS,
   ...TEXT_FORMAT_TRANSFORMERS,
