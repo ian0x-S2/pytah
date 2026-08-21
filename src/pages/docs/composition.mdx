@@ -1,0 +1,171 @@
+---
+title: "Composition"
+description: "How to treat the editor as a set of reusable building blocks instead of a fixed product shell."
+group: "core"
+icon: "Blocks"
+label: "Composition"
+order: 40
+badge: "Core Doc"
+---
+
+import compositionSource from "@/components/editor/core/composition.ts?raw";
+import editorTypesSource from "@/components/editor/core/types.ts?raw";
+import { extractExportedConst } from "@/components/docs/source-utils";
+
+## Composition Model
+
+The default `Editor` stays opinionated, but the intended DX is no longer "copy
+the editor and edit it from inside". The intended path is to compose from
+public extension points.
+
+| Layer | Purpose | Typical knobs |
+| --- | --- | --- |
+| **Ready-made editor** | Use the default Pytah experience with minimal setup | `minimal`, `toolbar`, `editable` |
+| **Feature composition** | Toggle built-in behavior plugins on or off | `features` |
+| **Custom feature contribution** | Add a whole capability (nodes, plugin, transformers, slash commands) without editing internals | `extraFeatures` |
+| **Chrome composition** | Show, hide, or replace visual editor surfaces | `chrome`, `slots` |
+| **Behavior extension** | Mount additional plugins around the built-in stack | `pluginSlots` |
+| **Lexical extension** | Add custom nodes without touching core config | `extraNodes`, `namespace` |
+
+<Callout title="Default-first, not hardcoded" variant="tip">
+  The default editor should remain the easiest path, but it should not be the
+  only path. When adding new capabilities, prefer new extension points over new
+  internal-only branches.
+</Callout>
+
+## Feature Flags
+
+Use `features` to control built-in behavior plugins without forking
+`ui/content.tsx`. Each flag is backed by an `EditorFeature` descriptor in
+`core/features.tsx`, so toggling it drives that feature's nodes, plugin,
+transformers, and slash commands together — never piecemeal.
+
+Feature flags also trim dependent slash-menu entries, so disabling a built-in
+block capability keeps the visible command list in sync with the mounted plugin
+stack.
+
+<InterfaceSource name="EditorFeatureFlags" source={editorTypesSource} />
+
+### Default Feature Stack
+
+These are the built-in, flag-resolved defaults. Each flag maps to an
+`EditorFeature` in `core/features.tsx`, which is the single source of truth for
+that capability's nodes, plugin, transformers, and slash commands.
+
+<CodeBlock language="typescript">{extractExportedConst(compositionSource, "DEFAULT_EDITOR_FEATURES")}</CodeBlock>
+
+```tsx
+<Editor
+  features={{
+    images: false,
+    layouts: false,
+    floatingToolbar: false,
+    focusOnMount: false,
+    slashCommand: true,
+  }}
+/>
+```
+
+## Contributing a Feature
+
+Use `extraFeatures` to add a whole capability as a single descriptor. Each
+`ExtraEditorFeature` bundles its optional plugin, owned Lexical nodes, markdown
+transformers, and slash-command ids — the composition surface wires them
+together automatically, keeping the mounted stack in sync with the visible
+command list.
+
+```tsx
+<Editor
+  extraFeatures={[
+    {
+      id: "callout",
+      plugin: CalloutPlugin,
+      nodes: [CalloutNode],
+      transformers: [CALLOUT_TRANSFORMER],
+      slashCommandIds: ["callout"],
+    },
+  ]}
+/>
+```
+
+This is the intended alternative to patching `ui/content.tsx` or the built-in
+`core/features.tsx` registry from outside.
+
+## Chrome
+
+Use `chrome` when you want to keep the default editor content and plugin stack,
+but remove opinionated product surfaces like the shell, header, footer, or
+output panes.
+
+<InterfaceSource name="EditorChromeOptions" source={editorTypesSource} />
+
+### Default Chrome
+
+<CodeBlock language="typescript">{extractExportedConst(compositionSource, "DEFAULT_EDITOR_CHROME")}</CodeBlock>
+
+```tsx
+<Editor
+  chrome={{
+    actionBar: false,
+    footer: false,
+    outputs: false,
+  }}
+  toolbar="full"
+/>
+```
+
+## Slots
+
+Use `slots` to replace visual surfaces instead of reaching into editor
+internals. Slot values can be static React nodes or render functions when the
+slot needs context.
+
+<InterfaceSource name="EditorChromeSlots" source={editorTypesSource} />
+
+```tsx
+<Editor
+  slots={{
+    actionBar: ({ onReset, onLoadMarkdown }) => (
+      <div className="flex gap-2 px-4 py-3">
+        <button onClick={onLoadMarkdown} type="button">Seed markdown</button>
+        <button onClick={onReset} type="button">Reset</button>
+      </div>
+    ),
+    header: <MyEditorHeader />,
+    outputs: ({ snapshot }) => <MyPreview markdown={snapshot.markdown} />,
+  }}
+/>
+```
+
+## Plugin Slots
+
+Use `pluginSlots` when you want to add behavior without editing the built-in
+orchestration file.
+
+<InterfaceSource name="EditorPluginSlots" source={editorTypesSource} />
+
+```tsx
+<Editor
+  pluginSlots={{
+    beforeDefault: <MetricsPlugin />,
+    afterEditable: <MySlashTelemetryPlugin />,
+  }}
+/>
+```
+
+Use `beforeDefault` and `afterDefault` for plugins that should run in both
+editable and read-only modes. Use `beforeEditable` and `afterEditable` for
+edit-only plugin mounts.
+
+## Guidelines
+
+Reach for the smallest public lever that solves the need:
+
+| Need | Preferred tool |
+| --- | --- |
+| Disable built-in behavior | `features` |
+| Contribute a whole custom feature | `extraFeatures` |
+| Hide a default UI surface | `chrome` |
+| Replace a visual surface | `slots` |
+| Add custom behavior | `pluginSlots` |
+| Add custom Lexical node support | `extraNodes` |

@@ -1,5 +1,7 @@
 import { Redirect, useRoute } from "wouter";
 import { DocsLayout } from "@/components/docs/layout";
+import { docsMdxComponents } from "@/components/docs/mdx-components";
+import { PageHeader } from "@/components/docs/primitives";
 import { DOCS_PAGE_BY_SLUG } from "./docs/manifest";
 
 export function DocsPage() {
@@ -22,9 +24,18 @@ export function DocsPage() {
     );
   }
 
+  const Page = page.component;
+
   return (
     <DocsLayout>
-      <page.component />
+      <article>
+        <PageHeader
+          badge={page.frontmatter.badge}
+          description={page.description}
+          title={page.title}
+        />
+        <Page components={docsMdxComponents} />
+      </article>
     </DocsLayout>
   );
 }

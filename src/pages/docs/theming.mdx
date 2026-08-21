@@ -1,0 +1,129 @@
+---
+title: "Theming"
+description: "How the design token system works and how to swap or customize themes with zero refactoring."
+group: "core"
+icon: "Palette"
+label: "Theming"
+order: 90
+badge: "Core Doc"
+---
+
+## How It Works
+
+The entire visual system is driven by **CSS custom properties** (design
+tokens). The editor and all its UI components reference these tokens through
+Tailwind utility classes like `bg-background`, `text-muted-foreground`,
+`border-border`, etc.
+
+The token architecture has two layers:
+
+**Source of truth** — the `:root` and `.dark` blocks in your CSS define every
+semantic color in oklch color space.
+
+**Tailwind bridge** — the `@theme inline` block maps these properties into
+Tailwind v4's `--color-*` namespace, enabling utility classes.
+
+## Swapping a ShadCN Theme
+
+To apply a different ShadCN theme, you only need to replace the `:root` and
+`.dark` blocks in `src/index.css`. The `@theme inline` bridge and all
+component code stay untouched.
+
+### Step 1: Get new tokens
+
+Go to [ui.shadcn.com/themes](https://ui.shadcn.com/themes) and pick a theme.
+Copy the CSS variables for both light and dark modes.
+
+### Step 2: Replace the token blocks
+
+Replace the `:root` and `.dark` blocks in your CSS with the new values. Keep
+the editor-specific `--highlight` tokens:
+
+```css
+:root {
+  /* Paste new ShadCN light theme tokens here */
+  --background: oklch(...);
+  --foreground: oklch(...);
+  /* ... all standard ShadCN tokens ... */
+
+  /* Keep these editor-specific tokens */
+  --highlight: oklch(0.905 0.145 98);
+  --highlight-foreground: oklch(0.145 0 0);
+  --radius: 0.625rem;
+}
+
+.dark {
+  /* Paste new ShadCN dark theme tokens here */
+  --background: oklch(...);
+  --foreground: oklch(...);
+  /* ... all standard ShadCN tokens ... */
+
+  /* Keep these editor-specific tokens */
+  --highlight: oklch(0.65 0.13 85);
+  --highlight-foreground: oklch(0.985 0 0);
+}
+```
+
+### Step 3: Done
+
+That's it. No component code changes, no Tailwind config changes, no
+refactoring. Every editor surface updates automatically.
+
+## Token Reference
+
+These are the ShadCN tokens consumed by the editor. All must be present for
+the editor to render correctly.
+
+| Token | Usage |
+| --- | --- |
+| `--background` | Editor surface, input backgrounds, resize handles |
+| `--foreground` | Body text, headings, code text |
+| `--card` | Collapsible container background |
+| `--card-foreground` | Collapsible container text |
+| `--popover` | Floating toolbar, slash menu, link editor backgrounds |
+| `--popover-foreground` | Popover text color |
+| `--primary` | Links, selected table cells, HR active, checked checkbox bg |
+| `--primary-foreground` | Checked checkbox icon, primary button text |
+| `--muted` | Code blocks, table headers, icon badges, drag handle hover |
+| `--muted-foreground` | Placeholder text, descriptions, secondary labels |
+| `--accent` | Hover/focus states in menus and toolbars |
+| `--accent-foreground` | Active menu item text |
+| `--destructive` | Delete actions in table menu |
+| `--border` | All borders: table cells, collapsible, layout grid, HR, inputs |
+| `--input` | Input field borders |
+| `--ring` | Focus rings on interactive elements |
+| `--highlight` | Text highlight marker background |
+| `--highlight-foreground` | Text color on highlighted text |
+
+## Dark Mode
+
+Dark mode is controlled by a `.dark` class on the `<html>` element. The
+included `ThemeProvider` manages this automatically with three modes: light,
+dark, and system (follows OS preference).
+
+Tailwind's `dark:` variant is configured as
+`@custom-variant dark (&:is(.dark *))`, matching any element inside a `.dark`
+ancestor.
+
+## Customizing the Highlight Color
+
+The highlight token defaults to a warm yellow. To change it, update the
+`--highlight` values in your `:root` and `.dark` blocks:
+
+```css
+/* Example: blue highlight */
+:root {
+  --highlight: oklch(0.85 0.12 250);
+  --highlight-foreground: oklch(0.145 0 0);
+}
+.dark {
+  --highlight: oklch(0.45 0.12 250);
+  --highlight-foreground: oklch(0.985 0 0);
+}
+```
+
+<Callout variant="tip">
+  Use the oklch color space for consistency with the rest of the ShadCN
+  palette. Tools like [oklch.com](https://oklch.com) make it easy to pick
+  values.
+</Callout>

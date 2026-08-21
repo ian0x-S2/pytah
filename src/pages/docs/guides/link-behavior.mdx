@@ -1,0 +1,113 @@
+---
+title: "Link Behavior"
+description: "Feature guide for built-in link handling: auto-linking, URL validation, sanitization, and the floating link editor."
+group: "feature-guides"
+icon: "Link"
+label: "Link Behavior"
+order: 20
+badge: "Feature Guide"
+---
+
+import linkBehaviorConstantsSource from "@/components/editor/plugins/link-behavior/constants.ts?raw";
+import floatingLinkEditorSource from "@/components/editor/plugins/link-behavior/floating-link-editor.tsx?raw";
+import linkBehaviorPluginSource from "@/components/editor/plugins/link-behavior/plugin.tsx?raw";
+import linkBehaviorUtilsSource from "@/components/editor/plugins/link-behavior/utils.ts?raw";
+
+<Callout title="Feature guide">
+  This page explains built-in link UX. Consumers who only need to change
+  whether the link editor appears should start with the editor `features` API.
+</Callout>
+
+## Files
+
+<FileTree
+  items={[
+    "src/components/editor/plugins/link-behavior/",
+    "  constants.ts              ← AUTO_LINK_MATCHERS",
+    "  utils.ts                  ← URL normalize / validate / sanitize",
+    "  plugin.tsx                ← LinkBehaviorPlugin composition",
+    "  floating-link-editor.tsx  ← FloatingLinkEditorPlugin",
+  ]}
+/>
+
+## constants.ts
+
+Two `AutoLinkPlugin` matchers — one for URLs and one for email addresses. Plain
+`www.` URLs are normalised to `https://` automatically; email addresses get the
+`mailto:` scheme.
+
+<CodeBlock label="src/components/editor/plugins/link-behavior/constants.ts" language="ts">
+  {linkBehaviorConstantsSource}
+</CodeBlock>
+
+## utils.ts
+
+Three URL helpers used by the floating editor and `LinkPlugin`'s
+`validateUrl` prop.
+
+| Export | Purpose |
+| --- | --- |
+| `LINK_PLACEHOLDER_URL` | Sentinel value (`"https://"`) used as the default when creating a new link so the input is pre-filled. |
+| `normalizeEditorLinkUrl(value)` | Trims whitespace, adds `mailto:` for bare email addresses, adds `https://` for `www.` prefixed strings. |
+| `isValidEditorLinkUrl(value)` | Returns `true` for any URL whose protocol is one of `http:`, `https:`, `mailto:`, `sms:`, `tel:` — or the placeholder. |
+| `sanitizeEditorLinkUrl(value)` | Returns `about:blank` for disallowed protocols, otherwise returns the normalised URL. |
+
+<CodeBlock label="src/components/editor/plugins/link-behavior/utils.ts" language="ts">
+  {linkBehaviorUtilsSource}
+</CodeBlock>
+
+## plugin.tsx
+
+`LinkBehaviorPlugin` is a thin composition of three Lexical React plugins. Pass
+`editable="{true}"` when the editor is in edit mode to disable
+`ClickableLinkPlugin` (links should not navigate while editing).
+
+<CodeBlock label="src/components/editor/plugins/link-behavior/plugin.tsx" language="tsx">
+  {linkBehaviorPluginSource}
+</CodeBlock>
+
+## floating-link-editor.tsx
+
+`FloatingLinkEditorPlugin` is a portal-based floating panel that appears below
+the selection whenever a link node is selected. It has two modes: a **preview
+mode** (URL + edit / delete / open-in-tab buttons) and an **edit mode** (URL
+input + confirm / cancel buttons).
+
+### Commands handled
+
+| Command | Priority | Behaviour |
+| --- | --- | --- |
+| `SELECTION_CHANGE_COMMAND` | LOW | Syncs link URL and panel position on every selection change. |
+| `OPEN_FLOATING_LINK_EDITOR_COMMAND` | HIGH | Enters edit mode immediately (dispatched by the floating toolbar's link button). |
+| `KEY_DOWN_COMMAND` | HIGH | Cmd/Ctrl+K toggles the link: removes it if the selection is already a link, otherwise creates a new one and enters edit mode. |
+| `KEY_ESCAPE_COMMAND` | HIGH | Dismisses the panel when a link is focused. |
+| `CLICK_COMMAND` | LOW | Cmd/Ctrl+click opens the link URL in a new tab while editing. |
+
+<CodeBlock label="src/components/editor/plugins/link-behavior/floating-link-editor.tsx" language="tsx">
+  {floatingLinkEditorSource}
+</CodeBlock>
+
+## Registration
+
+No custom nodes are required. `LinkBehaviorPlugin` is part of the
+always-mounted default stack, and the floating link editor ships behind the
+`floatingLinkEditor` feature flag. To add the floating editor to a custom
+composition, contribute a descriptor via `extraFeatures`:
+
+```tsx
+<Editor
+  extraFeatures={[
+    {
+      id: "floatingLinkEditor",
+      plugin: FloatingLinkEditorPlugin,
+    },
+  ]}
+/>
+```
+
+<Callout title="Keyboard shortcut" variant="tip">
+  Cmd/Ctrl+K is handled entirely inside `FloatingLinkEditorPlugin`. Pressing it
+  on plain text creates a link and opens the editor; pressing it again on an
+  existing link removes it. No toolbar wiring is needed for the shortcut to
+  work.
+</Callout>

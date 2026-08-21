@@ -1,0 +1,364 @@
+---
+title: "Plugins"
+description: "The editor's feature set is built as composable Lexical plugins."
+group: "core"
+icon: "Plug"
+label: "Plugins"
+order: 80
+badge: "Core Doc"
+---
+
+import editorContentSource from "@/components/editor/ui/content.tsx?raw";
+
+Every editor feature is implemented as a Lexical plugin — a React component
+rendered inside the `LexicalComposer` context. Plugins are either **visual**
+(render UI like toolbars and menus) or **headless** (register commands and
+transforms, return `null`).
+
+## Live Plugin Orchestration
+
+The plugin list below is the actual composition root from
+`src/components/editor/ui/content.tsx`. It is a better source of truth than a
+copied list because it shows the exact registration order running in the app.
+
+<CodeBlock label="src/components/editor/ui/content.tsx" language="tsx">
+  {editorContentSource}
+</CodeBlock>
+
+<Callout title="Public extension points" variant="info">
+  Consumers should prefer the public `pluginSlots`, `features`, and
+  `extraNodes` props on `Editor` before editing `ui/content.tsx`. Treat this
+  file as the default composition, not the only supported composition.
+</Callout>
+
+The `Composition` page explains where to mount plugins from a consumer
+perspective. This page focuses on the built-in plugin stack, registration
+order, and how to author new plugin pieces.
+
+## Visual Plugins
+
+| Plugin | Description | UI Components Used |
+| --- | --- | --- |
+| **block-type-toolbar** | Block type dropdown (paragraph, headings, lists, code, quote) with undo/redo and alignment controls, plus arrow-key navigation with initial highlight on the active editor block (or the first option when none matches) | Button, DropdownMenu, Separator |
+| **full-toolbar** | Full top toolbar providing block types, inline styles (bold, italic, underline, strikethrough, code), text/background color pickers, link actions, alignment, and indentation | Button, DropdownMenu, Separator, Popover |
+| **floating-toolbar** | Appears on text selection with format toggles (bold, italic, underline, strikethrough, code, highlight, link) | Toggle, Separator |
+| **slash-command** | Slash menu (type /) for inserting blocks, images, tables, YouTube embeds, column layouts, math equations, and collapsible sections | Command, Dialog, Button, Input, Textarea |
+| **toc** | Table of contents / outline indicator in the editor margin with mini-dash indicators and hover popover for heading navigation | Popover, Button |
+| **link-behavior** | Auto-link detection, clickable links, and a floating link editor for viewing/editing URLs | Button, Input |
+| **table-behavior** | Context menu on table cells with insert/delete row/column/table actions | Button, Popover, Separator |
+| **draggable-block** | Drag handle that appears on hover to reorder blocks via drag-and-drop | None (DOM-level handles) |
+| **image** | Image rendering with selection ring, alignment support, and resize handles | None (custom DOM) |
+
+## Headless Plugins
+
+| Plugin | Description |
+| --- | --- |
+| **core/editable** | Syncs the editable prop to the Lexical editor instance |
+| **core/editor-state** | Fires onChange callbacks and handles initial content loading (HTML or Markdown) |
+| **core/focus-on-mount** | Focuses the editor on first mount |
+| **core/horizontal-rule** | Horizontal rule insertion, click selection, keyboard navigation, and the `---` markdown shortcut |
+| **core/seed-content** | Seeds default Markdown content when the editor starts empty |
+| **code-highlight** | Syntax highlighting for code blocks powered by Shiki |
+| **collapsible** | Collapsible block node transforms and keyboard shortcuts |
+| **layout** | Column layout insert command registration |
+| **math** | KaTeX math block and inline equation commands and Markdown transformers ($...$ and $$...$$) |
+| **youtube** | YouTube embed insert command and URL parsing |
+| **markdown** | Custom Markdown transformers for images, YouTube embeds, math, tables, and horizontal rules (`---`) |
+
+## Feature Registry (derived from code)
+
+The built-in feature flags are derived at build time from
+`core/features.tsx` — toggling a flag toggles that feature's nodes, plugin,
+transformers, and slash commands together. This table updates automatically
+when the registry changes; it is never hand-maintained.
+
+<FeatureTable />
+
+## Markdown Transformers (derived from code)
+
+Every markdown transformer (built-in and feature-owned) ships through the
+resolved transformer set and is listed below automatically from
+`plugins/markdown/transformers.ts`. Adding a transformer to that file updates
+this table without editing docs.
+
+<TransformersTable />
+
+## Adding a Custom Plugin
+
+Every plugin follows the same pattern: a React component that accesses the
+editor through `useLexicalComposerContext()`, registers its behavior in a
+`useEffect`, and either returns `null` (headless) or renders UI (visual). The
+steps below walk you through adding a new headless plugin from scratch.
+
+### Step 1 — Create the plugin file
+
+Create `src/components/editor/plugins/my-feature/plugin.tsx`. Define a Lexical
+command and register a handler for it inside `useEffect`. The return value of
+`registerCommand` is an unsubscribe function — returning it from `useEffect`
+cleans up automatically when the component unmounts.
+
+```tsx
+// src/components/editor/plugins/my-feature/plugin.tsx
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { COMMAND_PRIORITY_EDITOR, createCommand } from "lexical";
+import { useEffect } from "react";
+
+export const MY_COMMAND = createCommand<void>("MY_COMMAND");
+
+export function MyPlugin() {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    return editor.registerCommand(
+      MY_COMMAND,
+      () => {
+        editor.update(() => {
+          // mutate the Lexical state here
+        });
+        return true; // true = command was handled, stop propagation
+      },
+      COMMAND_PRIORITY_EDITOR
+    );
+  }, [editor]);
+
+  return null;
+}
+```
+
+<Callout variant="tip">
+  If your plugin renders UI (a toolbar button, a popover, etc.), return JSX
+  instead of `null` and import the ShadCN primitives from `@/components/ui/`.
+  Dispatch commands to the editor with `editor.dispatchCommand(MY_COMMAND,
+  payload)`.
+</Callout>
+
+### Step 2 — Mount the plugin via Editor props
+
+For most custom behavior, you do not need to edit
+`src/components/editor/ui/content.tsx`. Mount your plugin through
+`pluginSlots` so it composes with the default editor stack.
+
+```tsx
+import { Editor } from "@/components/editor/editor";
+import { MyPlugin } from "@/components/editor/plugins/my-feature/plugin";
+
+export function MyEditor() {
+  return (
+    <Editor
+      pluginSlots={{
+        afterEditable: <MyPlugin />,
+      }}
+    />
+  );
+}
+```
+
+Use `beforeDefault` and `afterDefault` for plugins that should also run in
+read-only mode. Use `beforeEditable` and `afterEditable` for edit-only
+behavior.
+
+### Step 3 — Add a custom node (optional)
+
+If your feature needs a custom Lexical node (e.g., a decorator for rendering
+React UI inside the editor), create it under
+`src/components/editor/core/nodes/my-feature/node.tsx`. Export the class plus
+the standard `$create` and `$is` helpers that Lexical convention expects.
+
+```tsx
+// src/components/editor/core/nodes/my-feature/node.tsx
+import {
+  $applyNodeReplacement,
+  DecoratorNode,
+  type LexicalNode,
+} from "lexical";
+
+export class MyFeatureNode extends DecoratorNode<JSX.Element> {
+  static getType(): string {
+    return "my-feature";
+  }
+
+  static clone(node: MyFeatureNode): MyFeatureNode {
+    return new MyFeatureNode(node.__key);
+  }
+
+  createDOM(): HTMLElement {
+    return document.createElement("div");
+  }
+
+  updateDOM(): false {
+    return false;
+  }
+
+  decorate(): JSX.Element {
+    return <div>Your rendered UI here</div>;
+  }
+}
+
+export function $createMyFeatureNode(): MyFeatureNode {
+  return $applyNodeReplacement(new MyFeatureNode());
+}
+
+export function $isMyFeatureNode(
+  node: LexicalNode | null | undefined
+): node is MyFeatureNode {
+  return node instanceof MyFeatureNode;
+}
+```
+
+### Step 4 — Register the node via Editor props (optional)
+
+Custom nodes must be declared in the editor config before Lexical can
+serialize or deserialize them. For most consumers, use the public
+`extraNodes` prop instead of editing `src/components/editor/core/config.ts`.
+If the node belongs to a whole capability (with a plugin, transformers, and
+slash command), prefer the `extraFeatures` prop so all of it is wired by one
+descriptor.
+
+```ts
+import { Editor } from "@/components/editor/editor";
+import { MyFeatureNode } from "@/components/editor/core/nodes/my-feature/node";
+
+export function MyEditor() {
+  return <Editor extraNodes={[MyFeatureNode]} />;
+}
+```
+
+<Callout variant="tip">
+  Keep `types.ts`, `commands.ts`, and `utils.ts` co-located inside
+  `plugins/my-feature/` so the feature is self-contained and easy to remove.
+</Callout>
+
+## Extending the Slash Command Menu
+
+For consumers, the supported way to add a slash command (together with its
+nodes, plugin, and markdown transformers) is the `extraFeatures` prop on
+`Editor`. Declare an `ExtraEditorFeature` once and the composition surface
+wires everything for you — no edits inside the slash-command folder.
+
+### Consumer path — `extraFeatures`
+
+A feature descriptor bundles the ID, optional behavior plugin, Lexical nodes,
+markdown transformers, and the slash-command ids it contributes. The menu
+picks up any id you add.
+
+```tsx
+import { Editor } from "@/components/editor/editor";
+import { MyCalloutNode } from "./my-callout-node";
+import { MyCalloutPlugin } from "./my-callout-plugin";
+
+export function MyEditor() {
+  return (
+    <Editor
+      extraFeatures={[
+        {
+          id: "callout",
+          plugin: MyCalloutPlugin,
+          nodes: [MyCalloutNode],
+          transformers: [CALL_OUT_TRANSFORMER],
+          slashCommandIds: ["callout"],
+        },
+      ]}
+    />
+  );
+}
+```
+
+### Built-in authoring path — the three-file contract
+
+When contributing a *built-in* command (shipped in the default editor), add
+its id to `EDITOR_FEATURES` in `core/features.tsx` instead of reaching into
+the slash-command internals. The command menu is driven by the feature
+registry: the plugin, nodes, and transformers for the same capability live in
+its own feature folder.
+
+The slash-command folder still holds three files that describe each command.
+Editing them is only required when the command itself needs bespoke behavior
+that the feature descriptor can't express.
+
+| File | What you add |
+| --- | --- |
+| `types.ts` | A new literal to the SlashCommandId union |
+| `commands.ts` | A SlashCommand object (label, description, icon, keywords) |
+| `executors.ts` | A Lexical mutation function keyed by your new ID |
+
+### Step 1 — Register the command ID
+
+Open `plugins/slash-command/types.ts` and add your new identifier to the
+`SlashCommandId` union. TypeScript will then enforce that the other two files
+are updated to match.
+
+```ts
+// src/components/editor/plugins/slash-command/types.ts
+export type SlashCommandId =
+  | "paragraph"
+  | "h1"
+  | "h2"
+  | "h3"
+  | "quote"
+  | "code"
+  | "bullet"
+  | "number"
+  | "check"
+  | "image"
+  | "youtube"
+  | "collapsible"
+  | "columns"
+  | "table"
+  | "hr"
+  | "callout"; // ← add your ID here
+```
+
+### Step 2 — Add the command definition
+
+Open `plugins/slash-command/commands.ts` and push a new entry into the
+`SLASH_COMMANDS` array. Pick a `lucide-react` icon, write a short
+`description`, and add `keywords` so the fuzzy filter can find your command
+even when the user doesn't type the exact label.
+
+```ts
+// src/components/editor/plugins/slash-command/commands.ts
+import { AlertCircleIcon } from "lucide-react"; // ← add icon import
+
+export const SLASH_COMMANDS: SlashCommand[] = [
+  // ...existing commands
+  {
+    description: "Highlighted callout block",
+    icon: AlertCircleIcon,
+    id: "callout",
+    keywords: ["callout", "note", "info", "alert", "warning"],
+    label: "Callout",
+  },
+];
+```
+
+### Step 3 — Add the executor
+
+Open `plugins/slash-command/executors.ts` and add an entry to the
+`SLASH_COMMAND_EXECUTORS` map. The function receives the top-level
+`ElementNode` where the slash text lives and should replace or transform it
+into your target block.
+
+```ts
+// src/components/editor/plugins/slash-command/executors.ts
+import { $createParagraphNode } from "lexical"; // already imported
+
+export const SLASH_COMMAND_EXECUTORS: Record<
+  SlashCommandId,
+  (element: ElementNode) => void
+> = {
+  // ...existing entries
+  callout: (element) => {
+    const paragraph = $createParagraphNode();
+    element.replace(paragraph);
+    paragraph.selectEnd();
+  },
+};
+```
+
+<Callout title="Commands that need user input" variant="info">
+  If your command requires extra data before inserting (a URL, a file, a
+  preset choice), intercept it in `plugin.tsx` before the executor runs:
+  capture the `targetNodeKey` from the current selection, store it in state,
+  and open a dialog. The existing `image`, `youtube`, and `columns` commands
+  follow this pattern and are good reference implementations.
+</Callout>

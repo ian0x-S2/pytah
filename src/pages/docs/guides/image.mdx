@@ -1,0 +1,133 @@
+---
+title: "Image Block"
+description: "Extension guide for the image block: ImageNode, insertion flows, rendering, alignment, selection, and resize behavior."
+group: "extension-guides"
+icon: "Image"
+label: "Image Block"
+order: 10
+badge: "Extension Guide"
+---
+
+import imageNodeSource from "@/components/editor/core/nodes/image/node.tsx?raw";
+import imageCommandsSource from "@/components/editor/plugins/image/commands.ts?raw";
+import imageComponentSource from "@/components/editor/plugins/image/component.tsx?raw";
+import imagePluginSource from "@/components/editor/plugins/image/plugin.tsx?raw";
+import imageResizerSource from "@/components/editor/plugins/image/resizer.tsx?raw";
+import imageUtilsSource from "@/components/editor/plugins/image/utils.ts?raw";
+
+<Callout title="Extension guide">
+  This page focuses on how the image feature is implemented as a reusable
+  editor block. Use it when building or adapting custom node-backed editor
+  features.
+</Callout>
+
+## Files
+
+<FileTree
+  items={[
+    "src/components/editor/core/nodes/image/",
+    "  node.tsx          ← DecoratorNode + serialization",
+    "src/components/editor/plugins/image/",
+    "  commands.ts       ← INSERT_IMAGE_COMMAND",
+    "  utils.ts          ← file helpers",
+    "  plugin.tsx        ← ImagePlugin (insert / paste / drop)",
+    "  component.tsx     ← ImageComponent (click / select / delete / align)",
+    "  resizer.tsx       ← ImageResizer (4-corner drag-to-resize)",
+  ]}
+/>
+
+## node.tsx
+
+`ImageNode` extends `DecoratorNode` and stores `src`, `altText`, `alignment`,
+`width`, and `height`. It renders its React component via `decorate()` and
+handles HTML paste via `importDOM`.
+
+<CodeBlock label="src/components/editor/core/nodes/image/node.tsx" language="tsx">
+  {imageNodeSource}
+</CodeBlock>
+
+## commands.ts
+
+<CodeBlock label="src/components/editor/plugins/image/commands.ts" language="ts">
+  {imageCommandsSource}
+</CodeBlock>
+
+## utils.ts
+
+Three small helpers used by the plugin to detect and read image files from
+clipboard / drop events.
+
+<CodeBlock label="src/components/editor/plugins/image/utils.ts" language="ts">
+  {imageUtilsSource}
+</CodeBlock>
+
+## plugin.tsx
+
+Registers three Lexical commands: `INSERT_IMAGE_COMMAND` (inserts by URL),
+`DRAG_DROP_PASTE` (handles file drops), and `PASTE_COMMAND` (intercepts image
+file pastes).
+
+<CodeBlock label="src/components/editor/plugins/image/plugin.tsx" language="tsx">
+  {imagePluginSource}
+</CodeBlock>
+
+## component.tsx
+
+The React component rendered by `ImageNode.decorate()`. Handles
+click-to-select, Backspace/Delete to remove, and `FORMAT_ELEMENT_COMMAND` to
+change alignment. Mounts `ImageResizer` when the node is selected.
+
+<CodeBlock label="src/components/editor/plugins/image/component.tsx" language="tsx">
+  {imageComponentSource}
+</CodeBlock>
+
+## resizer.tsx
+
+Renders four corner drag handles (`ne`, `se`, `sw`, `nw`) as
+absolute-positioned divs. Uses pointer events to track drag distance and
+update the image's inline style in real-time, then calls `onResizeEnd` with
+the final pixel dimensions.
+
+<CodeBlock label="src/components/editor/plugins/image/resizer.tsx" language="tsx">
+  {imageResizerSource}
+</CodeBlock>
+
+## Registration
+
+The image capability ships in the default editor behind the `images` feature
+flag. To add it (or any whole capability) to a custom composition, contribute
+a descriptor via `extraFeatures` — no edits to `core/config.ts` or
+`ui/content.tsx`:
+
+```tsx
+<Editor
+  extraFeatures={[
+    {
+      id: "images",
+      plugin: ImagePlugin,
+      nodes: [ImageNode],
+      transformers: [IMAGE_MARKDOWN_TRANSFORMER],
+      slashCommandIds: ["image"],
+    },
+  ]}
+/>
+```
+
+Built-in capabilities are registered the same way in `core/features.tsx`, so
+a flag toggles the node, plugin, transformers, and slash command together.
+
+### Inserting an image programmatically
+
+```tsx
+editor.dispatchCommand(INSERT_IMAGE_COMMAND, {
+  src: "https://example.com/photo.jpg",
+  altText: "A photo",
+  alignment: "center",
+});
+```
+
+<Callout title="File paste / drop is automatic" variant="tip">
+  `ImagePlugin` intercepts `PASTE_COMMAND` and `DROP_COMMAND` automatically.
+  Any image file dragged into the editor or pasted from the clipboard is
+  converted to a data URL and inserted as an `ImageNode`.
+</Callout>

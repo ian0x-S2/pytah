@@ -1,0 +1,134 @@
+---
+title: "Layout Block"
+description: "Extension guide for the multi-column layout block: nodes, command, presets, insertion utilities, and plugin wiring."
+group: "extension-guides"
+icon: "Box"
+label: "Layout Block"
+order: 40
+badge: "Extension Guide"
+---
+
+import layoutContainerNodeSource from "@/components/editor/core/nodes/layout/container-node.ts?raw";
+import layoutItemNodeSource from "@/components/editor/core/nodes/layout/item-node.ts?raw";
+import layoutCommandsSource from "@/components/editor/plugins/layout/commands.ts?raw";
+import layoutConstantsSource from "@/components/editor/plugins/layout/constants.ts?raw";
+import layoutPluginSource from "@/components/editor/plugins/layout/plugin.tsx?raw";
+import layoutUtilsSource from "@/components/editor/plugins/layout/utils.ts?raw";
+
+<Callout title="Extension guide">
+  This page documents a block-level extension pattern: custom nodes plus a
+  feature plugin. It is a good reference when adding new structural block
+  types to the editor.
+</Callout>
+
+## Files
+
+<FileTree
+  items={[
+    "src/components/editor/core/nodes/layout/",
+    "  container-node.ts  ← LayoutContainerNode (CSS grid wrapper)",
+    "  item-node.ts       ← LayoutItemNode (single column)",
+    "src/components/editor/plugins/layout/",
+    "  commands.ts        ← INSERT_LAYOUT_COMMAND",
+    "  constants.ts       ← DEFAULT_LAYOUT_TEMPLATE + LAYOUT_PRESETS",
+    "  utils.ts           ← applyLayoutPreset",
+    "  plugin.tsx         ← LayoutPlugin",
+  ]}
+/>
+
+## container-node.ts
+
+Renders as a `<div>` with `data-lexical-layout-container` and
+`style.gridTemplateColumns` set to the stored template string (e.g.
+`"1fr 1fr"`). Acts as a shadow root.
+
+<CodeBlock label="src/components/editor/core/nodes/layout/container-node.ts" language="ts">
+  {layoutContainerNodeSource}
+</CodeBlock>
+
+## item-node.ts
+
+Each column is a `LayoutItemNode`. When the user backspaces at the start of
+the first column and all columns are empty, the entire layout container is
+removed via `collapseAtStart()`.
+
+<CodeBlock label="src/components/editor/core/nodes/layout/item-node.ts" language="ts">
+  {layoutItemNodeSource}
+</CodeBlock>
+
+## commands.ts
+
+<CodeBlock label="src/components/editor/plugins/layout/commands.ts" language="ts">
+  {layoutCommandsSource}
+</CodeBlock>
+
+## constants.ts
+
+Predefined grid templates. `DEFAULT_LAYOUT_TEMPLATE` is used by the
+slash-command executor.
+
+<CodeBlock label="src/components/editor/plugins/layout/constants.ts" language="ts">
+  {layoutConstantsSource}
+</CodeBlock>
+
+| Preset value | Description |
+| --- | --- |
+| `1fr 1fr` | Two equal columns (default) |
+| `1fr 3fr` | Narrow sidebar + wide content |
+| `1fr 1fr 1fr` | Three equal columns |
+| `1fr 2fr 1fr` | Three balanced columns |
+| `1fr 1fr 1fr 1fr` | Four equal columns |
+
+## utils.ts
+
+<CodeBlock label="src/components/editor/plugins/layout/utils.ts" language="ts">
+  {layoutUtilsSource}
+</CodeBlock>
+
+## plugin.tsx
+
+<CodeBlock label="src/components/editor/plugins/layout/plugin.tsx" language="tsx">
+  {layoutPluginSource}
+</CodeBlock>
+
+### Registration
+
+Layouts ship behind the `layouts` feature flag. To add the capability to a
+custom composition, contribute a descriptor via `extraFeatures`:
+
+```tsx
+<Editor
+  extraFeatures={[
+    {
+      id: "layouts",
+      plugin: LayoutPlugin,
+      nodes: [LayoutContainerNode, LayoutItemNode],
+      slashCommandIds: ["columns"],
+    },
+  ]}
+/>
+```
+
+### Inserting a layout programmatically
+
+```tsx
+import { INSERT_LAYOUT_COMMAND } from "../plugins/layout/commands";
+
+editor.dispatchCommand(INSERT_LAYOUT_COMMAND, {
+  templateColumns: "1fr 1fr 1fr", // three equal columns
+});
+
+// replace a specific node:
+editor.dispatchCommand(INSERT_LAYOUT_COMMAND, {
+  templateColumns: "1fr 3fr",
+  targetNodeKey: someNodeKey,
+});
+```
+
+<Callout title="Any valid CSS grid template works" variant="tip">
+  The `templateColumns` value is written directly to
+  `style.gridTemplateColumns`. You can pass any valid CSS grid template string
+  — the column count is derived by splitting on whitespace, so named tracks or
+  `repeat()` expressions should be pre-resolved to explicit values before
+  passing them in.
+</Callout>

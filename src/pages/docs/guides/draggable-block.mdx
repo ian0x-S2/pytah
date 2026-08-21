@@ -1,0 +1,68 @@
+---
+title: "Draggable Block"
+description: "Feature guide for the draggable block handle that reorders top-level blocks inside the editor."
+group: "feature-guides"
+icon: "GripVertical"
+label: "Draggable Block"
+order: 40
+badge: "Feature Guide"
+---
+
+import draggableBlockPluginSource from "@/components/editor/plugins/draggable-block/plugin.tsx?raw";
+
+<Callout title="Feature guide">
+  This is a built-in editor capability. If you only need to disable it in an
+  integration, prefer the editor `features` prop rather than editing plugin
+  internals.
+</Callout>
+
+## Files
+
+<FileTree
+  items={[
+    "src/components/editor/plugins/draggable-block/",
+    "  plugin.tsx        ← DraggableBlockPlugin",
+  ]}
+/>
+
+## plugin.tsx
+
+`DraggableBlockPlugin` wraps Lexical's experimental
+`DraggableBlockPlugin_EXPERIMENTAL`. It listens for the root element via
+`registerRootListener` to obtain the `anchorElem` (the root's parent container)
+and only renders when the editor is editable. The grip handle is a
+`GripVerticalIcon` that appears on hover, and a thin primary-coloured line
+shows the drop target position.
+
+<CodeBlock label="src/components/editor/plugins/draggable-block/plugin.tsx" language="tsx">
+  {draggableBlockPluginSource}
+</CodeBlock>
+
+## Registration
+
+Draggable blocks ship behind the `draggableBlocks` feature flag (editor-only).
+To add it to a custom composition, contribute a descriptor via
+`extraFeatures`:
+
+```tsx
+<Editor
+  extraFeatures={[
+    {
+      id: "draggableBlocks",
+      plugin: DraggableBlockPlugin,
+    },
+  ]}
+/>
+```
+
+<Callout title="Editor-only" variant="tip">
+  `DraggableBlockPlugin` checks `useLexicalEditable()` and renders `null` in
+  read-only mode, so it is safe to mount unconditionally.
+</Callout>
+
+<Callout title="Anchor element">
+  The plugin needs the root element's *parent* as the anchor so the floating
+  grip can be positioned outside the scrollable content area.
+  `registerRootListener` fires once on mount (and again if the root changes),
+  so `anchorElem` is always up to date.
+</Callout>

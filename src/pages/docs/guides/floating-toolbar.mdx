@@ -1,0 +1,110 @@
+---
+title: "Floating Toolbar"
+description: "Feature guide for the selection-anchored floating toolbar: state, positioning, formatting actions, and plugin wiring."
+group: "feature-guides"
+icon: "Layout"
+label: "Floating Toolbar"
+order: 10
+badge: "Feature Guide"
+---
+
+import floatingToolbarActionsSource from "@/components/editor/plugins/floating-toolbar/actions.ts?raw";
+import floatingToolbarConstantsSource from "@/components/editor/plugins/floating-toolbar/constants.ts?raw";
+import floatingToolbarLinkCommandSource from "@/components/editor/plugins/floating-toolbar/link-command.ts?raw";
+import floatingToolbarPluginSource from "@/components/editor/plugins/floating-toolbar/plugin.tsx?raw";
+import floatingToolbarSelectionSource from "@/components/editor/plugins/floating-toolbar/selection.ts?raw";
+import floatingToolbarTypesSource from "@/components/editor/plugins/floating-toolbar/types.ts?raw";
+
+<Callout title="Feature guide">
+  This page describes a built-in product capability. Use the `features` prop
+  on `Editor` if you only need to enable or disable it from a consumer
+  integration.
+</Callout>
+
+## Files
+
+<FileTree
+  items={[
+    "src/components/editor/plugins/floating-toolbar/",
+    "  types.ts          ← FloatingToolbarState + sub-types",
+    "  constants.ts      ← default/empty state values",
+    "  selection.ts      ← read selection, compute position + formats",
+    "  actions.ts        ← format toggle, link submit/clear, color apply",
+    "  link-command.ts   ← OPEN_FLOATING_LINK_EDITOR_COMMAND",
+    "  plugin.tsx        ← FloatingToolbarPlugin (portal + event wiring)",
+  ]}
+/>
+
+## types.ts
+
+<CodeBlock label="src/components/editor/plugins/floating-toolbar/types.ts" language="ts">
+  {floatingToolbarTypesSource}
+</CodeBlock>
+
+## constants.ts
+
+<CodeBlock label="src/components/editor/plugins/floating-toolbar/constants.ts" language="ts">
+  {floatingToolbarConstantsSource}
+</CodeBlock>
+
+## link-command.ts
+
+A dedicated Lexical command that tells `FloatingLinkEditorPlugin` to open in
+edit mode. Kept in a separate file so the floating toolbar and link editor can
+import it without a circular dependency.
+
+<CodeBlock label="src/components/editor/plugins/floating-toolbar/link-command.ts" language="ts">
+  {floatingToolbarLinkCommandSource}
+</CodeBlock>
+
+## selection.ts
+
+Pure read-only helpers that compute the toolbar's state from the current
+Lexical selection. Called inside `editor.getEditorState().read()`.
+
+<CodeBlock label="src/components/editor/plugins/floating-toolbar/selection.ts" language="ts">
+  {floatingToolbarSelectionSource}
+</CodeBlock>
+
+## actions.ts
+
+Imperative helpers that dispatch Lexical commands or call `editor.update()`.
+Imported by the plugin and by the floating link editor.
+
+<CodeBlock label="src/components/editor/plugins/floating-toolbar/actions.ts" language="ts">
+  {floatingToolbarActionsSource}
+</CodeBlock>
+
+## plugin.tsx
+
+The plugin subscribes to `SELECTION_CHANGE_COMMAND` and the update listener,
+then renders the toolbar as a fixed portal over the selection. A
+`isColorPickerOpenRef` prevents the toolbar from disappearing while a color
+popover is open.
+
+<CodeBlock label="src/components/editor/plugins/floating-toolbar/plugin.tsx" language="tsx">
+  {floatingToolbarPluginSource}
+</CodeBlock>
+
+### How to mount it
+
+The floating toolbar ships behind the `floatingToolbar` feature flag. To add
+it to a custom composition, contribute a descriptor via `extraFeatures`:
+
+```tsx
+<Editor
+  extraFeatures={[
+    {
+      id: "floatingToolbar",
+      plugin: FloatingToolbarPlugin,
+    },
+  ]}
+/>
+```
+
+<Callout title="Color picker stability" variant="tip">
+  The plugin uses a `ref` (not state) to track whether a color picker is open.
+  This avoids re-registering the `SELECTION_CHANGE_COMMAND` listener on every
+  open/close cycle while still preventing the toolbar from being hidden while
+  the user browses swatches.
+</Callout>

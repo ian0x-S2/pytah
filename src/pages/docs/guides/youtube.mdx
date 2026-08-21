@@ -1,0 +1,98 @@
+---
+title: "YouTube Embed"
+description: "Extension guide for the YouTube embed block: DecoratorBlockNode implementation, insert command, and plugin wiring."
+group: "extension-guides"
+icon: "Video"
+label: "YouTube Embed"
+order: 50
+badge: "Extension Guide"
+---
+
+import youTubeNodeSource from "@/components/editor/core/nodes/youtube/node.tsx?raw";
+import youTubeCommandsSource from "@/components/editor/plugins/youtube/commands.ts?raw";
+import youTubePluginSource from "@/components/editor/plugins/youtube/plugin.tsx?raw";
+
+<Callout title="Extension guide">
+  This page is useful when you want to add a custom embed-style block with
+  decorator rendering and HTML serialization support.
+</Callout>
+
+## Files
+
+<FileTree
+  items={[
+    "src/components/editor/core/nodes/youtube/",
+    "  node.tsx          ← DecoratorBlockNode + serialization",
+    "src/components/editor/plugins/youtube/",
+    "  commands.ts       ← INSERT_YOUTUBE_COMMAND",
+    "  plugin.tsx        ← YouTubePlugin (insert / replace)",
+  ]}
+/>
+
+## node.tsx
+
+`YouTubeNode` extends `DecoratorBlockNode` and stores a single `__videoId`
+string. It renders an `iframe` pointing to
+`youtube-nocookie.com/embed/[videoId]` wrapped in `BlockWithAlignableContents`
+so the user can left/center/right align the embed. HTML export emits an
+`iframe` with a `data-lexical-youtube` attribute, which is also used by
+`importDOM` to reconstruct the node on paste.
+
+<CodeBlock label="src/components/editor/core/nodes/youtube/node.tsx" language="tsx">
+  {youTubeNodeSource}
+</CodeBlock>
+
+## commands.ts
+
+A single typed command carries the video ID and an optional `targetNodeKey`
+that tells the plugin to replace an existing node (used by slash-command
+placeholders) rather than insert at the current selection.
+
+<CodeBlock label="src/components/editor/plugins/youtube/commands.ts" language="ts">
+  {youTubeCommandsSource}
+</CodeBlock>
+
+## plugin.tsx
+
+`YouTubePlugin` registers `INSERT_YOUTUBE_COMMAND` at
+`COMMAND_PRIORITY_EDITOR`. When a `targetNodeKey` is supplied the target
+element node is replaced; otherwise the embed is inserted via
+`$insertNodeToNearestRoot`. A paragraph is always appended after so the cursor
+lands in an editable position.
+
+<CodeBlock label="src/components/editor/plugins/youtube/plugin.tsx" language="tsx">
+  {youTubePluginSource}
+</CodeBlock>
+
+## Registration
+
+YouTube embeds ship behind the `youtube` feature flag. To add the capability
+to a custom composition, contribute a descriptor via `extraFeatures`:
+
+```tsx
+<Editor
+  extraFeatures={[
+    {
+      id: "youtube",
+      plugin: YouTubePlugin,
+      nodes: [YouTubeNode],
+      transformers: [YOUTUBE_MARKDOWN_TRANSFORMER],
+      slashCommandIds: ["youtube"],
+    },
+  ]}
+/>
+```
+
+### Inserting a video programmatically
+
+```tsx
+editor.dispatchCommand(INSERT_YOUTUBE_COMMAND, {
+  videoId: "dQw4w9WgXcQ",
+});
+```
+
+<Callout title="Privacy-enhanced embeds" variant="tip">
+  All embeds use `youtube-nocookie.com` so YouTube does not set cookies until
+  the user interacts with the player. The HTML export also targets this domain
+  so the behaviour is preserved when content is copied out of the editor.
+</Callout>

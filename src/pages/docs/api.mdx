@@ -1,0 +1,104 @@
+---
+title: "API"
+description: "Public types and extension contracts for embedding and composing the editor."
+group: "core"
+icon: "Code"
+label: "API"
+order: 60
+badge: "API"
+---
+
+import editorTypesSource from "@/components/editor/core/types.ts?raw";
+
+## Editor Props
+
+`EditorProps` is the main public contract for consumers. It combines
+ready-made editor options with composition-focused extension points.
+
+<InterfaceSource name="EditorProps" source={editorTypesSource} />
+
+## Slot Contexts
+
+Some slots receive contextual helpers so replacements can still use the
+built-in editor actions and state.
+
+### Action Bar Controls
+
+<InterfaceSource name="EditorActionBarControls" source={editorTypesSource} />
+
+### Footer Context
+
+<InterfaceSource name="EditorFooterContext" source={editorTypesSource} />
+
+### Output Context
+
+<InterfaceSource name="EditorOutputContext" source={editorTypesSource} />
+
+### Shell Context
+
+<InterfaceSource name="EditorShellContext" source={editorTypesSource} />
+
+## Examples
+
+### Minimal Product Editor
+
+```tsx
+<Editor editable minimal toolbar="basic" />
+```
+
+### Replace Outputs
+
+```tsx
+<Editor
+  chrome={{ outputs: true }}
+  slots={{
+    outputs: ({ snapshot }) => (
+      <section>
+        <h2>Markdown</h2>
+        <pre>{snapshot.markdown}</pre>
+      </section>
+    ),
+  }}
+/>
+```
+
+### Register Extra Node
+
+```tsx
+<Editor extraNodes={[CalloutNode]} />
+```
+
+### Contribute a Whole Feature
+
+```tsx
+<Editor
+  extraFeatures={[
+    {
+      id: "callout",
+      plugin: CalloutPlugin,
+      nodes: [CalloutNode],
+      transformers: [CALLOUT_TRANSFORMER],
+      slashCommandIds: ["callout"],
+    },
+  ]}
+/>
+```
+
+Each descriptor bundles the plugin, nodes, markdown transformers, and
+slash-command ids for one capability, wired together by the composition
+surface.
+
+### Multiple Editors
+
+```tsx
+<>
+  <Editor namespace="marketing-docs" />
+  <Editor namespace="knowledge-base" />
+</>
+```
+
+<Callout title="Public API boundary">
+  If a customization requires editing `ui/content.tsx` or
+  `core/config.ts`, treat that as a signal that the public API may still be
+  missing an extension point.
+</Callout>

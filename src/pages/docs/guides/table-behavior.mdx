@@ -1,0 +1,80 @@
+---
+title: "Table Behavior"
+description: "Feature guide for built-in table behavior: Lexical table integration, floating action menu, and table mutation helpers."
+group: "feature-guides"
+icon: "Table"
+label: "Table Behavior"
+order: 30
+badge: "Feature Guide"
+---
+
+import tableBehaviorActionsSource from "@/components/editor/plugins/table-behavior/actions.ts?raw";
+import tableBehaviorPluginSource from "@/components/editor/plugins/table-behavior/plugin.tsx?raw";
+
+<Callout title="Feature guide">
+  This page describes the built-in table editing UX. Use it as a product
+  feature reference; use the `Composition` page for top-level editor
+  configuration decisions.
+</Callout>
+
+## Files
+
+<FileTree
+  items={[
+    "src/components/editor/plugins/table-behavior/",
+    "  actions.ts   ← insert/delete row & column helpers",
+    "  plugin.tsx   ← TableBehaviorPlugin, TableCellActionMenuContainer, TableActionMenu",
+  ]}
+/>
+
+<Callout title="Depends on @lexical/table">
+  `TableBehaviorPlugin` composes the official `<TablePlugin>` from
+  `@lexical/react/LexicalTablePlugin`. No custom table nodes are needed — the
+  plugin adds the floating action-menu UI on top.
+</Callout>
+
+## actions.ts
+
+Thin wrappers around the `@lexical/table` mutations. These are kept separate so
+they can be called from outside the plugin (e.g. from a toolbar).
+
+<CodeBlock label="src/components/editor/plugins/table-behavior/actions.ts" language="ts">
+  {tableBehaviorActionsSource}
+</CodeBlock>
+
+## plugin.tsx
+
+Three components in one file. `TableBehaviorPlugin` is the public entry point —
+it renders `<TablePlugin>` and conditionally mounts the action-menu container.
+`TableCellActionMenuContainer` listens for selection changes and positions a
+small chevron button at the active cell. `TableActionMenu` is the popover
+content with insert/delete actions.
+
+<CodeBlock label="src/components/editor/plugins/table-behavior/plugin.tsx" language="tsx">
+  {tableBehaviorPluginSource}
+</CodeBlock>
+
+### Registration
+
+Table behavior ships behind the `tables` feature flag. To add it to a custom
+composition, contribute a descriptor via `extraFeatures`:
+
+```tsx
+<Editor
+  extraFeatures={[
+    {
+      id: "tables",
+      plugin: TableBehaviorPlugin,
+      transformers: [TABLE_MARKDOWN_TRANSFORMER],
+      slashCommandIds: ["table"],
+    },
+  ]}
+/>
+```
+
+<Callout title="Anchor element" variant="tip">
+  The action-menu portal renders inside `anchorElem`, which is the *parent* of
+  the editor root (obtained via `rootElement.parentElement`). This ensures the
+  absolute position calculations are relative to the same offset parent as the
+  table cells.
+</Callout>

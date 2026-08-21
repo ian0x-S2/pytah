@@ -1,0 +1,54 @@
+---
+title: "Overview"
+description: "What Pytah is, who this repository serves, and which path to follow next."
+group: "core"
+icon: "Compass"
+label: "Overview"
+order: 10
+badge: "Start Here"
+---
+
+## What is Pytah?
+
+Pytah is a rich text editor reference implementation and shadcn registry
+item built with React, Lexical, shadcn/Base UI, and Tailwind CSS v4.
+
+This repository is the demo app, docs site, and canonical source for the
+editor code that the registry serves. It exists both for teams that want
+to embed the editor and for contributors who want to evolve the editor
+core.
+
+<Callout title="Why the repository can feel different">
+  Pytah is not just an app and not just a component package. It is a
+  working product surface, a source-driven docs site, and the source of
+  truth for the shipped editor implementation.
+</Callout>
+
+## Choose Your Path
+
+| If you want to... | Start here | Then read |
+| --- | --- | --- |
+| evaluate the editor UX | `/demo` | `/docs/overview` and feature guides under `/docs/guides/*` |
+| install the editor into another app | `/docs/getting-started` | `/docs/composition` and `/docs/api` |
+| contribute to the editor core in this repo | `/docs/contributing` | `/docs/architecture`, `/docs/plugins`, and `CONTRIBUTING.md` |
+
+## Three Ways to Use the Editor
+
+| Mode | Reach for it when... | Main levers |
+| --- | --- | --- |
+| **Ready-made** | You want a working editor with the default Pytah experience. | `minimal`, `toolbar`, `editable` |
+| **Composable** | You want to keep the editor foundation but tune behavior or replace surfaces. | `features`, `chrome`, `slots`, `pluginSlots`, `extraNodes`, `extraFeatures` |
+| **Raw Lexical** | You need full ownership of the Lexical stack and only want Pytah as reference material. | `LexicalComposer` plus the patterns documented in `/docs/composition` |
+
+## Repository Mental Model
+
+`src/components/editor/editor.tsx` is the public composition
+root. Everything else exists to support or extend that surface.
+
+| Area | Owns | Start there when... |
+| --- | --- | --- |
+| `src/components/editor/editor.tsx` | top-level editor composition and public defaults | you need to understand how the product editor is wired together |
+| `src/components/editor/core/` | config, types, nodes, utilities, and composition helpers | you are changing editor contracts, node registration, or shared internals |
+| `src/components/editor/plugins/` | Lexical behavior plugins and feature-specific wiring | you are changing commands, listeners, or feature behavior |
+| `src/components/editor/ui/` | toolbars, panels, shells, and other React surfaces | you are changing the editor chrome or composition UI |
+| `src/pages/docs/` | consumer-facing documentation sourced from the codebase | you are updating onboarding, examples, or the public mental model |

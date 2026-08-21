@@ -1,0 +1,75 @@
+---
+title: "Contributing"
+description: "Use this page when you are changing the Pytah repository itself rather than embedding the editor into another app."
+group: "core"
+icon: "Wrench"
+label: "Contributing"
+order: 30
+badge: "Contributor Doc"
+---
+
+import {
+  REGISTRY_WORKFLOW_COMMAND,
+  STANDARD_VALIDATION_COMMAND,
+} from "@/components/docs/contributor-reference";
+
+<Callout title="Consumer docs vs contributor docs" variant="tip">
+  If you only want to install the editor into your own app, go to
+  `/docs/getting-started`. This page is for editing the core editor, docs, or
+  registry inside this repository.
+</Callout>
+
+## Local Development Loop
+
+Start by installing dependencies and running the local app. The fastest
+feedback loop is to keep the demo and docs open while you work.
+
+```bash
+bun install
+bun run dev
+```
+
+Use `/demo` to exercise behavior directly, `/docs/overview` to re-ground
+yourself in the repository purpose, and `/docs/architecture` when tracing
+which layer owns a feature.
+
+## Where to Change Things
+
+| If you need to change... | Start here | Notes |
+| --- | --- | --- |
+| Change a public prop or extension point | `editor.tsx` and `core/types.ts` | Public contracts live where the ready-made editor and composition API meet. |
+| Add or adjust built-in behavior | `plugins/<feature>/` | Feature behavior belongs with its Lexical commands, transforms, and feature-local UI. |
+| Register a whole capability (nodes + plugin + transformers + slash ids) | `core/features.tsx` (or the `extraFeatures` prop) | The EditorFeature registry is the single source of truth: toggling a flag drives its nodes, plugin, transformers, and slash commands together. |
+| Change toolbars, panels, or shell UI | `ui/` | The React composition layer owns the visual surfaces around the editor. |
+| Add a new node or serialization helper | `core/nodes/<feature>/` | Node code stays feature-local and should align with its owning plugin when a feature spans both layers. |
+| Update onboarding or examples | `src/pages/docs/`, `README.md`, and `CONTRIBUTING.md` | Repo context should stay consistent across the app docs and GitHub landing page. |
+
+## Default Change Checklist
+
+Before you ship a change, preserve the editor invariants that make this
+repo valuable as a reference implementation.
+
+| Check | Why it matters |
+| --- | --- |
+| Editable and read-only modes still work | The editor is expected to support both modes without forking the implementation. |
+| HTML and Markdown copy/paste still behave well | Copy/paste quality is part of the project purpose, not a nice-to-have. |
+| New behavior uses extension points where possible | Pytah aims for a lego-like editor, not a monolithic editor tree. |
+| Docs stay aligned with the real implementation | The docs are part of the developer experience and should not drift away from source. |
+
+Run the standard validation flow before handing work off:
+
+<CodeBlock language="bash">{STANDARD_VALIDATION_COMMAND}</CodeBlock>
+
+## Registry and Dependency Workflow
+
+Most edits only need the standard validation flow. Reach for the
+registry and dependency scripts when you are changing shipped registry
+output or compatibility expectations.
+
+<CodeBlock language="bash">{REGISTRY_WORKFLOW_COMMAND}</CodeBlock>
+
+<Callout title="Standards">
+  Use `AGENTS.md` for the deeper architecture rules and coding
+  conventions. Use the docs pages for the human-readable product and
+  onboarding narrative.
+</Callout>

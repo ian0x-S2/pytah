@@ -1,0 +1,126 @@
+---
+title: "Collapsible Block"
+description: "Extension guide for the collapsible block: nodes, commands, insertion helpers, and plugin logic for transforms and keyboard handling."
+group: "extension-guides"
+icon: "ToggleLeft"
+label: "Collapsible Block"
+order: 30
+badge: "Extension Guide"
+---
+
+import collapsibleContainerNodeSource from "@/components/editor/core/nodes/collapsible/container-node.ts?raw";
+import collapsibleContentNodeSource from "@/components/editor/core/nodes/collapsible/content-node.ts?raw";
+import collapsibleTitleNodeSource from "@/components/editor/core/nodes/collapsible/title-node.ts?raw";
+import collapsibleCommandsSource from "@/components/editor/plugins/collapsible/commands.ts?raw";
+import collapsiblePluginSource from "@/components/editor/plugins/collapsible/plugin.tsx?raw";
+import collapsibleUtilsSource from "@/components/editor/plugins/collapsible/utils.ts?raw";
+
+<Callout title="Extension guide">
+  This guide is a reference for multi-node block features that own both
+  document structure and behavior.
+</Callout>
+
+## Files
+
+<FileTree
+  items={[
+    "src/components/editor/core/nodes/collapsible/",
+    "  container-node.ts  ← CollapsibleContainerNode (open/closed state)",
+    "  title-node.ts      ← CollapsibleTitleNode (summary/trigger)",
+    "  content-node.ts    ← CollapsibleContentNode (hidden body)",
+    "  dom-utils.ts       ← setDomHiddenUntilFound / domOnBeforeMatch",
+    "src/components/editor/plugins/collapsible/",
+    "  commands.ts        ← INSERT_COLLAPSIBLE_COMMAND",
+    "  utils.ts           ← createCollapsibleStructure helpers",
+    "  plugin.tsx         ← CollapsiblePlugin",
+  ]}
+/>
+
+<Callout title="Chrome vs. other browsers">
+  Native `<details>`/`<summary>` elements handle expand/collapse in non-Chrome
+  browsers automatically. Chrome requires manual DOM manipulation because it
+  does not support the `hidden="until-found"` attribute. Both paths are
+  handled in the node's `createDOM` / `updateDOM` methods.
+</Callout>
+
+## container-node.ts
+
+The root of the collapsible structure. Stores a single boolean `__open` and
+exposes `toggleOpen()`. Acts as a shadow root so inner selections stay
+contained.
+
+<CodeBlock label="src/components/editor/core/nodes/collapsible/container-node.ts" language="ts">
+  {collapsibleContainerNodeSource}
+</CodeBlock>
+
+## title-node.ts
+
+Renders as a `<summary>` element. On Chrome, a click listener calls
+`container.toggleOpen()` via `editor.update()`. Pressing Enter in the title
+jumps into the content body.
+
+<CodeBlock label="src/components/editor/core/nodes/collapsible/title-node.ts" language="ts">
+  {collapsibleTitleNodeSource}
+</CodeBlock>
+
+## content-node.ts
+
+The body area. On Chrome uses `setDomHiddenUntilFound()` so the browser's
+Ctrl+F can still find text inside collapsed sections. Acts as a shadow root.
+
+<CodeBlock label="src/components/editor/core/nodes/collapsible/content-node.ts" language="ts">
+  {collapsibleContentNodeSource}
+</CodeBlock>
+
+## commands.ts
+
+<CodeBlock label="src/components/editor/plugins/collapsible/commands.ts" language="ts">
+  {collapsibleCommandsSource}
+</CodeBlock>
+
+## utils.ts
+
+<CodeBlock label="src/components/editor/plugins/collapsible/utils.ts" language="ts">
+  {collapsibleUtilsSource}
+</CodeBlock>
+
+## plugin.tsx
+
+Registers node transforms to enforce the `container → [title, content]`
+invariant, four arrow-key handlers for cursor escape, an
+`INSERT_PARAGRAPH_COMMAND` handler to open the body on Enter in the title, and
+the `INSERT_COLLAPSIBLE_COMMAND` handler.
+
+<CodeBlock label="src/components/editor/plugins/collapsible/plugin.tsx" language="tsx">
+  {collapsiblePluginSource}
+</CodeBlock>
+
+### Registration
+
+The collapsible capability ships behind the `collapsible` feature flag. To add
+it to a custom composition, contribute a descriptor via `extraFeatures`:
+
+```tsx
+<Editor
+  extraFeatures={[
+    {
+      id: "collapsible",
+      plugin: CollapsiblePlugin,
+      nodes: [
+        CollapsibleContainerNode,
+        CollapsibleTitleNode,
+        CollapsibleContentNode,
+      ],
+      slashCommandIds: ["collapsible"],
+    },
+  ]}
+/>
+```
+
+### Inserting programmatically
+
+```tsx
+editor.dispatchCommand(INSERT_COLLAPSIBLE_COMMAND, undefined);
+// or replace a specific node:
+editor.dispatchCommand(INSERT_COLLAPSIBLE_COMMAND, { targetNodeKey: "abc" });
+```
