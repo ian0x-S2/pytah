@@ -3,7 +3,7 @@
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import type { LexicalEditor } from "lexical";
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
   copyEditorOutput,
@@ -140,22 +140,31 @@ export function Editor({
     null
   );
 
-  const resolvedChrome = resolveEditorChrome(chrome);
-  const resolvedFeatures = resolveEditorFeatures(features);
+  const resolvedChrome = useMemo(() => resolveEditorChrome(chrome), [chrome]);
+  const resolvedFeatures = useMemo(
+    () => resolveEditorFeatures(features),
+    [features]
+  );
 
-  const featureNodes: LexicalNodeList = computeFeatureNodes(
-    resolvedFeatures,
-    extraFeatures
+  // Derived registries are memoized so their identities stay stable across
+  // re-renders (the editor state flows into React state on every keystroke);
+  // otherwise every consumer of these props reconciles on each update.
+  const featureNodes: LexicalNodeList = useMemo(
+    () => computeFeatureNodes(resolvedFeatures, extraFeatures),
+    [resolvedFeatures, extraFeatures]
   );
-  const transformers = computeEditorTransformers(
-    resolvedFeatures,
-    extraFeatures
+  const transformers = useMemo(
+    () => computeEditorTransformers(resolvedFeatures, extraFeatures),
+    [resolvedFeatures, extraFeatures]
   );
-  const commandIds = resolveSlashCommandIdsWithExtras(
-    resolvedFeatures,
-    extraFeatures
+  const commandIds = useMemo(
+    () => resolveSlashCommandIdsWithExtras(resolvedFeatures, extraFeatures),
+    [resolvedFeatures, extraFeatures]
   );
-  const extraFeaturePlugins = resolveExtraFeaturePlugins(extraFeatures);
+  const extraFeaturePlugins = useMemo(
+    () => resolveExtraFeaturePlugins(extraFeatures),
+    [extraFeatures]
+  );
 
   const initialConfig = createEditorConfig({
     editable,

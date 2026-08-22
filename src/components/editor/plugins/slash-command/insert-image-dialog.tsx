@@ -12,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
 interface InsertImageDialogProps {
+  /** Prefix for form input ids so multiple mounted dialogs stay unique. */
+  idPrefix?: string;
   imageAltText: string;
   imageFileName: string;
   imageFileSrc: string | null;
@@ -25,6 +27,7 @@ interface InsertImageDialogProps {
 }
 
 export function InsertImageDialog({
+  idPrefix = "slash",
   imageAltText,
   imageFileName,
   imageFileSrc,
@@ -60,11 +63,14 @@ export function InsertImageDialog({
           }}
         >
           <div className="grid gap-2">
-            <label className="font-medium text-sm" htmlFor="slash-image-url">
+            <label
+              className="font-medium text-sm"
+              htmlFor={`${idPrefix}-image-url`}
+            >
               Image URL
             </label>
             <Input
-              id="slash-image-url"
+              id={`${idPrefix}-image-url`}
               onChange={(event) => onUrlChange(event.target.value)}
               placeholder="https://example.com/image.jpg"
               ref={(element) => {
@@ -78,12 +84,15 @@ export function InsertImageDialog({
           </div>
 
           <div className="grid gap-2">
-            <label className="font-medium text-sm" htmlFor="slash-image-file">
+            <label
+              className="font-medium text-sm"
+              htmlFor={`${idPrefix}-image-file`}
+            >
               Local file
             </label>
             <Input
               accept="image/*"
-              id="slash-image-file"
+              id={`${idPrefix}-image-file`}
               onChange={onImageFileChange}
               type="file"
             />
@@ -95,11 +104,14 @@ export function InsertImageDialog({
           </div>
 
           <div className="grid gap-2">
-            <label className="font-medium text-sm" htmlFor="slash-image-alt">
+            <label
+              className="font-medium text-sm"
+              htmlFor={`${idPrefix}-image-alt`}
+            >
               Alt text
             </label>
             <Textarea
-              id="slash-image-alt"
+              id={`${idPrefix}-image-alt`}
               onChange={(event) => onAltTextChange(event.target.value)}
               placeholder="Describe the image for accessibility"
               rows={3}

@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import { parseYouTubeUrl } from "../youtube/utils";
 
 interface InsertYouTubeDialogProps {
+  /** Prefix for form input ids so multiple mounted dialogs stay unique. */
+  idPrefix?: string;
   onCancel: () => void;
   onSubmit: () => void;
   onUrlChange: (value: string) => void;
@@ -19,6 +21,7 @@ interface InsertYouTubeDialogProps {
 }
 
 export function InsertYouTubeDialog({
+  idPrefix = "slash",
   onCancel,
   onSubmit,
   onUrlChange,
@@ -49,11 +52,14 @@ export function InsertYouTubeDialog({
           }}
         >
           <div className="grid gap-2">
-            <label className="font-medium text-sm" htmlFor="slash-youtube-url">
+            <label
+              className="font-medium text-sm"
+              htmlFor={`${idPrefix}-youtube-url`}
+            >
               YouTube URL
             </label>
             <Input
-              id="slash-youtube-url"
+              id={`${idPrefix}-youtube-url`}
               onChange={(event) => onUrlChange(event.target.value)}
               placeholder="https://www.youtube.com/watch?v=jNQXAC9IVRw"
               ref={(element) => {

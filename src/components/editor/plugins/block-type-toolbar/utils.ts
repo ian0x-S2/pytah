@@ -22,11 +22,28 @@ import {
   $isRangeSelection,
   type LexicalEditor,
   type LexicalNode,
+  type RangeSelection,
 } from "lexical";
+import { SLASH_COMMAND_EXECUTORS } from "../slash-command/executors";
 import { DEFAULT_INSERT_TABLE_PAYLOAD } from "../table-behavior/constants";
 import type { BlockOption, BlockTypeValue } from "./types";
 
 const HEADING_VALUES = ["h1", "h2", "h3"] as const;
+
+const EXECUTOR_BLOCK_TYPES = [
+  "collapsible",
+  "columns",
+  "hr",
+  "math",
+] as const satisfies readonly BlockTypeValue[];
+
+const isExecutorBlockType = (
+  value: BlockTypeValue
+): value is (typeof EXECUTOR_BLOCK_TYPES)[number] => {
+  return EXECUTOR_BLOCK_TYPES.includes(
+    value as (typeof EXECUTOR_BLOCK_TYPES)[number]
+  );
+};
 
 const isHeadingValue = (
   value: BlockTypeValue
@@ -89,6 +106,52 @@ export const getBlockTypeFromSelection = (): BlockTypeValue | null => {
   return null;
 };
 
+const $applyConversionBlockType = (
+  selection: RangeSelection,
+  blockType: BlockTypeValue
+): boolean => {
+  if (blockType === "paragraph") {
+    $setBlocksType(selection, () => $createParagraphNode());
+    return true;
+  }
+
+  if (isHeadingValue(blockType)) {
+    $setBlocksType(selection, () => $createHeadingNode(blockType));
+    return true;
+  }
+
+  if (blockType === "quote") {
+    $setBlocksType(selection, () => $createQuoteNode());
+    return true;
+  }
+
+  if (blockType === "code") {
+    $setBlocksType(selection, () => $createCodeNode());
+    return true;
+  }
+
+  return false;
+};
+
+const $applyExecutorBlockType = (
+  selection: RangeSelection,
+  blockType: BlockTypeValue
+): boolean => {
+  // Insert-style blocks reuse the slash command executors so both surfaces
+  // produce identical results (e.g. divider, math, collapsible, columns).
+  if (!isExecutorBlockType(blockType)) {
+    return false;
+  }
+
+  const targetElement = selection.anchor.getNode().getTopLevelElement();
+  if (!targetElement) {
+    return true;
+  }
+
+  SLASH_COMMAND_EXECUTORS[blockType](targetElement);
+  return true;
+};
+
 export const applyBlockType = (
   editor: LexicalEditor,
   blockType: BlockTypeValue
@@ -99,23 +162,11 @@ export const applyBlockType = (
       return;
     }
 
-    if (blockType === "paragraph") {
-      $setBlocksType(selection, () => $createParagraphNode());
+    if ($applyConversionBlockType(selection, blockType)) {
       return;
     }
 
-    if (isHeadingValue(blockType)) {
-      $setBlocksType(selection, () => $createHeadingNode(blockType));
-      return;
-    }
-
-    if (blockType === "quote") {
-      $setBlocksType(selection, () => $createQuoteNode());
-      return;
-    }
-
-    if (blockType === "code") {
-      $setBlocksType(selection, () => $createCodeNode());
+    if ($applyExecutorBlockType(selection, blockType)) {
       return;
     }
 

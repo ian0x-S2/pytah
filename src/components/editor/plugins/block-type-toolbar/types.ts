@@ -1,16 +1,13 @@
-export type BlockTypeValue =
-  | "paragraph"
-  | "h1"
-  | "h2"
-  | "h3"
-  | "bullet"
-  | "number"
-  | "check"
-  | "quote"
-  | "code"
-  | "table";
+import type { SlashCommandId } from "../slash-command/types";
+
+/**
+ * Block types available in toolbar dropdowns mirror the slash command ids so
+ * both surfaces stay in sync by construction.
+ */
+export type BlockTypeValue = SlashCommandId;
 
 export interface BlockOption {
+  alwaysOn?: boolean;
   description: string;
   label: string;
   value: BlockTypeValue;

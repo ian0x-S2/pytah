@@ -37,12 +37,14 @@ import { LinkBehaviorPlugin } from "../plugins/link-behavior/plugin";
 import { EditorFooter } from "./chrome";
 
 interface EditorTopToolbarProps {
+  commandIds: readonly string[];
   editable: boolean;
   toolbar: EditorToolbar;
   topToolbar?: EditorChromeSlots["topToolbar"];
 }
 
 function EditorTopToolbar({
+  commandIds,
   editable,
   topToolbar,
   toolbar,
@@ -63,9 +65,9 @@ function EditorTopToolbar({
     <div className="px-8 py-2">
       <div className="overflow-x-auto">
         {toolbar === "full" ? (
-          <FullToolbarPlugin />
+          <FullToolbarPlugin commandIds={commandIds} />
         ) : (
-          <BlockTypeToolbarPlugin />
+          <BlockTypeToolbarPlugin commandIds={commandIds} />
         )}
       </div>
     </div>
@@ -216,6 +218,7 @@ export function EditorContent({
   return (
     <>
       <EditorTopToolbar
+        commandIds={commandIds}
         editable={editable}
         toolbar={toolbar}
         topToolbar={topToolbar}

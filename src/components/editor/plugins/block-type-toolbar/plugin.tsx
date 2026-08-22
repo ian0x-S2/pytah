@@ -20,14 +20,21 @@ import {
   RedoIcon,
   UndoIcon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { BlockTypeDrop } from "./block-type-drop";
 import type { BlockTypeValue } from "./types";
 import { getBlockTypeFromSelection } from "./utils";
 
-export function BlockTypeToolbarPlugin() {
+interface BlockTypeToolbarPluginProps {
+  /** Slash command ids resolved from the enabled feature set. */
+  commandIds?: readonly string[];
+}
+
+export const BlockTypeToolbarPlugin = memo(function BlockTypeToolbarPlugin({
+  commandIds,
+}: BlockTypeToolbarPluginProps) {
   const [editor] = useLexicalComposerContext();
   const [currentBlockType, setCurrentBlockType] =
     useState<BlockTypeValue>("paragraph");
@@ -61,6 +68,7 @@ export function BlockTypeToolbarPlugin() {
     <div className="flex items-center gap-1">
       <BlockTypeDrop
         blockType={currentBlockType}
+        commandIds={commandIds}
         editor={editor}
         onBlockTypeChange={setCurrentBlockType}
       />
@@ -140,4 +148,4 @@ export function BlockTypeToolbarPlugin() {
       </Button>
     </div>
   );
-}
+});

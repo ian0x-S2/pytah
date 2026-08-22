@@ -21,7 +21,7 @@ import {
   SuperscriptIcon,
   UndoIcon,
 } from "lucide-react";
-import { useReducer } from "react";
+import { memo, useCallback, useReducer } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Toggle } from "@/components/ui/toggle";
@@ -44,9 +44,14 @@ import { useToolbarState } from "./use-toolbar-state";
 
 interface FullToolbarPluginProps {
   className?: string;
+  /** Slash command ids resolved from the enabled feature set. */
+  commandIds?: readonly string[];
 }
 
-export function FullToolbarPlugin({ className }: FullToolbarPluginProps) {
+export const FullToolbarPlugin = memo(function FullToolbarPlugin({
+  className,
+  commandIds,
+}: FullToolbarPluginProps) {
   const [editor] = useLexicalComposerContext();
   const { blockType, formats, setBlockType } = useToolbarState();
   const [uiState, dispatchUi] = useReducer(
@@ -55,9 +60,12 @@ export function FullToolbarPlugin({ className }: FullToolbarPluginProps) {
   );
   const { activeInsertIndex, insertOpen } = uiState;
 
-  const handleBlockTypeChange = (value: BlockTypeValue) => {
-    setBlockType(value);
-  };
+  const handleBlockTypeChange = useCallback(
+    (value: BlockTypeValue) => {
+      setBlockType(value);
+    },
+    [setBlockType]
+  );
 
   const handleLinkToggle = () => {
     if (formats.isLink) {
@@ -97,6 +105,7 @@ export function FullToolbarPlugin({ className }: FullToolbarPluginProps) {
 
       <BlockTypeDrop
         blockType={blockType}
+        commandIds={commandIds}
         editor={editor}
         onBlockTypeChange={handleBlockTypeChange}
       />
@@ -212,6 +221,7 @@ export function FullToolbarPlugin({ className }: FullToolbarPluginProps) {
 
       <InsertPopover
         activeInsertIndex={activeInsertIndex}
+        commandIds={commandIds}
         dispatchUi={dispatchUi}
         insertOpen={insertOpen}
         onOpenChange={(open) =>
@@ -223,4 +233,4 @@ export function FullToolbarPlugin({ className }: FullToolbarPluginProps) {
       />
     </div>
   );
-}
+});
