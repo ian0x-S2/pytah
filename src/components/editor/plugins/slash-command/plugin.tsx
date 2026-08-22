@@ -183,6 +183,7 @@ export function SlashCommandPlugin({ commandIds }: SlashCommandPluginProps) {
   } = state;
   const commandListRef = useRef<HTMLDivElement | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  const lastPointerPositionRef = useRef<{ x: number; y: number } | null>(null);
 
   const filteredCommands = filterSlashCommands(availableCommands, query);
 
@@ -673,7 +674,7 @@ export function SlashCommandPlugin({ commandIds }: SlashCommandPluginProps) {
               finalFocus={false}
               initialFocus={false}
             >
-              <Command shouldFilter={false}>
+              <Command shouldFilter={false} value={selectedCommandId}>
                 <CommandList ref={commandListRef}>
                   <CommandGroup heading="Blocks">
                     {filteredCommands.map((command, index) => (
@@ -684,12 +685,31 @@ export function SlashCommandPlugin({ commandIds }: SlashCommandPluginProps) {
                             : ""
                         }
                         key={command.id}
-                        onMouseEnter={() =>
+                        onMouseMove={(event) => {
+                          const previousPosition =
+                            lastPointerPositionRef.current;
+                          lastPointerPositionRef.current = {
+                            x: event.clientX,
+                            y: event.clientY,
+                          };
+
+                          if (!previousPosition) {
+                            return;
+                          }
+
+                          const hasPointerMoved =
+                            previousPosition.x !== event.clientX ||
+                            previousPosition.y !== event.clientY;
+
+                          if (!hasPointerMoved) {
+                            return;
+                          }
+
                           dispatch({
                             type: "patch",
                             payload: { rawSelectedCommandId: command.id },
-                          })
-                        }
+                          });
+                        }}
                         onSelect={() => executeCommand(command.id)}
                         value={command.id}
                       >
