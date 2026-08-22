@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { ThemeToggle } from "@/components/docs/theme-toggle";
 import { HeroCube3D } from "@/components/home/hero-cube-3d";
 import { Button } from "@/components/ui/button";
+import { REPOSITORY_URL } from "@/lib/site";
 
 const features = [
   {
@@ -63,11 +64,7 @@ export function HomePage() {
                 Demo
               </Button>
             </Link>
-            <a
-              href="https://github.com"
-              rel="noopener noreferrer"
-              target="_blank"
-            >
+            <a href={REPOSITORY_URL} rel="noopener noreferrer" target="_blank">
               <Button size="sm" variant="ghost">
                 <CodeIcon className="size-3.5" />
                 <span className="hidden sm:inline">GitHub</span>
@@ -206,7 +203,7 @@ export function HomePage() {
             </Link>
             <a
               className="transition-colors hover:text-foreground"
-              href="https://github.com"
+              href={REPOSITORY_URL}
               rel="noopener noreferrer"
               target="_blank"
             >

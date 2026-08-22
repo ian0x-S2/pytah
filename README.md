@@ -1,5 +1,7 @@
 # Pytah
 
+[Repository](https://github.com/ian0x-S2/pytah) · [Issues](https://github.com/ian0x-S2/pytah/issues)
+
 Pytah is a rich text editor reference implementation and shadcn registry item built with React, Lexical, shadcn/Base UI, and Tailwind CSS v4.
 
 This repository is intentionally both:

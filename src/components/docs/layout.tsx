@@ -18,6 +18,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { REPOSITORY_URL } from "@/lib/site";
 import {
   DOCS_PAGE_GROUPS,
   type DocsPageDefinition,
@@ -112,7 +113,7 @@ function DocsSidebar() {
               render={
                 // biome-ignore lint/a11y/useAnchorContent: content is injected by useRender at runtime
                 <a
-                  href="https://github.com"
+                  href={REPOSITORY_URL}
                   rel="noopener noreferrer"
                   target="_blank"
                 />

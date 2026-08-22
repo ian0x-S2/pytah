@@ -3,6 +3,14 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ian0x-S2/pytah.git"
+  },
+  "homepage": "https://github.com/ian0x-S2/pytah#readme",
+  "bugs": {
+    "url": "https://github.com/ian0x-S2/pytah/issues"
+  },
   "scripts": {
     "dev": "vite",
     "build": "bun run registry:build && tsc -b && vite build",
