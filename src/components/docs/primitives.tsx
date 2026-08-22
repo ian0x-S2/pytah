@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 import type { HighlighterGeneric, ThemedToken, TokensResult } from "shiki";
 import { getSingletonHighlighter, getTokenStyleObject } from "shiki";
@@ -184,8 +185,20 @@ function useCodeTokens(
   return EMPTY_CODE_TOKENS_STATE;
 }
 
-function tokenStyleToReactStyle(token: ThemedToken) {
-  return getTokenStyleObject(token);
+const CSS_KEBAB_CASE_PROPERTY_PATTERN = /-([a-z])/g;
+
+function tokenStyleToReactStyle(token: ThemedToken): CSSProperties {
+  const styleObject = getTokenStyleObject(token);
+
+  return Object.fromEntries(
+    Object.entries(styleObject).map(([property, value]) => [
+      property.replace(
+        CSS_KEBAB_CASE_PROPERTY_PATTERN,
+        (_match, character: string) => character.toUpperCase()
+      ),
+      value,
+    ])
+  );
 }
 
 function normalizeCodeLanguage(language?: string): CodeLanguage | null {
