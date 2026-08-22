@@ -67,6 +67,7 @@ Key public extension points:
 - `slots`: replace visual surfaces without editing internals
 - `pluginSlots`: mount extra plugins around the built-in stack
 - `extraNodes`: register additional Lexical nodes
+- `extraFeatures`: contribute whole custom features (plugin, nodes, transformers, slash commands) without editing internals
 - `namespace`: customize the Lexical namespace
 
 ```tsx
@@ -75,6 +76,7 @@ Key public extension points:
   features={{ floatingToolbar: false, slashCommand: true }}
   pluginSlots={{ afterEditable: <MyPlugin /> }}
   extraNodes={[MyNode]}
+  extraFeatures={[myFeature]}
   toolbar="full"
 />
 ```
@@ -110,6 +112,8 @@ bun run registry:build # regenerate shadcn registry files under public/r/
 bun run registry:smoke # rebuild the registry and run the install smoke test
 bun run deps:check     # check dependency drift
 bun run deps:validate  # validate dependency updates end-to-end
+bun run lint           # run ESLint
+bun run test           # run editor tests (bun test)
 ```
 
 ## Documentation
@@ -123,6 +127,9 @@ Start with:
 - `/docs/contributing`
 - `/docs/architecture`
 - `/docs/plugins`
+- `/docs/api`
+- `/docs/components`
+- `/docs/theming`
 
 Feature guides are available under `/docs/guides/*`.
 
