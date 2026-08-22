@@ -1,3 +1,4 @@
+import { useLayoutEffect } from "react";
 import { Redirect, useRoute } from "wouter";
 import { DocsLayout } from "@/components/docs/layout";
 import { docsMdxComponents } from "@/components/docs/mdx-components";
@@ -7,6 +8,14 @@ import { DOCS_PAGE_BY_SLUG } from "./docs/manifest";
 export function DocsPage() {
   const [, params] = useRoute("/docs/*");
   const slug = params?.["*"];
+
+  useLayoutEffect(() => {
+    if (!slug) {
+      return;
+    }
+
+    window.scrollTo({ top: 0 });
+  }, [slug]);
 
   if (!slug) {
     return <Redirect to="/docs/overview" />;
