@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import {
   applyThemeToDOM,
   getSystemTheme,
@@ -21,7 +21,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setThemeState(next);
   };
 
-  useEffect(() => {
+  // Layout effect so the .dark class flips in the same commit as consumers
+  // (e.g. Shiki inline colors) — avoids a painted frame with mismatched
+  // tokens, which shows up as a flash on theme-styled elements.
+  useLayoutEffect(() => {
     applyThemeToDOM(resolvedTheme);
   }, [resolvedTheme]);
 

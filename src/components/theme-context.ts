@@ -39,19 +39,37 @@ export function disableTransitions(): () => void {
   const css = document.createElement("style");
   css.appendChild(
     document.createTextNode(
-      "*,*::before,*::after{-webkit-transition:none!important;-moz-transition:none!important;-o-transition:none!important;-ms-transition:none!important;transition:none!important}"
+      "*,*::before,*::after{-webkit-transition:none!important;-moz-transition:none!important;-o-transition:none!important;-ms-transition:none!important;transition:none!important;-webkit-animation-play-state:paused!important;animation-play-state:paused!important}"
     )
   );
   document.head.appendChild(css);
 
-  return () => {
-    // Force synchronous layout calculation so that styles apply with transitions disabled
-    (() => window.getComputedStyle(document.body))();
+  let removed = false;
 
-    // Re-enable transitions on the next tick
+  return () => {
+    // Force synchronous style/layout calculation so the theme swap applies
+    // while transitions are disabled and running animations are paused
+    window.getComputedStyle(document.body);
+
+    // Keep the suppression alive until the swapped frame has actually been
+    // painted: a bare 1ms timeout can fire before that frame is committed,
+    // letting elements with transition-* classes visibly interpolate.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (removed) {
+          return;
+        }
+        removed = true;
+        document.head.removeChild(css);
+      });
+    });
     setTimeout(() => {
+      if (removed) {
+        return;
+      }
+      removed = true;
       document.head.removeChild(css);
-    }, 1);
+    }, 100);
   };
 }
 
