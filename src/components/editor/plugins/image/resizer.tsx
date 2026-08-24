@@ -3,12 +3,23 @@
 import { calculateZoomLevel } from "@lexical/utils";
 import type { LexicalEditor } from "lexical";
 import { useLayoutEffect, useRef } from "react";
-
-type CornerDirection = "ne" | "nw" | "se" | "sw";
-type EdgeDirection = "e" | "n" | "s" | "w";
-type ResizeDirection = CornerDirection | EdgeDirection;
+import {
+  type CornerDirection,
+  computeNextSize,
+  type EdgeDirection,
+  getCursor,
+  type ResizeDirection,
+  type ResizeState,
+} from "./resize-geometry";
 
 interface ImageResizerProps {
+  /**
+   * Absolutely-positioned chrome (action buttons and the like) rendered
+   * inside the bounds-synced overlay. Because the overlay tracks the
+   * resized element's true box, decorations stay glued to its corners and
+   * edges even when ancestor containers clamp the element's layout width.
+   */
+  decorations?: React.ReactNode;
   /**
    * Also render edge handles that resize a single axis freely. Corners keep
    * the aspect-ratio-locked behavior; opt in for blocks like drawings where
@@ -22,21 +33,6 @@ interface ImageResizerProps {
   onResizeEnd: (width: number, height: number) => void;
   onResizeStart: () => void;
 }
-
-export interface ResizeState {
-  currentHeight: number;
-  currentWidth: number;
-  direction: ResizeDirection;
-  isResizing: boolean;
-  ratio: number;
-  startHeight: number;
-  startWidth: number;
-  startX: number;
-  startY: number;
-}
-
-const MIN_WIDTH = 100;
-const MIN_HEIGHT = 40;
 
 const CORNER_DIRECTIONS: CornerDirection[] = ["ne", "se", "sw", "nw"];
 const EDGE_DIRECTIONS: EdgeDirection[] = ["n", "e", "s", "w"];
@@ -63,75 +59,13 @@ const EDGE_BAR_CLASSES: Record<EdgeDirection, string> = {
   w: "h-6 w-1 cursor-ew-resize",
 };
 
-const clamp = (value: number, min: number, max: number) =>
-  Math.min(Math.max(value, min), max);
-
-const isEast = (d: ResizeDirection) => d === "ne" || d === "se" || d === "e";
-
-const getCursor = (d: ResizeDirection) => {
-  if (d === "n" || d === "s") {
-    return "ns-resize";
-  }
-
-  if (d === "e" || d === "w") {
-    return "ew-resize";
-  }
-
-  return d === "nw" || d === "se" ? "nwse-resize" : "nesw-resize";
-};
-
 /**
- * Computes the next box for a drag position. Corner drags stay width-driven
- * with locked aspect ratio; edge drags move one axis independently.
+ * Corner and edge handles rendered in an overlay that mirrors the resized
+ * element's true box, so handles stay glued to it even when ancestor
+ * containers clamp its layout width.
  */
-export const computeNextSize = (
-  positioning: ResizeState,
-  clientX: number,
-  clientY: number,
-  zoom: number,
-  maxWidthContainer: number
-): { height: number; width: number } => {
-  const dx = clientX / zoom - positioning.startX;
-  const dy = clientY / zoom - positioning.startY;
-  const { direction } = positioning;
-
-  if (direction === "n" || direction === "s") {
-    const delta = direction === "n" ? -dy : dy;
-    return {
-      height: clamp(
-        positioning.startHeight + delta,
-        MIN_HEIGHT,
-        Number.MAX_SAFE_INTEGER
-      ),
-      width: positioning.startWidth,
-    };
-  }
-
-  if (direction === "e" || direction === "w") {
-    const delta = isEast(direction) ? dx : -dx;
-    return {
-      height: positioning.startHeight,
-      width: clamp(
-        positioning.startWidth + delta,
-        MIN_WIDTH,
-        maxWidthContainer
-      ),
-    };
-  }
-
-  const delta = isEast(direction) ? dx : -dx;
-  const width = clamp(
-    positioning.startWidth + delta,
-    MIN_WIDTH,
-    maxWidthContainer
-  );
-  return {
-    height: width / positioning.ratio,
-    width,
-  };
-};
-
 export function ImageResizer({
+  decorations,
   editor,
   imageRef,
   maxWidth,
@@ -168,6 +102,12 @@ export function ImageResizer({
   // element's true corners. Anchor instead to the element's layout geometry
   // (offset* are unaffected by ancestor transforms/zoom) and re-sync whenever
   // the element or its positioning context changes.
+  //
+  // `imageRef` (the stable ref object) is the dependency, not `.current`:
+  // reading ref values during render is invalid. Callers bind the ref to an
+  // element that persists for this component's lifetime — the overlay mounts
+  // together with selection — and the ResizeObserver keeps bounds in sync
+  // after that.
   useLayoutEffect(() => {
     const image = imageRef.current;
     const controlWrapper = controlWrapperRef.current;
@@ -195,7 +135,7 @@ export function ImageResizer({
       observer.observe(offsetParent);
     }
     return () => observer.disconnect();
-  }, [imageRef.current]);
+  }, [imageRef]);
 
   const setStartCursor = (direction: ResizeDirection) => {
     const cursor = getCursor(direction);
@@ -335,6 +275,7 @@ export function ImageResizer({
             />
           ))
         : null}
+      {decorations}
     </div>
   );
 }

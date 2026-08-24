@@ -224,30 +224,30 @@ function ExcalidrawPreview({
           </button>
         </div>
 
-        {editable ? (
-          <button
-            aria-label="Edit drawing"
-            className="absolute -top-3 right-2 flex size-6 items-center justify-center rounded-md bg-popover shadow-lg ring-1 ring-border transition-colors hover:bg-accent"
-            onClick={(event) => {
-              event.stopPropagation();
-              openEditor();
-            }}
-            onMouseDown={(event) => {
-              event.preventDefault();
-            }}
-            style={{
-              opacity: isSelected ? undefined : 0,
-              pointerEvents: isSelected ? undefined : "none",
-            }}
-            tabIndex={isSelected ? 0 : -1}
-            type="button"
-          >
-            <PencilIcon className="size-3 text-muted-foreground" />
-          </button>
-        ) : null}
-
+        {/*
+         * The edit button lives inside the resizer's bounds-synced overlay so
+         * it hugs the handles at the drawing's true top-right corner. Anchoring
+         * it to this container instead would let it drift away whenever the
+         * committed width exceeds the clamped container (`max-w-full`).
+         */}
         {editable && isSelected ? (
           <ImageResizer
+            decorations={
+              <button
+                aria-label="Edit drawing"
+                className="absolute -top-3 right-2 z-10 flex size-6 items-center justify-center rounded-md bg-popover shadow-lg ring-1 ring-border transition-colors hover:bg-accent"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  openEditor();
+                }}
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                }}
+                type="button"
+              >
+                <PencilIcon className="size-3 text-muted-foreground" />
+              </button>
+            }
             edgeHandles
             editor={editor}
             imageRef={containerRef}

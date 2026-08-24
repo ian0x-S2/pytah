@@ -1,6 +1,6 @@
 import { deepStrictEqual } from "node:assert/strict";
 import { describe, test } from "node:test";
-import { computeNextSize, type ResizeState } from "./resizer";
+import { computeNextSize, type ResizeState } from "./resize-geometry";
 
 const createState = (overrides: Partial<ResizeState> = {}): ResizeState => ({
   currentHeight: 0,
