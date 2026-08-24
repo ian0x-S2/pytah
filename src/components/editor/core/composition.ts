@@ -4,6 +4,7 @@ import type { EditorChromeOptions, EditorFeatureFlags } from "./types";
 export const DEFAULT_EDITOR_FEATURES = {
   collapsible: true,
   draggableBlocks: true,
+  excalidraw: true,
   floatingLinkEditor: true,
   floatingToolbar: true,
   focusOnMount: true,

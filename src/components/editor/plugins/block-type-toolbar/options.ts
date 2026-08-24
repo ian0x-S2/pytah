@@ -18,6 +18,7 @@ export const BLOCK_TYPE_ORDER: BlockTypeValue[] = [
   "math",
   "image",
   "youtube",
+  "excalidraw",
   "collapsible",
   "columns",
   "table",
@@ -38,6 +39,7 @@ const BLOCK_DESCRIPTION_OVERRIDES: Partial<Record<BlockTypeValue, string>> = {
   check: "Todo items with checkboxes",
   code: "Monospace code block",
   columns: "Multi-column content layout",
+  excalidraw: "Draw a diagram or sketch",
   h1: "Main section title",
   h2: "Section heading",
   h3: "Subsection heading",
@@ -106,6 +108,7 @@ export const BLOCK_LABELS: Record<BlockTypeValue, string> = Object.fromEntries(
 export const INSERT_SECTION_TYPES = new Set<BlockTypeValue>([
   "collapsible",
   "columns",
+  "excalidraw",
   "hr",
   "image",
   "math",
@@ -121,5 +124,6 @@ export const INSERT_ACTION_ORDER: BlockTypeValue[] = [
   "math",
   "image",
   "youtube",
+  "excalidraw",
   "columns",
 ];

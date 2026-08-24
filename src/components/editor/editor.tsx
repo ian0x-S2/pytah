@@ -181,6 +181,7 @@ export function Editor({
   const handleSnapshotChange = (nextText: string, editor: LexicalEditor) => {
     setTextContent(nextText);
     setEditorInstance((currentEditor) => currentEditor ?? editor);
+    (window as unknown as { __editor?: LexicalEditor }).__editor = editor;
   };
 
   const handleSnapshotReady = (

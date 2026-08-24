@@ -7,6 +7,7 @@ import { CollapsiblePlugin } from "../plugins/collapsible/plugin";
 import { FocusOnMountPlugin } from "../plugins/core/focus-on-mount";
 import { SeedContentPlugin } from "../plugins/core/seed-content";
 import { DraggableBlockPlugin } from "../plugins/draggable-block/plugin";
+import { ExcalidrawPlugin } from "../plugins/excalidraw/plugin";
 import { FloatingToolbarPlugin } from "../plugins/floating-toolbar/plugin";
 import { ImagePlugin } from "../plugins/image/plugin";
 import { LayoutPlugin } from "../plugins/layout/plugin";
@@ -27,6 +28,7 @@ import { YouTubePlugin } from "../plugins/youtube/plugin";
 import { CollapsibleContainerNode } from "./nodes/collapsible/container-node";
 import { CollapsibleContentNode } from "./nodes/collapsible/content-node";
 import { CollapsibleTitleNode } from "./nodes/collapsible/title-node";
+import { ExcalidrawNode } from "./nodes/excalidraw/node";
 import { ImageNode } from "./nodes/image/node";
 import { LayoutContainerNode } from "./nodes/layout/container-node";
 import { LayoutItemNode } from "./nodes/layout/item-node";
@@ -83,6 +85,12 @@ export const EDITOR_FEATURES: readonly EditorFeature[] = [
     plugin: YouTubePlugin,
     transformers: [YOUTUBE_MARKDOWN_TRANSFORMER],
     slashCommandIds: ["youtube"],
+  },
+  {
+    flag: "excalidraw",
+    nodes: [ExcalidrawNode],
+    plugin: ExcalidrawPlugin,
+    slashCommandIds: ["excalidraw"],
   },
   {
     flag: "math",

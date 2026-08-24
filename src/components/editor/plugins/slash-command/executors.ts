@@ -21,6 +21,7 @@ import {
   $isParagraphNode,
   type ElementNode,
 } from "lexical";
+import { $createExcalidrawNode } from "../../core/nodes/excalidraw/node";
 import { $createMathNode } from "../../core/nodes/math/node";
 import { replaceElementWithCollapsible } from "../collapsible/utils";
 import { DEFAULT_LAYOUT_TEMPLATE } from "../layout/constants";
@@ -142,6 +143,19 @@ const applyMathCommand = (targetElement: ElementNode) => {
   paragraph.select();
 };
 
+const applyExcalidrawCommand = (targetElement: ElementNode) => {
+  // Replacing the selected paragraph leaves the selection dangling, which
+  // rolls the whole update back — re-anchor it on a trailing paragraph.
+  // The empty drawing block opens its editing surface as soon as it renders;
+  // discarding removes the node and keeps the paragraph.
+  const excalidrawNode = $createExcalidrawNode();
+  const paragraph = $createParagraphNode();
+
+  targetElement.replace(excalidrawNode);
+  excalidrawNode.insertAfter(paragraph);
+  paragraph.select();
+};
+
 export const SLASH_COMMAND_EXECUTORS: Record<
   SlashCommandId,
   (element: ElementNode) => void
@@ -151,6 +165,7 @@ export const SLASH_COMMAND_EXECUTORS: Record<
   code: applyCodeCommand,
   collapsible: applyCollapsibleCommand,
   columns: applyColumnsCommand,
+  excalidraw: applyExcalidrawCommand,
   h1: (element) => applyHeadingCommand(element, "h1"),
   h2: (element) => applyHeadingCommand(element, "h2"),
   h3: (element) => applyHeadingCommand(element, "h3"),

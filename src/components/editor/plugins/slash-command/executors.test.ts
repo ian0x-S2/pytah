@@ -3,8 +3,10 @@ import { describe, test } from "node:test";
 import { createHeadlessEditor } from "@lexical/headless";
 import {
   $getRoot,
+  $getSelection,
   $isElementNode,
   $isParagraphNode,
+  $isRangeSelection,
   type LexicalNode,
 } from "lexical";
 import { DEFAULT_EDITOR_FEATURES } from "../../core/composition";
@@ -176,6 +178,41 @@ describe("slash command executors", () => {
       strictEqual(mathNode.getType(), "math");
       const trailingParagraph = root.getLastChildOrThrow();
       strictEqual(trailingParagraph.getType(), "paragraph");
+    });
+  });
+
+  test("replaces a paragraph with an empty drawing and re-anchors selection", async () => {
+    const editor = createTestEditor();
+    await initializeEditor(editor);
+
+    editor.update(() => {
+      const root = $getRoot();
+      const paragraph = root.getFirstChildOrThrow();
+
+      if (!$isParagraphNode(paragraph)) {
+        throw new Error("Expected initial paragraph node");
+      }
+
+      // Mirror the slash menu flow: the replaced paragraph holds the anchor
+      // selection, so the executor must leave a valid selection behind.
+      paragraph.select();
+      SLASH_COMMAND_EXECUTORS.excalidraw(paragraph);
+    });
+
+    await flushEditorUpdates();
+
+    editor.getEditorState().read(() => {
+      const root = $getRoot();
+      strictEqual(root.getChildrenSize(), 2);
+      const drawingNode = root.getFirstChildOrThrow();
+      strictEqual(drawingNode.getType(), "excalidraw");
+
+      const selection = $getSelection();
+      strictEqual($isRangeSelection(selection), true);
+      if ($isRangeSelection(selection)) {
+        const topLevel = selection.anchor.getNode().getTopLevelElement();
+        strictEqual(topLevel?.getType(), "paragraph");
+      }
     });
   });
 });

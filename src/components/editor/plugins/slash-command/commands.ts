@@ -10,6 +10,7 @@ import {
   ListOrderedIcon,
   MinusIcon,
   PanelsTopLeftIcon,
+  PencilRulerIcon,
   PlayIcon,
   SquareCheckIcon,
   TableIcon,
@@ -111,6 +112,13 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     id: "youtube",
     keywords: ["youtube", "video", "embed", "yt"],
     label: "YouTube",
+  },
+  {
+    description: "Draw a diagram or sketch",
+    icon: PencilRulerIcon,
+    id: "excalidraw",
+    keywords: ["drawing", "diagram", "sketch", "whiteboard", "canvas"],
+    label: "Drawing",
   },
   {
     description: "Expandable toggle section",

@@ -1,0 +1,137 @@
+---
+title: "Excalidraw Drawing"
+description: "Extension guide for the excalidraw drawing block: DecoratorNode implementation, lazy-loaded editing surface, and plugin wiring."
+group: "extension-guides"
+icon: "PencilRuler"
+label: "Excalidraw"
+order: 55
+badge: "Extension Guide"
+---
+
+import componentSource from "@/components/editor/plugins/excalidraw/component.tsx?raw";
+import imageSource from "@/components/editor/plugins/excalidraw/image.tsx?raw";
+import modalSource from "@/components/editor/plugins/excalidraw/modal.tsx?raw";
+import nodeSource from "@/components/editor/core/nodes/excalidraw/node.tsx?raw";
+import pluginSource from "@/components/editor/plugins/excalidraw/plugin.tsx?raw";
+import sceneSource from "@/components/editor/plugins/excalidraw/scene.ts?raw";
+
+<Callout title="Extension guide">
+  This page is useful when you want to add a heavy, canvas-style block with
+  decorator rendering, on-demand loading, and HTML round-trip support.
+</Callout>
+
+## Files
+
+<FileTree
+  items={[
+    "src/components/editor/core/nodes/excalidraw/",
+    "  node.tsx          ← ExcalidrawNode + serialization",
+    "src/components/editor/plugins/excalidraw/",
+    "  commands.ts       ← INSERT_EXCALIDRAW_COMMAND",
+    "  scene.ts          ← scene parse/serialize helpers",
+    "  image.tsx         ← static svg preview (lazy exportToSvg)",
+    "  modal.tsx         ← full-screen drawing surface (lazy @excalidraw/excalidraw)",
+    "  component.tsx     ← decorator component (select / resize / edit)",
+    "  plugin.tsx        ← ExcalidrawPlugin (insert command)",
+  ]}
+/>
+
+## node.tsx
+
+`ExcalidrawNode` extends `DecoratorNode` and stores the whole drawing as a
+serialized JSON string in `__data`, plus optional `__width`/`__height`
+dimensions for resizing. HTML export embeds the currently rendered svg so
+pasted content stays visible outside the editor, and tags the element with a
+`data-lexical-excalidraw-json` attribute that `importDOM` uses to restore an
+editable drawing on paste.
+
+<CodeBlock label="src/components/editor/core/nodes/excalidraw/node.tsx" language="tsx">
+  {nodeSource}
+</CodeBlock>
+
+## scene.ts
+
+The stored payload keeps only what is needed to re-open a drawing: elements,
+the files referenced by image elements, and a small subset of app state. The
+helpers below normalize parsing so corrupt or foreign data degrades to an
+empty scene instead of throwing.
+
+<CodeBlock label="src/components/editor/plugins/excalidraw/scene.ts" language="ts">
+  {sceneSource}
+</CodeBlock>
+
+## Lazy loading
+
+The `@excalidraw/excalidraw` runtime is large, so nothing imports it at module
+scope. Both consumers load it on demand:
+
+- `image.tsx` dynamically imports `exportToSvg` when a scene preview renders.
+- `modal.tsx` lazily loads the `<Excalidraw>` editor plus its stylesheet the
+  first time the drawing surface opens.
+
+Documents that never contain a drawing never download the package.
+
+<CodeBlock label="src/components/editor/plugins/excalidraw/image.tsx" language="tsx">
+  {imageSource}
+</CodeBlock>
+
+<CodeBlock label="src/components/editor/plugins/excalidraw/modal.tsx" language="tsx">
+  {modalSource}
+</CodeBlock>
+
+## component.tsx
+
+The decorator component owns the interaction model: click selects the block,
+double-click (or the pencil affordance) opens the editing surface, drag start
+is suppressed, and Backspace/Delete removes a selected empty-handed block.
+Saving writes the serialized scene back into the node; discarding removes the
+node entirely when it was inserted empty.
+
+<CodeBlock label="src/components/editor/plugins/excalidraw/component.tsx" language="tsx">
+  {componentSource}
+</CodeBlock>
+
+## plugin.tsx
+
+`ExcalidrawPlugin` registers `INSERT_EXCALIDRAW_COMMAND` and inserts an empty
+drawing block via `$insertNodeToNearestRoot`. Because an empty, editable block
+opens its editing surface on mount, slash commands (`/drawing`) and toolbar
+inserts reuse this single path — no dialog plumbing in either surface.
+
+<CodeBlock label="src/components/editor/plugins/excalidraw/plugin.tsx" language="tsx">
+  {pluginSource}
+</CodeBlock>
+
+## Registration
+
+Excalidraw drawings ship behind the `excalidraw` feature flag. To add the
+capability to a custom composition, contribute a descriptor via
+`extraFeatures`:
+
+```tsx
+import { $createExcalidrawNode, $isExcalidrawNode, ExcalidrawNode } from "@/components/editor/core/nodes/excalidraw/node";
+import { ExcalidrawPlugin } from "@/components/editor/plugins/excalidraw/plugin";
+
+<Editor
+  extraFeatures={[
+    {
+      id: "excalidraw",
+      plugin: ExcalidrawPlugin,
+      nodes: [ExcalidrawNode],
+      slashCommandIds: ["excalidraw"],
+    },
+  ]}
+/>
+```
+
+### Inserting a drawing programmatically
+
+```tsx
+editor.dispatchCommand(INSERT_EXCALIDRAW_COMMAND, undefined);
+```
+
+<Callout title="Fonts and assets" variant="tip">
+  Excalidraw loads its hand-drawn fonts from a public CDN by default. Set
+  `window.EXCALIDRAW_ASSET_PATH` before the editor mounts to self-host the
+  assets from your own origin.
+</Callout>

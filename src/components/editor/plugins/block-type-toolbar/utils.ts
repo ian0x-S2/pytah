@@ -33,6 +33,7 @@ const HEADING_VALUES = ["h1", "h2", "h3"] as const;
 const EXECUTOR_BLOCK_TYPES = [
   "collapsible",
   "columns",
+  "excalidraw",
   "hr",
   "math",
 ] as const satisfies readonly BlockTypeValue[];

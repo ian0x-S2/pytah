@@ -32,6 +32,7 @@ export interface EditorShellContext {
 export interface EditorFeatureFlags {
   collapsible?: boolean;
   draggableBlocks?: boolean;
+  excalidraw?: boolean;
   floatingLinkEditor?: boolean;
   floatingToolbar?: boolean;
   focusOnMount?: boolean;

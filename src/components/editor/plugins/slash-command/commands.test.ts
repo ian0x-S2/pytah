@@ -9,6 +9,7 @@ describe("slash command id resolution", () => {
     const ids = resolveSlashCommandIds(
       resolveEditorFeatures({
         collapsible: false,
+        excalidraw: false,
         images: false,
         layouts: false,
         math: false,
@@ -24,6 +25,7 @@ describe("slash command id resolution", () => {
     const ids = resolveSlashCommandIds(
       resolveEditorFeatures({
         collapsible: true,
+        excalidraw: true,
         images: false,
         layouts: false,
         math: false,
@@ -32,7 +34,7 @@ describe("slash command id resolution", () => {
       })
     );
 
-    deepStrictEqual(ids, ["collapsible", "table"]);
+    deepStrictEqual(ids, ["excalidraw", "collapsible", "table"]);
   });
 });
 

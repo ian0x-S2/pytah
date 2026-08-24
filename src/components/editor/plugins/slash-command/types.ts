@@ -13,6 +13,7 @@ export type SlashCommandId =
   | "math"
   | "image"
   | "youtube"
+  | "excalidraw"
   | "collapsible"
   | "columns"
   | "table"
