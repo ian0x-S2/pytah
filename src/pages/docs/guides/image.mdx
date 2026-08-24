@@ -13,6 +13,7 @@ import imageCommandsSource from "@/components/editor/plugins/image/commands.ts?r
 import imageComponentSource from "@/components/editor/plugins/image/component.tsx?raw";
 import imagePluginSource from "@/components/editor/plugins/image/plugin.tsx?raw";
 import imageResizerSource from "@/components/editor/plugins/image/resizer.tsx?raw";
+import resizeGeometrySource from "@/components/editor/plugins/image/resize-geometry.ts?raw";
 import imageUtilsSource from "@/components/editor/plugins/image/utils.ts?raw";
 
 <Callout title="Extension guide">
@@ -32,7 +33,8 @@ import imageUtilsSource from "@/components/editor/plugins/image/utils.ts?raw";
     "  utils.ts          ← file helpers",
     "  plugin.tsx        ← ImagePlugin (insert / paste / drop)",
     "  component.tsx     ← ImageComponent (click / select / delete / align)",
-    "  resizer.tsx       ← ImageResizer (4-corner drag-to-resize)",
+    "  resizer.tsx       ← ImageResizer (drag-to-resize overlay)",
+    "  resize-geometry.ts ← pure resize math (directions, clamps)",
   ]}
 />
 
@@ -84,12 +86,27 @@ change alignment. Mounts `ImageResizer` when the node is selected.
 ## resizer.tsx
 
 Renders four corner drag handles (`ne`, `se`, `sw`, `nw`) as
-absolute-positioned divs. Uses pointer events to track drag distance and
-update the image's inline style in real-time, then calls `onResizeEnd` with
-the final pixel dimensions.
+absolute-positioned divs. The overlay mirrors the resized element's true box
+via offset-based bounds syncing, so handles stay glued to it even when an
+ancestor container clamps the element's layout width. Uses pointer events to
+track drag distance and update the image's inline style in real-time, then
+calls `onResizeEnd` with the final pixel dimensions. Other block types (like
+drawings) reuse `ImageResizer` with `edgeHandles` for free axis resizing and
+a `decorations` slot for chrome that must hug the handles.
 
 <CodeBlock label="src/components/editor/plugins/image/resizer.tsx" language="tsx">
   {imageResizerSource}
+</CodeBlock>
+
+## resize-geometry.ts
+
+The pure resize math shared by every consumer of `ImageResizer`: direction
+types, min-size clamps, cursor mapping, and `computeNextSize` (corner drags
+lock the aspect ratio; edge drags move one axis independently). Keeping it
+component-free lets tests cover it headlessly.
+
+<CodeBlock label="src/components/editor/plugins/image/resize-geometry.ts" language="ts">
+  {resizeGeometrySource}
 </CodeBlock>
 
 ## Registration

@@ -31,7 +31,7 @@ import sceneSource from "@/components/editor/plugins/excalidraw/scene.ts?raw";
     "  scene.ts          ← scene parse/serialize helpers",
     "  image.tsx         ← static svg preview (lazy exportToSvg)",
     "  modal.tsx         ← full-screen drawing surface (lazy @excalidraw/excalidraw)",
-    "  component.tsx     ← decorator component (select / resize / edit)",
+    "  component.tsx     ← decorator component (select / resize / edit / align)",
     "  plugin.tsx        ← ExcalidrawPlugin (insert command)",
   ]}
 />
@@ -40,10 +40,12 @@ import sceneSource from "@/components/editor/plugins/excalidraw/scene.ts?raw";
 
 `ExcalidrawNode` extends `DecoratorNode` and stores the whole drawing as a
 serialized JSON string in `__data`, plus optional `__width`/`__height`
-dimensions for resizing. HTML export embeds the currently rendered svg so
-pasted content stays visible outside the editor, and tags the element with a
-`data-lexical-excalidraw-json` attribute that `importDOM` uses to restore an
-editable drawing on paste.
+dimensions for resizing and an `__alignment` field that mirrors how
+`ImageNode` handles left/center/right positioning. HTML export embeds the
+currently rendered svg so pasted content stays visible outside the editor,
+applies the same auto-margin alignment styles as images, and tags the element
+with a `data-lexical-excalidraw-json` attribute that `importDOM` uses to
+restore an editable drawing on paste.
 
 <CodeBlock label="src/components/editor/core/nodes/excalidraw/node.tsx" language="tsx">
   {nodeSource}
@@ -83,9 +85,11 @@ Documents that never contain a drawing never download the package.
 
 The decorator component owns the interaction model: click selects the block,
 double-click (or the pencil affordance) opens the editing surface, drag start
-is suppressed, and Backspace/Delete removes a selected empty-handed block.
-Saving writes the serialized scene back into the node; discarding removes the
-node entirely when it was inserted empty.
+is suppressed, Backspace/Delete removes a selected empty-handed block, and
+`FORMAT_ELEMENT_COMMAND` repositions the block while it is selected — the
+same left/center/right flow images use. Saving writes the serialized scene
+back into the node; discarding removes the node entirely when it was inserted
+empty.
 
 <CodeBlock label="src/components/editor/plugins/excalidraw/component.tsx" language="tsx">
   {componentSource}
