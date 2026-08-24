@@ -19,8 +19,10 @@ import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Separator } from "@/components/ui/separator";
 import { Toggle } from "@/components/ui/toggle";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { ColorSwatches } from "../../ui/color-swatches";
+import { ToolbarTooltip } from "../../ui/toolbar-tooltip";
 import { LINK_PLACEHOLDER_URL } from "../link-behavior/utils";
 import { applyBgColor, applyTextColor, toggleToolbarFormat } from "./actions";
 import { DEFAULT_FORMAT_STATE, EMPTY_TOOLBAR_POSITION } from "./constants";
@@ -36,12 +38,27 @@ import type {
 } from "./types";
 
 const TOOLBAR_FORMAT_ACTIONS = [
-  { format: "bold", icon: BoldIcon, key: "isBold" },
-  { format: "italic", icon: ItalicIcon, key: "isItalic" },
-  { format: "underline", icon: UnderlineIcon, key: "isUnderline" },
-  { format: "strikethrough", icon: StrikethroughIcon, key: "isStrikethrough" },
-  { format: "highlight", icon: HighlighterIcon, key: "isHighlight" },
-  { format: "code", icon: CodeIcon, key: "isCode" },
+  { format: "bold", icon: BoldIcon, key: "isBold", label: "Bold" },
+  { format: "italic", icon: ItalicIcon, key: "isItalic", label: "Italic" },
+  {
+    format: "underline",
+    icon: UnderlineIcon,
+    key: "isUnderline",
+    label: "Underline",
+  },
+  {
+    format: "strikethrough",
+    icon: StrikethroughIcon,
+    key: "isStrikethrough",
+    label: "Strikethrough",
+  },
+  {
+    format: "highlight",
+    icon: HighlighterIcon,
+    key: "isHighlight",
+    label: "Highlight",
+  },
+  { format: "code", icon: CodeIcon, key: "isCode", label: "Inline code" },
 ] as const;
 
 export function FloatingToolbarPlugin() {
@@ -146,50 +163,59 @@ export function FloatingToolbarPlugin() {
         )}
         role="toolbar"
       >
-        {TOOLBAR_FORMAT_ACTIONS.map((action) => {
-          const Icon = action.icon;
+        <TooltipProvider>
+          {TOOLBAR_FORMAT_ACTIONS.map((action) => {
+            const Icon = action.icon;
 
-          return (
+            return (
+              <ToolbarTooltip key={action.format} label={action.label}>
+                <Toggle
+                  aria-label={action.label}
+                  onPressedChange={() =>
+                    toggleToolbarFormat(editor, action.format)
+                  }
+                  pressed={formats[action.key]}
+                  size="sm"
+                >
+                  <Icon />
+                </Toggle>
+              </ToolbarTooltip>
+            );
+          })}
+
+          <Separator className="mx-0.5 h-5" orientation="vertical" />
+
+          {/* Text color — uses `color` CSS property */}
+          <ColorSwatches
+            activeColor={formats.textColor}
+            icon={BaselineIcon}
+            label="Text color"
+            onColorChange={(color) => applyTextColor(editor, color)}
+            onOpenChange={handleColorPickerOpenChange}
+          />
+
+          {/* Background color — uses `background-color` CSS property */}
+          <ColorSwatches
+            activeColor={formats.bgColor}
+            icon={PaintBucketIcon}
+            label="Background color"
+            onColorChange={(color) => applyBgColor(editor, color)}
+            onOpenChange={handleColorPickerOpenChange}
+          />
+
+          <Separator className="mx-0.5 h-5" orientation="vertical" />
+
+          <ToolbarTooltip label="Link">
             <Toggle
-              key={action.format}
-              onPressedChange={() => toggleToolbarFormat(editor, action.format)}
-              pressed={formats[action.key]}
+              aria-label="Link"
+              onPressedChange={handleLinkToggle}
+              pressed={formats.isLink}
               size="sm"
             >
-              <Icon />
+              <LinkIcon />
             </Toggle>
-          );
-        })}
-
-        <Separator className="mx-0.5 h-5" orientation="vertical" />
-
-        {/* Text color — uses `color` CSS property */}
-        <ColorSwatches
-          activeColor={formats.textColor}
-          icon={BaselineIcon}
-          label="Text color"
-          onColorChange={(color) => applyTextColor(editor, color)}
-          onOpenChange={handleColorPickerOpenChange}
-        />
-
-        {/* Background color — uses `background-color` CSS property */}
-        <ColorSwatches
-          activeColor={formats.bgColor}
-          icon={PaintBucketIcon}
-          label="Background color"
-          onColorChange={(color) => applyBgColor(editor, color)}
-          onOpenChange={handleColorPickerOpenChange}
-        />
-
-        <Separator className="mx-0.5 h-5" orientation="vertical" />
-
-        <Toggle
-          onPressedChange={handleLinkToggle}
-          pressed={formats.isLink}
-          size="sm"
-        >
-          <LinkIcon />
-        </Toggle>
+          </ToolbarTooltip>
+        </TooltipProvider>
       </div>
     </div>,
     document.body

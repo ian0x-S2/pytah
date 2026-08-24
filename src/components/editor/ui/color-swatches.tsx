@@ -8,6 +8,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { COLOR_PALETTE, type ColorSwatch } from "../core/colors";
 
@@ -56,34 +61,45 @@ export function ColorSwatches({
   return (
     <Popover onOpenChange={handleOpenChange} open={open}>
       {/*
-       * onMouseDown is prevented so that clicking the trigger does not move
-       * focus away from the editor — the Lexical selection is preserved and
-       * the color is applied to the correct range.
+       * The tooltip trigger renders the popover trigger which renders the
+       * button, so hover/focus and press behaviors merge onto a single
+       * interactive element.  onMouseDown is prevented so that clicking the
+       * trigger does not move focus away from the editor — the Lexical
+       * selection is preserved and the color is applied to the correct range.
        */}
-      <PopoverTrigger
-        className={cn(className)}
-        onMouseDown={(e) => e.preventDefault()}
-        render={
-          <Button
-            aria-label={label}
-            className="flex-col gap-0.5"
-            size="icon-sm"
-            variant="ghost"
-          />
-        }
-      >
-        <Icon aria-hidden className="size-3.5 shrink-0" />
-        {/* Thin color bar indicates the currently active color */}
-        <div
-          aria-hidden
-          className="h-0.5 w-3.5 rounded-full transition-colors"
-          style={{
-            backgroundColor: activeColor || "transparent",
-            outline: activeColor ? undefined : "1px dashed hsl(var(--border))",
-            outlineOffset: "-1px",
-          }}
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <PopoverTrigger
+              className={cn(className)}
+              onMouseDown={(e) => e.preventDefault()}
+              render={
+                <Button
+                  aria-label={label}
+                  className="flex-col gap-0.5"
+                  size="icon-sm"
+                  variant="ghost"
+                />
+              }
+            >
+              <Icon aria-hidden className="size-3.5 shrink-0" />
+              {/* Thin color bar indicates the currently active color */}
+              <div
+                aria-hidden
+                className="h-0.5 w-3.5 rounded-full transition-colors"
+                style={{
+                  backgroundColor: activeColor || "transparent",
+                  outline: activeColor
+                    ? undefined
+                    : "1px dashed hsl(var(--border))",
+                  outlineOffset: "-1px",
+                }}
+              />
+            </PopoverTrigger>
+          }
         />
-      </PopoverTrigger>
+        <TooltipContent>{label}</TooltipContent>
+      </Tooltip>
 
       {/*
        * onMouseDown is also prevented here so that clicking any swatch
