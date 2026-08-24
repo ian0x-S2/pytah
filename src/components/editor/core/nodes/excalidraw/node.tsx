@@ -19,8 +19,11 @@ import { ExcalidrawComponent } from "../../../plugins/excalidraw/component";
 
 export type ExcalidrawDimension = number | "inherit";
 
+export type ExcalidrawAlignment = "left" | "center" | "right";
+
 export type SerializedExcalidrawNode = Spread<
   {
+    alignment?: ExcalidrawAlignment;
     data: string;
     height?: ExcalidrawDimension;
     width?: ExcalidrawDimension;
@@ -31,6 +34,20 @@ export type SerializedExcalidrawNode = Spread<
 /** Attribute used for HTML round-trips of excalidraw scenes. */
 export const EXCALIDRAW_DATA_ATTRIBUTE = "data-lexical-excalidraw-json";
 
+const getExcalidrawAlignment = (domNode: HTMLElement): ExcalidrawAlignment => {
+  const { marginLeft, marginRight } = domNode.style;
+
+  if (marginLeft === "auto" && marginRight === "auto") {
+    return "center";
+  }
+
+  if (marginLeft === "auto") {
+    return "right";
+  }
+
+  return "left";
+};
+
 const convertExcalidrawElement = (
   domNode: HTMLElement
 ): DOMConversionOutput | null => {
@@ -40,11 +57,15 @@ const convertExcalidrawElement = (
   }
 
   return {
-    node: $createExcalidrawNode({ data }),
+    node: $createExcalidrawNode({
+      alignment: getExcalidrawAlignment(domNode),
+      data,
+    }),
   };
 };
 
 export interface ExcalidrawNodePayload {
+  alignment?: ExcalidrawAlignment;
   data?: string;
   height?: ExcalidrawDimension;
   key?: NodeKey;
@@ -58,18 +79,21 @@ export interface ExcalidrawNodePayload {
  * re-imported as an editable drawing.
  */
 export class ExcalidrawNode extends DecoratorNode<JSX.Element> {
+  __alignment: ExcalidrawAlignment;
   __data: string;
   __height: ExcalidrawDimension;
   __width: ExcalidrawDimension;
 
   constructor(
     data = "[]",
+    alignment: ExcalidrawAlignment = "left",
     width: ExcalidrawDimension = "inherit",
     height: ExcalidrawDimension = "inherit",
     key?: NodeKey
   ) {
     super(key);
     this.__data = data;
+    this.__alignment = alignment;
     this.__width = width;
     this.__height = height;
   }
@@ -81,6 +105,7 @@ export class ExcalidrawNode extends DecoratorNode<JSX.Element> {
   static clone(node: ExcalidrawNode): ExcalidrawNode {
     return new ExcalidrawNode(
       node.__data,
+      node.__alignment,
       node.__width,
       node.__height,
       node.__key
@@ -104,6 +129,7 @@ export class ExcalidrawNode extends DecoratorNode<JSX.Element> {
 
   static importJSON(serializedNode: SerializedExcalidrawNode): ExcalidrawNode {
     return $createExcalidrawNode({
+      alignment: serializedNode.alignment,
       data: serializedNode.data,
       height: serializedNode.height,
       width: serializedNode.width,
@@ -116,6 +142,7 @@ export class ExcalidrawNode extends DecoratorNode<JSX.Element> {
     return super
       .updateFromJSON(serializedNode)
       .setData(serializedNode.data ?? "[]")
+      .setAlignment(serializedNode.alignment ?? "left")
       .setHeight(serializedNode.height ?? "inherit")
       .setWidth(serializedNode.width ?? "inherit");
   }
@@ -123,6 +150,7 @@ export class ExcalidrawNode extends DecoratorNode<JSX.Element> {
   exportJSON(): SerializedExcalidrawNode {
     return {
       ...super.exportJSON(),
+      alignment: this.__alignment,
       data: this.__data,
       height: this.__height === "inherit" ? undefined : this.__height,
       type: "excalidraw",
@@ -134,6 +162,15 @@ export class ExcalidrawNode extends DecoratorNode<JSX.Element> {
   exportDOM(editor: LexicalEditor): DOMExportOutput {
     const element = document.createElement("span");
     element.style.display = "block";
+
+    // Mirror ImageNode's export so both block types round-trip alignment.
+    if (this.__alignment === "center") {
+      element.style.marginLeft = "auto";
+      element.style.marginRight = "auto";
+    } else if (this.__alignment === "right") {
+      element.style.marginLeft = "auto";
+      element.style.marginRight = "0";
+    }
 
     // Embed the currently rendered svg so exported/pasted HTML shows the
     // drawing even where excalidraw is unavailable.
@@ -172,6 +209,7 @@ export class ExcalidrawNode extends DecoratorNode<JSX.Element> {
   decorate(): JSX.Element {
     return (
       <ExcalidrawComponent
+        alignment={this.__alignment}
         data={this.__data}
         height={this.__height}
         nodeKey={this.getKey()}
@@ -188,6 +226,10 @@ export class ExcalidrawNode extends DecoratorNode<JSX.Element> {
     return this.getLatest().__data;
   }
 
+  getAlignment(): ExcalidrawAlignment {
+    return this.getLatest().__alignment;
+  }
+
   getWidth(): ExcalidrawDimension {
     return this.getLatest().__width;
   }
@@ -199,6 +241,12 @@ export class ExcalidrawNode extends DecoratorNode<JSX.Element> {
   setData(data: string): this {
     const writable = this.getWritable();
     writable.__data = data;
+    return writable;
+  }
+
+  setAlignment(alignment: ExcalidrawAlignment): this {
+    const writable = this.getWritable();
+    writable.__alignment = alignment;
     return writable;
   }
 
@@ -216,12 +264,13 @@ export class ExcalidrawNode extends DecoratorNode<JSX.Element> {
 }
 
 export function $createExcalidrawNode({
+  alignment,
   data,
   height,
   key,
   width,
 }: ExcalidrawNodePayload = {}): ExcalidrawNode {
-  return new ExcalidrawNode(data, width, height, key);
+  return new ExcalidrawNode(data, alignment, width, height, key);
 }
 
 export function $isExcalidrawNode(

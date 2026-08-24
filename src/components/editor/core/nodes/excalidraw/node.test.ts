@@ -56,6 +56,7 @@ describe("ExcalidrawNode", () => {
         width: 320,
       });
       deepStrictEqual(node.exportJSON(), {
+        alignment: "left",
         data: SCENE_JSON,
         height: 240,
         type: "excalidraw",
@@ -70,6 +71,7 @@ describe("ExcalidrawNode", () => {
     editor.update(() => {
       const node = $createExcalidrawNode();
       deepStrictEqual(node.exportJSON(), {
+        alignment: "left",
         data: "[]",
         height: undefined,
         type: "excalidraw",
@@ -113,6 +115,28 @@ describe("ExcalidrawNode", () => {
       strictEqual(node.getData(), SCENE_JSON);
       strictEqual(node.getWidth(), 480);
       strictEqual(node.getHeight(), 360);
+    });
+  });
+
+  test("round-trips alignment through JSON", () => {
+    const editor = createTestEditor();
+    editor.update(() => {
+      const node = $createExcalidrawNode({ data: SCENE_JSON });
+      strictEqual(node.getAlignment(), "left");
+
+      node.setAlignment("center");
+      strictEqual(node.getAlignment(), "center");
+
+      const restored = ExcalidrawNode.importJSON(
+        node.exportJSON() as SerializedExcalidrawNode
+      );
+      strictEqual(restored.getAlignment(), "center");
+
+      const rightNode = $createExcalidrawNode({
+        alignment: "right",
+        data: SCENE_JSON,
+      });
+      strictEqual(rightNode.getAlignment(), "right");
     });
   });
 

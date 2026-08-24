@@ -11,6 +11,7 @@ import {
   CLICK_COMMAND,
   COMMAND_PRIORITY_LOW,
   DRAGSTART_COMMAND,
+  FORMAT_ELEMENT_COMMAND,
   KEY_BACKSPACE_COMMAND,
   KEY_DELETE_COMMAND,
   type LexicalEditor,
@@ -19,7 +20,10 @@ import {
 import { PencilIcon } from "lucide-react";
 import type { RefObject } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { $isExcalidrawNode } from "../../core/nodes/excalidraw/node";
+import {
+  $isExcalidrawNode,
+  type ExcalidrawAlignment,
+} from "../../core/nodes/excalidraw/node";
 import { ImageResizer } from "../image/resizer";
 import { ExcalidrawImage } from "./image";
 import {
@@ -33,6 +37,7 @@ import {
 } from "./scene";
 
 interface ExcalidrawComponentProps {
+  alignment: ExcalidrawAlignment;
   data: string;
   height: number | "inherit";
   nodeKey: NodeKey;
@@ -45,6 +50,7 @@ interface SelectionBehaviorOptions {
   editable: boolean;
   isResizing: boolean;
   isSelected: boolean;
+  nodeKey: NodeKey;
   openEditor: () => void;
   removeNode: () => void;
   setSelected: (selected: boolean) => void;
@@ -58,8 +64,8 @@ const isInsideButton = (
 };
 
 /**
- * Wires click-to-select, double-click-to-edit, drag suppression and
- * delete-key removal for one drawing block.
+ * Wires click-to-select, double-click-to-edit, drag suppression, alignment
+ * and delete-key removal for one drawing block.
  */
 const useExcalidrawSelectionBehavior = ({
   buttonRef,
@@ -67,6 +73,7 @@ const useExcalidrawSelectionBehavior = ({
   editable,
   isResizing,
   isSelected,
+  nodeKey,
   openEditor,
   removeNode,
   setSelected,
@@ -132,6 +139,30 @@ const useExcalidrawSelectionBehavior = ({
         COMMAND_PRIORITY_LOW
       ),
       editor.registerCommand(
+        FORMAT_ELEMENT_COMMAND,
+        (format) => {
+          if (!isSelected) {
+            return false;
+          }
+
+          if (
+            !(format === "left" || format === "center" || format === "right")
+          ) {
+            return false;
+          }
+
+          editor.update(() => {
+            const node = $getNodeByKey(nodeKey);
+            if ($isExcalidrawNode(node)) {
+              node.setAlignment(format as ExcalidrawAlignment);
+            }
+          });
+
+          return true;
+        },
+        COMMAND_PRIORITY_LOW
+      ),
+      editor.registerCommand(
         KEY_BACKSPACE_COMMAND,
         removeSelectedDrawing,
         COMMAND_PRIORITY_LOW
@@ -149,6 +180,7 @@ const useExcalidrawSelectionBehavior = ({
     editor,
     isResizing,
     isSelected,
+    nodeKey,
     openEditor,
     removeNode,
     setSelected,
@@ -171,6 +203,7 @@ const applyDimensions = (
 };
 
 interface ExcalidrawPreviewProps {
+  alignment: ExcalidrawAlignment;
   buttonRef: RefObject<HTMLButtonElement | null>;
   containerRef: RefObject<HTMLDivElement | null>;
   editable: boolean;
@@ -185,6 +218,7 @@ interface ExcalidrawPreviewProps {
 }
 
 function ExcalidrawPreview({
+  alignment,
   buttonRef,
   containerRef,
   editable,
@@ -197,78 +231,93 @@ function ExcalidrawPreview({
   setIsResizing,
   width,
 }: ExcalidrawPreviewProps) {
+  // Mirrors ImageComponent's wrappers so both block types align identically.
+  let figureClassName = "my-4 w-fit max-w-full";
+  let alignmentClassName = "inline-flex max-w-full";
+
+  if (alignment === "center") {
+    figureClassName = "my-4 w-full";
+    alignmentClassName = "flex max-w-full justify-center";
+  } else if (alignment === "right") {
+    figureClassName = "my-4 ml-auto w-fit max-w-full";
+    alignmentClassName = "flex max-w-full justify-end";
+  }
+
   return (
-    <figure className="my-4 w-fit max-w-full">
-      <div className="relative inline-flex max-w-full">
-        <div
-          className={
-            isSelected && editable
-              ? "rounded-xl ring-1 ring-primary/40 ring-offset-2 ring-offset-background"
-              : "rounded-xl"
-          }
-        >
-          <button
-            aria-label="Drawing preview, double-click to edit"
-            className="block cursor-default overflow-hidden rounded-lg border border-border/60 bg-muted/20 shadow-xs"
-            ref={buttonRef}
-            type="button"
-          >
-            <ExcalidrawImage
-              appState={scene.appState}
-              containerRef={containerRef}
-              elements={scene.elements}
-              files={scene.files}
-              height={height}
-              width={width}
-            />
-          </button>
-        </div>
-
-        {/*
-         * The edit button lives inside the resizer's bounds-synced overlay so
-         * it hugs the handles at the drawing's true top-right corner. Anchoring
-         * it to this container instead would let it drift away whenever the
-         * committed width exceeds the clamped container (`max-w-full`).
-         */}
-        {editable && isSelected ? (
-          <ImageResizer
-            decorations={
-              <button
-                aria-label="Edit drawing"
-                className="absolute -top-3 right-2 z-10 flex size-6 items-center justify-center rounded-md bg-popover shadow-lg ring-1 ring-border transition-colors hover:bg-accent"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  openEditor();
-                }}
-                onMouseDown={(event) => {
-                  event.preventDefault();
-                }}
-                type="button"
-              >
-                <PencilIcon className="size-3 text-muted-foreground" />
-              </button>
+    <figure className={figureClassName}>
+      <div className={alignmentClassName}>
+        <div className="relative inline-flex max-w-full">
+          <div
+            className={
+              isSelected && editable
+                ? "rounded-xl ring-1 ring-primary/40 ring-offset-2 ring-offset-background"
+                : "rounded-xl"
             }
-            edgeHandles
-            editor={editor}
-            imageRef={containerRef}
-            onResizeEnd={(nextWidth, nextHeight) => {
-              window.setTimeout(() => {
-                setIsResizing(false);
-              }, 200);
+          >
+            <button
+              aria-label="Drawing preview, double-click to edit"
+              className="block cursor-default overflow-hidden rounded-lg border border-border/60 bg-muted/20 shadow-xs"
+              ref={buttonRef}
+              type="button"
+            >
+              <ExcalidrawImage
+                appState={scene.appState}
+                containerRef={containerRef}
+                elements={scene.elements}
+                files={scene.files}
+                height={height}
+                width={width}
+              />
+            </button>
+          </div>
 
-              applyDimensions(editor, nodeKey, nextWidth, nextHeight);
-            }}
-            onResizeStart={() => {
-              setIsResizing(true);
-            }}
-          />
-        ) : null}
+          {/*
+           * The edit button lives inside the resizer's bounds-synced overlay so
+           * it hugs the handles at the drawing's true top-right corner. Anchoring
+           * it to this container instead would let it drift away whenever the
+           * committed width exceeds the clamped container (`max-w-full`).
+           */}
+          {editable && isSelected ? (
+            <ImageResizer
+              decorations={
+                <button
+                  aria-label="Edit drawing"
+                  className="absolute -top-3 right-2 z-10 flex size-6 items-center justify-center rounded-md bg-popover shadow-lg ring-1 ring-border transition-colors hover:bg-accent"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    openEditor();
+                  }}
+                  onMouseDown={(event) => {
+                    event.preventDefault();
+                  }}
+                  type="button"
+                >
+                  <PencilIcon className="size-3 text-muted-foreground" />
+                </button>
+              }
+              edgeHandles
+              editor={editor}
+              imageRef={containerRef}
+              onResizeEnd={(nextWidth, nextHeight) => {
+                window.setTimeout(() => {
+                  setIsResizing(false);
+                }, 200);
+
+                applyDimensions(editor, nodeKey, nextWidth, nextHeight);
+              }}
+              onResizeStart={() => {
+                setIsResizing(true);
+              }}
+            />
+          ) : null}
+        </div>
       </div>
     </figure>
   );
 }
 
 export function ExcalidrawComponent({
+  alignment,
   data,
   height,
   nodeKey,
@@ -309,6 +358,7 @@ export function ExcalidrawComponent({
     editable,
     isResizing,
     isSelected,
+    nodeKey,
     openEditor,
     removeNode,
     setSelected,
@@ -365,6 +415,7 @@ export function ExcalidrawComponent({
 
       {scene.elements.length > 0 ? (
         <ExcalidrawPreview
+          alignment={alignment}
           buttonRef={buttonRef}
           containerRef={containerRef}
           editable={editable}
