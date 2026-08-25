@@ -143,7 +143,13 @@ const collectSourceFiles = async (directory) => {
       continue;
     }
 
-    if (!(entry.name.endsWith(".ts") || entry.name.endsWith(".tsx"))) {
+    if (
+      !(
+        entry.name.endsWith(".ts") ||
+        entry.name.endsWith(".tsx") ||
+        entry.name.endsWith(".css")
+      )
+    ) {
       continue;
     }
 

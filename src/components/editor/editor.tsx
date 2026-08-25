@@ -1,6 +1,7 @@
 "use client";
 
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import "./editor.css";
 import type { LexicalEditor } from "lexical";
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";

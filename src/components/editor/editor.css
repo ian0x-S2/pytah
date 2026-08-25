@@ -1,0 +1,13 @@
+/* Editor theme rules that must ship with the registry. The repo's app also
+ * declares these in its own index.css; this file exists so installed apps
+ * render correctly without replicating editor rules by hand.
+ *
+ * Reset <mark> UA default so the Lexical highlight theme class on the inner
+ * <span> is the sole source of color. Without this, the browser's built-in
+ * yellow shows through the rounded corners of the inner span (sharp 4-corner
+ * artifact behind the highlight).
+ */
+mark {
+  color: inherit;
+  background-color: transparent;
+}
