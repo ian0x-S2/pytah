@@ -2,7 +2,7 @@
 
 [Repository](https://github.com/ian0x-S2/pytah) · [Issues](https://github.com/ian0x-S2/pytah/issues)
 
-Pytah is a rich text editor reference implementation and shadcn registry item built with React, Lexical, shadcn/Base UI, and Tailwind CSS v4.
+Pytah is a rich text editor reference implementation and modular shadcn registry built with React, Lexical, shadcn/Base UI, and Tailwind CSS v4.
 
 This repository is intentionally both:
 
@@ -22,6 +22,25 @@ If you want to contribute to the editor core in this repository:
 
 - read [`CONTRIBUTING.md`](./CONTRIBUTING.md)
 - then use `/docs/contributing` and `/docs/architecture`
+
+## Installing the Editor
+
+The registry ships a lean core item plus one optional item per content feature (`editor-image`, `editor-tables`, `editor-excalidraw`, ...), each carrying only its own dependencies. Configure the namespace once and add what you need:
+
+```bash
+bunx shadcn@latest add @pytah/editor        # lean core
+bunx shadcn@latest add @pytah/editor-full   # or everything
+```
+
+Installed features are composed through descriptors:
+
+```tsx
+import { imageFeature } from "@/components/editor/plugins/image/feature";
+
+<Editor extraFeatures={[imageFeature]} />
+```
+
+Full walkthrough in [`AGENT_GUIDE.md`](./AGENT_GUIDE.md).
 
 ## Quick Start
 
@@ -47,6 +66,7 @@ Open the app locally and use:
 - Lexical-based rich editor with HTML and Markdown output
 - Copy/paste-oriented authoring flows
 - Slash command, floating toolbar, draggable blocks, tables, embeds, and layouts
+- Modular registry: a lean core editor plus one optional install per content feature
 - Ready-made editor experience plus public composition hooks
 - In-app docs sourced from the real implementation
 
@@ -62,12 +82,12 @@ Pytah supports three levels of use:
 
 Key public extension points:
 
-- `features`: enable or disable built-in behavior plugins
+- `features`: enable or disable core behavior plugins (history, toolbars, slash command, ...)
 - `chrome`: show or hide default shell pieces like header, footer, action bar, and outputs
 - `slots`: replace visual surfaces without editing internals
 - `pluginSlots`: mount extra plugins around the built-in stack
 - `extraNodes`: register additional Lexical nodes
-- `extraFeatures`: contribute whole custom features (plugin, nodes, transformers, slash commands) without editing internals
+- `extraFeatures`: compose installed content features (images, tables, drawings, ...) and contribute whole custom capabilities without editing internals
 - `namespace`: customize the Lexical namespace
 
 ```tsx
