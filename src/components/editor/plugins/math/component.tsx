@@ -1,5 +1,9 @@
 "use client";
 
+// Bundled with the feature so `editor-math` installs render correctly
+// without the consumer importing the stylesheet manually. Bundlers dedupe
+// it if the app also imports it from its own CSS.
+import "katex/dist/katex.min.css";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { useLexicalEditable } from "@lexical/react/useLexicalEditable";
 import { useLexicalNodeSelection } from "@lexical/react/useLexicalNodeSelection";
