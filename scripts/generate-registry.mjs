@@ -32,10 +32,12 @@ const editorUiFiles = [
   "separator.tsx",
   "textarea.tsx",
   "toggle.tsx",
+  "tooltip.tsx",
 ];
 
 const registryDependencyNames = [
   "@base-ui/react",
+  "@excalidraw/excalidraw",
   "@lexical/clipboard",
   "@lexical/code",
   "@lexical/code-shiki",
@@ -53,6 +55,7 @@ const registryDependencyNames = [
   "class-variance-authority",
   "clsx",
   "cmdk",
+  "katex",
   "lexical",
   "lucide-react",
   "tailwind-merge",
@@ -207,6 +210,20 @@ const getLibEntries = () => {
         "theme-provider.tsx"
       ),
       target: path.posix.join("src", "components", "theme-provider.tsx"),
+    }),
+    createRegistryFileEntry({
+      absolutePath: path.join(
+        projectRoot,
+        "src",
+        "components",
+        "theme-context.ts"
+      ),
+      registryPath: path.posix.join(
+        registryPathPrefix,
+        "components",
+        "theme-context.ts"
+      ),
+      target: path.posix.join("src", "components", "theme-context.ts"),
     }),
   ]);
 };

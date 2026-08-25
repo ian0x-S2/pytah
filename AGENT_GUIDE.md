@@ -48,8 +48,8 @@ O `shadcn add` instala automaticamente:
 
 - todo o `src/components/editor/` (core + plugins + ui)
 - os primitivos `ui` necessários (`button`, `command`, `dialog`, `dropdown-menu`,
-  `input`, `input-group`, `popover`, `separator`, `textarea`, `toggle`)
-- `theme-provider.tsx` (usado pelo code highlight)
+  `input`, `input-group`, `popover`, `separator`, `textarea`, `toggle`, `tooltip`)
+- `theme-provider.tsx` + `theme-context.ts` (usados pelo code highlight)
 - `lib/utils.ts` (helper `cn()`)
 - todas as dependências (`lexical`, `@lexical/*`, `@base-ui/react`, `cmdk`, ...)
 - os tokens `--highlight` no CSS
@@ -121,7 +121,8 @@ Use quando o `shadcn add` não estiver disponível ou você preferir controle to
 bun add lexical @lexical/react @lexical/rich-text @lexical/list @lexical/code \
   @lexical/code-shiki @lexical/link @lexical/table @lexical/html @lexical/markdown \
   @lexical/utils @lexical/selection @lexical/clipboard @lexical/history \
-  @lexical/extension @base-ui/react class-variance-authority clsx tailwind-merge \
+  @lexical/extension @base-ui/react @excalidraw/excalidraw katex \
+  class-variance-authority clsx tailwind-merge \
   cmdk lucide-react tw-animate-css
 ```
 
@@ -142,7 +143,9 @@ src/components/ui/              ← copie só estes primitivos:
     separator.tsx
     textarea.tsx
     toggle.tsx
+    tooltip.tsx
 src/components/theme-provider.tsx
+src/components/theme-context.ts
 src/lib/utils.ts
 ```
 
@@ -241,9 +244,9 @@ O passo a passo é o mesmo, mudando só a configuração do Tailwind v4 e o alia
 
 **Método B (manual):**
 
-1. Dependências instaladas (incluindo `tw-animate-css`)
+1. Dependências instaladas (incluindo `tw-animate-css` e `katex`)
 2. Tailwind v4 configurado (postcss ou plugin vite)
-3. Arquivos copiados: `editor/`, `ui/*` (10 arquivos), `theme-provider.tsx`, `lib/utils.ts`
+3. Arquivos copiados: `editor/`, `ui/*` (11 arquivos), `theme-provider.tsx`, `theme-context.ts`, `lib/utils.ts`
 4. Alias `@/` → `./src` no tsconfig
 5. Tokens `--highlight` no CSS + bridge `@theme inline`
 6. `ThemeProvider` envolvendo o editor
