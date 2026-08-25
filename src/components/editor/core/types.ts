@@ -11,6 +11,7 @@ export interface EditorSnapshot {
 }
 
 export interface EditorActionBarControls {
+  onExportMarkdown?: () => void;
   onLoadHtml: () => void;
   onLoadMarkdown: () => void;
   onReset: () => void;
@@ -31,6 +32,7 @@ export interface EditorShellContext {
 }
 
 export interface EditorFeatureFlags {
+  exportMarkdown?: boolean;
   floatingLinkEditor?: boolean;
   floatingToolbar?: boolean;
   focusOnMount?: boolean;

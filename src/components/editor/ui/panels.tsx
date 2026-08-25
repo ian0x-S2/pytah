@@ -1,6 +1,6 @@
 "use client";
 
-import { FileCode2Icon, FileTextIcon } from "lucide-react";
+import { DownloadIcon, FileCode2Icon, FileTextIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { EditorSnapshot } from "../core/types";
@@ -8,6 +8,7 @@ import { OutputPanel } from "./chrome";
 
 interface EditorActionBarProps {
   className?: string;
+  onExportMarkdown?: () => void;
   onLoadHtml: () => void;
   onLoadMarkdown: () => void;
   onReset: () => void;
@@ -15,6 +16,7 @@ interface EditorActionBarProps {
 
 export function EditorActionBar({
   className,
+  onExportMarkdown,
   onLoadHtml,
   onLoadMarkdown,
   onReset,
@@ -40,6 +42,17 @@ export function EditorActionBar({
         <Button onClick={onReset} size="sm" type="button" variant="ghost">
           Reset
         </Button>
+        {onExportMarkdown ? (
+          <Button
+            onClick={onExportMarkdown}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            <DownloadIcon />
+            Export .md
+          </Button>
+        ) : null}
       </div>
     </div>
   );

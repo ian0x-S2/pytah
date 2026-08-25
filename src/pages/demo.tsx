@@ -1,5 +1,7 @@
+import type { LexicalEditor } from "lexical";
 import {
   BookOpenIcon,
+  DownloadIcon,
   EyeIcon,
   ListTreeIcon,
   MaximizeIcon,
@@ -7,10 +9,14 @@ import {
   PanelTopIcon,
   PencilIcon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 import { ThemeToggle } from "@/components/docs/theme-toggle";
-import type { EditorToolbar } from "@/components/editor/core/types";
+import type {
+  EditorSnapshot,
+  EditorToolbar,
+} from "@/components/editor/core/types";
+import { EXPORT_MARKDOWN_COMMAND } from "@/components/editor/plugins/export-markdown/commands";
 import { EditorWithToc } from "@/components/editor/plugins/toc/editor-with-toc";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -28,6 +34,7 @@ export function DemoPage() {
   const [zen, setZen] = useState(false);
   const [toolbar, setToolbar] = useState<EditorToolbar>(false);
   const [showToc, setShowToc] = useState(false);
+  const editorRef = useRef<LexicalEditor | null>(null);
 
   useEffect(() => {
     const restoreScrollRestoration = history.scrollRestoration;
@@ -46,6 +53,17 @@ export function DemoPage() {
       const idx = TOOLBAR_CYCLE.indexOf(prev);
       return TOOLBAR_CYCLE[(idx + 1) % TOOLBAR_CYCLE.length];
     });
+  };
+
+  const handleSnapshotChange = (
+    _snapshot: EditorSnapshot,
+    editor: LexicalEditor
+  ) => {
+    editorRef.current = editor;
+  };
+
+  const handleExportMarkdown = () => {
+    editorRef.current?.dispatchCommand(EXPORT_MARKDOWN_COMMAND, undefined);
   };
 
   return (
@@ -120,6 +138,14 @@ export function DemoPage() {
                 </>
               )}
             </Button>
+            <Button
+              className="gap-1.5"
+              onClick={handleExportMarkdown}
+              size="sm"
+              variant="ghost"
+            >
+              <DownloadIcon className="size-3.5" /> Export .md
+            </Button>
             <Link href="/docs/getting-started">
               <Button className="gap-1.5" size="sm" variant="ghost">
                 <BookOpenIcon className="size-3.5" /> Docs
@@ -152,6 +178,9 @@ export function DemoPage() {
               editable={editable}
               extraFeatures={demoEditorFeatures}
               minimal
+              onChange={(snapshot, editor) =>
+                handleSnapshotChange(snapshot, editor)
+              }
               toc={tocVisible ? undefined : null}
               toolbar={toolbar}
             />

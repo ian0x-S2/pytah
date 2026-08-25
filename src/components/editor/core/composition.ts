@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { EditorChromeOptions, EditorFeatureFlags } from "./types";
 
 export const DEFAULT_EDITOR_FEATURES = {
+  exportMarkdown: true,
   floatingLinkEditor: true,
   floatingToolbar: true,
   focusOnMount: true,

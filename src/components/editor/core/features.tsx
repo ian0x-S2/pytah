@@ -4,6 +4,7 @@ import type { Transformer } from "@lexical/markdown";
 import type { InitialConfigType } from "@lexical/react/LexicalComposer";
 import type { ComponentType } from "react";
 import { FocusOnMountPlugin } from "../plugins/core/focus-on-mount";
+import { MarkdownExportPlugin } from "../plugins/export-markdown/plugin";
 import { FloatingToolbarPlugin } from "../plugins/floating-toolbar/plugin";
 import { FloatingLinkEditorPlugin } from "../plugins/link-behavior/floating-link-editor";
 import { BUILTIN_MARKDOWN_TRANSFORMERS } from "../plugins/markdown/transformers";
@@ -57,6 +58,10 @@ export const EDITOR_FEATURES: readonly EditorFeature[] = [
     editableOnly: true,
     flag: "floatingToolbar",
     plugin: FloatingToolbarPlugin,
+  },
+  {
+    flag: "exportMarkdown",
+    plugin: MarkdownExportPlugin,
   },
 ];
 

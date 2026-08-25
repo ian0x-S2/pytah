@@ -34,6 +34,7 @@ import type {
   EditorSnapshot,
 } from "./core/types";
 import { readEditorSnapshot } from "./core/utils";
+import { EXPORT_MARKDOWN_COMMAND } from "./plugins/export-markdown/commands";
 import { EditorHeader, EditorShell } from "./ui/chrome";
 import { EditorContent } from "./ui/content";
 import { EditorActionBar, EditorOutputGrid } from "./ui/panels";
@@ -206,6 +207,14 @@ export function Editor({
     await copyEditorOutput(serializedSnapshot.html);
   };
 
+  const handleExportMarkdown = () => {
+    if (!editorInstance) {
+      return;
+    }
+
+    editorInstance.dispatchCommand(EXPORT_MARKDOWN_COMMAND, undefined);
+  };
+
   const handleReset = () => {
     if (!editorInstance) {
       return;
@@ -243,6 +252,9 @@ export function Editor({
   };
 
   const actionBarControls: EditorActionBarControls = {
+    onExportMarkdown: resolvedFeatures.exportMarkdown
+      ? handleExportMarkdown
+      : undefined,
     onLoadHtml: handleLoadHtmlExample,
     onLoadMarkdown: handleLoadMarkdownExample,
     onReset: handleReset,
