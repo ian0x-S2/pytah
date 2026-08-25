@@ -5,16 +5,17 @@ import type {
   MultilineElementTransformer,
   TextMatchTransformer,
 } from "@lexical/markdown";
-import { DEFAULT_EDITOR_FEATURES } from "../../core/composition";
 import { createEditorConfig } from "../../core/config";
-import { resolveFeatureNodes } from "../../core/features";
 import { $createMathNode, MathNode } from "../../core/nodes/math/node";
-import { EDITOR_MARKDOWN_TRANSFORMERS } from "../markdown/transformers";
+import {
+  MATH_BLOCK_MARKDOWN_TRANSFORMER,
+  MATH_INLINE_MARKDOWN_TRANSFORMER,
+} from "../../core/nodes/math/transformers";
 
 const createTestEditor = () => {
   const config = createEditorConfig({
     editable: true,
-    featureNodes: resolveFeatureNodes(DEFAULT_EDITOR_FEATURES),
+    featureNodes: [MathNode],
   });
   return createHeadlessEditor({
     editable: config.editable,
@@ -30,9 +31,8 @@ const createTestEditor = () => {
 describe("Math Plugin and Transformers", () => {
   test("exports inline math to markdown", () => {
     const editor = createTestEditor();
-    const inlineTransformer = EDITOR_MARKDOWN_TRANSFORMERS.find(
-      (t): t is TextMatchTransformer => "trigger" in t && t.trigger === "$"
-    );
+    const inlineTransformer: TextMatchTransformer | undefined =
+      MATH_INLINE_MARKDOWN_TRANSFORMER;
     strictEqual(Boolean(inlineTransformer), true);
 
     const exportFn = inlineTransformer?.export;
@@ -51,10 +51,8 @@ describe("Math Plugin and Transformers", () => {
 
   test("exports block math to markdown", () => {
     const editor = createTestEditor();
-    const blockTransformer = EDITOR_MARKDOWN_TRANSFORMERS.find(
-      (t): t is MultilineElementTransformer =>
-        "regExpStart" in t && t.dependencies.includes(MathNode)
-    );
+    const blockTransformer: MultilineElementTransformer | undefined =
+      MATH_BLOCK_MARKDOWN_TRANSFORMER;
     strictEqual(Boolean(blockTransformer), true);
 
     const exportFn = blockTransformer?.export;

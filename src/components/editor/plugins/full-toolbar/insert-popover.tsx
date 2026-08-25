@@ -19,7 +19,7 @@ import {
 } from "../block-type-toolbar/options";
 import type { BlockTypeValue } from "../block-type-toolbar/types";
 import { applyBlockType } from "../block-type-toolbar/utils";
-import { useInsertDialogs } from "../slash-command/use-insert-dialogs";
+import { getSlashRunner } from "../slash-command/executors";
 import type { FullToolbarUiAction } from "./types";
 
 interface InsertPopoverProps {
@@ -44,8 +44,6 @@ export const InsertPopover = memo(function InsertPopover({
 }: InsertPopoverProps) {
   const [editor] = useLexicalComposerContext();
   const insertOptionRefs = useRef<Array<HTMLButtonElement | null>>([]);
-  const { dialogs, openColumns, openImage, openYouTube } =
-    useInsertDialogs("insert");
 
   const availableOptions = getAvailableBlockOptions(
     commandIds ?? BLOCK_TYPE_ORDER
@@ -63,27 +61,14 @@ export const InsertPopover = memo(function InsertPopover({
   };
 
   const handleSelect = (value: BlockTypeValue) => {
-    if (value === "image") {
-      close();
-      openImage();
-      return;
-    }
+    close();
 
-    if (value === "youtube") {
-      close();
-      openYouTube();
-      return;
-    }
-
-    // Columns opens the layout preset picker, matching the slash menu flow.
-    if (value === "columns") {
-      close();
-      openColumns();
+    if (INSERT_SECTION_TYPES.has(value)) {
+      getSlashRunner(value)?.(editor);
       return;
     }
 
     applyBlockType(editor, value);
-    close();
   };
 
   const insertActions = insertOptions.map((option) => ({
@@ -156,69 +141,66 @@ export const InsertPopover = memo(function InsertPopover({
   };
 
   return (
-    <>
-      <Popover onOpenChange={onOpenChange} open={insertOpen}>
-        <PopoverTrigger
-          render={
-            <Button
-              aria-label="Insert"
-              className="h-7 gap-1.5 rounded-full px-2.5 text-xs"
-              size="sm"
-              type="button"
-              variant="ghost"
-            />
-          }
+    <Popover onOpenChange={onOpenChange} open={insertOpen}>
+      <PopoverTrigger
+        render={
+          <Button
+            aria-label="Insert"
+            className="h-7 gap-1.5 rounded-full px-2.5 text-xs"
+            size="sm"
+            type="button"
+            variant="ghost"
+          />
+        }
+      >
+        <PlusIcon className="size-3.5" />
+        <span>Insert</span>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-44 p-1">
+        <div
+          className="space-y-0.5"
+          onKeyDown={handleInsertListKeyDown}
+          role="listbox"
         >
-          <PlusIcon className="size-3.5" />
-          <span>Insert</span>
-        </PopoverTrigger>
-        <PopoverContent align="start" className="w-44 p-1">
-          <div
-            className="space-y-0.5"
-            onKeyDown={handleInsertListKeyDown}
-            role="listbox"
-          >
-            {insertOptions.map((option, optionIndex) => {
-              const Icon = BLOCK_ICONS[option.value];
-              const isActive = optionIndex === activeInsertIndex;
+          {insertOptions.map((option, optionIndex) => {
+            const Icon = BLOCK_ICONS[option.value];
+            const isActive = optionIndex === activeInsertIndex;
 
-              return (
-                <button
-                  aria-selected={isActive}
-                  className={cn(
-                    "flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none",
-                    isActive && "bg-accent"
-                  )}
-                  key={option.value}
-                  onClick={() => handleSelect(option.value)}
-                  onFocus={() =>
-                    dispatchUi({
-                      type: "set-active-insert-index",
-                      payload: optionIndex,
-                    })
-                  }
-                  onMouseEnter={() =>
-                    dispatchUi({
-                      type: "set-active-insert-index",
-                      payload: optionIndex,
-                    })
-                  }
-                  ref={(element) => {
-                    insertOptionRefs.current[optionIndex] = element;
-                  }}
-                  role="option"
-                  tabIndex={optionIndex === activeInsertIndex ? 0 : -1}
-                  type="button"
-                >
-                  <Icon className="size-4 shrink-0 text-muted-foreground" />
-                  {option.label}
-                </button>
-              );
-            })}
-          </div>
-        </PopoverContent>
-      </Popover>
-      {dialogs}
-    </>
+            return (
+              <button
+                aria-selected={isActive}
+                className={cn(
+                  "flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none",
+                  isActive && "bg-accent"
+                )}
+                key={option.value}
+                onClick={() => handleSelect(option.value)}
+                onFocus={() =>
+                  dispatchUi({
+                    type: "set-active-insert-index",
+                    payload: optionIndex,
+                  })
+                }
+                onMouseEnter={() =>
+                  dispatchUi({
+                    type: "set-active-insert-index",
+                    payload: optionIndex,
+                  })
+                }
+                ref={(element) => {
+                  insertOptionRefs.current[optionIndex] = element;
+                }}
+                role="option"
+                tabIndex={optionIndex === activeInsertIndex ? 0 : -1}
+                type="button"
+              >
+                <Icon className="size-4 shrink-0 text-muted-foreground" />
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 });

@@ -151,6 +151,8 @@ editor files.
 
 ```tsx
 import { Editor } from "@/components/editor/editor";
+import { imageFeature } from "@/components/editor/plugins/image/feature";
+import { youtubeFeature } from "@/components/editor/plugins/youtube/feature";
 import { MyAnalyticsPlugin } from "@/components/editor/plugins/my-analytics/plugin";
 import { MyCalloutNode } from "@/components/editor/core/nodes/my-callout/node";
 
@@ -159,11 +161,10 @@ export function CustomEditorExample() {
     <Editor
       chrome={{ header: false, outputs: false }}
       extraNodes={[MyCalloutNode]}
+      extraFeatures={[imageFeature, youtubeFeature]}
       features={{
         floatingToolbar: false,
-        images: false,
         slashCommand: true,
-        youtube: false,
       }}
       pluginSlots={{
         afterEditable: <MyAnalyticsPlugin />,
@@ -190,7 +191,8 @@ The `Editor` component accepts the following props:
 The most important composition hooks are:
 
 ```tsx
-features        // enable/disable built-in behavior plugins
+features        // enable/disable built-in behavior plugins (core only)
+extraFeatures   // install content features (images, tables...) and custom capabilities
 chrome          // show/hide default shell/header/footer/action bar/output panels
 slots           // replace default visual surfaces
 pluginSlots     // mount extra plugins around the built-in plugin stack

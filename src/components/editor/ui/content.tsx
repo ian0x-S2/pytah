@@ -10,22 +10,20 @@ import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPl
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { TabIndentationPlugin } from "@lexical/react/LexicalTabIndentationPlugin";
 import type { LexicalEditor } from "lexical";
-import type { ComponentType } from "react";
+import { type ComponentType, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import {
   type ResolvedEditorFeatureFlags,
   renderEditorSlot,
 } from "../core/composition";
-import {
-  EDITOR_FEATURES,
-  renderSeedContentPlugin,
-  renderSlashCommandPlugin,
-} from "../core/features";
+import { EditorTransformersContext } from "../core/editor-transformers-context";
+import { EDITOR_FEATURES, renderSlashCommandPlugin } from "../core/features";
 import type {
   EditorChromeSlots,
   EditorPluginSlots,
   EditorSnapshot,
   EditorToolbar,
+  ExtraEditorFeature,
 } from "../core/types";
 import { BlockTypeToolbarPlugin } from "../plugins/block-type-toolbar/plugin";
 import { CodeHighlightPlugin } from "../plugins/code-highlight/plugin";
@@ -34,6 +32,11 @@ import { EditorStatePlugin } from "../plugins/core/editor-state";
 import { HorizontalRulePlugin } from "../plugins/core/horizontal-rule";
 import { FullToolbarPlugin } from "../plugins/full-toolbar/plugin";
 import { LinkBehaviorPlugin } from "../plugins/link-behavior/plugin";
+import {
+  registerSlashRunner,
+  unregisterSlashRunner,
+} from "../plugins/slash-command/executors";
+import type { FeatureSlashCommand } from "../plugins/slash-command/types";
 import { EditorFooter } from "./chrome";
 
 interface EditorTopToolbarProps {
@@ -75,10 +78,10 @@ function EditorTopToolbar({
 }
 
 interface EditorContentProps {
-  commandIds: readonly string[];
+  commands: readonly FeatureSlashCommand[];
   contentClassName?: string;
   editable: boolean;
-  extraFeaturePlugins: readonly { id: string; plugin: ComponentType }[];
+  extraFeatures: readonly ExtraEditorFeature[];
   features: ResolvedEditorFeatureFlags;
   footerSlot?: EditorChromeSlots["footer"];
   initialHtml?: string;
@@ -97,7 +100,7 @@ interface EditorContentProps {
 
 interface DefaultEditorPluginsProps {
   editable: boolean;
-  extraFeaturePlugins: readonly { id: string; plugin: ComponentType }[];
+  extraFeatures: readonly ExtraEditorFeature[];
   features: ResolvedEditorFeatureFlags;
   initialHtml?: string;
   initialMarkdown?: string;
@@ -108,7 +111,7 @@ interface DefaultEditorPluginsProps {
 
 function DefaultEditorPlugins({
   editable,
-  extraFeaturePlugins,
+  extraFeatures,
   features,
   initialHtml,
   initialMarkdown,
@@ -121,7 +124,7 @@ function DefaultEditorPlugins({
   });
 
   return (
-    <>
+    <EditorTransformersContext.Provider value={transformers}>
       {features.history ? <HistoryPlugin /> : null}
       <CodeHighlightPlugin />
       <ListPlugin />
@@ -134,6 +137,14 @@ function DefaultEditorPlugins({
         }
         return <Plugin key={feature.flag} />;
       })}
+      {/* Extras without `editableOnly` mount for every mode, so read-only
+            surfaces keep rendering installed nodes. */}
+      {extraFeatures
+        .filter((extra) => !extra.editableOnly && extra.plugin)
+        .map((extra) => {
+          const Plugin = extra.plugin as ComponentType;
+          return <Plugin key={extra.id} />;
+        })}
       <HorizontalRulePlugin />
       {features.tabIndentation ? <TabIndentationPlugin /> : null}
       {features.markdownShortcuts ? (
@@ -147,28 +158,27 @@ function DefaultEditorPlugins({
         onSnapshotReady={onSnapshotReady}
         transformers={transformers}
       />
-      {features.seedContent ? renderSeedContentPlugin(transformers) : null}
-      {extraFeaturePlugins.map(({ id, plugin: Plugin }) => {
-        return <Plugin key={id} />;
-      })}
-    </>
+    </EditorTransformersContext.Provider>
   );
 }
 
 interface EditableEditorPluginsProps {
-  commandIds: readonly string[];
+  commands: readonly FeatureSlashCommand[];
+  extraFeatures: readonly ExtraEditorFeature[];
   features: ResolvedEditorFeatureFlags;
   pluginSlots?: EditorPluginSlots;
 }
 
 function EditableEditorPlugins({
-  commandIds,
+  commands,
+  extraFeatures,
   features,
   pluginSlots,
 }: EditableEditorPluginsProps) {
   const editablePlugins = EDITOR_FEATURES.filter((feature) => {
     return feature.editableOnly && features[feature.flag];
   });
+  const slashCommandEnabled = features.slashCommand;
 
   return (
     <>
@@ -178,21 +188,26 @@ function EditableEditorPlugins({
           const Plugin = feature.plugin;
           return <Plugin key={feature.flag} />;
         }
-        if (feature.flag === "slashCommand") {
-          return renderSlashCommandPlugin(commandIds);
-        }
         return null;
       })}
+      {/* Editable-only extras (e.g. drag handles). */}
+      {extraFeatures
+        .filter((extra) => extra.editableOnly && extra.plugin)
+        .map((extra) => {
+          const Plugin = extra.plugin as ComponentType;
+          return <Plugin key={extra.id} />;
+        })}
+      {slashCommandEnabled ? renderSlashCommandPlugin(commands) : null}
       {pluginSlots?.afterEditable}
     </>
   );
 }
 
 export function EditorContent({
-  commandIds,
+  commands,
   contentClassName,
   editable,
-  extraFeaturePlugins,
+  extraFeatures,
   features,
   footerSlot,
   initialHtml,
@@ -208,6 +223,25 @@ export function EditorContent({
   toolbar,
   transformers,
 }: EditorContentProps) {
+  // Expose installed feature actions to core surfaces (toolbar dropdowns)
+  // without any static import from feature folders.
+  useEffect(() => {
+    const registered: string[] = [];
+
+    for (const extra of extraFeatures) {
+      for (const contribution of extra.slashCommands ?? []) {
+        registerSlashRunner(contribution.command.id, contribution.run);
+        registered.push(contribution.command.id);
+      }
+    }
+
+    return () => {
+      for (const id of registered) {
+        unregisterSlashRunner(id);
+      }
+    };
+  }, [extraFeatures]);
+
   const footerContent =
     footerSlot === undefined ? (
       <EditorFooter snapshot={snapshot} />
@@ -218,7 +252,7 @@ export function EditorContent({
   return (
     <>
       <EditorTopToolbar
-        commandIds={commandIds}
+        commandIds={commands.map((entry) => entry.command.id)}
         editable={editable}
         toolbar={toolbar}
         topToolbar={topToolbar}
@@ -249,7 +283,7 @@ export function EditorContent({
       {pluginSlots?.beforeDefault}
       <DefaultEditorPlugins
         editable={editable}
-        extraFeaturePlugins={extraFeaturePlugins}
+        extraFeatures={extraFeatures}
         features={features}
         initialHtml={initialHtml}
         initialMarkdown={initialMarkdown}
@@ -259,7 +293,8 @@ export function EditorContent({
       />
       {editable ? (
         <EditableEditorPlugins
-          commandIds={commandIds}
+          commands={commands}
+          extraFeatures={extraFeatures}
           features={features}
           pluginSlots={pluginSlots}
         />

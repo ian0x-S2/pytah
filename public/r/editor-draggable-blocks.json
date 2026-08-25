@@ -1,0 +1,29 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "author": "Pytah",
+  "categories": ["editor"],
+  "dependencies": [
+    "@lexical/react@^0.42.0",
+    "lucide-react@^1.7.0",
+    "react@^19.2.4"
+  ],
+  "description": "Drag handles with drop indicators for reordering top-level blocks.",
+  "files": [
+    {
+      "content": "import type { ExtraEditorFeature } from \"../../core/types\";\nimport { DraggableBlockPlugin } from \"./plugin\";\n\n/**\n * Installs the drag-handle block controls. The plugin self-gates on editor\n * editability, so mounting it in read-only mode is a no-op. Ships as the\n * `editor-draggable-blocks` registry item.\n */\nexport const draggableBlocksFeature: ExtraEditorFeature = {\n  id: \"draggable-blocks\",\n  plugin: DraggableBlockPlugin,\n};\n",
+      "path": "registry/pytah/editor/components/editor/plugins/draggable-block/feature.ts",
+      "target": "src/components/editor/plugins/draggable-block/feature.ts",
+      "type": "registry:file"
+    },
+    {
+      "content": "\"use client\";\n\nimport { useLexicalComposerContext } from \"@lexical/react/LexicalComposerContext\";\nimport { DraggableBlockPlugin_EXPERIMENTAL } from \"@lexical/react/LexicalDraggableBlockPlugin\";\nimport { useLexicalEditable } from \"@lexical/react/useLexicalEditable\";\nimport { GripVerticalIcon } from \"lucide-react\";\nimport { useEffect, useRef, useState } from \"react\";\n\nconst DRAG_MENU_CLASS_NAME = \"editor-draggable-block-menu\";\n\nexport function DraggableBlockPlugin() {\n  const [editor] = useLexicalComposerContext();\n  const isEditable = useLexicalEditable();\n  const menuRef = useRef<HTMLDivElement>(null);\n  const targetLineRef = useRef<HTMLDivElement>(null);\n  const [anchorElem, setAnchorElem] = useState<HTMLElement | null>(null);\n\n  useEffect(() => {\n    return editor.registerRootListener((rootElement) => {\n      setAnchorElem(rootElement?.parentElement ?? null);\n    });\n  }, [editor]);\n\n  const isOnMenu = (element: HTMLElement) =>\n    Boolean(element.closest(`.${DRAG_MENU_CLASS_NAME}`));\n\n  if (!(isEditable && anchorElem)) {\n    return null;\n  }\n\n  return (\n    <DraggableBlockPlugin_EXPERIMENTAL\n      anchorElem={anchorElem}\n      isOnMenu={isOnMenu}\n      menuComponent={\n        <div\n          className={`${DRAG_MENU_CLASS_NAME} absolute top-0 left-0 z-40 flex cursor-grab items-center gap-0.5 rounded-md p-0.5 text-muted-foreground opacity-0 transition-[transform,opacity] duration-150 ease-in-out active:cursor-grabbing`}\n          ref={menuRef}\n        >\n          <div className=\"flex size-4 items-center justify-center rounded-sm opacity-50 transition hover:bg-muted hover:opacity-100\">\n            <GripVerticalIcon className=\"size-3.5\" />\n          </div>\n        </div>\n      }\n      menuRef={menuRef}\n      targetLineComponent={\n        <div\n          className=\"pointer-events-none absolute top-0 left-0 z-30 h-1 rounded-full bg-primary opacity-0\"\n          ref={targetLineRef}\n        />\n      }\n      targetLineRef={targetLineRef}\n    />\n  );\n}\n",
+      "path": "registry/pytah/editor/components/editor/plugins/draggable-block/plugin.tsx",
+      "target": "src/components/editor/plugins/draggable-block/plugin.tsx",
+      "type": "registry:file"
+    }
+  ],
+  "name": "editor-draggable-blocks",
+  "registryDependencies": ["@pytah/editor"],
+  "title": "Pytah Editor — Draggable Blocks",
+  "type": "registry:block"
+}

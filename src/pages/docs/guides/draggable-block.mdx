@@ -40,19 +40,13 @@ shows the drop target position.
 
 ## Registration
 
-Draggable blocks ship behind the `draggableBlocks` feature flag (editor-only).
-To add it to a custom composition, contribute a descriptor via
-`extraFeatures`:
+Draggable blocks ship as the `editor-draggable-blocks` registry item. Install
+it and contribute the ready-made descriptor via `extraFeatures`:
 
 ```tsx
-<Editor
-  extraFeatures={[
-    {
-      id: "draggableBlocks",
-      plugin: DraggableBlockPlugin,
-    },
-  ]}
-/>
+import { draggableBlocksFeature } from "@/components/editor/plugins/draggable-block/feature";
+
+<Editor extraFeatures={[draggableBlocksFeature]} />
 ```
 
 <Callout title="Editor-only" variant="tip">

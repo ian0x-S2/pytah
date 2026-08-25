@@ -1,6 +1,29 @@
 import type { Transformer } from "@lexical/markdown";
-import { EDITOR_FEATURES } from "@/components/editor/core/features";
-import { EDITOR_MARKDOWN_TRANSFORMERS } from "@/components/editor/plugins/markdown/transformers";
+import { IMAGE_MARKDOWN_TRANSFORMER } from "@/components/editor/core/nodes/image/transformer";
+import {
+  MATH_BLOCK_MARKDOWN_TRANSFORMER,
+  MATH_INLINE_MARKDOWN_TRANSFORMER,
+} from "@/components/editor/core/nodes/math/transformers";
+import { YOUTUBE_MARKDOWN_TRANSFORMER } from "@/components/editor/core/nodes/youtube/transformer";
+import { collapsibleFeature } from "@/components/editor/plugins/collapsible/feature";
+import { seedContentFeature } from "@/components/editor/plugins/core/seed-content-feature";
+import { draggableBlocksFeature } from "@/components/editor/plugins/draggable-block/feature";
+import { excalidrawFeature } from "@/components/editor/plugins/excalidraw/feature";
+import { imageFeature } from "@/components/editor/plugins/image/feature";
+import { layoutFeature } from "@/components/editor/plugins/layout/feature";
+import { BUILTIN_MARKDOWN_TRANSFORMERS } from "@/components/editor/plugins/markdown/transformers";
+import { mathFeature } from "@/components/editor/plugins/math/feature";
+import { tableFeature } from "@/components/editor/plugins/table-behavior/feature";
+import { tocFeature } from "@/components/editor/plugins/toc/feature";
+import { youtubeFeature } from "@/components/editor/plugins/youtube/feature";
+
+const EDITOR_MARKDOWN_TRANSFORMERS = [
+  ...BUILTIN_MARKDOWN_TRANSFORMERS,
+  IMAGE_MARKDOWN_TRANSFORMER,
+  MATH_INLINE_MARKDOWN_TRANSFORMER,
+  MATH_BLOCK_MARKDOWN_TRANSFORMER,
+  YOUTUBE_MARKDOWN_TRANSFORMER,
+];
 
 export interface DocsFeatureRow {
   editableOnly: boolean;
@@ -11,13 +34,28 @@ export interface DocsFeatureRow {
   transformerCount: number;
 }
 
-export const docsFeatureRows: DocsFeatureRow[] = EDITOR_FEATURES.map(
+const INSTALLED_FEATURES = [
+  collapsibleFeature,
+  seedContentFeature,
+  draggableBlocksFeature,
+  excalidrawFeature,
+  imageFeature,
+  layoutFeature,
+  mathFeature,
+  tableFeature,
+  tocFeature,
+  youtubeFeature,
+];
+
+export const docsFeatureRows: DocsFeatureRow[] = INSTALLED_FEATURES.map(
   (feature) => ({
     editableOnly: feature.editableOnly ?? false,
-    flag: feature.flag,
+    flag: feature.id,
     hasNodes: Boolean(feature.nodes?.length),
     hasPlugin: Boolean(feature.plugin),
-    slashCommandIds: feature.slashCommandIds ?? [],
+    slashCommandIds: (feature.slashCommands ?? []).map(
+      (contribution) => contribution.command.id
+    ),
     transformerCount: feature.transformers?.length ?? 0,
   })
 );

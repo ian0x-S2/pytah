@@ -1,15 +1,14 @@
 import { deepStrictEqual, strictEqual } from "node:assert/strict";
 import { describe, test } from "node:test";
 import { createHeadlessEditor } from "@lexical/headless";
-import { DEFAULT_EDITOR_FEATURES } from "../../composition";
+
 import { createEditorConfig } from "../../config";
-import { resolveFeatureNodes } from "../../features";
 import { $createMathNode, $isMathNode, MathNode } from "./node";
 
 const createTestEditor = () => {
   const config = createEditorConfig({
     editable: true,
-    featureNodes: resolveFeatureNodes(DEFAULT_EDITOR_FEATURES),
+    featureNodes: [MathNode],
   });
   return createHeadlessEditor({
     editable: config.editable,

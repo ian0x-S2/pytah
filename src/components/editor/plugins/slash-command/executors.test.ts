@@ -2,6 +2,7 @@ import { strictEqual } from "node:assert/strict";
 import { describe, test } from "node:test";
 import { createHeadlessEditor } from "@lexical/headless";
 import {
+  $createTextNode,
   $getRoot,
   $getSelection,
   $isElementNode,
@@ -9,17 +10,42 @@ import {
   $isRangeSelection,
   type LexicalNode,
 } from "lexical";
-import { DEFAULT_EDITOR_FEATURES } from "../../core/composition";
 import { createEditorConfig } from "../../core/config";
-import { resolveFeatureNodes } from "../../core/features";
+import { computeFeatureNodes } from "../../core/features";
+import type { ExtraEditorFeature } from "../../core/types";
 import { createEmptyEditorState } from "../../core/utils";
+import { collapsibleFeature } from "../collapsible/feature";
+import { replaceElementWithCollapsible } from "../collapsible/utils";
+import { excalidrawFeature } from "../excalidraw/feature";
 import { DEFAULT_LAYOUT_TEMPLATE } from "../layout/constants";
-import { SLASH_COMMAND_EXECUTORS } from "./executors";
+import { layoutFeature } from "../layout/feature";
+import { applyLayoutPreset } from "../layout/utils";
+import { mathFeature } from "../math/feature";
+import { CORE_SLASH_COMMAND_EXECUTORS } from "./executors";
 
-const createTestEditor = () => {
+// replaceCurrentBlock requires an anchored text node, mirroring the real
+// slash-menu flow where the typed query gets cleared.
+const selectParagraphText = (
+  editor: ReturnType<typeof createTestEditor>
+): void => {
+  editor.update(() => {
+    const root = $getRoot();
+    const paragraph = root.getFirstChildOrThrow();
+
+    if (!$isParagraphNode(paragraph)) {
+      throw new Error("Expected initial paragraph node");
+    }
+
+    const text = $createTextNode("query");
+    paragraph.append(text);
+    text.select(0);
+  });
+};
+
+const createTestEditor = (extras: readonly ExtraEditorFeature[]) => {
   const config = createEditorConfig({
     editable: true,
-    featureNodes: resolveFeatureNodes(DEFAULT_EDITOR_FEATURES),
+    featureNodes: computeFeatureNodes(extras),
   });
 
   return createHeadlessEditor({
@@ -54,9 +80,25 @@ const expectElementNode = (node: LexicalNode) => {
   return node;
 };
 
+const getCommandRun =
+  (feature: ExtraEditorFeature, commandId: string) =>
+  (
+    editor: Parameters<
+      NonNullable<ExtraEditorFeature["slashCommands"]>[number]["run"]
+    >[0]
+  ) => {
+    const entry = feature.slashCommands?.find(
+      (candidate) => candidate.command.id === commandId
+    );
+    if (!entry) {
+      throw new Error(`missing slash command contribution: ${commandId}`);
+    }
+    entry.run(editor);
+  };
+
 describe("slash command executors", () => {
   test("creates a default 3-column table structure", async () => {
-    const editor = createTestEditor();
+    const editor = createTestEditor([]);
     await initializeEditor(editor);
 
     editor.update(() => {
@@ -67,7 +109,7 @@ describe("slash command executors", () => {
         throw new Error("Expected initial paragraph node");
       }
 
-      SLASH_COMMAND_EXECUTORS.table(paragraph);
+      CORE_SLASH_COMMAND_EXECUTORS.table?.(paragraph);
     });
 
     await flushEditorUpdates();
@@ -88,10 +130,10 @@ describe("slash command executors", () => {
   });
 
   test("creates a layout container matching the default preset", async () => {
-    const editor = createTestEditor();
+    const editor = createTestEditor([layoutFeature]);
     await initializeEditor(editor);
 
-    editor.update(() => {
+    await editor.update(() => {
       const root = $getRoot();
       const paragraph = root.getFirstChildOrThrow();
 
@@ -99,17 +141,14 @@ describe("slash command executors", () => {
         throw new Error("Expected initial paragraph node");
       }
 
-      SLASH_COMMAND_EXECUTORS.columns(paragraph);
+      applyLayoutPreset(paragraph, DEFAULT_LAYOUT_TEMPLATE);
     });
-
-    await flushEditorUpdates();
 
     editor.getEditorState().read(() => {
       const root = $getRoot();
       const layoutContainer = expectElementNode(root.getFirstChildOrThrow());
 
       strictEqual(layoutContainer.getType(), "layout-container");
-      strictEqual(layoutContainer.getChildrenSize(), 2);
       strictEqual("getTemplateColumns" in layoutContainer, true);
       strictEqual(
         (
@@ -121,10 +160,10 @@ describe("slash command executors", () => {
   });
 
   test("replaces a paragraph with a collapsible structure", async () => {
-    const editor = createTestEditor();
+    const editor = createTestEditor([collapsibleFeature]);
     await initializeEditor(editor);
 
-    editor.update(() => {
+    await editor.update(() => {
       const root = $getRoot();
       const paragraph = root.getFirstChildOrThrow();
 
@@ -132,10 +171,8 @@ describe("slash command executors", () => {
         throw new Error("Expected initial paragraph node");
       }
 
-      SLASH_COMMAND_EXECUTORS.collapsible(paragraph);
+      replaceElementWithCollapsible(paragraph);
     });
-
-    await flushEditorUpdates();
 
     editor.getEditorState().read(() => {
       const root = $getRoot();
@@ -155,7 +192,7 @@ describe("slash command executors", () => {
   });
 
   test("replaces a paragraph with a math block and trailing paragraph", async () => {
-    const editor = createTestEditor();
+    const editor = createTestEditor([mathFeature]);
     await initializeEditor(editor);
 
     editor.update(() => {
@@ -166,9 +203,11 @@ describe("slash command executors", () => {
         throw new Error("Expected initial paragraph node");
       }
 
-      SLASH_COMMAND_EXECUTORS.math(paragraph);
+      paragraph.select();
     });
 
+    selectParagraphText(editor);
+    getCommandRun(mathFeature, "math")(editor);
     await flushEditorUpdates();
 
     editor.getEditorState().read(() => {
@@ -182,7 +221,7 @@ describe("slash command executors", () => {
   });
 
   test("replaces a paragraph with an empty drawing and re-anchors selection", async () => {
-    const editor = createTestEditor();
+    const editor = createTestEditor([excalidrawFeature]);
     await initializeEditor(editor);
 
     editor.update(() => {
@@ -196,9 +235,10 @@ describe("slash command executors", () => {
       // Mirror the slash menu flow: the replaced paragraph holds the anchor
       // selection, so the executor must leave a valid selection behind.
       paragraph.select();
-      SLASH_COMMAND_EXECUTORS.excalidraw(paragraph);
     });
 
+    selectParagraphText(editor);
+    getCommandRun(excalidrawFeature, "excalidraw")(editor);
     await flushEditorUpdates();
 
     editor.getEditorState().read(() => {

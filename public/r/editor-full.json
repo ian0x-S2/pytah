@@ -1,0 +1,22 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "author": "Pytah",
+  "categories": ["editor"],
+  "description": "Every optional Pytah editor feature in one install. Compose descriptors through the `extraFeatures` prop.",
+  "files": [],
+  "name": "editor-full",
+  "registryDependencies": [
+    "@pytah/editor-collapsible",
+    "@pytah/editor-draggable-blocks",
+    "@pytah/editor-excalidraw",
+    "@pytah/editor-image",
+    "@pytah/editor-layouts",
+    "@pytah/editor-math",
+    "@pytah/editor-seed-content",
+    "@pytah/editor-tables",
+    "@pytah/editor-toc",
+    "@pytah/editor-youtube"
+  ],
+  "title": "Pytah Editor — All Features",
+  "type": "registry:block"
+}

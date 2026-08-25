@@ -1,10 +1,47 @@
 import type { LucideIcon } from "lucide-react";
-import { SLASH_COMMANDS } from "../slash-command/commands";
+import {
+  CalculatorIcon,
+  ChevronRightIcon,
+  CodeIcon,
+  Heading1Icon,
+  Heading2Icon,
+  Heading3Icon,
+  ImageIcon,
+  ListIcon,
+  ListOrderedIcon,
+  MinusIcon,
+  PanelsTopLeftIcon,
+  PencilRulerIcon,
+  PlayIcon,
+  QuoteIcon,
+  SquareCheckIcon,
+  TableIcon,
+  TypeIcon,
+} from "lucide-react";
 import type { BlockOption, BlockTypeValue } from "./types";
 
-/** Toolbar dropdown options are derived from the slash command registry so
- * the two surfaces can never drift apart. Presentation copy is overridden
- * where the toolbar phrasing differs from the slash menu. */
+/**
+ * Toolbar dropdown metadata. Self-contained on purpose: the toolbar is core
+ * chrome and must not import feature modules. Feature-gated options only
+ * render when their command id was resolved from installed extras (see
+ * `getAvailableBlockOptions`).
+ */
+
+/** Core block types every install ships; never gated by command ids. */
+const CORE_BLOCK_TYPES = new Set<BlockTypeValue>([
+  "paragraph",
+  "h1",
+  "h2",
+  "h3",
+  "bullet",
+  "number",
+  "check",
+  "quote",
+  "code",
+  "table",
+  "hr",
+]);
+
 export const BLOCK_TYPE_ORDER: BlockTypeValue[] = [
   "paragraph",
   "h1",
@@ -25,55 +62,107 @@ export const BLOCK_TYPE_ORDER: BlockTypeValue[] = [
   "hr",
 ];
 
-const BLOCK_LABEL_OVERRIDES: Partial<Record<BlockTypeValue, string>> = {
-  bullet: "Bullet list",
-  check: "Checklist",
-  code: "Code block",
-  number: "Numbered list",
-  paragraph: "Text",
-  quote: "Quote",
+const BLOCK_METADATA: Record<
+  BlockTypeValue,
+  {
+    description: string;
+    icon: LucideIcon;
+    label: string;
+  }
+> = {
+  bullet: {
+    description: "Unordered list",
+    icon: ListIcon,
+    label: "Bullet list",
+  },
+  check: {
+    description: "Todo items with checkboxes",
+    icon: SquareCheckIcon,
+    label: "Checklist",
+  },
+  code: {
+    description: "Monospace code block",
+    icon: CodeIcon,
+    label: "Code block",
+  },
+  collapsible: {
+    description: "Expandable toggle section",
+    icon: ChevronRightIcon,
+    label: "Collapsible",
+  },
+  columns: {
+    description: "Multi-column content layout",
+    icon: PanelsTopLeftIcon,
+    label: "Columns",
+  },
+  excalidraw: {
+    description: "Draw a diagram or sketch",
+    icon: PencilRulerIcon,
+    label: "Drawing",
+  },
+  h1: {
+    description: "Main section title",
+    icon: Heading1Icon,
+    label: "Heading 1",
+  },
+  h2: {
+    description: "Section heading",
+    icon: Heading2Icon,
+    label: "Heading 2",
+  },
+  h3: {
+    description: "Subsection heading",
+    icon: Heading3Icon,
+    label: "Heading 3",
+  },
+  hr: {
+    description: "Horizontal rule separator",
+    icon: MinusIcon,
+    label: "Divider",
+  },
+  image: {
+    description: "Insert an image from URL or file",
+    icon: ImageIcon,
+    label: "Image",
+  },
+  math: {
+    description: "Insert TeX math equation",
+    icon: CalculatorIcon,
+    label: "Math Block",
+  },
+  number: {
+    description: "Ordered list",
+    icon: ListOrderedIcon,
+    label: "Numbered list",
+  },
+  paragraph: {
+    description: "Regular paragraph",
+    icon: TypeIcon,
+    label: "Text",
+  },
+  quote: {
+    description: "Block quote",
+    icon: QuoteIcon,
+    label: "Quote",
+  },
+  table: {
+    description: "Simple editable table",
+    icon: TableIcon,
+    label: "Table",
+  },
+  youtube: {
+    description: "Embed a YouTube video",
+    icon: PlayIcon,
+    label: "YouTube",
+  },
 };
 
-const BLOCK_DESCRIPTION_OVERRIDES: Partial<Record<BlockTypeValue, string>> = {
-  bullet: "Unordered list",
-  check: "Todo items with checkboxes",
-  code: "Monospace code block",
-  columns: "Multi-column content layout",
-  excalidraw: "Draw a diagram or sketch",
-  h1: "Main section title",
-  h2: "Section heading",
-  h3: "Subsection heading",
-  image: "Insert an image from URL or file",
-  math: "Insert TeX math equation",
-  number: "Ordered list",
-  paragraph: "Regular paragraph",
-  quote: "Blockquote",
-  table: "Simple editable table",
-  youtube: "Embed a YouTube video",
-};
-
-const commandById = new Map(
-  SLASH_COMMANDS.map((command) => [command.id, command])
-);
-
-const toBlockOptions = (): BlockOption[] =>
-  BLOCK_TYPE_ORDER.flatMap((value) => {
-    const command = commandById.get(value);
-    if (!command) {
-      return [];
-    }
-
-    return [
-      {
-        alwaysOn: command.alwaysOn,
-        description: BLOCK_DESCRIPTION_OVERRIDES[value] ?? command.description,
-        label: BLOCK_LABEL_OVERRIDES[value] ?? command.label,
-        value,
-      },
-    ];
-  });
-
-export const BLOCK_OPTIONS: BlockOption[] = toBlockOptions();
+export const BLOCK_OPTIONS: BlockOption[] = BLOCK_TYPE_ORDER.map((value) => ({
+  alwaysOn: CORE_BLOCK_TYPES.has(value),
+  description: BLOCK_METADATA[value].description,
+  label: BLOCK_METADATA[value].label,
+  value,
+}));
 
 export const getAvailableBlockOptions = (
   commandIds: readonly string[]
@@ -85,23 +174,13 @@ export const getAvailableBlockOptions = (
   );
 };
 
-const toIconMap = (): Record<BlockTypeValue, LucideIcon> => {
-  const icons: Partial<Record<BlockTypeValue, LucideIcon>> = {};
-
-  for (const option of BLOCK_OPTIONS) {
-    const icon = commandById.get(option.value)?.icon;
-    if (icon) {
-      icons[option.value] = icon;
-    }
-  }
-
-  return icons as Record<BlockTypeValue, LucideIcon>;
-};
-
-export const BLOCK_ICONS = toIconMap();
+export const BLOCK_ICONS: Record<BlockTypeValue, LucideIcon> =
+  Object.fromEntries(
+    BLOCK_TYPE_ORDER.map((value) => [value, BLOCK_METADATA[value].icon])
+  ) as Record<BlockTypeValue, LucideIcon>;
 
 export const BLOCK_LABELS: Record<BlockTypeValue, string> = Object.fromEntries(
-  BLOCK_OPTIONS.map((option) => [option.value, option.label])
+  BLOCK_TYPE_ORDER.map((value) => [value, BLOCK_METADATA[value].label])
 ) as Record<BlockTypeValue, string>;
 
 /** Options rendered under an "Insert" section instead of conversion lists. */

@@ -24,8 +24,7 @@ import {
   type LexicalNode,
   type RangeSelection,
 } from "lexical";
-import { SLASH_COMMAND_EXECUTORS } from "../slash-command/executors";
-import { DEFAULT_INSERT_TABLE_PAYLOAD } from "../table-behavior/constants";
+import { getSlashRunner } from "../slash-command/executors";
 import type { BlockOption, BlockTypeValue } from "./types";
 
 const HEADING_VALUES = ["h1", "h2", "h3"] as const;
@@ -134,29 +133,21 @@ const $applyConversionBlockType = (
   return false;
 };
 
-const $applyExecutorBlockType = (
-  selection: RangeSelection,
-  blockType: BlockTypeValue
-): boolean => {
-  // Insert-style blocks reuse the slash command executors so both surfaces
-  // produce identical results (e.g. divider, math, collapsible, columns).
-  if (!isExecutorBlockType(blockType)) {
-    return false;
-  }
-
-  const targetElement = selection.anchor.getNode().getTopLevelElement();
-  if (!targetElement) {
-    return true;
-  }
-
-  SLASH_COMMAND_EXECUTORS[blockType](targetElement);
-  return true;
-};
-
 export const applyBlockType = (
   editor: LexicalEditor,
   blockType: BlockTypeValue
 ) => {
+  // Insert-style blocks reuse the slash command runners so every surface
+  // (slash menu, toolbar, dialogs) produces identical results. Feature runs
+  // come from the runtime registry — no static feature imports here.
+  if (isExecutorBlockType(blockType)) {
+    const run = getSlashRunner(blockType);
+    if (run) {
+      run(editor);
+      return;
+    }
+  }
+
   editor.update(() => {
     const selection = $getSelection();
     if (!$isRangeSelection(selection)) {
@@ -167,15 +158,12 @@ export const applyBlockType = (
       return;
     }
 
-    if ($applyExecutorBlockType(selection, blockType)) {
-      return;
-    }
-
     if (blockType === "table") {
-      editor.dispatchCommand(
-        INSERT_TABLE_COMMAND,
-        DEFAULT_INSERT_TABLE_PAYLOAD
-      );
+      editor.dispatchCommand(INSERT_TABLE_COMMAND, {
+        columns: "3",
+        includeHeaders: true,
+        rows: "3",
+      });
       return;
     }
 

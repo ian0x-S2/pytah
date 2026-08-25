@@ -23,9 +23,7 @@ import { DEFAULT_PLACEHOLDER } from "./core/constants";
 import {
   computeEditorTransformers,
   computeFeatureNodes,
-  type LexicalNodeList,
-  resolveExtraFeaturePlugins,
-  resolveSlashCommandIdsWithExtras,
+  computeResolvedSlashCommands,
 } from "./core/features";
 import type {
   EditorActionBarControls,
@@ -149,20 +147,16 @@ export function Editor({
   // Derived registries are memoized so their identities stay stable across
   // re-renders (the editor state flows into React state on every keystroke);
   // otherwise every consumer of these props reconciles on each update.
-  const featureNodes: LexicalNodeList = useMemo(
-    () => computeFeatureNodes(resolvedFeatures, extraFeatures),
-    [resolvedFeatures, extraFeatures]
+  const featureNodes = useMemo(
+    () => computeFeatureNodes(extraFeatures),
+    [extraFeatures]
   );
   const transformers = useMemo(
-    () => computeEditorTransformers(resolvedFeatures, extraFeatures),
-    [resolvedFeatures, extraFeatures]
+    () => computeEditorTransformers(extraFeatures),
+    [extraFeatures]
   );
-  const commandIds = useMemo(
-    () => resolveSlashCommandIdsWithExtras(resolvedFeatures, extraFeatures),
-    [resolvedFeatures, extraFeatures]
-  );
-  const extraFeaturePlugins = useMemo(
-    () => resolveExtraFeaturePlugins(extraFeatures),
+  const commands = useMemo(
+    () => computeResolvedSlashCommands(extraFeatures),
     [extraFeatures]
   );
 
@@ -255,10 +249,10 @@ export function Editor({
 
   const defaultContent = (
     <EditorContent
-      commandIds={commandIds}
+      commands={commands}
       contentClassName={contentClassName}
       editable={editable}
-      extraFeaturePlugins={extraFeaturePlugins}
+      extraFeatures={extraFeatures ?? []}
       features={resolvedFeatures}
       footerSlot={slots?.footer}
       initialHtml={initialHtml}

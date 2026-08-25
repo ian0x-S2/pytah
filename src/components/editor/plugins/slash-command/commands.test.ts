@@ -1,49 +1,17 @@
-import { deepStrictEqual } from "node:assert/strict";
+import { deepStrictEqual, strictEqual } from "node:assert/strict";
 import { describe, test } from "node:test";
-import { resolveEditorFeatures } from "../../core/composition";
-import { resolveSlashCommandIds } from "../../core/features";
-import { getSlashCommandsForIds } from "./commands";
+import { computeResolvedSlashCommands } from "../../core/features";
+import { CORE_SLASH_COMMANDS } from "./commands";
 
-describe("slash command id resolution", () => {
-  test("collects ids for enabled features", () => {
-    const ids = resolveSlashCommandIds(
-      resolveEditorFeatures({
-        collapsible: false,
-        excalidraw: false,
-        images: false,
-        layouts: false,
-        math: false,
-        tables: false,
-        youtube: false,
-      })
-    );
-
-    deepStrictEqual(ids, []);
+describe("core slash commands", () => {
+  test("ids are unique", () => {
+    const ids = CORE_SLASH_COMMANDS.map(({ id }) => id);
+    strictEqual(new Set(ids).size, ids.length);
   });
 
-  test("includes ids contributed by enabled features", () => {
-    const ids = resolveSlashCommandIds(
-      resolveEditorFeatures({
-        collapsible: true,
-        excalidraw: true,
-        images: false,
-        layouts: false,
-        math: false,
-        tables: true,
-        youtube: false,
-      })
-    );
-
-    deepStrictEqual(ids, ["excalidraw", "collapsible", "table"]);
-  });
-});
-
-describe("slash command filtering", () => {
-  test("always includes base commands plus enabled feature ids", () => {
-    const commands = getSlashCommandsForIds(["math", "table"]);
-
+  test("ships the base block types plus divider and table", () => {
     deepStrictEqual(
-      commands.map(({ id }) => id),
+      CORE_SLASH_COMMANDS.map(({ id }) => id),
       [
         "paragraph",
         "h1",
@@ -54,30 +22,46 @@ describe("slash command filtering", () => {
         "bullet",
         "number",
         "check",
-        "hr",
-        "math",
         "table",
+        "hr",
       ]
     );
   });
 
-  test("keeps base commands even when no feature ids are supplied", () => {
-    const commands = getSlashCommandsForIds([]);
+  test("every core command resolves to a runnable entry", () => {
+    const resolved = computeResolvedSlashCommands();
+
+    for (const command of CORE_SLASH_COMMANDS) {
+      const entry = resolved.find(
+        (candidate) => candidate.command.id === command.id
+      );
+      strictEqual(Boolean(entry), true, `missing entry: ${command.id}`);
+      strictEqual(typeof entry?.run, "function");
+    }
+  });
+
+  test("feature entries are appended after the core block types", () => {
+    const resolved = computeResolvedSlashCommands([
+      {
+        id: "fake",
+        slashCommands: [
+          {
+            command: {
+              description: "Fake",
+              icon: (() => null) as never,
+              id: "math",
+              keywords: [],
+              label: "Fake Math",
+            },
+            run: () => undefined,
+          },
+        ],
+      },
+    ]);
 
     deepStrictEqual(
-      commands.map(({ id }) => id),
-      [
-        "paragraph",
-        "h1",
-        "h2",
-        "h3",
-        "quote",
-        "code",
-        "bullet",
-        "number",
-        "check",
-        "hr",
-      ]
+      resolved.map((entry) => entry.command.id),
+      [...CORE_SLASH_COMMANDS.map((command) => command.id), "math"]
     );
   });
 });

@@ -34,27 +34,86 @@ Isso cria o `components.json`, o alias `@/*` no tsconfig e os tokens CSS base.
 
 ## Método A — CLI do shadcn (recomendado)
 
-### Passo 3A — Adicione o bloco do editor
+### Passo 3A — Adicione os itens do registry
 
-```bash
-# com o docs/dev server do Pytah rodando localmente:
-bunx shadcn@latest add http://localhost:5173/r/editor.json
+O registry é modular: `editor` é o núcleo enxuto e cada capability de conteúdo
+(images, tabelas, drawings, TOC...) é um item opcional separado.
 
-# ou apontando para o host publicado:
-bunx shadcn@latest add https://your-domain.example/r/editor.json
+**Configure o namespace uma vez** no `components.json` do projeto consumidor:
+
+```json
+{
+  "registries": {
+    "@pytah": "http://localhost:5173/r/{name}.json"
+  }
+}
 ```
 
-O `shadcn add` instala automaticamente:
+> Para produção, troque por `https://your-domain.example/r/{name}.json`.
 
-- todo o `src/components/editor/` (core + plugins + ui)
+Depois instale o núcleo e as features que quiser:
+
+```bash
+# núcleo (sempre):
+bunx shadcn@latest add @pytah/editor
+
+# features opcionais — instale só as que for usar:
+bunx shadcn@latest add @pytah/editor-image
+bunx shadcn@latest add @pytah/editor-tables
+bunx shadcn@latest add @pytah/editor-excalidraw
+
+# ou tudo de uma vez:
+bunx shadcn@latest add @pytah/editor-full
+```
+
+Instalar via namespace é importante: os itens declaram
+`registryDependencies` que só resolvem pelo namespace.
+
+O item `editor` instala automaticamente:
+
+- o core do editor (`src/components/editor/` sem as pastas de features)
 - os primitivos `ui` necessários (`button`, `command`, `dialog`, `dropdown-menu`,
   `input`, `input-group`, `popover`, `separator`, `textarea`, `toggle`, `tooltip`)
 - `theme-provider.tsx` + `theme-context.ts` (usados pelo code highlight)
 - `lib/utils.ts` (helper `cn()`)
-- todas as dependências (`lexical`, `@lexical/*`, `@base-ui/react`, `cmdk`, ...)
+- apenas as dependências do core (`lexical`, `@lexical/*`, `@base-ui/react`,
+  `cmdk`, ...) — nada de `@excalidraw/excalidraw` ou `katex`
 - os tokens `--highlight` no CSS
 
-### Passo 4 — CSS: `tw-animate-css`
+Itens de feature trazem só os próprios arquivos e dependências
+(`editor-excalidraw` → `@excalidraw/excalidraw`; `editor-math` → `katex`) e
+puxam o `@pytah/editor` automaticamente.
+
+### Passo 4 — Componha as features instaladas
+
+Features não são flags: quem instala, compõe. Cada item exporta um descritor
+pronto em `plugins/<feature>/feature.ts`:
+
+```tsx
+// src/app/page.tsx
+import { Editor } from "@/components/editor/editor";
+import { imageFeature } from "@/components/editor/plugins/image/feature";
+import { tableFeature } from "@/components/editor/plugins/table-behavior/feature";
+import { Providers } from "./providers";
+
+export default function Page() {
+  return (
+    <Providers>
+      <main className="min-h-screen bg-background text-foreground">
+        <Editor
+          extraFeatures={[imageFeature, tableFeature]}
+          minimal
+          toolbar="full"
+        />
+      </main>
+    </Providers>
+  );
+}
+```
+
+Não importou o descritor? O código da feature não entra no bundle.
+
+### Passo 5 — CSS: `tw-animate-css`
 
 O registry não injeta o `tw-animate-css`. Adicione o import no `globals.css`:
 
@@ -63,7 +122,7 @@ O registry não injeta o `tw-animate-css`. Adicione o import no `globals.css`:
 @import "tw-animate-css";
 ```
 
-### Passo 5 — Monte o ThemeProvider
+### Passo 6 — Monte o ThemeProvider
 
 O code highlight usa `useTheme()`, então o `ThemeProvider` deve envolver o
 editor. Crie um client component:
@@ -76,27 +135,6 @@ import { ThemeProvider } from "@/components/theme-provider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return <ThemeProvider>{children}</ThemeProvider>;
-}
-```
-
-### Passo 6 — Renderize o editor
-
-O editor já declara `"use client"` internamente, então pode ser importado
-diretamente de um Server Component:
-
-```tsx
-// src/app/page.tsx
-import { Editor } from "@/components/editor/editor";
-import { Providers } from "./providers";
-
-export default function Page() {
-  return (
-    <Providers>
-      <main className="min-h-screen bg-background text-foreground">
-        <Editor minimal toolbar="full" />
-      </main>
-    </Providers>
-  );
 }
 ```
 
@@ -117,21 +155,28 @@ Use quando o `shadcn add` não estiver disponível ou você preferir controle to
 
 ### Passo 3B — Instale as dependências
 
+Core apenas (sem features de conteúdo):
+
 ```bash
 bun add lexical @lexical/react @lexical/rich-text @lexical/list @lexical/code \
   @lexical/code-shiki @lexical/link @lexical/table @lexical/html @lexical/markdown \
   @lexical/utils @lexical/selection @lexical/clipboard @lexical/history \
-  @lexical/extension @base-ui/react @excalidraw/excalidraw katex \
+  @lexical/extension @base-ui/react \
   class-variance-authority clsx tailwind-merge \
   cmdk lucide-react tw-animate-css
 ```
 
+Extras por feature: `@excalidraw/excalidraw` (drawings), `katex` (math).
+
 ### Passo 4B — Copie os arquivos do editor
 
-Do repositório Pytah para o seu app, **preservando a estrutura de pastas**:
+Do repositório Pytah para o seu app, **preservando a estrutura de pastas**.
+O core é tudo em `src/components/editor/` **exceto** as pastas de features que
+você não quiser (`plugins/<feature>/`, `core/nodes/<feature>/` — remova aos
+pares e apague o descritor correspondente):
 
 ```text
-src/components/editor/          ← copie o diretório inteiro
+src/components/editor/          ← copie o diretório inteiro, menos features indesejadas
 src/components/ui/              ← copie só estes primitivos:
     button.tsx
     command.tsx
@@ -149,7 +194,8 @@ src/components/theme-context.ts
 src/lib/utils.ts
 ```
 
-Não copie arquivos de teste (`*.test.ts`/`*.test.tsx`).
+Não copie arquivos de teste (`*.test.ts`/`*.test.tsx`) nem arquivos `feature.ts`
+de features que você removeu.
 
 ### Passo 5B — Alias `@/` (se ainda não existir)
 
@@ -237,16 +283,18 @@ O passo a passo é o mesmo, mudando só a configuração do Tailwind v4 e o alia
 **Método A (CLI):**
 
 1. `bunx shadcn@latest init` no projeto
-2. `bunx shadcn@latest add <url>/r/editor.json`
-3. `tw-animate-css` importado no CSS
-4. `ThemeProvider` envolvendo o editor
-5. `bun run build` passando
+2. Namespace `@pytah` configurado no `components.json`
+3. `@pytah/editor` + features desejadas instalados
+4. Descritores das features compostos via `extraFeatures`
+5. `tw-animate-css` importado no CSS
+6. `ThemeProvider` envolvendo o editor
+7. `bun run build` passando
 
 **Método B (manual):**
 
-1. Dependências instaladas (incluindo `tw-animate-css` e `katex`)
+1. Dependências do core instaladas (+ extras das features mantidas)
 2. Tailwind v4 configurado (postcss ou plugin vite)
-3. Arquivos copiados: `editor/`, `ui/*` (11 arquivos), `theme-provider.tsx`, `theme-context.ts`, `lib/utils.ts`
+3. Arquivos copiados: core do `editor/`, `ui/*` (11 arquivos), `theme-provider.tsx`, `theme-context.ts`, `lib/utils.ts`
 4. Alias `@/` → `./src` no tsconfig
 5. Tokens `--highlight` no CSS + bridge `@theme inline`
 6. `ThemeProvider` envolvendo o editor

@@ -1,3 +1,10 @@
+import {
+  $getSelection,
+  $isRangeSelection,
+  $isTextNode,
+  type ElementNode,
+  type LexicalEditor,
+} from "lexical";
 import type { SlashCommand, SlashCommandSelection } from "./types";
 
 export const SLASH_QUERY_PATTERN = /^\/(\w*)$/;
@@ -63,4 +70,32 @@ export const getSlashQueryMatch = (textUpToCursor: string): string | null => {
   const match = textUpToCursor.match(SLASH_QUERY_PATTERN);
 
   return match?.[1] ?? null;
+};
+
+/**
+ * Runs a block-level replacement against the current selection: clears the
+ * text content of the selected text node and hands the enclosing top-level
+ * element to the callback. Mirrors the flow the slash menu has always used
+ * for direct executors.
+ */
+export const replaceCurrentBlock = (
+  editor: LexicalEditor,
+  replace: (element: ElementNode) => void
+): void => {
+  editor.update(() => {
+    const selection = $getSelection();
+
+    if (!$isRangeSelection(selection)) {
+      return;
+    }
+
+    const node = selection.anchor.getNode();
+
+    if (!$isTextNode(node)) {
+      return;
+    }
+
+    node.setTextContent("");
+    replace(node.getTopLevelElementOrThrow());
+  });
 };

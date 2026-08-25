@@ -1,9 +1,8 @@
 import { deepStrictEqual, strictEqual } from "node:assert/strict";
 import { describe, test } from "node:test";
 import { createHeadlessEditor } from "@lexical/headless";
-import { DEFAULT_EDITOR_FEATURES } from "../../composition";
+
 import { createEditorConfig } from "../../config";
-import { resolveFeatureNodes } from "../../features";
 import {
   $createExcalidrawNode,
   $isExcalidrawNode,
@@ -20,7 +19,7 @@ const SCENE_JSON = JSON.stringify({
 const createTestEditor = () => {
   const config = createEditorConfig({
     editable: true,
-    featureNodes: resolveFeatureNodes(DEFAULT_EDITOR_FEATURES),
+    featureNodes: [ExcalidrawNode],
   });
   return createHeadlessEditor({
     editable: config.editable,

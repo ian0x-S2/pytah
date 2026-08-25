@@ -1,80 +1,88 @@
+import type { LucideIcon } from "lucide-react";
 import {
-  CalculatorIcon,
-  ChevronRightIcon,
   CodeIcon,
   Heading1Icon,
   Heading2Icon,
   Heading3Icon,
-  ImageIcon,
   ListIcon,
   ListOrderedIcon,
   MinusIcon,
-  PanelsTopLeftIcon,
-  PencilRulerIcon,
-  PlayIcon,
+  QuoteIcon,
   SquareCheckIcon,
   TableIcon,
-  TextQuoteIcon,
   TypeIcon,
 } from "lucide-react";
-import type { SlashCommand } from "./types";
+import type { SlashCommandId } from "./types";
 
-export const SLASH_COMMANDS: SlashCommand[] = [
+export interface SlashCommandEntry {
+  description: string;
+  icon: LucideIcon;
+  id: SlashCommandId;
+  keywords: string[];
+  label: string;
+}
+
+/**
+ * Core-owned slash commands. Every base editor ships these regardless of
+ * which feature items are installed — block types plus divider and table
+ * insertion (`TableNode` is part of the core node set so pasted tables never
+ * drop). Feature-scoped entries come from feature descriptors instead.
+ */
+export const CORE_SLASH_COMMANDS: readonly {
+  description: string;
+  icon: LucideIcon;
+  id: SlashCommandId;
+  keywords: string[];
+  label: string;
+}[] = [
   {
-    description: "Plain text block",
+    description: "Empty block",
     icon: TypeIcon,
     id: "paragraph",
-    keywords: ["text", "plain", "p"],
-    label: "Paragraph",
-    alwaysOn: true,
+    keywords: ["plain", "text", "paragraph", "p"],
+    label: "Text",
   },
   {
-    description: "Large section heading",
+    description: "Big heading",
     icon: Heading1Icon,
     id: "h1",
-    keywords: ["title", "heading", "h1"],
+    keywords: ["h1", "heading", "title", "large"],
     label: "Heading 1",
-    alwaysOn: true,
   },
   {
-    description: "Medium section heading",
+    description: "Medium heading",
     icon: Heading2Icon,
     id: "h2",
-    keywords: ["subtitle", "heading", "h2"],
+    keywords: ["h2", "heading", "subtitle", "medium"],
     label: "Heading 2",
-    alwaysOn: true,
   },
   {
-    description: "Small section heading",
+    description: "Small heading",
     icon: Heading3Icon,
     id: "h3",
-    keywords: ["heading", "h3"],
+    keywords: ["h3", "heading", "small"],
     label: "Heading 3",
-    alwaysOn: true,
   },
   {
-    description: "Capture a quote",
-    icon: TextQuoteIcon,
+    description: "Block quote",
+    icon: QuoteIcon,
     id: "quote",
-    keywords: ["blockquote", "quote", "citation"],
-    label: "Blockquote",
-    alwaysOn: true,
+    keywords: ["blockquote", "citation", "quote"],
+    label: "Quote",
   },
   {
-    description: "Write a code snippet",
+    description: "Code block",
     icon: CodeIcon,
     id: "code",
     keywords: ["code", "snippet", "pre"],
     label: "Code Block",
-    alwaysOn: true,
   },
   {
-    description: "Unordered list",
+    description: "Bulleted list",
     icon: ListIcon,
     id: "bullet",
-    keywords: ["list", "bullet", "unordered", "ul"],
+    keywords: ["bullet", "list", "unordered", "ul"],
     label: "Bullet List",
-    alwaysOn: true,
   },
   {
     description: "Ordered list",
@@ -82,7 +90,6 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     id: "number",
     keywords: ["list", "ordered", "numbered", "ol"],
     label: "Numbered List",
-    alwaysOn: true,
   },
   {
     description: "Todo list with checkboxes",
@@ -90,49 +97,6 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     id: "check",
     keywords: ["check", "checklist", "todo", "task"],
     label: "Checklist",
-    alwaysOn: true,
-  },
-  {
-    description: "Insert TeX math equation",
-    icon: CalculatorIcon,
-    id: "math",
-    keywords: ["math", "latex", "katex", "equation", "formula", "tex"],
-    label: "Math Block",
-  },
-  {
-    description: "Insert an image from URL",
-    icon: ImageIcon,
-    id: "image",
-    keywords: ["image", "photo", "media", "picture", "img"],
-    label: "Image",
-  },
-  {
-    description: "Embed a YouTube video",
-    icon: PlayIcon,
-    id: "youtube",
-    keywords: ["youtube", "video", "embed", "yt"],
-    label: "YouTube",
-  },
-  {
-    description: "Draw a diagram or sketch",
-    icon: PencilRulerIcon,
-    id: "excalidraw",
-    keywords: ["drawing", "diagram", "sketch", "whiteboard", "canvas"],
-    label: "Drawing",
-  },
-  {
-    description: "Expandable toggle section",
-    icon: ChevronRightIcon,
-    id: "collapsible",
-    keywords: ["collapsible", "toggle", "details", "accordion"],
-    label: "Collapsible",
-  },
-  {
-    description: "Multi-column content layout",
-    icon: PanelsTopLeftIcon,
-    id: "columns",
-    keywords: ["columns", "layout", "grid", "multi-column"],
-    label: "Columns",
   },
   {
     description: "Simple editable table",
@@ -147,28 +111,5 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     id: "hr",
     keywords: ["divider", "separator", "hr", "line"],
     label: "Divider",
-    alwaysOn: true,
   },
 ];
-
-/**
- * Slash commands that are always shown regardless of feature toggles. These
- * are the base block types (paragraph, headings, lists, quote, code, divider)
- * that every editor ships. Feature-gated commands are contributed through the
- * resolved `ids` argument instead.
- */
-const ALWAYS_ON_SLASH_COMMANDS = SLASH_COMMANDS.filter(
-  (command) => command.alwaysOn
-);
-
-export const getSlashCommandsForIds = (
-  ids: readonly string[]
-): SlashCommand[] => {
-  const idSet = new Set<string>(ids);
-
-  const featureCommands = SLASH_COMMANDS.filter((command) => {
-    return !command.alwaysOn && idSet.has(command.id);
-  });
-
-  return [...ALWAYS_ON_SLASH_COMMANDS, ...featureCommands];
-};

@@ -9,14 +9,17 @@ import {
   $insertNodes,
   $isElementNode,
   $isRangeSelection,
+  $isTextNode,
   COMMAND_PRIORITY_EDITOR,
   COMMAND_PRIORITY_HIGH,
   DROP_COMMAND,
   PASTE_COMMAND,
 } from "lexical";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { $createImageNode, $isImageNode } from "../../core/nodes/image/node";
+import type { InsertImagePayload } from "./commands";
 import { INSERT_IMAGE_COMMAND } from "./commands";
+import { InsertImageDialog } from "./insert-dialog";
 import { getFirstImageFile, readFileAsDataUrl } from "./utils";
 
 const insertParagraphAfterImage = (
@@ -31,8 +34,18 @@ const insertParagraphAfterImage = (
   paragraph.select();
 };
 
+const EMPTY_DIALOG_STATE = {
+  altText: "",
+  fileName: "",
+  fileSrc: null as string | null,
+  open: false,
+  pendingTargetKey: null as string | null,
+  url: "",
+};
+
 export function ImagePlugin() {
   const [editor] = useLexicalComposerContext();
+  const [dialogState, setDialogState] = useState(EMPTY_DIALOG_STATE);
 
   useEffect(() => {
     const insertImage = ({
@@ -40,20 +53,15 @@ export function ImagePlugin() {
       altText,
       src,
       targetNodeKey,
-    }: {
-      alignment?: "left" | "center" | "right";
-      altText: string;
-      src: string;
-      targetNodeKey?: string;
-    }) => {
-      const trimmedSrc = src.trim();
+    }: InsertImagePayload) => {
+      const trimmedSrc = src?.trim();
       if (!trimmedSrc) {
         return false;
       }
 
       const imageNode = $createImageNode({
         alignment,
-        altText: altText.trim(),
+        altText: altText?.trim() ?? "",
         src: trimmedSrc,
       });
 
@@ -82,6 +90,43 @@ export function ImagePlugin() {
       INSERT_IMAGE_COMMAND,
       (payload) => insertImage(payload),
       COMMAND_PRIORITY_EDITOR
+    );
+  }, [editor]);
+
+  // Incomplete payloads (no src) mean "open the pick-a-source dialog". The
+  // slash menu and toolbars dispatch the bare command; the target block is
+  // captured here so the dialog submit replaces it.
+  useEffect(() => {
+    return editor.registerCommand(
+      INSERT_IMAGE_COMMAND,
+      (payload) => {
+        if (payload.src?.trim()) {
+          return false;
+        }
+
+        let targetNodeKey: string | null = payload.targetNodeKey ?? null;
+
+        if (!targetNodeKey) {
+          editor.getEditorState().read(() => {
+            const selection = $getSelection();
+            if (!$isRangeSelection(selection)) {
+              return;
+            }
+            const node = selection.anchor.getNode();
+            if ($isTextNode(node)) {
+              targetNodeKey = node.getTopLevelElementOrThrow().getKey();
+            }
+          });
+        }
+
+        setDialogState({
+          ...EMPTY_DIALOG_STATE,
+          open: true,
+          pendingTargetKey: targetNodeKey,
+        });
+        return true;
+      },
+      COMMAND_PRIORITY_HIGH
     );
   }, [editor]);
 
@@ -148,5 +193,58 @@ export function ImagePlugin() {
     );
   }, [editor]);
 
-  return null;
+  const closeDialog = () => {
+    setDialogState(EMPTY_DIALOG_STATE);
+  };
+
+  const handleSubmit = () => {
+    if (!(dialogState.fileSrc || dialogState.url.trim())) {
+      return;
+    }
+
+    editor.update(() => {
+      editor.dispatchCommand(INSERT_IMAGE_COMMAND, {
+        altText: dialogState.altText,
+        src: dialogState.fileSrc ?? dialogState.url.trim(),
+        targetNodeKey: dialogState.pendingTargetKey ?? undefined,
+      });
+    });
+    closeDialog();
+  };
+
+  return (
+    <InsertImageDialog
+      idPrefix="image-plugin"
+      imageAltText={dialogState.altText}
+      imageFileName={dialogState.fileName}
+      imageFileSrc={dialogState.fileSrc}
+      imageUrl={dialogState.url}
+      onAltTextChange={(value) =>
+        setDialogState((state) => ({ ...state, altText: value }))
+      }
+      onCancel={closeDialog}
+      onImageFileChange={(event) => {
+        const file = event.target.files?.[0];
+        if (!file) {
+          return;
+        }
+        readFileAsDataUrl(file)
+          .then((src) => {
+            setDialogState((state) => ({
+              ...state,
+              fileName: file.name,
+              fileSrc: src,
+            }));
+          })
+          .catch(() => {
+            setDialogState((state) => ({ ...state, fileSrc: null }));
+          });
+      }}
+      onSubmit={handleSubmit}
+      onUrlChange={(value) =>
+        setDialogState((state) => ({ ...state, url: value }))
+      }
+      open={dialogState.open}
+    />
+  );
 }

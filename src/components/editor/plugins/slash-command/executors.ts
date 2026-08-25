@@ -21,12 +21,8 @@ import {
   $isParagraphNode,
   type ElementNode,
 } from "lexical";
-import { $createExcalidrawNode } from "../../core/nodes/excalidraw/node";
-import { $createMathNode } from "../../core/nodes/math/node";
-import { replaceElementWithCollapsible } from "../collapsible/utils";
-import { DEFAULT_LAYOUT_TEMPLATE } from "../layout/constants";
-import { applyLayoutPreset } from "../layout/utils";
-import type { SlashCommandId } from "./types";
+import type { FeatureSlashCommand, SlashCommandId } from "./types";
+import { replaceCurrentBlock } from "./utils";
 
 const replaceElementChildren = (
   targetElement: ElementNode,
@@ -123,58 +119,66 @@ const applyDividerCommand = (targetElement: ElementNode) => {
   paragraph.select();
 };
 
-const applyColumnsCommand = (targetElement: ElementNode) => {
-  applyLayoutPreset(targetElement, DEFAULT_LAYOUT_TEMPLATE);
-};
-
-const applyCollapsibleCommand = (targetElement: ElementNode) => {
-  replaceElementWithCollapsible(targetElement);
-};
-
-const applyMathCommand = (targetElement: ElementNode) => {
-  const mathNode = $createMathNode({
-    equation: "f(x) = c",
-    inline: false,
-  });
-  const paragraph = $createParagraphNode();
-
-  targetElement.replace(mathNode);
-  mathNode.insertAfter(paragraph);
-  paragraph.select();
-};
-
-const applyExcalidrawCommand = (targetElement: ElementNode) => {
-  // Replacing the selected paragraph leaves the selection dangling, which
-  // rolls the whole update back — re-anchor it on a trailing paragraph.
-  // The empty drawing block opens its editing surface as soon as it renders;
-  // discarding removes the node and keeps the paragraph.
-  const excalidrawNode = $createExcalidrawNode();
-  const paragraph = $createParagraphNode();
-
-  targetElement.replace(excalidrawNode);
-  excalidrawNode.insertAfter(paragraph);
-  paragraph.select();
-};
-
-export const SLASH_COMMAND_EXECUTORS: Record<
+/**
+ * Core-owned executors. Feature-scoped executors live beside their features
+ * and reach the menu through their descriptor's `run` instead.
+ */
+export const CORE_SLASH_COMMAND_EXECUTORS: Record<
   SlashCommandId,
-  (element: ElementNode) => void
+  ((element: ElementNode) => void) | undefined
 > = {
   bullet: (element) => applyListCommand(element, "bullet"),
   check: (element) => applyListCommand(element, "check"),
   code: applyCodeCommand,
-  collapsible: applyCollapsibleCommand,
-  columns: applyColumnsCommand,
-  excalidraw: applyExcalidrawCommand,
+  collapsible: undefined,
+  columns: undefined,
+  excalidraw: undefined,
   h1: (element) => applyHeadingCommand(element, "h1"),
   h2: (element) => applyHeadingCommand(element, "h2"),
   h3: (element) => applyHeadingCommand(element, "h3"),
   hr: applyDividerCommand,
-  image: applyParagraphCommand,
-  math: applyMathCommand,
+  image: undefined,
+  math: undefined,
   number: (element) => applyListCommand(element, "number"),
   paragraph: applyParagraphCommand,
   quote: applyQuoteCommand,
   table: applyTableCommand,
-  youtube: applyParagraphCommand,
+  youtube: undefined,
+};
+
+/**
+ * Runtime registry for feature-contributed command runs. The composition
+ * surface registers every installed extra's contributions at mount time, so
+ * core surfaces (slash menu, toolbar dropdowns) can execute feature actions
+ * without importing any feature module statically.
+ */
+const featureRunners = new Map<string, FeatureSlashCommand["run"]>();
+
+export const registerSlashRunner = (
+  id: string,
+  run: FeatureSlashCommand["run"]
+): void => {
+  featureRunners.set(id, run);
+};
+
+export const unregisterSlashRunner = (id: string): void => {
+  featureRunners.delete(id);
+};
+
+export const getSlashRunner = (
+  id: string
+): FeatureSlashCommand["run"] | undefined => {
+  const featureRun = featureRunners.get(id);
+  if (featureRun) {
+    return featureRun;
+  }
+
+  const executor = CORE_SLASH_COMMAND_EXECUTORS[id as SlashCommandId];
+  if (!executor) {
+    return undefined;
+  }
+
+  return (editor) => {
+    replaceCurrentBlock(editor, executor);
+  };
 };

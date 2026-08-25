@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -7,7 +8,41 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, "..");
-const registryItemPath = path.join(projectRoot, "public", "r", "editor.json");
+const registryDirectory = path.join(projectRoot, "public", "r");
+
+/**
+ * Serves `public/r` over HTTP so the CLI resolves items and their
+ * `registryDependencies` exactly like a published registry would.
+ */
+const startRegistryServer = () =>
+  new Promise((resolve) => {
+    const server = createServer((request, response) => {
+      const url = new URL(request.url ?? "/", "http://localhost");
+      const fileName = path.basename(url.pathname);
+      const filePath = path.join(registryDirectory, fileName);
+
+      readFile(filePath)
+        .then((content) => {
+          response.writeHead(200, {
+            "access-control-allow-origin": "*",
+            "content-type": "application/json",
+          });
+          response.end(content);
+        })
+        .catch(() => {
+          response.writeHead(404);
+          response.end("not found");
+        });
+    });
+
+    server.listen(0, "127.0.0.1", () => {
+      const { port } = server.address();
+      resolve({
+        close: () => server.close(),
+        urlTemplate: `http://127.0.0.1:${port}/r/{name}.json`,
+      });
+    });
+  });
 const shadcnCliPath = path.join(
   projectRoot,
   "node_modules",
@@ -100,7 +135,9 @@ const smokeCss = `@import "tailwindcss";
 }
 `;
 
-const smokeAppSource = `import { Editor } from "@/components/editor/editor";
+const renderAppSource = (
+  body
+) => `import { Editor } from "@/components/editor/editor";
 
 export default function App() {
   return (
@@ -110,14 +147,56 @@ export default function App() {
           <p className="text-muted-foreground text-sm">Registry smoke test</p>
           <h1 className="font-semibold text-2xl">Pytah Editor</h1>
         </div>
-        <Editor minimal toolbar="full" />
+        ${body}
       </div>
     </main>
   );
 }
 `;
 
-const smokeComponentsJson = {
+const baseAppSource = renderAppSource('<Editor minimal toolbar="full" />');
+
+const fullAppSource = `import { Editor } from "@/components/editor/editor";
+import { collapsibleFeature } from "@/components/editor/plugins/collapsible/feature";
+import { seedContentFeature } from "@/components/editor/plugins/core/seed-content-feature";
+import { draggableBlocksFeature } from "@/components/editor/plugins/draggable-block/feature";
+import { excalidrawFeature } from "@/components/editor/plugins/excalidraw/feature";
+import { imageFeature } from "@/components/editor/plugins/image/feature";
+import { layoutFeature } from "@/components/editor/plugins/layout/feature";
+import { mathFeature } from "@/components/editor/plugins/math/feature";
+import { tableFeature } from "@/components/editor/plugins/table-behavior/feature";
+import { tocFeature } from "@/components/editor/plugins/toc/feature";
+import { youtubeFeature } from "@/components/editor/plugins/youtube/feature";
+
+const features = [
+  collapsibleFeature,
+  seedContentFeature,
+  draggableBlocksFeature,
+  excalidrawFeature,
+  imageFeature,
+  layoutFeature,
+  mathFeature,
+  tableFeature,
+  tocFeature,
+  youtubeFeature,
+];
+
+export default function App() {
+  return (
+    <main className="min-h-screen bg-background px-6 py-10 text-foreground">
+      <div className="mx-auto max-w-4xl space-y-6">
+        <div className="space-y-2">
+          <p className="text-muted-foreground text-sm">Registry smoke test</p>
+          <h1 className="font-semibold text-2xl">Pytah Editor</h1>
+        </div>
+        <Editor minimal toolbar="full" extraFeatures={features} />
+      </div>
+    </main>
+  );
+}
+`;
+
+const smokeComponentsJson = (registryUrlTemplate) => ({
   $schema: "https://ui.shadcn.com/schema.json",
   aliases: {
     components: "@/components",
@@ -129,7 +208,9 @@ const smokeComponentsJson = {
   iconLibrary: "lucide",
   menuAccent: "subtle",
   menuColor: "default",
-  registries: {},
+  registries: {
+    "@pytah": registryUrlTemplate,
+  },
   rsc: false,
   rtl: false,
   style: "base-nova",
@@ -141,7 +222,7 @@ const smokeComponentsJson = {
     prefix: "",
   },
   tsx: true,
-};
+});
 
 const run = (command, args, options = {}) => {
   return new Promise((resolve, reject) => {
@@ -182,47 +263,18 @@ const updateTsConfigApp = async (projectDirectory) => {
   await writeFile(tsconfigPath, updatedSource, "utf8");
 };
 
-const configureSmokeApp = async (projectDirectory) => {
+const configureSmokeApp = async (projectDirectory, registryUrlTemplate) => {
   await Promise.all([
     updateTsConfigApp(projectDirectory),
     writeFile(
       path.join(projectDirectory, "components.json"),
-      `${JSON.stringify(smokeComponentsJson, null, 2)}\n`,
-      "utf8"
-    ),
-    writeFile(
-      path.join(projectDirectory, "src", "App.tsx"),
-      smokeAppSource,
-      "utf8"
-    ),
-    writeFile(
-      path.join(projectDirectory, "src", "index.css"),
-      smokeCss,
-      "utf8"
-    ),
-    writeFile(
-      path.join(projectDirectory, "vite.config.ts"),
-      [
-        'import tailwindcss from "@tailwindcss/vite";',
-        'import react from "@vitejs/plugin-react";',
-        'import { defineConfig } from "vite";',
-        "",
-        "export default defineConfig({",
-        "  plugins: [tailwindcss(), react()],",
-        "  resolve: {",
-        "    alias: {",
-        '      "@": new URL("./src", import.meta.url).pathname,',
-        "    },",
-        "  },",
-        "});",
-        "",
-      ].join("\n"),
+      `${JSON.stringify(smokeComponentsJson(registryUrlTemplate), null, 2)}\n`,
       "utf8"
     ),
   ]);
 };
 
-const verifyInstalledFiles = async (projectDirectory) => {
+const verifyInstalledFiles = async (projectDirectory, { withFeatures }) => {
   const expectedFiles = [
     path.join(projectDirectory, "src", "components", "editor", "editor.tsx"),
     path.join(
@@ -234,20 +286,66 @@ const verifyInstalledFiles = async (projectDirectory) => {
       "utils.ts"
     ),
     path.join(projectDirectory, "src", "components", "ui", "button.tsx"),
+    path.join(projectDirectory, "src", "components", "ui", "tooltip.tsx"),
     path.join(projectDirectory, "src", "lib", "utils.ts"),
   ];
+
+  if (withFeatures) {
+    expectedFiles.push(
+      path.join(
+        projectDirectory,
+        "src",
+        "components",
+        "editor",
+        "plugins",
+        "image",
+        "feature.ts"
+      ),
+      path.join(
+        projectDirectory,
+        "src",
+        "components",
+        "editor",
+        "plugins",
+        "toc",
+        "editor-with-toc.tsx"
+      )
+    );
+  }
 
   await Promise.all(
     expectedFiles.map((filePath) => readFile(filePath, "utf8"))
   );
 };
 
-const main = async () => {
-  const tempRoot = await mkdtemp(path.join(tmpdir(), "pytah-registry-smoke-"));
-  const projectDirectory = path.join(tempRoot, "app");
-  const keepTemp = process.env.PYTAH_KEEP_SMOKE_APP === "1";
+const scenarios = [
+  {
+    // The lean install: base editor only. Must never pull excalidraw/katex.
+    appSource: baseAppSource,
+    items: ["@pytah/editor"],
+    name: "base",
+    withFeatures: false,
+  },
+  {
+    // Everything on: editor-full resolves every feature item through its
+    // registryDependencies; the app composes all descriptors explicitly.
+    appSource: fullAppSource,
+    items: ["@pytah/editor-full"],
+    name: "all-features",
+    withFeatures: true,
+  },
+];
 
-  console.log(`Creating smoke app in ${projectDirectory}`);
+const runScenario = async (
+  { appSource, items, name, withFeatures },
+  registryUrlTemplate
+) => {
+  const tempRoot = await mkdtemp(
+    path.join(tmpdir(), `pytah-registry-smoke-${name}-`)
+  );
+  const projectDirectory = path.join(tempRoot, "app");
+
+  console.log(`[${name}] Creating smoke app in ${projectDirectory}`);
 
   try {
     await run(
@@ -263,23 +361,80 @@ const main = async () => {
       ["add", "-d", "@tailwindcss/vite", "tailwindcss", "tw-animate-css"],
       { cwd: projectDirectory }
     );
-    await configureSmokeApp(projectDirectory);
-    await run(
-      "node",
-      [shadcnCliPath, "add", registryItemPath, "-y", "--cwd", projectDirectory],
-      { cwd: projectRoot }
-    );
-    await verifyInstalledFiles(projectDirectory);
+
+    await configureSmokeApp(projectDirectory, registryUrlTemplate);
+    await Promise.all([
+      writeFile(
+        path.join(projectDirectory, "src", "App.tsx"),
+        appSource,
+        "utf8"
+      ),
+      writeFile(
+        path.join(projectDirectory, "src", "index.css"),
+        smokeCss,
+        "utf8"
+      ),
+      writeFile(
+        path.join(projectDirectory, "vite.config.ts"),
+        [
+          'import tailwindcss from "@tailwindcss/vite";',
+          'import react from "@vitejs/plugin-react";',
+          'import { defineConfig } from "vite";',
+          "",
+          "export default defineConfig({",
+          "  plugins: [tailwindcss(), react()],",
+          "  resolve: {",
+          "    alias: {",
+          '      "@": new URL("./src", import.meta.url).pathname,',
+          "    },",
+          "  },",
+          "});",
+          "",
+        ].join("\n"),
+        "utf8"
+      ),
+    ]);
+
+    for (const item of items) {
+      await run(
+        "node",
+        [shadcnCliPath, "add", item, "-y", "--cwd", projectDirectory],
+        {
+          cwd: projectRoot,
+        }
+      );
+    }
+
+    await verifyInstalledFiles(projectDirectory, { withFeatures });
     await run("bun", ["run", "build"], { cwd: projectDirectory });
 
-    console.log("Registry smoke test passed.");
-  } finally {
-    if (keepTemp) {
-      console.log(`Keeping smoke app at ${projectDirectory}`);
-    } else {
-      await rm(tempRoot, { force: true, recursive: true });
-    }
+    console.log(`[${name}] Registry smoke test passed.`);
+  } catch (error) {
+    // Preserve the failing workspace for debugging.
+    console.error(`[${name}] Smoke failed; keeping app at ${projectDirectory}`);
+    throw error;
   }
+
+  if (process.env.PYTAH_KEEP_SMOKE_APP === "1") {
+    console.log(`[${name}] Keeping smoke app at ${projectDirectory}`);
+    return;
+  }
+
+  await rm(tempRoot, { force: true, recursive: true });
+};
+
+const main = async () => {
+  const { close, urlTemplate } = await startRegistryServer();
+
+  try {
+    for (const scenario of scenarios) {
+      await runScenario(scenario, urlTemplate);
+    }
+  } finally {
+    close();
+  }
+
+  console.log("Registry smoke test passed.");
 };
 
 await main();

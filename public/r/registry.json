@@ -2,9 +2,75 @@
   "$schema": "https://ui.shadcn.com/schema/registry.json",
   "items": [
     {
-      "description": "Copy/paste-ready Lexical editor with built-in chrome and extension points.",
+      "description": "Copy/paste-ready Lexical editor core with chrome, slash menu, links and markdown/html interop. Pair with optional feature items (images, tables, drawings, ...) for content capabilities.",
       "name": "editor",
       "title": "Pytah Editor",
+      "type": "registry:block"
+    },
+    {
+      "description": "Every optional Pytah editor feature in one install. Compose descriptors through the `extraFeatures` prop.",
+      "name": "editor-full",
+      "title": "Pytah Editor — All Features",
+      "type": "registry:block"
+    },
+    {
+      "description": "Collapsible sections with toggle titles, indentation flows and slash-command insertion.",
+      "name": "editor-collapsible",
+      "title": "Pytah Editor — Collapsible Sections",
+      "type": "registry:block"
+    },
+    {
+      "description": "Drag handles with drop indicators for reordering top-level blocks.",
+      "name": "editor-draggable-blocks",
+      "title": "Pytah Editor — Draggable Blocks",
+      "type": "registry:block"
+    },
+    {
+      "description": "Excalidraw drawing blocks with resize handles and modal editing.",
+      "name": "editor-excalidraw",
+      "title": "Pytah Editor — Drawings",
+      "type": "registry:block"
+    },
+    {
+      "description": "Image embeds with URL/file dialogs, alignment controls, paste and drag-drop upload.",
+      "name": "editor-image",
+      "title": "Pytah Editor — Images",
+      "type": "registry:block"
+    },
+    {
+      "description": "Multi-column layout containers with preset templates and column controls.",
+      "name": "editor-layouts",
+      "title": "Pytah Editor — Layouts",
+      "type": "registry:block"
+    },
+    {
+      "description": "Inline and block TeX math rendered with KaTeX.",
+      "name": "editor-math",
+      "title": "Pytah Editor — Math",
+      "type": "registry:block"
+    },
+    {
+      "description": "Seeds the example document when the editor mounts empty. Intended for demos.",
+      "name": "editor-seed-content",
+      "title": "Pytah Editor — Seed Content",
+      "type": "registry:block"
+    },
+    {
+      "description": "Table cell menus, row/column actions and merge controls. Insertion and paste stay in the base editor.",
+      "name": "editor-tables",
+      "title": "Pytah Editor — Table Behavior",
+      "type": "registry:block"
+    },
+    {
+      "description": "Table-of-contents sidebar with active-heading tracking, plus an EditorWithToc composition wrapper.",
+      "name": "editor-toc",
+      "title": "Pytah Editor — Table of Contents",
+      "type": "registry:block"
+    },
+    {
+      "description": "YouTube embeds with URL dialog and markdown link support.",
+      "name": "editor-youtube",
+      "title": "Pytah Editor — YouTube",
       "type": "registry:block"
     }
   ],

@@ -11,9 +11,10 @@ import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { ThemeToggle } from "@/components/docs/theme-toggle";
 import type { EditorToolbar } from "@/components/editor/core/types";
-import { EditorWithToc } from "@/components/editor/editor-with-toc";
+import { EditorWithToc } from "@/components/editor/plugins/toc/editor-with-toc";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { demoEditorFeatures } from "./demo-features";
 
 const TOOLBAR_CYCLE: EditorToolbar[] = [false, "basic", "full"];
 
@@ -149,6 +150,7 @@ export function DemoPage() {
           <div className={cn(zen && "pt-20")}>
             <EditorWithToc
               editable={editable}
+              extraFeatures={demoEditorFeatures}
               minimal
               toc={tocVisible ? undefined : null}
               toolbar={toolbar}

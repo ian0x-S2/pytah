@@ -1,6 +1,6 @@
 import { deepStrictEqual, strictEqual } from "node:assert/strict";
 import { describe, test } from "node:test";
-import { SLASH_COMMANDS } from "./commands";
+import { CORE_SLASH_COMMANDS } from "./commands";
 import {
   filterSlashCommands,
   getFirstCommandId,
@@ -14,17 +14,19 @@ import {
 describe("slash command utils", () => {
   test("filters commands by label and keyword", () => {
     deepStrictEqual(
-      filterSlashCommands(SLASH_COMMANDS, "hea").map(({ id }) => id),
+      filterSlashCommands([...CORE_SLASH_COMMANDS], "hea").map(({ id }) => id),
       ["h1", "h2", "h3"]
     );
     deepStrictEqual(
-      filterSlashCommands(SLASH_COMMANDS, "embed").map(({ id }) => id),
-      ["youtube"]
+      filterSlashCommands([...CORE_SLASH_COMMANDS], "divider").map(
+        ({ id }) => id
+      ),
+      ["hr"]
     );
   });
 
   test("returns stable navigation ids", () => {
-    const commands = filterSlashCommands(SLASH_COMMANDS, "");
+    const commands = filterSlashCommands([...CORE_SLASH_COMMANDS], "");
     const firstId = getFirstCommandId(commands);
 
     strictEqual(firstId, "paragraph");

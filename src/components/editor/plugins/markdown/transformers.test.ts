@@ -16,20 +16,17 @@ import {
   type ElementNode,
   UNDO_COMMAND,
 } from "lexical";
-import { DEFAULT_EDITOR_FEATURES } from "../../core/composition";
 import { createEditorConfig } from "../../core/config";
-import { resolveFeatureNodes } from "../../core/features";
 import {
   $replaceWithHorizontalRule,
   BUILTIN_MARKDOWN_TRANSFORMERS,
-  EDITOR_MARKDOWN_TRANSFORMERS,
   HORIZONTAL_RULE_MARKDOWN_TRANSFORMER,
 } from "./transformers";
 
 const createTestEditor = () => {
   const config = createEditorConfig({
     editable: true,
-    featureNodes: resolveFeatureNodes(DEFAULT_EDITOR_FEATURES),
+    featureNodes: [],
   });
   return createHeadlessEditor({
     editable: config.editable,
@@ -64,12 +61,6 @@ describe("Horizontal rule markdown transformer", () => {
       ),
       true
     );
-    strictEqual(
-      EDITOR_MARKDOWN_TRANSFORMERS.includes(
-        HORIZONTAL_RULE_MARKDOWN_TRANSFORMER
-      ),
-      true
-    );
   });
 
   test("exports a horizontal rule node to a divider", async () => {
@@ -97,7 +88,7 @@ describe("Horizontal rule markdown transformer", () => {
   test("imports a bare divider line into a horizontal rule node", async () => {
     const editor = createTestEditor();
     await editor.update(() => {
-      $convertFromMarkdownString("---", [...EDITOR_MARKDOWN_TRANSFORMERS]);
+      $convertFromMarkdownString("---", [...BUILTIN_MARKDOWN_TRANSFORMERS]);
     });
     editor.getEditorState().read(() => {
       const children = $getRoot().getChildren();
@@ -110,7 +101,7 @@ describe("Horizontal rule markdown transformer", () => {
     const editor = createTestEditor();
     await editor.update(() => {
       $convertFromMarkdownString("texto ---\n\n----", [
-        ...EDITOR_MARKDOWN_TRANSFORMERS,
+        ...BUILTIN_MARKDOWN_TRANSFORMERS,
       ]);
     });
     strictEqual(hierarchy(editor).includes("horizontalrule:"), false);

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "author": "Pytah",
+  "categories": ["editor"],
+  "dependencies": ["@lexical/react@^0.42.0", "react@^19.2.4"],
+  "description": "Seeds the example document when the editor mounts empty. Intended for demos.",
+  "files": [
+    {
+      "content": "import type { ExtraEditorFeature } from \"../../core/types\";\nimport { SeedContentPlugin } from \"./seed-content\";\n\n/**\n * Seeds the example document when the editor mounts empty. Intended for\n * demos; real consumers usually pass `initialMarkdown` or their own content\n * instead. Ships as the `editor-seed-content` registry item.\n */\nexport const seedContentFeature: ExtraEditorFeature = {\n  id: \"seed-content\",\n  plugin: SeedContentPlugin,\n};\n",
+      "path": "registry/pytah/editor/components/editor/plugins/core/seed-content-feature.ts",
+      "target": "src/components/editor/plugins/core/seed-content-feature.ts",
+      "type": "registry:file"
+    },
+    {
+      "content": "\"use client\";\n\nimport { useLexicalComposerContext } from \"@lexical/react/LexicalComposerContext\";\nimport { useContext, useEffect } from \"react\";\nimport { DEFAULT_EDITOR_MARKDOWN } from \"../../core/constants\";\nimport { EditorTransformersContext } from \"../../core/editor-transformers-context\";\nimport { loadMarkdownContent, readEditorSnapshot } from \"../../core/utils\";\n\n/**\n * Seeds the example document when the editor is empty. The transformer set\n * comes from the composition surface via context, so seeding respects every\n * installed feature's markdown syntax.\n */\nexport function SeedContentPlugin() {\n  const [editor] = useLexicalComposerContext();\n  const transformers = useContext(EditorTransformersContext);\n\n  useEffect(() => {\n    const snapshot = readEditorSnapshot(editor, transformers);\n    if (snapshot.text.trim()) {\n      return;\n    }\n\n    loadMarkdownContent(editor, DEFAULT_EDITOR_MARKDOWN, {\n      select: false,\n      transformers,\n    });\n  }, [editor, transformers]);\n\n  return null;\n}\n",
+      "path": "registry/pytah/editor/components/editor/plugins/core/seed-content.tsx",
+      "target": "src/components/editor/plugins/core/seed-content.tsx",
+      "type": "registry:file"
+    }
+  ],
+  "name": "editor-seed-content",
+  "registryDependencies": ["@pytah/editor"],
+  "title": "Pytah Editor — Seed Content",
+  "type": "registry:block"
+}

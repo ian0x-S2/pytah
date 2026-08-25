@@ -16,7 +16,7 @@
     "build": "bun run registry:build && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "registry:build": "node scripts/generate-registry.mjs && bun x ultracite fix public/r/editor.json public/r/registry.json",
+    "registry:build": "node scripts/generate-registry.mjs && bun x ultracite fix public/r",
     "registry:smoke": "bun run registry:build && node scripts/smoke-registry.mjs",
     "deps:check": "bun outdated",
     "deps:validate": "bun run check && bun run build && bun run registry:smoke",

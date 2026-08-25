@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { LAYOUT_PRESETS } from "../layout/constants";
+import { LAYOUT_PRESETS } from "./constants";
 
 const TEMPLATE_COLUMN_SEPARATOR = /\s+/;
 
@@ -41,19 +41,19 @@ function LayoutPresetPreview({ templateColumns }: { templateColumns: string }) {
   );
 }
 
-interface SlashLayoutDialogProps {
+interface LayoutPresetDialogProps {
   onCancel: () => void;
   onOpenChange: (open: boolean) => void;
   onSelectPreset: (templateColumns: string) => void;
   open: boolean;
 }
 
-export function SlashLayoutDialog({
+export function LayoutPresetDialog({
   onCancel,
   onOpenChange,
   onSelectPreset,
   open,
-}: SlashLayoutDialogProps) {
+}: LayoutPresetDialogProps) {
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent

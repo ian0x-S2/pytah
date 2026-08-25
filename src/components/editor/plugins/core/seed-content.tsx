@@ -1,29 +1,21 @@
 "use client";
 
-import type { Transformer } from "@lexical/markdown";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import type { LexicalEditor } from "lexical";
-import { useEffect } from "react";
+import { useContext, useEffect } from "react";
 import { DEFAULT_EDITOR_MARKDOWN } from "../../core/constants";
+import { EditorTransformersContext } from "../../core/editor-transformers-context";
 import { loadMarkdownContent, readEditorSnapshot } from "../../core/utils";
 
-interface SeedContentPluginProps {
-  editor?: LexicalEditor | null;
-  transformers?: readonly Transformer[];
-}
-
-export function SeedContentPlugin({
-  editor: propEditor,
-  transformers,
-}: SeedContentPluginProps) {
-  const [contextEditor] = useLexicalComposerContext();
-  const editor = propEditor ?? contextEditor;
+/**
+ * Seeds the example document when the editor is empty. The transformer set
+ * comes from the composition surface via context, so seeding respects every
+ * installed feature's markdown syntax.
+ */
+export function SeedContentPlugin() {
+  const [editor] = useLexicalComposerContext();
+  const transformers = useContext(EditorTransformersContext);
 
   useEffect(() => {
-    if (!editor) {
-      return;
-    }
-
     const snapshot = readEditorSnapshot(editor, transformers);
     if (snapshot.text.trim()) {
       return;

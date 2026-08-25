@@ -2,6 +2,7 @@ import type { Transformer } from "@lexical/markdown";
 import type { InitialConfigType } from "@lexical/react/LexicalComposer";
 import type { LexicalEditor } from "lexical";
 import type { ComponentType, ReactNode } from "react";
+import type { FeatureSlashCommand } from "../plugins/slash-command/types";
 
 export interface EditorSnapshot {
   html: string;
@@ -30,38 +31,34 @@ export interface EditorShellContext {
 }
 
 export interface EditorFeatureFlags {
-  collapsible?: boolean;
-  draggableBlocks?: boolean;
-  excalidraw?: boolean;
   floatingLinkEditor?: boolean;
   floatingToolbar?: boolean;
   focusOnMount?: boolean;
   history?: boolean;
-  images?: boolean;
-  layouts?: boolean;
   markdownShortcuts?: boolean;
-  math?: boolean;
-  seedContent?: boolean;
   slashCommand?: boolean;
   tabIndentation?: boolean;
-  tables?: boolean;
-  youtube?: boolean;
 }
 
 /**
  * A feature contributed by a consumer at composition time. Each capability is
  * described once and its nodes, plugin, transformers and slash commands are
  * wired together by the composition surface — no internal file edits needed.
+ *
+ * Content features (images, tables, drawings, ...) are shipped as separate
+ * registry items and composed through this interface; nothing in `core/`
+ * imports them statically, so uninstalled features never reach the bundle.
  */
 export interface ExtraEditorFeature {
-  /** Unique id of the feature (must not collide with built-in flags). */
+  /** Only mount the plugin when the editor is editable. */
+  editableOnly?: boolean;
   id: string;
   /** Lexical nodes contributed by the feature. */
   nodes?: NonNullable<InitialConfigType["nodes"]>;
   /** The behavior plugin to mount on the editor. */
   plugin?: ComponentType;
-  /** Slash-command ids this feature adds to the shared insert menu. */
-  slashCommandIds?: string[];
+  /** Slash-menu entries this feature adds to the shared insert menu. */
+  slashCommands?: readonly FeatureSlashCommand[];
   /** Markdown transformers contributed by the feature. */
   transformers?: Transformer[];
 }

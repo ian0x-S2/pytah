@@ -54,13 +54,16 @@ that capability's nodes, plugin, transformers, and slash commands.
 
 <CodeBlock language="typescript">{extractExportedConst(compositionSource, "DEFAULT_EDITOR_FEATURES")}</CodeBlock>
 
+Content features (images, tables, drawings, ...) are not flags anymore — they
+ship as separate registry items (`editor-image`, `editor-tables`, ...) and are
+composed through `extraFeatures`. The remaining flags cover core behavior:
+
 ```tsx
 <Editor
   features={{
-    images: false,
-    layouts: false,
     floatingToolbar: false,
     focusOnMount: false,
+    markdownShortcuts: false,
     slashCommand: true,
   }}
 />
@@ -75,18 +78,16 @@ together automatically, keeping the mounted stack in sync with the visible
 command list.
 
 ```tsx
-<Editor
-  extraFeatures={[
-    {
-      id: "callout",
-      plugin: CalloutPlugin,
-      nodes: [CalloutNode],
-      transformers: [CALLOUT_TRANSFORMER],
-      slashCommandIds: ["callout"],
-    },
-  ]}
-/>
+import { imageFeature } from "@/components/editor/plugins/image/feature";
+import { myCalloutFeature } from "./my-callout/feature";
+
+<Editor extraFeatures={[imageFeature, myCalloutFeature]} />
 ```
+
+Each descriptor bundles its optional plugin, owned Lexical nodes, markdown
+transformers, and `slashCommands` contributions (`{ command, run }` pairs).
+Feature descriptors shipped by the registry live beside their feature
+(`plugins/<feature>/feature.ts`).
 
 This is the intended alternative to patching `ui/content.tsx` or the built-in
 `core/features.tsx` registry from outside.

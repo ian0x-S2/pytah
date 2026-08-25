@@ -13,7 +13,6 @@ import {
   KEY_ENTER_COMMAND,
   KEY_ESCAPE_COMMAND,
 } from "lexical";
-import type { ChangeEvent } from "react";
 import { useEffect, useEffectEvent, useReducer, useRef } from "react";
 import {
   Command,
@@ -23,22 +22,8 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
-import { INSERT_IMAGE_COMMAND } from "../image/commands";
-import { readFileAsDataUrl } from "../image/utils";
-import { INSERT_LAYOUT_COMMAND } from "../layout/commands";
-import { INSERT_YOUTUBE_COMMAND } from "../youtube/commands";
-import { parseYouTubeUrl } from "../youtube/utils";
 import { createSlashMenuAnchor, getSelectionRectangle } from "./anchor";
-import { getSlashCommandsForIds } from "./commands";
-import { SLASH_COMMAND_EXECUTORS } from "./executors";
-import { InsertImageDialog } from "./insert-image-dialog";
-import { InsertYouTubeDialog } from "./insert-youtube-dialog";
-import { SlashLayoutDialog } from "./layout-dialog";
-import type {
-  SlashCommand,
-  SlashCommandId,
-  SlashCommandSelection,
-} from "./types";
+import type { FeatureSlashCommand, SlashCommandSelection } from "./types";
 import {
   filterSlashCommands,
   getFirstCommandId,
@@ -55,26 +40,18 @@ const SLASH_MENU_COLLISION_AVOIDANCE = {
 } as const;
 
 export interface SlashCommandPluginProps {
-  /** The ids whose commands should be shown in the menu, resolved from the
-   * enabled feature set by the composition surface. */
-  commandIds: readonly string[];
+  /**
+   * Resolved slash-menu contributions: the core block types plus every entry
+   * contributed by installed feature descriptors. The composition surface
+   * builds this list — the menu renders exactly what it receives.
+   */
+  commands: readonly FeatureSlashCommand[];
 }
 
 interface SlashCommandState {
-  imageAltText: string;
-  imageFileName: string;
-  imageFileSrc: string | null;
-  imageUrl: string;
-  isImageDialogOpen: boolean;
-  isLayoutPresetOpen: boolean;
   isOpen: boolean;
-  isYouTubeDialogOpen: boolean;
-  pendingImageTargetKey: string | null;
-  pendingLayoutTargetKey: string | null;
-  pendingYouTubeTargetKey: string | null;
   query: string;
   rawSelectedCommandId: SlashCommandSelection;
-  youTubeUrl: string;
 }
 
 type SlashCommandAction =
@@ -82,35 +59,17 @@ type SlashCommandAction =
   | {
       type: "move-selected-command";
       payload: {
-        commands: SlashCommand[];
+        commands: readonly FeatureSlashCommand[];
         direction: "down" | "up";
-      };
-    }
-  | {
-      type: "set-image-file";
-      payload: {
-        fileName: string;
-        src: string;
       };
     };
 
 const createInitialSlashCommandState = (
   rawSelectedCommandId: SlashCommandSelection
 ): SlashCommandState => ({
-  imageAltText: "",
-  imageFileName: "",
-  imageFileSrc: null,
-  imageUrl: "",
-  isImageDialogOpen: false,
-  isLayoutPresetOpen: false,
   isOpen: false,
-  isYouTubeDialogOpen: false,
-  pendingImageTargetKey: null,
-  pendingLayoutTargetKey: null,
-  pendingYouTubeTargetKey: null,
   query: "",
   rawSelectedCommandId,
-  youTubeUrl: "",
 });
 
 const applySlashCommandPatch = (
@@ -137,18 +96,10 @@ const slashCommandReducer = (
     case "move-selected-command": {
       return applySlashCommandPatch(state, {
         rawSelectedCommandId: getNeighborCommandId(
-          action.payload.commands,
+          action.payload.commands.map((entry) => entry.command),
           state.rawSelectedCommandId,
           action.payload.direction
         ),
-      });
-    }
-    case "set-image-file": {
-      return applySlashCommandPatch(state, {
-        imageAltText: state.imageAltText || action.payload.fileName,
-        imageFileName: action.payload.fileName,
-        imageFileSrc: action.payload.src,
-        imageUrl: "",
       });
     }
     default: {
@@ -157,37 +108,27 @@ const slashCommandReducer = (
   }
 };
 
-export function SlashCommandPlugin({ commandIds }: SlashCommandPluginProps) {
+export function SlashCommandPlugin({ commands }: SlashCommandPluginProps) {
   const [editor] = useLexicalComposerContext();
-  const availableCommands = getSlashCommandsForIds(commandIds);
   const [state, dispatch] = useReducer(
     slashCommandReducer,
-    getFirstCommandId(availableCommands),
+    getFirstCommandId(commands.map((entry) => entry.command)),
     createInitialSlashCommandState
   );
-  const {
-    imageAltText,
-    imageFileName,
-    imageFileSrc,
-    imageUrl,
-    isImageDialogOpen,
-    isLayoutPresetOpen,
-    isOpen,
-    isYouTubeDialogOpen,
-    pendingImageTargetKey,
-    pendingLayoutTargetKey,
-    pendingYouTubeTargetKey,
-    query,
-    rawSelectedCommandId,
-    youTubeUrl,
-  } = state;
+  const { isOpen, query, rawSelectedCommandId } = state;
   const commandListRef = useRef<HTMLDivElement | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const lastPointerPositionRef = useRef<{ x: number; y: number } | null>(null);
 
-  const filteredCommands = filterSlashCommands(availableCommands, query);
+  const filteredCommands = filterSlashCommands(
+    commands.map((entry) => entry.command),
+    query
+  );
+  const filteredEntries = commands.filter((entry) => {
+    return filteredCommands.some((command) => command.id === entry.command.id);
+  });
 
-  const selectedCommandId: SlashCommandId | "" = (() => {
+  const selectedCommandId: SlashCommandSelection = (() => {
     if (filteredCommands.length === 0) {
       return "";
     }
@@ -210,19 +151,13 @@ export function SlashCommandPlugin({ commandIds }: SlashCommandPluginProps) {
       $isRangeSelection(selection) && selection.isCollapsed();
 
     if (!isCollapsedRangeSelection) {
-      dispatch({
-        type: "patch",
-        payload: { isLayoutPresetOpen: false, isOpen: false },
-      });
+      dispatch({ type: "patch", payload: { isOpen: false } });
       return;
     }
 
     const node = selection.anchor.getNode();
     if (!$isTextNode(node)) {
-      dispatch({
-        type: "patch",
-        payload: { isLayoutPresetOpen: false, isOpen: false },
-      });
+      dispatch({ type: "patch", payload: { isOpen: false } });
       return;
     }
 
@@ -232,10 +167,7 @@ export function SlashCommandPlugin({ commandIds }: SlashCommandPluginProps) {
     const nextQuery = getSlashQueryMatch(textUpToCursor);
 
     if (nextQuery === null) {
-      dispatch({
-        type: "patch",
-        payload: { isLayoutPresetOpen: false, isOpen: false },
-      });
+      dispatch({ type: "patch", payload: { isOpen: false } });
       return;
     }
 
@@ -263,210 +195,13 @@ export function SlashCommandPlugin({ commandIds }: SlashCommandPluginProps) {
     });
   });
 
-  const resetImageDialog = () => {
-    dispatch({
-      type: "patch",
-      payload: {
-        imageAltText: "",
-        imageFileName: "",
-        imageFileSrc: null,
-        imageUrl: "",
-        isImageDialogOpen: false,
-        pendingImageTargetKey: null,
-      },
-    });
-  };
-
-  const resetYouTubeDialog = () => {
-    dispatch({
-      type: "patch",
-      payload: {
-        isYouTubeDialogOpen: false,
-        pendingYouTubeTargetKey: null,
-        youTubeUrl: "",
-      },
-    });
-  };
-
-  const handleImageFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-
-    if (!file) {
-      dispatch({
-        type: "patch",
-        payload: { imageFileName: "", imageFileSrc: null },
-      });
-      return;
-    }
-
-    readFileAsDataUrl(file)
-      .then((src) => {
-        dispatch({
-          type: "set-image-file",
-          payload: { fileName: file.name, src },
-        });
-      })
-      .catch(() => {
-        dispatch({
-          type: "patch",
-          payload: { imageFileName: "", imageFileSrc: null },
-        });
-      });
-  };
-
-  const executeCommand = (commandId: SlashCommandId) => {
-    if (
-      commandId === "columns" ||
-      commandId === "image" ||
-      commandId === "youtube"
-    ) {
-      let targetNodeKey: string | null = null;
-
-      editor.getEditorState().read(() => {
-        const selection = $getSelection();
-        if (!$isRangeSelection(selection)) {
-          return;
-        }
-
-        const node = selection.anchor.getNode();
-        if (!$isTextNode(node)) {
-          return;
-        }
-
-        targetNodeKey = node.getTopLevelElementOrThrow().getKey();
-      });
-
-      if (commandId === "columns") {
-        dispatch({
-          type: "patch",
-          payload: {
-            isLayoutPresetOpen: true,
-            isOpen: false,
-            pendingLayoutTargetKey: targetNodeKey,
-          },
-        });
-      } else if (commandId === "youtube") {
-        dispatch({
-          type: "patch",
-          payload: {
-            isOpen: false,
-            isYouTubeDialogOpen: true,
-            pendingYouTubeTargetKey: targetNodeKey,
-          },
-        });
-      } else {
-        dispatch({
-          type: "patch",
-          payload: {
-            isImageDialogOpen: true,
-            isOpen: false,
-            pendingImageTargetKey: targetNodeKey,
-          },
-        });
-      }
-      return;
-    }
-
-    editor.update(() => {
-      const selection = $getSelection();
-      if (!$isRangeSelection(selection)) {
-        return;
-      }
-
-      const node = selection.anchor.getNode();
-      if (!$isTextNode(node)) {
-        return;
-      }
-
-      node.setTextContent("");
-
-      const element = node.getTopLevelElementOrThrow();
-      SLASH_COMMAND_EXECUTORS[commandId](element);
-    });
-
+  const executeEntry = useEffectEvent((entry: FeatureSlashCommand) => {
     dispatch({ type: "patch", payload: { isOpen: false } });
-  };
-
-  const executeLayoutPreset = (templateColumns: string) => {
-    if (!pendingLayoutTargetKey) {
-      return;
-    }
-
-    editor.dispatchCommand(INSERT_LAYOUT_COMMAND, {
-      targetNodeKey: pendingLayoutTargetKey,
-      templateColumns,
-    });
-
-    dispatch({
-      type: "patch",
-      payload: {
-        isLayoutPresetOpen: false,
-        isOpen: false,
-        pendingLayoutTargetKey: null,
-      },
-    });
-  };
-
-  const submitImage = () => {
-    const nextImageSrc = imageFileSrc ?? imageUrl.trim();
-    if (!(nextImageSrc && pendingImageTargetKey)) {
-      return;
-    }
-
-    editor.dispatchCommand(INSERT_IMAGE_COMMAND, {
-      altText: imageAltText.trim(),
-      src: nextImageSrc,
-      targetNodeKey: pendingImageTargetKey,
-    });
-
-    dispatch({
-      type: "patch",
-      payload: {
-        imageAltText: "",
-        imageFileName: "",
-        imageFileSrc: null,
-        imageUrl: "",
-        isImageDialogOpen: false,
-        isOpen: false,
-        pendingImageTargetKey: null,
-      },
-    });
-  };
-
-  const submitYouTube = () => {
-    if (!pendingYouTubeTargetKey) {
-      return;
-    }
-
-    const videoId = parseYouTubeUrl(youTubeUrl);
-    if (!videoId) {
-      return;
-    }
-
-    editor.dispatchCommand(INSERT_YOUTUBE_COMMAND, {
-      targetNodeKey: pendingYouTubeTargetKey,
-      videoId,
-    });
-
-    dispatch({
-      type: "patch",
-      payload: {
-        isOpen: false,
-        isYouTubeDialogOpen: false,
-        pendingYouTubeTargetKey: null,
-        youTubeUrl: "",
-      },
-    });
-  };
+    entry.run(editor);
+  });
 
   useEffect(() => {
-    if (
-      !(isOpen && selectedCommandId) ||
-      isImageDialogOpen ||
-      isLayoutPresetOpen ||
-      isYouTubeDialogOpen
-    ) {
+    if (!(isOpen && selectedCommandId)) {
       return;
     }
 
@@ -483,23 +218,13 @@ export function SlashCommandPlugin({ commandIds }: SlashCommandPluginProps) {
     return () => {
       window.cancelAnimationFrame(animationFrameId);
     };
-  }, [
-    isImageDialogOpen,
-    isLayoutPresetOpen,
-    isOpen,
-    isYouTubeDialogOpen,
-    selectedCommandId,
-  ]);
+  }, [isOpen, selectedCommandId]);
 
   useEffect(() => {
-    if (isImageDialogOpen || isLayoutPresetOpen || isYouTubeDialogOpen) {
-      return;
-    }
-
     return editor.registerUpdateListener(() => {
       scheduleSlashMenuUpdate();
     });
-  }, [editor, isImageDialogOpen, isLayoutPresetOpen, isYouTubeDialogOpen]);
+  }, [editor]);
 
   useEffect(() => {
     return () => {
@@ -512,74 +237,30 @@ export function SlashCommandPlugin({ commandIds }: SlashCommandPluginProps) {
 
   const onKeyCommand = useEffectEvent(
     (command: "arrow-down" | "arrow-up" | "enter" | "escape") => {
-      const handleEnter = () => {
-        if (isLayoutPresetOpen) {
-          executeLayoutPreset("1fr 1fr");
-          return;
-        }
-
-        if (isImageDialogOpen) {
-          submitImage();
-          return;
-        }
-
-        if (isYouTubeDialogOpen) {
-          submitYouTube();
-          return;
-        }
-
-        const selectedCommand = filteredCommands[selectedIndex];
-        if (selectedCommand) {
-          executeCommand(selectedCommand.id);
-        }
-      };
-
-      const handleEscape = () => {
-        if (isImageDialogOpen) {
-          resetImageDialog();
-          return;
-        }
-
-        if (isLayoutPresetOpen) {
-          dispatch({
-            type: "patch",
-            payload: {
-              isLayoutPresetOpen: false,
-              pendingLayoutTargetKey: null,
-            },
-          });
-          return;
-        }
-
-        if (isYouTubeDialogOpen) {
-          resetYouTubeDialog();
-          return;
-        }
-
-        dispatch({ type: "patch", payload: { isOpen: false } });
-      };
-
       switch (command) {
         case "arrow-down": {
           dispatch({
             type: "move-selected-command",
-            payload: { commands: filteredCommands, direction: "down" },
+            payload: { commands, direction: "down" },
           });
           return;
         }
         case "arrow-up": {
           dispatch({
             type: "move-selected-command",
-            payload: { commands: filteredCommands, direction: "up" },
+            payload: { commands, direction: "up" },
           });
           return;
         }
         case "enter": {
-          handleEnter();
+          const selectedEntry = filteredEntries[selectedIndex];
+          if (selectedEntry) {
+            executeEntry(selectedEntry);
+          }
           return;
         }
         case "escape": {
-          handleEscape();
+          dispatch({ type: "patch", payload: { isOpen: false } });
           return;
         }
         default: {
@@ -594,17 +275,10 @@ export function SlashCommandPlugin({ commandIds }: SlashCommandPluginProps) {
       return;
     }
 
-    const isDialogOpen =
-      isImageDialogOpen || isLayoutPresetOpen || isYouTubeDialogOpen;
-
     return mergeRegister(
       editor.registerCommand(
         KEY_ARROW_DOWN_COMMAND,
         (event) => {
-          if (isDialogOpen) {
-            return true;
-          }
-
           event.preventDefault();
           onKeyCommand("arrow-down");
           return true;
@@ -614,10 +288,6 @@ export function SlashCommandPlugin({ commandIds }: SlashCommandPluginProps) {
       editor.registerCommand(
         KEY_ARROW_UP_COMMAND,
         (event) => {
-          if (isDialogOpen) {
-            return true;
-          }
-
           event.preventDefault();
           onKeyCommand("arrow-up");
           return true;
@@ -642,42 +312,37 @@ export function SlashCommandPlugin({ commandIds }: SlashCommandPluginProps) {
         COMMAND_PRIORITY_HIGH
       )
     );
-  }, [
-    editor,
-    isOpen,
-    isImageDialogOpen,
-    isLayoutPresetOpen,
-    isYouTubeDialogOpen,
-  ]);
+  }, [editor, isOpen]);
 
   return (
-    <>
-      <PopoverPrimitive.Root
-        modal={false}
-        open={isOpen && filteredCommands.length > 0}
-      >
-        <PopoverPrimitive.Portal>
-          <PopoverPrimitive.Positioner
-            align="start"
-            anchor={anchor}
-            className="isolate z-50"
-            collisionAvoidance={SLASH_MENU_COLLISION_AVOIDANCE}
-            positionMethod="fixed"
-            side="bottom"
-            sideOffset={4}
+    <PopoverPrimitive.Root
+      modal={false}
+      open={isOpen && filteredCommands.length > 0}
+    >
+      <PopoverPrimitive.Portal>
+        <PopoverPrimitive.Positioner
+          align="start"
+          anchor={anchor}
+          className="isolate z-50"
+          collisionAvoidance={SLASH_MENU_COLLISION_AVOIDANCE}
+          positionMethod="fixed"
+          side="bottom"
+          sideOffset={4}
+        >
+          <PopoverPrimitive.Popup
+            className={cn(
+              "data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 z-50 flex w-72 origin-(--transform-origin) flex-col overflow-hidden rounded-lg bg-popover p-0 text-popover-foreground text-sm shadow-md outline-hidden ring-1 ring-foreground/10 duration-100 data-closed:animate-out data-open:animate-in"
+            )}
+            data-slot="slash-command-popover"
+            finalFocus={false}
+            initialFocus={false}
           >
-            <PopoverPrimitive.Popup
-              className={cn(
-                "data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 z-50 flex w-72 origin-(--transform-origin) flex-col overflow-hidden rounded-lg bg-popover p-0 text-popover-foreground text-sm shadow-md outline-hidden ring-1 ring-foreground/10 duration-100 data-closed:animate-out data-open:animate-in"
-              )}
-              data-slot="slash-command-popover"
-              finalFocus={false}
-              initialFocus={false}
-            >
-              <Command shouldFilter={false} value={selectedCommandId}>
-                <CommandList ref={commandListRef}>
-                  <CommandGroup heading="Blocks">
-                    {filteredCommands.map((command, index) => (
+            <Command shouldFilter={false} value={selectedCommandId}>
+              <CommandList ref={commandListRef}>
+                <CommandGroup heading="Blocks">
+                  {filteredEntries.map((entry, index) => {
+                    const command = entry.command;
+                    return (
                       <CommandItem
                         className={
                           index === selectedIndex
@@ -710,7 +375,7 @@ export function SlashCommandPlugin({ commandIds }: SlashCommandPluginProps) {
                             payload: { rawSelectedCommandId: command.id },
                           });
                         }}
-                        onSelect={() => executeCommand(command.id)}
+                        onSelect={() => executeEntry(entry)}
                         value={command.id}
                       >
                         <command.icon className="size-4 shrink-0 text-muted-foreground" />
@@ -721,66 +386,17 @@ export function SlashCommandPlugin({ commandIds }: SlashCommandPluginProps) {
                           </span>
                         </div>
                       </CommandItem>
-                    ))}
-                  </CommandGroup>
-                  {filteredCommands.length === 0 ? (
-                    <CommandEmpty>No results found</CommandEmpty>
-                  ) : null}
-                </CommandList>
-              </Command>
-            </PopoverPrimitive.Popup>
-          </PopoverPrimitive.Positioner>
-        </PopoverPrimitive.Portal>
-      </PopoverPrimitive.Root>
-
-      <SlashLayoutDialog
-        onCancel={() => {
-          dispatch({
-            type: "patch",
-            payload: {
-              isLayoutPresetOpen: false,
-              pendingLayoutTargetKey: null,
-            },
-          });
-        }}
-        onOpenChange={(open) =>
-          dispatch({
-            type: "patch",
-            payload: open
-              ? { isLayoutPresetOpen: true }
-              : { isLayoutPresetOpen: false, pendingLayoutTargetKey: null },
-          })
-        }
-        onSelectPreset={executeLayoutPreset}
-        open={isLayoutPresetOpen}
-      />
-
-      <InsertImageDialog
-        imageAltText={imageAltText}
-        imageFileName={imageFileName}
-        imageFileSrc={imageFileSrc}
-        imageUrl={imageUrl}
-        onAltTextChange={(value) =>
-          dispatch({ type: "patch", payload: { imageAltText: value } })
-        }
-        onCancel={resetImageDialog}
-        onImageFileChange={handleImageFileChange}
-        onSubmit={submitImage}
-        onUrlChange={(value) =>
-          dispatch({ type: "patch", payload: { imageUrl: value } })
-        }
-        open={isImageDialogOpen}
-      />
-
-      <InsertYouTubeDialog
-        onCancel={resetYouTubeDialog}
-        onSubmit={submitYouTube}
-        onUrlChange={(value) =>
-          dispatch({ type: "patch", payload: { youTubeUrl: value } })
-        }
-        open={isYouTubeDialogOpen}
-        youTubeUrl={youTubeUrl}
-      />
-    </>
+                    );
+                  })}
+                </CommandGroup>
+                {filteredCommands.length === 0 ? (
+                  <CommandEmpty>No results found</CommandEmpty>
+                ) : null}
+              </CommandList>
+            </Command>
+          </PopoverPrimitive.Popup>
+        </PopoverPrimitive.Positioner>
+      </PopoverPrimitive.Portal>
+    </PopoverPrimitive.Root>
   );
 }

@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { useInsertDialogs } from "../slash-command/use-insert-dialogs";
+import { getSlashRunner } from "../slash-command/executors";
 import {
   BLOCK_ICONS,
   BLOCK_LABELS,
@@ -59,23 +59,9 @@ export const BlockTypeDrop = memo(function BlockTypeDrop({
   const currentOption = getCurrentBlockOption(blockType, availableOptions);
   const CurrentIcon = BLOCK_ICONS[currentOption?.value ?? "paragraph"];
 
-  const { dialogs, openColumns, openImage, openYouTube } =
-    useInsertDialogs("block-type");
-
   const handleChange = (value: BlockTypeValue) => {
-    if (value === "image") {
-      openImage();
-      return;
-    }
-
-    if (value === "youtube") {
-      openYouTube();
-      return;
-    }
-
-    // Columns opens the layout preset picker, matching the slash menu flow.
-    if (value === "columns") {
-      openColumns();
+    if (INSERT_SECTION_TYPES.has(value)) {
+      getSlashRunner(value)?.(editor);
       return;
     }
 
@@ -115,30 +101,27 @@ export const BlockTypeDrop = memo(function BlockTypeDrop({
   };
 
   return (
-    <>
-      <DropdownMenu>
-        <DropdownMenuTrigger render={<Button size="sm" variant="outline" />}>
-          <CurrentIcon className="size-4" />
-          <span>{currentOption?.label ?? BLOCK_LABELS.paragraph}</span>
-          <ChevronDownIcon className="size-4 text-muted-foreground" />
-        </DropdownMenuTrigger>
+    <DropdownMenu>
+      <DropdownMenuTrigger render={<Button size="sm" variant="outline" />}>
+        <CurrentIcon className="size-4" />
+        <span>{currentOption?.label ?? BLOCK_LABELS.paragraph}</span>
+        <ChevronDownIcon className="size-4 text-muted-foreground" />
+      </DropdownMenuTrigger>
 
-        <DropdownMenuContent className={cn("w-72", className)}>
+      <DropdownMenuContent className={cn("w-72", className)}>
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>Turn into</DropdownMenuLabel>
+          {conversionOptions.map(renderOption)}
+        </DropdownMenuGroup>
+
+        {insertOptions.length > 0 && (
           <DropdownMenuGroup>
-            <DropdownMenuLabel>Turn into</DropdownMenuLabel>
-            {conversionOptions.map(renderOption)}
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel>Insert</DropdownMenuLabel>
+            {insertOptions.map(renderOption)}
           </DropdownMenuGroup>
-
-          {insertOptions.length > 0 && (
-            <DropdownMenuGroup>
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel>Insert</DropdownMenuLabel>
-              {insertOptions.map(renderOption)}
-            </DropdownMenuGroup>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
-      {dialogs}
-    </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 });
