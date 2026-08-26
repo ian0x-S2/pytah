@@ -116,6 +116,14 @@ const featureItems = [
 const registryPathPrefix = "registry/pytah/editor";
 
 /**
+ * Published origin of this docs app. The shadcn registry directory requires
+ * `/registry.json` and every `{name}.json` to resolve from a single flat
+ * public base URL.
+ */
+const registryBaseUrl =
+  process.env.PYTAH_REGISTRY_BASE_URL ?? "https://pytah.vercel.app";
+
+/**
  * Namespace used inside `registryDependencies`. Consumers map it to the
  * hosted URL template in their `components.json`:
  *
@@ -498,6 +506,7 @@ const main = async () => {
 
   const registryIndex = {
     $schema: "https://ui.shadcn.com/schema/registry.json",
+    homepage: registryBaseUrl,
     items: [baseItem, fullItem, ...items].map((item) => ({
       description: item.description,
       name: item.name,

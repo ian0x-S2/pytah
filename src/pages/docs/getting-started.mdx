@@ -30,16 +30,51 @@ Radix UI, and is currently validated against Lexical
 
 ## 1. Install with shadcn CLI
 
-The fastest path is the registry item served by this app. Use the published
-registry URL in your own project, or the local URL while this docs app is
-running on your machine:
+There are two supported install styles: a **namespace registry** (recommended,
+enables optional feature items) and **direct URLs** (single-item installs).
+
+### Option A: Namespace registry (recommended)
+
+Map the `@pytah` namespace in your project's `components.json`:
+
+```json
+{
+  "registries": {
+    "@pytah": "https://pytah.vercel.app/r/{name}.json"
+  }
+}
+```
+
+Then install with the short name:
+
+```bash
+# base editor
+bunx --bun shadcn add @pytah/editor
+
+# any optional feature item
+bunx --bun shadcn add @pytah/editor-image
+```
+
+<Callout title="Required for feature items" variant="warning">
+  Feature items (`editor-image`, `editor-tables`, ...) declare
+  `registryDependencies: ["@pytah/editor"]`. The CLI can only resolve that
+  reference through the namespace mapping above — installing a feature by raw
+  URL fails to pull the base editor automatically.
+</Callout>
+
+For local development, point the namespace at the dev server instead:
+`http://localhost:5173/r/{name}.json`.
+
+### Option B: Direct URL
+
+Single-item installs work without touching `components.json`:
 
 ```bash
 # local docs/dev server
 bun x shadcn@latest add http://localhost:5173/r/editor.json
 
-# same path on your deployed host
-bun x shadcn@latest add https://your-domain.example/r/editor.json
+# published registry
+bun x shadcn@latest add https://pytah.vercel.app/r/editor.json
 ```
 
 The path is always `/r/editor.json`. Only the origin changes between local and
@@ -197,12 +232,12 @@ chrome          // show/hide default shell/header/footer/action bar/output panel
 slots           // replace default visual surfaces
 pluginSlots     // mount extra plugins around the built-in plugin stack
 extraNodes      // register additional Lexical nodes
-extraFeatures   // contribute a whole capability (nodes + plugin + transformers + slash commands)
 namespace       // customize the Lexical namespace when embedding multiple editors
 ```
 
-For a deeper breakdown of those contracts, continue with the `Composition` and
-`API` pages.
+Installed feature items are composed through their feature descriptors — see
+`/docs/composition` for `extraFeatures`. For a deeper breakdown of those
+contracts, continue with the `Composition` and `API` pages.
 
 <Callout title="That's it" variant="tip">
   The editor is self-contained. It manages its own Lexical composer, plugins,

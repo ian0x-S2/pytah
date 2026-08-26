@@ -1,5 +1,6 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "homepage": "https://pytah.vercel.app",
   "items": [
     {
       "description": "Copy/paste-ready Lexical editor core with chrome, slash menu, links and markdown/html interop. Pair with optional feature items (images, tables, drawings, ...) for content capabilities.",

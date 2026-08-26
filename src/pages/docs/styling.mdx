@@ -1,0 +1,93 @@
+---
+title: "Styling"
+description: "Every surface you can restyle without forking the editor: class overrides, the Lexical content theme, and the base stylesheet."
+group: "core"
+icon: "PencilRuler"
+label: "Styling"
+order: 85
+badge: "Core Doc"
+---
+
+import editorCssSource from "@/components/editor/editor.css?raw";
+import themeSource from "@/components/editor/core/theme.ts?raw";
+
+## Styling Layers
+
+The editor separates styling into four independent layers. Each one answers a
+different question, and none of them requires patching internal files:
+
+| Layer | Question it answers | Where |
+| --- | --- | --- |
+| Design tokens | Which colors, radii, and semantic values | `/docs/theming` |
+| Content theme | How rendered content looks inside the editable area | `core/theme.ts` |
+| Surface overrides | Sizing, padding, and chrome adjustments from outside | `className`, `contentClassName`, `slots` |
+| Base stylesheet | A few reset rules the editor cannot function without | `editor.css` |
+
+<Callout variant="tip">
+  Start at the highest layer that solves your need: swap tokens first (see
+  `/docs/theming`), then restyle the content theme, then reach for class
+  overrides or slot replacement in `/docs/composition`.
+</Callout>
+
+## Surface Overrides
+
+Every public editor component accepts a `className` prop merged through
+`cn(defaults, className)`, so callers can override specific utilities without
+losing defaults. The `Editor` additionally exposes `contentClassName`, threaded
+down to the `ContentEditable` surface.
+
+```tsx
+<Editor
+  className="max-w-3xl mx-auto"
+  contentClassName="min-h-60 px-6 py-6 text-base"
+/>
+```
+
+Common uses for `contentClassName`: tighter padding, a smaller base font size,
+or a minimum height that matches the surrounding layout. For replacing entire
+surfaces (header, action bar, outputs) instead of resizing them, use
+`slots` — see `/docs/composition`.
+
+## Content Theme
+
+Rendered content is styled through the Lexical theme in `core/theme.ts`. It is
+a flat map from content roles (headings, lists, tables, code, inline text) to
+Tailwind classes, plugged into the editor config by `createEditorConfig`. This
+is the single place that controls typography and spacing inside the editable
+area.
+
+<CodeBlock label="src/components/editor/core/theme.ts" language="typescript">
+  {themeSource}
+</CodeBlock>
+
+A few patterns worth keeping if you customize it:
+
+- Reference design tokens (`bg-muted`, `text-primary`) instead of raw colors,
+  so dark mode keeps working for free.
+- Give headings `first:mt-0` and `scroll-mt-*` so the top of the document stays
+  flush and anchor scrolling respects sticky headers.
+- Keep list/checklist styling on the theme's `before:` pseudo-element utilities;
+  the marker glyphs come from there, not from DOM nodes.
+
+<Callout title="Registered, not injected" variant="info">
+  The theme ships as part of the editor registry item. To change it, edit the
+  installed `theme.ts` (or pass your own `theme` when composing a lower-level
+  `LexicalComposer` yourself) — the built-in `Editor` intentionally does not
+  expose a theme prop, keeping the default opinionated and overridable at the
+  composition layer instead.
+</Callout>
+
+## Base Stylesheet
+
+The registry item ships one tiny stylesheet, imported by the editor root. It
+exists because some user-agent defaults fight the content theme — everything
+else lives in Tailwind classes and tokens.
+
+<CodeBlock label="src/components/editor/editor.css" language="css">
+  {editorCssSource}
+</CodeBlock>
+
+Without the `mark` reset, the browser's built-in yellow highlight shows behind
+the rounded corners of the themed highlight span. If you compose the editor at
+a lower level without importing `editor.css`, replicate this rule in your own
+global styles.

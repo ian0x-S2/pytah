@@ -49,7 +49,7 @@ O registry é modular: `editor` é o núcleo enxuto e cada capability de conteú
 }
 ```
 
-> Para produção, troque por `https://your-domain.example/r/{name}.json`.
+> Para produção, o namespace oficial é `https://pytah.vercel.app/r/{name}.json`.
 
 Depois instale o núcleo e as features que quiser:
 
