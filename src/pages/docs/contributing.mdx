@@ -76,12 +76,14 @@ output or compatibility expectations.
 
 ## Registry Directory Listing
 
-The `@pytah` namespace is listed in the official
-[shadcn registry directory](https://ui.shadcn.com/docs/registry/directory), so
-`shadcn add` and `shadcn search` resolve it out of the box. The published base
-URL is fixed: `https://pytah.vercel.app/r/{name}.json`.
+The `@pytah` namespace is a candidate for the official
+[shadcn registry directory](https://ui.shadcn.com/docs/registry/directory) —
+not listed yet. Once merged, `shadcn add` and `shadcn search` will resolve it
+out of the box; until then, consumers install via the namespace mapping in
+`components.json` (see `/docs/getting-started`). The base URL is fixed:
+`https://pytah.vercel.app/r/{name}.json`.
 
-Entry submitted to
+Entry to submit to
 [`apps/v4/registry/directory.json`](https://github.com/shadcn-ui/ui/blob/main/apps/v4/registry/directory.json):
 
 ```json
@@ -105,5 +107,6 @@ Directory requirements and how this repo satisfies them:
 <Callout title="Keep the base URL stable" variant="warning">
   Once listed, `https://pytah.vercel.app/r/{name}.json` becomes a hard
   contract for every installed app. Changing hosts or paths breaks consumers'
-  `components.json` mappings silently.
+  `components.json` mappings silently — so fix it before submitting, not
+  after.
 </Callout>
