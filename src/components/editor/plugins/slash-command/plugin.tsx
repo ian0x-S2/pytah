@@ -336,6 +336,19 @@ export function SlashCommandPlugin({ commands }: SlashCommandPluginProps) {
             data-slot="slash-command-popover"
             finalFocus={false}
             initialFocus={false}
+            onFocus={(event) => {
+              // `initialFocus: false` makes the focus manager grab focus for
+              // the popup, stealing the caret from the editor. Bounce focus
+              // back to the editor root so typing continues seamlessly.
+              const rootElement = editor.getRootElement();
+              if (
+                rootElement &&
+                event.target !== rootElement &&
+                !rootElement.contains(event.target)
+              ) {
+                rootElement.focus({ preventScroll: true });
+              }
+            }}
           >
             <Command shouldFilter={false} value={selectedCommandId}>
               <CommandList ref={commandListRef}>

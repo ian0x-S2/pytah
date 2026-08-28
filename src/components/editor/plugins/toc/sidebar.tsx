@@ -46,7 +46,9 @@ function EditorTocMiniBars({
   }
 
   return (
-    <div className="flex flex-col items-end gap-2 py-2">
+    // Capped so heading-heavy documents don't stretch the mini-bars to full
+    // editor height; overflow scrolls with a thin scrollbar.
+    <div className="scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent flex max-h-[70vh] flex-col items-end gap-2 overflow-y-auto py-2">
       {entries.map(([key, text, tag]) => {
         const isActive = key === activeKey;
         const widthClass = DASH_WIDTHS[tag] ?? "w-3.5";

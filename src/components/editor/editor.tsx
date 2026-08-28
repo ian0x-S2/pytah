@@ -199,12 +199,41 @@ export function Editor({
     onChange?.(nextSnapshot, editor);
   };
 
+  // Snapshot serialization options are resolved with the feature flags; the
+  // editor-level handlers (copy, reset, example loaders) must respect the
+  // same gating so disabled outputs are never assumed to be real content.
+  const snapshotOptions = resolvedFeatures.snapshot;
+
+  const readSerializedOutput = (output: "html" | "markdown"): string => {
+    if (!editorInstance) {
+      return "";
+    }
+
+    return readEditorSnapshot(
+      editorInstance,
+      transformers,
+      output === "html"
+        ? { html: true, markdown: false, text: false }
+        : { html: false, markdown: true, text: false }
+    )[output];
+  };
+
   const handleCopyMarkdown = async () => {
-    await copyEditorOutput(serializedSnapshot.markdown);
+    // When an output is disabled its stored snapshot is a "" placeholder —
+    // serialize on demand so the outputs panel still copies real content.
+    await copyEditorOutput(
+      snapshotOptions.markdown
+        ? serializedSnapshot.markdown
+        : readSerializedOutput("markdown")
+    );
   };
 
   const handleCopyHtml = async () => {
-    await copyEditorOutput(serializedSnapshot.html);
+    await copyEditorOutput(
+      snapshotOptions.html
+        ? serializedSnapshot.html
+        : readSerializedOutput("html")
+    );
   };
 
   const handleExportMarkdown = () => {
@@ -221,7 +250,11 @@ export function Editor({
     }
 
     resetEditorContent(editorInstance);
-    const nextSnapshot = readEditorSnapshot(editorInstance, transformers);
+    const nextSnapshot = readEditorSnapshot(
+      editorInstance,
+      transformers,
+      snapshotOptions
+    );
     setTextContent(nextSnapshot.text);
     setSerializedSnapshot(nextSnapshot);
     onChange?.(nextSnapshot, editorInstance);
@@ -233,7 +266,11 @@ export function Editor({
     }
 
     loadEditorHtmlExample(editorInstance);
-    const nextSnapshot = readEditorSnapshot(editorInstance, transformers);
+    const nextSnapshot = readEditorSnapshot(
+      editorInstance,
+      transformers,
+      snapshotOptions
+    );
     setTextContent(nextSnapshot.text);
     setSerializedSnapshot(nextSnapshot);
     onChange?.(nextSnapshot, editorInstance);
@@ -245,7 +282,11 @@ export function Editor({
     }
 
     loadEditorMarkdownExample(editorInstance);
-    const nextSnapshot = readEditorSnapshot(editorInstance, transformers);
+    const nextSnapshot = readEditorSnapshot(
+      editorInstance,
+      transformers,
+      snapshotOptions
+    );
     setTextContent(nextSnapshot.text);
     setSerializedSnapshot(nextSnapshot);
     onChange?.(nextSnapshot, editorInstance);

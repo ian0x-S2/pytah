@@ -4,10 +4,37 @@ import type { LexicalEditor } from "lexical";
 import type { ComponentType, ReactNode } from "react";
 import type { FeatureSlashCommand } from "../plugins/slash-command/types";
 
+/**
+ * A serialized view of the current editor document. Fields stay `string`
+ * unconditionally: an output disabled through `features.snapshot` is never
+ * computed and surfaces as `""` — it is a placeholder, not empty content.
+ */
 export interface EditorSnapshot {
   html: string;
   markdown: string;
   text: string;
+}
+
+/**
+ * Selective snapshot serialization. Every option defaults to `true`
+ * (backward compatible); a disabled output is skipped entirely instead of
+ * being computed and discarded.
+ */
+export interface EditorSnapshotOutputs {
+  /** Serialize HTML into `snapshot.html`. @default true */
+  html?: boolean;
+  /** Serialize markdown into `snapshot.markdown`. @default true */
+  markdown?: boolean;
+  /** Serialize plain text into `snapshot.text`. @default true */
+  text?: boolean;
+}
+
+export interface EditorSnapshotOptions extends EditorSnapshotOutputs {
+  /**
+   * Emit `onChange`/`onSnapshotReady` for the initial programmatic seed
+   * (`initialMarkdown`/`initialHtml`). @default true
+   */
+  emitInitialSnapshot?: boolean;
 }
 
 export interface EditorActionBarControls {
@@ -39,6 +66,11 @@ export interface EditorFeatureFlags {
   history?: boolean;
   markdownShortcuts?: boolean;
   slashCommand?: boolean;
+  /**
+   * Selective snapshot serialization. Disable the outputs a consumer never
+   * reads to skip their per-keystroke serialization cost entirely.
+   */
+  snapshot?: EditorSnapshotOptions;
   tabIndentation?: boolean;
 }
 

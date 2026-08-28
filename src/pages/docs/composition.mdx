@@ -69,6 +69,39 @@ composed through `extraFeatures`. The remaining flags cover core behavior:
 />
 ```
 
+## Snapshot Outputs
+
+Every editor state change serializes the document into the `EditorSnapshot`
+delivered to `onChange`/`onSnapshotReady`. Consumers that only read one output
+(e.g. a notes app that only consumes `markdown`) can skip the others entirely
+through `features.snapshot` — a disabled output is never computed, which
+removes its per-keystroke serialization cost and surfaces as `""` on the
+snapshot.
+
+<InterfaceSource name="EditorSnapshotOptions" source={editorTypesSource} />
+
+```tsx
+<Editor
+  features={{
+    snapshot: {
+      html: false,
+      text: false,
+      // Skip the onChange emission for the initial programmatic seed
+      // (initialMarkdown/initialHtml); the first change emits instead.
+      emitInitialSnapshot: false,
+    },
+  }}
+/>
+```
+
+<Callout title="Initial-only seed props" variant="note">
+  `initialMarkdown` and `initialHtml` seed the editor once per mount. They are
+  captured when the editor mounts and are not re-applied when their identity
+  changes later — re-seeding in place would replace live state and reset the
+  caret. To load different content, remount with a changed `key` or dispatch a
+  load yourself.
+</Callout>
+
 ## Contributing a Feature
 
 Use `extraFeatures` to add a whole capability as a single descriptor. Each

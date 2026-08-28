@@ -156,6 +156,7 @@ function DefaultEditorPlugins({
         initialMarkdown={initialMarkdown}
         onChange={onSnapshotChange}
         onSnapshotReady={onSnapshotReady}
+        snapshotOptions={features.snapshot}
         transformers={transformers}
       />
     </EditorTransformersContext.Provider>

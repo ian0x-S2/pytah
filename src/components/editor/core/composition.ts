@@ -1,5 +1,34 @@
 import type { ReactNode } from "react";
-import type { EditorChromeOptions, EditorFeatureFlags } from "./types";
+import type {
+  EditorChromeOptions,
+  EditorFeatureFlags,
+  EditorSnapshotOptions,
+} from "./types";
+
+export const DEFAULT_EDITOR_SNAPSHOT_OPTIONS = {
+  emitInitialSnapshot: true,
+  html: true,
+  markdown: true,
+  text: true,
+} as const satisfies Required<EditorSnapshotOptions>;
+
+export type ResolvedEditorSnapshotOptions = Required<EditorSnapshotOptions>;
+
+export const resolveEditorSnapshotOptions = (
+  options?: EditorSnapshotOptions
+): ResolvedEditorSnapshotOptions => {
+  return {
+    ...DEFAULT_EDITOR_SNAPSHOT_OPTIONS,
+    ...options,
+  };
+};
+
+export type ResolvedEditorFeatureFlags = Required<
+  Omit<EditorFeatureFlags, "snapshot">
+> & {
+  snapshot: ResolvedEditorSnapshotOptions;
+};
+export type ResolvedEditorChromeOptions = Required<EditorChromeOptions>;
 
 export const DEFAULT_EDITOR_FEATURES = {
   exportMarkdown: true,
@@ -9,8 +38,9 @@ export const DEFAULT_EDITOR_FEATURES = {
   history: true,
   markdownShortcuts: true,
   slashCommand: true,
+  snapshot: DEFAULT_EDITOR_SNAPSHOT_OPTIONS,
   tabIndentation: true,
-} as const satisfies Required<EditorFeatureFlags>;
+} as const satisfies ResolvedEditorFeatureFlags;
 
 export const DEFAULT_EDITOR_CHROME = {
   actionBar: true,
@@ -20,15 +50,17 @@ export const DEFAULT_EDITOR_CHROME = {
   shell: true,
 } as const satisfies Required<EditorChromeOptions>;
 
-export type ResolvedEditorFeatureFlags = Required<EditorFeatureFlags>;
-export type ResolvedEditorChromeOptions = Required<EditorChromeOptions>;
-
 export const resolveEditorFeatures = (
   features?: EditorFeatureFlags
 ): ResolvedEditorFeatureFlags => {
+  const { snapshot, ...flags } = features ?? {};
+
   return {
     ...DEFAULT_EDITOR_FEATURES,
-    ...features,
+    ...flags,
+    // The nested snapshot bag is resolved separately so a partial override
+    // (e.g. `{ html: false }`) never loses the sibling defaults.
+    snapshot: resolveEditorSnapshotOptions(snapshot),
   };
 };
 

@@ -10,6 +10,14 @@ export const DEFAULT_PLACEHOLDER =
 
 export const WORD_SEPARATOR_PATTERN = /\s+/;
 
+/**
+ * Update tag applied to the programmatic seed update that loads
+ * `initialMarkdown`/`initialHtml` (and the demo seed content). The snapshot
+ * listener filters tagged updates when `features.snapshot.emitInitialSnapshot`
+ * is `false`; the tag is otherwise inert metadata.
+ */
+export const EDITOR_SEED_UPDATE_TAG = "pytah-seed";
+
 export const FEATURE_ITEMS = [
   {
     icon: SparklesIcon,
