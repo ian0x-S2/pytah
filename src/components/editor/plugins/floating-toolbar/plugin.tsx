@@ -15,7 +15,13 @@ import {
   StrikethroughIcon,
   UnderlineIcon,
 } from "lucide-react";
-import { useEffect, useEffectEvent, useRef, useState } from "react";
+import {
+  useEffect,
+  useEffectEvent,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 import { Separator } from "@/components/ui/separator";
 import { Toggle } from "@/components/ui/toggle";
@@ -27,6 +33,7 @@ import { LINK_PLACEHOLDER_URL } from "../link-behavior/utils";
 import { applyBgColor, applyTextColor, toggleToolbarFormat } from "./actions";
 import { DEFAULT_FORMAT_STATE, EMPTY_TOOLBAR_POSITION } from "./constants";
 import { OPEN_FLOATING_LINK_EDITOR_COMMAND } from "./link-command";
+import { clampFloatingToolbarPosition } from "./position";
 import {
   areFloatingToolbarFormatsEqual,
   areFloatingToolbarPositionsEqual,
@@ -72,6 +79,32 @@ export function FloatingToolbarPlugin() {
   const [formats, setFormats] =
     useState<FloatingToolbarFormatState>(DEFAULT_FORMAT_STATE);
 
+  // The raw position anchors the toolbar at the selection midpoint; the
+  // rendered box is clamped against the measured toolbar size so it never
+  // overflows the browser viewport. Runs pre-paint (no flicker) whenever
+  // the anchor moves.
+  const [adjustedPosition, setAdjustedPosition] =
+    useState<FloatingToolbarPosition>(EMPTY_TOOLBAR_POSITION);
+
+  useLayoutEffect(() => {
+    if (!isVisible) {
+      return;
+    }
+    const toolbar = toolbarRef.current;
+    if (!toolbar) {
+      return;
+    }
+
+    const next = clampFloatingToolbarPosition({
+      position,
+      toolbar: { height: toolbar.offsetHeight, width: toolbar.offsetWidth },
+      viewport: { height: window.innerHeight, width: window.innerWidth },
+    });
+
+    setAdjustedPosition((current) =>
+      areFloatingToolbarPositionsEqual(current, next) ? current : next
+    );
+  }, [isVisible, position]);
   /*
    * When a color picker popover is open we skip visibility/position updates so
    * the floating toolbar stays alive while the user browses swatches.  A ref
@@ -150,8 +183,8 @@ export function FloatingToolbarPlugin() {
       className="fixed z-50"
       ref={toolbarRef}
       style={{
-        left: `${position.left}px`,
-        top: `${position.top}px`,
+        left: `${adjustedPosition.left}px`,
+        top: `${adjustedPosition.top}px`,
         transform: "translate(-50%, -100%)",
       }}
     >
