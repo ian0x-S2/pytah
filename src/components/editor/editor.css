@@ -11,3 +11,12 @@ mark {
   color: inherit;
   background-color: transparent;
 }
+
+/* Hide the scrollbar while keeping the element scrollable (editor TOC
+   rail/popover, where a visible bar is noise). Pair with overflow-y-auto. */
+.scrollbar-hidden {
+  scrollbar-width: none;
+}
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}

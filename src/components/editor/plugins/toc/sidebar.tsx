@@ -9,9 +9,9 @@ import { useActiveHeading } from "./hooks";
 import { EditorTableOfContentsPlugin } from "./plugin";
 
 const DASH_WIDTHS: Record<string, string> = {
-  h1: "w-6",
-  h2: "w-4.5",
-  h3: "w-3.5",
+  h1: "w-5",
+  h2: "w-4",
+  h3: "w-3",
   h4: "w-2.5",
   h5: "w-2",
   h6: "w-1.5",
@@ -19,11 +19,11 @@ const DASH_WIDTHS: Record<string, string> = {
 
 const INDENT_CLASSES: Record<string, string> = {
   h1: "pl-1",
-  h2: "pl-4",
-  h3: "pl-7",
-  h4: "pl-10",
-  h5: "pl-12",
-  h6: "pl-14",
+  h2: "pl-3",
+  h3: "pl-5",
+  h4: "pl-7",
+  h5: "pl-9",
+  h6: "pl-11",
 };
 
 function EditorTocMiniBars({
@@ -37,36 +37,37 @@ function EditorTocMiniBars({
 }) {
   if (entries.length === 0) {
     return (
-      <div className="flex flex-col items-end gap-2 py-2 opacity-40">
-        <span className="h-[2.5px] w-6 rounded-full bg-muted-foreground/40" />
-        <span className="h-[2.5px] w-4 rounded-full bg-muted-foreground/40" />
-        <span className="h-[2.5px] w-3 rounded-full bg-muted-foreground/40" />
+      <div className="flex flex-col items-end gap-1 py-1 opacity-40">
+        <span className="h-0.5 w-5 rounded-full bg-muted-foreground/40" />
+        <span className="h-0.5 w-4 rounded-full bg-muted-foreground/40" />
+        <span className="h-0.5 w-3 rounded-full bg-muted-foreground/40" />
       </div>
     );
   }
 
   return (
-    // Capped so heading-heavy documents don't stretch the mini-bars to full
-    // editor height; overflow scrolls with a thin scrollbar.
-    <div className="scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent flex max-h-[70vh] flex-col items-end gap-2 overflow-y-auto py-2">
+    // Height-capped and densified so heading-heavy documents keep the rail a
+    // quiet outline affordance: compact gaps, thin dashes, overflow scrolled
+    // via wheel/touch with the scrollbar itself hidden.
+    <div className="scrollbar-hidden flex max-h-[45vh] flex-col items-end gap-1 overflow-y-auto py-1">
       {entries.map(([key, text, tag]) => {
         const isActive = key === activeKey;
-        const widthClass = DASH_WIDTHS[tag] ?? "w-3.5";
+        const widthClass = DASH_WIDTHS[tag] ?? "w-3";
 
         return (
           <button
             aria-label={`Jump to ${text.trim() || "heading"}`}
-            className="group relative flex cursor-pointer items-center justify-end py-0.5 outline-none transition-all duration-150"
+            className="group relative flex cursor-pointer items-center justify-end py-px outline-none"
             key={key}
             onClick={() => onHeadingClick(key)}
             type="button"
           >
             <span
               className={cn(
-                "h-[2.5px] rounded-full transition-all duration-200 ease-out",
+                "h-0.5 rounded-full transition-colors duration-150 ease-linear",
                 widthClass,
                 isActive
-                  ? "scale-x-110 bg-primary shadow-xs"
+                  ? "bg-primary"
                   : "bg-muted-foreground/30 group-hover:bg-muted-foreground/60"
               )}
             />
@@ -88,8 +89,8 @@ function EditorTocPopoverCard({
 }) {
   if (entries.length === 0) {
     return (
-      <div className="fade-in-0 zoom-in-95 absolute top-0 right-0 z-50 flex min-w-[200px] animate-in flex-col items-center justify-center gap-2 rounded-2xl border border-border/50 bg-popover/95 px-5 py-6 text-center shadow-2xl backdrop-blur-md duration-150">
-        <div className="flex size-7 items-center justify-center rounded-lg bg-muted/20 text-muted-foreground/60">
+      <div className="fade-in-0 zoom-in-95 absolute top-0 right-0 z-50 flex min-w-[180px] animate-in flex-col items-center justify-center gap-1.5 rounded-lg border border-border/50 bg-popover/95 px-4 py-5 text-center shadow-2xl backdrop-blur-md duration-150">
+        <div className="flex size-6 items-center justify-center rounded-md bg-muted/20 text-muted-foreground/60">
           <AlignLeftIcon className="size-3.5" />
         </div>
         <p className="font-medium text-muted-foreground text-xs">
@@ -102,9 +103,9 @@ function EditorTocPopoverCard({
   return (
     <nav
       aria-label="Table of contents popover"
-      className="fade-in-0 zoom-in-95 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent relative top-0 right-0 z-50 max-h-[70vh] min-w-[240px] max-w-[320px] animate-in overflow-y-auto rounded-2xl border border-border/50 bg-popover/95 p-3 shadow-2xl backdrop-blur-md duration-150"
+      className="fade-in-0 zoom-in-95 scrollbar-hidden relative top-0 right-0 z-50 max-h-[55vh] min-w-[200px] max-w-[260px] animate-in overflow-y-auto rounded-lg border border-border/50 bg-popover/95 p-2 shadow-2xl backdrop-blur-md duration-150"
     >
-      <ul className="flex flex-col gap-0.5">
+      <ul className="flex flex-col">
         {entries.map(([key, text, tag]) => {
           const headingText = text.trim() || "Untitled";
           const isActive = key === activeKey;
@@ -115,7 +116,7 @@ function EditorTocPopoverCard({
               <button
                 aria-current={isActive ? "location" : undefined}
                 className={cn(
-                  "relative flex w-full cursor-pointer select-none items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs outline-none transition-colors duration-150",
+                  "relative flex w-full cursor-pointer select-none items-center gap-2 rounded-md px-2 py-1 text-left text-xs outline-none transition-colors duration-100 ease-linear",
                   indentClass,
                   isActive
                     ? "bg-primary/10 font-medium text-primary"
