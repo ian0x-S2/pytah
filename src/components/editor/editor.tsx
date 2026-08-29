@@ -1,8 +1,10 @@
 "use client";
 
+import { $generateNodesFromDOM } from "@lexical/html";
+import { $convertFromMarkdownString } from "@lexical/markdown";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import "./editor.css";
-import type { LexicalEditor } from "lexical";
+import { $createParagraphNode, $getRoot, type LexicalEditor } from "lexical";
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
@@ -146,6 +148,14 @@ export function Editor({
     [features]
   );
 
+  // Seed props are initial-only by contract (consumers remount via `key`),
+  // so they are captured once per mount.
+  const [seedInput] = useState(() => ({
+    html: initialHtml,
+    markdown: initialMarkdown,
+  }));
+  const seededViaConfig = Boolean(seedInput.markdown || seedInput.html);
+
   // Derived registries are memoized so their identities stay stable across
   // re-renders (the editor state flows into React state on every keystroke);
   // otherwise every consumer of these props reconciles on each update.
@@ -162,11 +172,36 @@ export function Editor({
     [extraFeatures]
   );
 
+  // Content is seeded inside LexicalComposer's *first* editor state (Lexical
+  // runs this function in the initial update, before any plugin mounts), so
+  // the very first paint of the editor already contains the document. A
+  // post-mount effect paints an empty editor first and then re-populates the
+  // whole document — a visible "content appears late" delay.
+  const seedEditorState = seededViaConfig
+    ? (editor: LexicalEditor) => {
+        const root = $getRoot();
+        root.clear();
+        if (seedInput.markdown) {
+          $convertFromMarkdownString(seedInput.markdown, [...transformers]);
+          return;
+        }
+        const dom = new DOMParser().parseFromString(
+          seedInput.html ?? "",
+          "text/html"
+        );
+        root.append(...$generateNodesFromDOM(editor, dom));
+        if (root.getChildrenSize() === 0) {
+          root.append($createParagraphNode());
+        }
+      }
+    : undefined;
+
   const initialConfig = createEditorConfig({
     editable,
     namespace,
     featureNodes,
     extraNodes,
+    editorState: seedEditorState,
   });
 
   const snapshot: EditorSnapshot = {
@@ -316,6 +351,7 @@ export function Editor({
       onSnapshotReady={handleSnapshotReady}
       placeholder={placeholder}
       pluginSlots={pluginSlots}
+      seededViaConfig={seededViaConfig}
       showFooter={!minimal && resolvedChrome.footer}
       snapshot={snapshot}
       toolbar={toolbar}

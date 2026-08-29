@@ -25,6 +25,26 @@ describe("editor composition", () => {
     );
   });
 
+  test("resolves the nested snapshot bag without losing sibling defaults", () => {
+    deepStrictEqual(resolveEditorFeatures().snapshot, {
+      emitInitialSnapshot: true,
+      html: true,
+      markdown: true,
+      text: true,
+    });
+    // A partial override merges against the snapshot defaults only — the
+    // flat flags and the other snapshot outputs keep their defaults.
+    deepStrictEqual(resolveEditorFeatures({ snapshot: { html: false } }), {
+      ...DEFAULT_EDITOR_FEATURES,
+      snapshot: {
+        emitInitialSnapshot: true,
+        html: false,
+        markdown: true,
+        text: true,
+      },
+    });
+  });
+
   test("resolves chrome options over defaults", () => {
     deepStrictEqual(resolveEditorChrome(), DEFAULT_EDITOR_CHROME);
     deepStrictEqual(resolveEditorChrome({ header: false, outputs: false }), {

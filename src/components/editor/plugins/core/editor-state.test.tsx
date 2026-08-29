@@ -12,7 +12,7 @@ import type { ResolvedEditorSnapshotOptions } from "../../core/composition";
 GlobalRegistrator.register();
 (globalThis as Record<string, unknown>).IS_REACT_ACT_ENVIRONMENT = true;
 
-const { act, createElement } = await import("react");
+const { act, createElement, useEffect } = await import("react");
 const { createRoot } = await import("react-dom/client");
 const { useLexicalComposerContext } = await import(
   "@lexical/react/LexicalComposerContext"
@@ -31,6 +31,8 @@ const { DEFAULT_EDITOR_SNAPSHOT_OPTIONS } = await import(
 );
 const { EDITOR_SEED_UPDATE_TAG } = await import("../../core/constants");
 const { createEditorConfig } = await import("../../core/config");
+const { computeEditorTransformers } = await import("../../core/features");
+const { $convertFromMarkdownString } = await import("@lexical/markdown");
 const { readEditorSnapshot } = await import("../../core/utils");
 const { EditorStatePlugin, shouldEmitSnapshotUpdate } = await import(
   "./editor-state"
@@ -61,6 +63,33 @@ let editorRef: LexicalEditor | null = null;
 const EditorProbe = () => {
   const [editor] = useLexicalComposerContext();
   editorRef = editor;
+  return null;
+};
+
+let postMountContentUpdates = 0;
+let postMountUpdateStates: unknown[] = [];
+
+/**
+ * Registers an update listener at mount time — after the composer's first
+ * render — so any content update committed post-mount is counted and its
+ * editor state recorded.
+ */
+const SeedUpdateProbe = () => {
+  const [editor] = useLexicalComposerContext();
+  editorRef = editor;
+
+  useEffect(() => {
+    return editor.registerUpdateListener(
+      ({ editorState, dirtyElements, dirtyLeaves }) => {
+        if (dirtyElements.size === 0 && dirtyLeaves.size === 0) {
+          return;
+        }
+        postMountContentUpdates += 1;
+        postMountUpdateStates.push(editorState);
+      }
+    );
+  }, [editor]);
+
   return null;
 };
 
@@ -139,6 +168,70 @@ const flushUpdates = async () => {
       resolve();
     });
   });
+};
+
+interface ConfigSeededRenderOptions {
+  emitInitialSnapshot: boolean;
+  recorder?: Recorder;
+}
+
+/**
+ * Renders EditorStatePlugin the way `Editor` does when content was seeded
+ * through the composer's `initialConfig.editorState` function form.
+ */
+const renderConfigSeededPlugin = async ({
+  emitInitialSnapshot,
+  recorder = createRecorder(),
+}: ConfigSeededRenderOptions) => {
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+
+  const transformers = computeEditorTransformers();
+  const config = createEditorConfig({
+    editable: true,
+    featureNodes: [],
+    // Runs inside the composer's first update, before any plugin mounts.
+    editorState: () => {
+      $getRoot().clear();
+      $convertFromMarkdownString(SEED_MARKDOWN, [...transformers]);
+    },
+  });
+
+  await act(() => {
+    root.render(
+      createElement(
+        LexicalComposer,
+        { initialConfig: config },
+        createElement(SeedUpdateProbe),
+        createElement(EditorStatePlugin, {
+          initialMarkdown: SEED_MARKDOWN,
+          onChange: (textContent: string) => {
+            recorder.texts.push(textContent);
+          },
+          onSnapshotReady: (snapshot: SnapshotRecord) => {
+            recorder.snapshots.push(snapshot);
+          },
+          seededViaConfig: true,
+          snapshotOptions: {
+            ...DEFAULT_EDITOR_SNAPSHOT_OPTIONS,
+            emitInitialSnapshot,
+          },
+        })
+      )
+    );
+  });
+
+  return {
+    container,
+    recorder,
+    async unmount() {
+      await act(() => {
+        root.unmount();
+      });
+      container.remove();
+    },
+  };
 };
 
 const readAnchorSelection = (editor: LexicalEditor) => {
@@ -359,6 +452,74 @@ describe("EditorStatePlugin", () => {
       deepStrictEqual(readAnchorSelection(editorRef), selectionBefore);
     } finally {
       await render.unmount();
+    }
+  });
+});
+
+describe("EditorStatePlugin (seeded via composer initial state)", () => {
+  test("content exists in the first committed state and no second update occurs", async () => {
+    postMountContentUpdates = 0;
+    postMountUpdateStates = [];
+    const render = await renderConfigSeededPlugin({
+      emitInitialSnapshot: false,
+    });
+
+    try {
+      if (!editorRef) {
+        throw new Error("editor reference missing");
+      }
+
+      // Drain the composer's initial update commit (scheduleMicroTask).
+      await flushUpdates();
+
+      // Exactly one content update is observed post-mount — the composer's
+      // own init commit — and it already carries the full document. A
+      // post-mount seeding effect would produce a second content update.
+      strictEqual(postMountContentUpdates, 1);
+      const firstUpdateHasHeading = (
+        postMountUpdateStates[0] as import("lexical").EditorState
+      ).read(() => {
+        const first = $getRoot().getFirstChild();
+        return first !== null && first.getType() === "heading";
+      });
+      strictEqual(firstUpdateHasHeading, true);
+
+      const hasHeading = editorRef.getEditorState().read(() => {
+        const first = $getRoot().getFirstChild();
+        return first !== null && first.getType() === "heading";
+      });
+      strictEqual(hasHeading, true);
+
+      // No further updates may be committed after that first one.
+      const stateAfterSeed = editorRef.getEditorState();
+      await flushUpdates();
+      strictEqual(editorRef.getEditorState(), stateAfterSeed);
+    } finally {
+      await render.unmount();
+    }
+  });
+
+  test("emitInitialSnapshot parity: emitted once from the seeded state when enabled, never when disabled", async () => {
+    const emitted = await renderConfigSeededPlugin({
+      emitInitialSnapshot: true,
+    });
+
+    try {
+      if (!editorRef) {
+        throw new Error("editor reference missing");
+      }
+
+      await flushUpdates();
+
+      strictEqual(emitted.recorder.texts.length, 1);
+      strictEqual(emitted.recorder.snapshots.length, 1);
+      strictEqual(
+        emitted.recorder.snapshots[0].markdown,
+        "# Seed heading\n\nSeed paragraph."
+      );
+      strictEqual(emitted.recorder.texts[0].includes("Seed heading"), true);
+    } finally {
+      await emitted.unmount();
     }
   });
 });

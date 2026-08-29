@@ -15,7 +15,7 @@ import {
   type LexicalNode,
   SKIP_DOM_SELECTION_TAG,
 } from "lexical";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTheme } from "@/components/theme-context";
 
 const CODE_BLOCK_THEME_BY_MODE = {
@@ -92,19 +92,54 @@ export function CodeHighlightPlugin() {
   const { resolvedTheme } = useTheme();
   const codeBlockTheme = CODE_BLOCK_THEME_BY_MODE[resolvedTheme];
 
-  useEffect(() => {
-    return registerCodeHighlighting(editor);
-  }, [editor]);
+  // Shiki tokenization + per-node diff/re-splice is the most expensive
+  // synchronous work an editor mount can do; with many code blocks the
+  // chained async→sync updates starve the first paint (observed multi-second
+  // blank freeze opening a code-heavy document). Arm highlighting after the
+  // document has painted: content shows first as plain code text, colors
+  // land one frame later, off the critical path.
+  const [armed, setArmed] = useState(false);
 
   useEffect(() => {
+    if (armed) {
+      return;
+    }
+    let raf2 = 0;
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        setArmed(true);
+      });
+    });
+    return () => {
+      cancelAnimationFrame(raf1);
+      if (raf2) {
+        cancelAnimationFrame(raf2);
+      }
+    };
+  }, [armed]);
+
+  useEffect(() => {
+    if (!armed) {
+      return;
+    }
+    return registerCodeHighlighting(editor);
+  }, [armed, editor]);
+
+  useEffect(() => {
+    if (!armed) {
+      return;
+    }
     return editor.registerNodeTransform(CodeNode, (codeNode) => {
       if (codeNode.getTheme() !== codeBlockTheme) {
         codeNode.setTheme(codeBlockTheme);
       }
     });
-  }, [codeBlockTheme, editor]);
+  }, [armed, codeBlockTheme, editor]);
 
   useEffect(() => {
+    if (!armed) {
+      return;
+    }
     preloadShikiThemes();
 
     editor.update(
@@ -116,7 +151,7 @@ export function CodeHighlightPlugin() {
       // the browser scroll to the caret (e.g. when toggling themes).
       { discrete: true, tag: SKIP_DOM_SELECTION_TAG }
     );
-  }, [codeBlockTheme, editor]);
+  }, [armed, codeBlockTheme, editor]);
 
   return null;
 }

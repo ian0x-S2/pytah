@@ -34,6 +34,12 @@ export const BASE_EDITOR_NODES = [
 
 interface CreateEditorConfigOptions {
   editable: boolean;
+  /**
+   * Initial-state builder run by LexicalComposer inside the very first
+   * update, before any plugin mounts. Used to seed content synchronously
+   * so the editor's first paint already contains the document.
+   */
+  editorState?: InitialConfigType["editorState"];
   /** Consumer-provided nodes appended after everything else. */
   extraNodes?: NonNullable<InitialConfigType["nodes"]>;
   /** Nodes contributed by enabled feature descriptors. */
@@ -43,6 +49,7 @@ interface CreateEditorConfigOptions {
 
 export const createEditorConfig = ({
   editable,
+  editorState,
   namespace = "PytahEditor",
   featureNodes = [],
   extraNodes,
@@ -55,5 +62,6 @@ export const createEditorConfig = ({
     nodes,
     onError,
     theme: editorTheme,
+    ...(editorState ? { editorState } : {}),
   };
 };

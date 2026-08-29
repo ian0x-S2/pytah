@@ -91,6 +91,8 @@ interface EditorContentProps {
   onSnapshotReady?: (snapshot: EditorSnapshot, editor: LexicalEditor) => void;
   placeholder: string;
   pluginSlots?: EditorPluginSlots;
+  /** True when the seed was already applied via the composer's initial state. */
+  seededViaConfig?: boolean;
   showFooter: boolean;
   snapshot: EditorSnapshot;
   toolbar: EditorToolbar;
@@ -106,6 +108,8 @@ interface DefaultEditorPluginsProps {
   initialMarkdown?: string;
   onSnapshotChange: (textContent: string, editor: LexicalEditor) => void;
   onSnapshotReady?: (snapshot: EditorSnapshot, editor: LexicalEditor) => void;
+  /** True when the seed was already applied via the composer's initial state. */
+  seededViaConfig?: boolean;
   transformers: readonly Transformer[];
 }
 
@@ -117,6 +121,7 @@ function DefaultEditorPlugins({
   initialMarkdown,
   onSnapshotChange,
   onSnapshotReady,
+  seededViaConfig,
   transformers,
 }: DefaultEditorPluginsProps) {
   const featurePlugins = EDITOR_FEATURES.filter((feature) => {
@@ -156,6 +161,7 @@ function DefaultEditorPlugins({
         initialMarkdown={initialMarkdown}
         onChange={onSnapshotChange}
         onSnapshotReady={onSnapshotReady}
+        seededViaConfig={seededViaConfig}
         snapshotOptions={features.snapshot}
         transformers={transformers}
       />
@@ -218,6 +224,7 @@ export function EditorContent({
   onSnapshotReady,
   placeholder,
   pluginSlots,
+  seededViaConfig,
   showFooter,
   snapshot,
   topToolbar,
@@ -273,6 +280,12 @@ export function EditorContent({
                   {placeholder}
                 </div>
               }
+              // WebKitGTK lazily boots its enchant spell-checking broker on the
+              // first spellcheck-enabled editable region; with no enchant
+              // backend installed it dlopen-probes every provider serially on
+              // the web-process main thread (~2s freeze, zero JS long tasks,
+              // first mount per session).
+              spellCheck={false}
             />
           }
           ErrorBoundary={LexicalErrorBoundary}
@@ -290,6 +303,7 @@ export function EditorContent({
         initialMarkdown={initialMarkdown}
         onSnapshotChange={onSnapshotChange}
         onSnapshotReady={onSnapshotReady}
+        seededViaConfig={seededViaConfig}
         transformers={transformers}
       />
       {editable ? (
