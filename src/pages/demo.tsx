@@ -37,13 +37,9 @@ export function DemoPage() {
   const editorRef = useRef<LexicalEditor | null>(null);
 
   useEffect(() => {
-    const restoreScrollRestoration = history.scrollRestoration;
-    history.scrollRestoration = "manual";
+    // Reload scroll restoration is disabled app-wide in `main.tsx` (module
+    // scope, pre-layout); this just guards against any residual offset.
     window.scrollTo(0, 0);
-
-    return () => {
-      history.scrollRestoration = restoreScrollRestoration;
-    };
   }, []);
 
   const tocVisible = showToc && !zen;
