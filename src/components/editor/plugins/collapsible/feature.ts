@@ -1,5 +1,6 @@
 import type { ElementNode } from "lexical";
 import { ChevronRightIcon } from "lucide-react";
+
 import { CollapsibleContainerNode } from "../../core/nodes/collapsible/container-node";
 import { CollapsibleContentNode } from "../../core/nodes/collapsible/content-node";
 import { CollapsibleTitleNode } from "../../core/nodes/collapsible/title-node";

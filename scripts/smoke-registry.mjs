@@ -5,8 +5,8 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __filename = import.meta.filename;
+const __dirname = import.meta.dirname;
 const projectRoot = path.resolve(__dirname, "..");
 const registryDirectory = path.join(projectRoot, "public", "r");
 
@@ -224,8 +224,8 @@ const smokeComponentsJson = (registryUrlTemplate) => ({
   tsx: true,
 });
 
-const run = (command, args, options = {}) => {
-  return new Promise((resolve, reject) => {
+const run = (command, args, options = {}) =>
+  new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       cwd: options.cwd,
       env: { ...process.env, ...options.env },
@@ -246,11 +246,10 @@ const run = (command, args, options = {}) => {
       );
     });
   });
-};
 
 const updateTsConfigApp = async (projectDirectory) => {
   const tsconfigPath = path.join(projectDirectory, "tsconfig.app.json");
-  const source = await readFile(tsconfigPath, "utf8");
+  const source = await readFile(tsconfigPath, "utf-8");
   const updatedSource = source.replace(
     '    "jsx": "react-jsx",\n',
     '    "jsx": "react-jsx",\n    "paths": {\n      "@/*": ["./src/*"]\n    },\n'
@@ -260,7 +259,7 @@ const updateTsConfigApp = async (projectDirectory) => {
     throw new Error("Failed to inject path aliases into tsconfig.app.json");
   }
 
-  await writeFile(tsconfigPath, updatedSource, "utf8");
+  await writeFile(tsconfigPath, updatedSource, "utf-8");
 };
 
 const configureSmokeApp = async (projectDirectory, registryUrlTemplate) => {
@@ -269,7 +268,7 @@ const configureSmokeApp = async (projectDirectory, registryUrlTemplate) => {
     writeFile(
       path.join(projectDirectory, "components.json"),
       `${JSON.stringify(smokeComponentsJson(registryUrlTemplate), null, 2)}\n`,
-      "utf8"
+      "utf-8"
     ),
   ]);
 };
@@ -314,7 +313,7 @@ const verifyInstalledFiles = async (projectDirectory, { withFeatures }) => {
   }
 
   await Promise.all(
-    expectedFiles.map((filePath) => readFile(filePath, "utf8"))
+    expectedFiles.map((filePath) => readFile(filePath, "utf-8"))
   );
 };
 
@@ -367,12 +366,12 @@ const runScenario = async (
       writeFile(
         path.join(projectDirectory, "src", "App.tsx"),
         appSource,
-        "utf8"
+        "utf-8"
       ),
       writeFile(
         path.join(projectDirectory, "src", "index.css"),
         smokeCss,
-        "utf8"
+        "utf-8"
       ),
       writeFile(
         path.join(projectDirectory, "vite.config.ts"),
@@ -391,7 +390,7 @@ const runScenario = async (
           "});",
           "",
         ].join("\n"),
-        "utf8"
+        "utf-8"
       ),
     ]);
 

@@ -21,17 +21,14 @@ import {
 
 ## Local Development Loop
 
-Start by installing dependencies and running the local app. The fastest
-feedback loop is to keep the demo and docs open while you work.
+Start by installing dependencies and running the local app. The fastest feedback loop is to keep the demo and docs open while you work.
 
 ```bash
 bun install
 bun run dev
 ```
 
-Use `/demo` to exercise behavior directly, `/docs/overview` to re-ground
-yourself in the repository purpose, and `/docs/architecture` when tracing
-which layer owns a feature.
+Use `/demo` to exercise behavior directly, `/docs/overview` to re-ground yourself in the repository purpose, and `/docs/architecture` when tracing which layer owns a feature.
 
 ## Where to Change Things
 
@@ -46,8 +43,7 @@ which layer owns a feature.
 
 ## Default Change Checklist
 
-Before you ship a change, preserve the editor invariants that make this
-repo valuable as a reference implementation.
+Before you ship a change, preserve the editor invariants that make this repo valuable as a reference implementation.
 
 | Check | Why it matters |
 | --- | --- |
@@ -62,29 +58,20 @@ Run the standard validation flow before handing work off:
 
 ## Registry and Dependency Workflow
 
-Most edits only need the standard validation flow. Reach for the
-registry and dependency scripts when you are changing shipped registry
-output or compatibility expectations.
+Most edits only need the standard validation flow. Reach for the registry and dependency scripts when you are changing shipped registry output or compatibility expectations.
 
 <CodeBlock language="bash">{REGISTRY_WORKFLOW_COMMAND}</CodeBlock>
 
 <Callout title="Standards">
-  Use `AGENTS.md` for the deeper architecture rules and coding
-  conventions. Use the docs pages for the human-readable product and
-  onboarding narrative.
+  Use `AGENTS.md` for the deeper architecture rules and coding conventions. Use
+  the docs pages for the human-readable product and onboarding narrative.
 </Callout>
 
 ## Registry Directory Listing
 
-The `@pytah` namespace is a candidate for the official
-[shadcn registry directory](https://ui.shadcn.com/docs/registry/directory) —
-not listed yet. Once merged, `shadcn add` and `shadcn search` will resolve it
-out of the box; until then, consumers install via the namespace mapping in
-`components.json` (see `/docs/getting-started`). The base URL is fixed:
-`https://pytah.vercel.app/r/{name}.json`.
+The `@pytah` namespace is a candidate for the official [shadcn registry directory](https://ui.shadcn.com/docs/registry/directory) — not listed yet. Once merged, `shadcn add` and `shadcn search` will resolve it out of the box; until then, consumers install via the namespace mapping in `components.json` (see `/docs/getting-started`). The base URL is fixed: `https://pytah.vercel.app/r/{name}.json`.
 
-Entry to submit to
-[`apps/v4/registry/directory.json`](https://github.com/shadcn-ui/ui/blob/main/apps/v4/registry/directory.json):
+Entry to submit to [`apps/v4/registry/directory.json`](https://github.com/shadcn-ui/ui/blob/main/apps/v4/registry/directory.json):
 
 ```json
 {
@@ -105,8 +92,7 @@ Directory requirements and how this repo satisfies them:
 | No `content` in index `files` | The generated `registry.json` index lists only `name`, `title`, `description`, and `type`. |
 
 <Callout title="Keep the base URL stable" variant="warning">
-  Once listed, `https://pytah.vercel.app/r/{name}.json` becomes a hard
-  contract for every installed app. Changing hosts or paths breaks consumers'
-  `components.json` mappings silently — so fix it before submitting, not
-  after.
+  Once listed, `https://pytah.vercel.app/r/{name}.json` becomes a hard contract
+  for every installed app. Changing hosts or paths breaks consumers'
+  `components.json` mappings silently — so fix it before submitting, not after.
 </Callout>

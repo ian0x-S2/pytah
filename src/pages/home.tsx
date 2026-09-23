@@ -1,5 +1,6 @@
 import { ArrowRightIcon, CodeIcon, PlayIcon } from "lucide-react";
 import { Link } from "wouter";
+
 import { ThemeToggle } from "@/components/docs/theme-toggle";
 import { HeroCube3D } from "@/components/home/hero-cube-3d";
 import { Button } from "@/components/ui/button";
@@ -7,25 +8,25 @@ import { REPOSITORY_URL } from "@/lib/site";
 
 const features = [
   {
-    tag: "Architecture",
-    title: "Lego-like Composition",
     description:
       "Modular Lexical architecture. Enable, replace, or omit plugins, floating toolbars, and node types with clean React props.",
     href: "/docs/overview",
+    tag: "Architecture",
+    title: "Lego-like Composition",
   },
   {
-    tag: "Workflows",
-    title: "Lossless Copy & Paste",
     description:
       "Bi-directional Markdown and HTML conversion that preserves callouts, tables, checklists, and code formatting with zero friction.",
     href: "/docs/features/markdown-support",
+    tag: "Workflows",
+    title: "Lossless Copy & Paste",
   },
   {
-    tag: "Design System",
-    title: "shadcn/ui Native",
     description:
       "Engineered with Base UI primitives and Tailwind CSS v4 tokens. Seamless dark mode, zero CSS runtime overhead, and instant theming.",
     href: "/docs/overview",
+    tag: "Design System",
+    title: "shadcn/ui Native",
   },
 ];
 
@@ -43,10 +44,10 @@ export function HomePage() {
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(ellipse_75%_45%_at_50%_-10%,hsl(var(--foreground)/0.05),transparent)]" />
 
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-border/40 border-b bg-background/70 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/70 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6 sm:px-8">
           <Link
-            className="flex items-center gap-2 font-semibold text-sm tracking-tight transition-opacity hover:opacity-80"
+            className="flex items-center gap-2 text-sm font-semibold tracking-tight transition-opacity hover:opacity-80"
             href="/"
           >
             <span>Pytah</span>
@@ -84,15 +85,15 @@ export function HomePage() {
           {/* Left Column — Main text block */}
           <div className="flex flex-col items-center text-center lg:col-span-7 lg:items-start lg:text-left">
             {/* Eyebrow badge */}
-            <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-transparent px-3.5 py-1 text-muted-foreground text-xs shadow-xs transition-colors hover:border-foreground/20 hover:text-foreground">
+            <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-transparent px-3.5 py-1 text-xs text-muted-foreground shadow-xs transition-colors hover:border-foreground/20 hover:text-foreground">
               <span className="size-1.5 rounded-full bg-foreground/80" />
-              <span className="font-mono text-[11px] uppercase tracking-wider">
+              <span className="font-mono text-[11px] tracking-wider uppercase">
                 shadcn registry item · React & Lexical
               </span>
             </div>
 
             {/* Headline */}
-            <h1 className="mt-6 font-semibold text-4xl text-foreground leading-[1.08] tracking-tight sm:text-5xl xl:text-6xl">
+            <h1 className="mt-6 text-4xl leading-[1.08] font-semibold tracking-tight text-foreground sm:text-5xl xl:text-6xl">
               The rich text editor
               <br />
               <span className="font-normal text-muted-foreground">
@@ -101,7 +102,7 @@ export function HomePage() {
             </h1>
 
             {/* Subtitle */}
-            <p className="mt-5 max-w-xl text-balance text-base text-muted-foreground leading-relaxed sm:text-lg">
+            <p className="mt-5 max-w-xl text-base leading-relaxed text-balance text-muted-foreground sm:text-lg">
               A fully composable, copy-paste ready Lexical editor engineered
               with shadcn/ui and Tailwind CSS. Built for speed, developer
               ergonomics, and lossless Markdown & HTML workflows.
@@ -111,7 +112,7 @@ export function HomePage() {
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
               <Link href="/docs/overview">
                 <Button
-                  className="h-10 px-5 font-medium text-sm shadow-xs"
+                  className="h-10 px-5 text-sm font-medium shadow-xs"
                   size="default"
                 >
                   Get Started
@@ -120,7 +121,7 @@ export function HomePage() {
               </Link>
               <Link href="/demo">
                 <Button
-                  className="h-10 px-5 font-medium text-sm"
+                  className="h-10 px-5 text-sm font-medium"
                   size="default"
                   variant="outline"
                 >
@@ -162,20 +163,20 @@ export function HomePage() {
               key={feature.title}
             >
               <div>
-                <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
+                <span className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
                   {feature.tag}
                 </span>
 
-                <h3 className="mt-4 font-semibold text-base text-foreground tracking-tight">
+                <h3 className="mt-4 text-base font-semibold tracking-tight text-foreground">
                   {feature.title}
                 </h3>
 
-                <p className="mt-2.5 text-muted-foreground text-xs leading-relaxed sm:text-sm">
+                <p className="mt-2.5 text-xs leading-relaxed text-muted-foreground sm:text-sm">
                   {feature.description}
                 </p>
               </div>
 
-              <div className="mt-6 flex items-center gap-1.5 font-medium text-muted-foreground text-xs transition-colors group-hover:text-foreground">
+              <div className="mt-6 flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors group-hover:text-foreground">
                 <span>Learn more</span>
                 <ArrowRightIcon className="size-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
               </div>
@@ -185,8 +186,8 @@ export function HomePage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-border/40 border-t py-8">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 text-center text-muted-foreground text-xs sm:flex-row sm:px-8 sm:text-left">
+      <footer className="border-t border-border/40 py-8">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 text-center text-xs text-muted-foreground sm:flex-row sm:px-8 sm:text-left">
           <p>Built with Lexical, shadcn/ui, and Tailwind CSS v4.</p>
           <div className="flex items-center gap-6">
             <Link

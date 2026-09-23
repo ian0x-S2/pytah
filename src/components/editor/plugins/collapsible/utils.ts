@@ -5,8 +5,9 @@ import {
   $getSelection,
   $isElementNode,
   $isRangeSelection,
-  type ElementNode,
 } from "lexical";
+import type { ElementNode } from "lexical";
+
 import { $createCollapsibleContainerNode } from "../../core/nodes/collapsible/container-node";
 import { $createCollapsibleContentNode } from "../../core/nodes/collapsible/content-node";
 import { $createCollapsibleTitleNode } from "../../core/nodes/collapsible/title-node";

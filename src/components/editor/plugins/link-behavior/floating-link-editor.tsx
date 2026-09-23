@@ -15,6 +15,7 @@ import {
 } from "lexical";
 import { useEffect, useEffectEvent, useReducer, useRef } from "react";
 import { createPortal } from "react-dom";
+
 import { OPEN_FLOATING_LINK_EDITOR_COMMAND } from "../floating-toolbar/link-command";
 import {
   areFloatingToolbarPositionsEqual,
@@ -23,11 +24,11 @@ import {
 import { FloatingLinkEditorPanel } from "./floating-link-editor-panel";
 import {
   EMPTY_POSITION,
-  type FloatingLinkEditorPosition,
   getLinkEditorPosition,
   readSelectedLinkUrl,
   selectionContainsLink,
 } from "./floating-link-editor-position";
+import type { FloatingLinkEditorPosition } from "./floating-link-editor-position";
 import { LINK_PLACEHOLDER_URL } from "./utils";
 
 interface FloatingLinkEditorState {
@@ -135,12 +136,12 @@ export function FloatingLinkEditorPlugin() {
     const nextPosition = getLinkEditorPosition(editor) ?? EMPTY_POSITION;
 
     dispatch({
-      type: "sync",
       payload: {
         isLink: nextIsLink,
         linkUrl: nextLinkUrl,
         position: nextPosition,
       },
+      type: "sync",
     });
   };
 
@@ -157,91 +158,93 @@ export function FloatingLinkEditorPlugin() {
     });
   });
 
-  useEffect(() => {
-    return mergeRegister(
-      editor.registerUpdateListener(() => {
-        scheduleLinkEditorUpdate();
-      }),
-      editor.registerCommand(
-        SELECTION_CHANGE_COMMAND,
-        () => {
+  useEffect(
+    () =>
+      mergeRegister(
+        editor.registerUpdateListener(() => {
           scheduleLinkEditorUpdate();
-          return false;
-        },
-        COMMAND_PRIORITY_LOW
-      ),
-      editor.registerCommand(
-        OPEN_FLOATING_LINK_EDITOR_COMMAND,
-        () => {
-          dispatch({
-            type: "open-edit-mode",
-            payload: {
-              editedLinkUrl: readSelectedLinkUrl() || LINK_PLACEHOLDER_URL,
-            },
-          });
-          scheduleLinkEditorUpdate();
-          return true;
-        },
-        COMMAND_PRIORITY_HIGH
-      ),
-      editor.registerCommand(
-        KEY_DOWN_COMMAND,
-        (event) => {
-          const isModifierPressed = event.metaKey || event.ctrlKey;
-          if (!(isModifierPressed && event.key.toLowerCase() === "k")) {
+        }),
+        editor.registerCommand(
+          SELECTION_CHANGE_COMMAND,
+          () => {
+            scheduleLinkEditorUpdate();
             return false;
-          }
-
-          event.preventDefault();
-
-          if (selectionContainsLink()) {
-            dispatch({ type: "close-edit-mode" });
-            editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
+          },
+          COMMAND_PRIORITY_LOW
+        ),
+        editor.registerCommand(
+          OPEN_FLOATING_LINK_EDITOR_COMMAND,
+          () => {
+            dispatch({
+              payload: {
+                editedLinkUrl: readSelectedLinkUrl() || LINK_PLACEHOLDER_URL,
+              },
+              type: "open-edit-mode",
+            });
+            scheduleLinkEditorUpdate();
             return true;
-          }
+          },
+          COMMAND_PRIORITY_HIGH
+        ),
+        editor.registerCommand(
+          KEY_DOWN_COMMAND,
+          (event) => {
+            const isModifierPressed = event.metaKey || event.ctrlKey;
+            if (!(isModifierPressed && event.key.toLowerCase() === "k")) {
+              return false;
+            }
 
-          dispatch({
-            type: "open-edit-mode",
-            payload: { editedLinkUrl: LINK_PLACEHOLDER_URL },
-          });
-          editor.dispatchCommand(TOGGLE_LINK_COMMAND, LINK_PLACEHOLDER_URL);
-          return true;
-        },
-        COMMAND_PRIORITY_HIGH
-      ),
-      editor.registerCommand(
-        KEY_ESCAPE_COMMAND,
-        () => {
-          if (!isLink) {
-            return false;
-          }
+            event.preventDefault();
 
-          dispatch({ type: "close-link-editor" });
-          return true;
-        },
-        COMMAND_PRIORITY_HIGH
-      ),
-      editor.registerCommand(
-        CLICK_COMMAND,
-        (event) => {
-          const selection = $getSelection();
-          if (!$isRangeSelection(selection)) {
-            return false;
-          }
+            if (selectionContainsLink()) {
+              dispatch({ type: "close-edit-mode" });
+              editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
+              return true;
+            }
 
-          const node = getFloatingToolbarSelectedNode(selection);
-          const linkNode = $findMatchingParent(node, $isLinkNode);
-          if ($isLinkNode(linkNode) && (event.metaKey || event.ctrlKey)) {
-            window.open(linkNode.getURL(), "_blank", "noopener,noreferrer");
+            dispatch({
+              payload: { editedLinkUrl: LINK_PLACEHOLDER_URL },
+              type: "open-edit-mode",
+            });
+            editor.dispatchCommand(TOGGLE_LINK_COMMAND, LINK_PLACEHOLDER_URL);
             return true;
-          }
+          },
+          COMMAND_PRIORITY_HIGH
+        ),
+        editor.registerCommand(
+          KEY_ESCAPE_COMMAND,
+          () => {
+            if (!isLink) {
+              return false;
+            }
 
-          return false;
-        },
-        COMMAND_PRIORITY_LOW
-      )
-    );
-  }, [editor, isLink]);
+            dispatch({ type: "close-link-editor" });
+            return true;
+          },
+          COMMAND_PRIORITY_HIGH
+        ),
+        editor.registerCommand(
+          CLICK_COMMAND,
+          (event) => {
+            const selection = $getSelection();
+            if (!$isRangeSelection(selection)) {
+              return false;
+            }
+
+            const node = getFloatingToolbarSelectedNode(selection);
+            const linkNode = $findMatchingParent(node, $isLinkNode);
+            if ($isLinkNode(linkNode) && (event.metaKey || event.ctrlKey)) {
+              window.open(linkNode.getURL(), "_blank", "noopener,noreferrer");
+              return true;
+            }
+
+            return false;
+          },
+          COMMAND_PRIORITY_LOW
+        )
+      ),
+    [editor, isLink]
+  );
 
   useEffect(() => {
     scheduleLinkEditorUpdate();
@@ -261,13 +264,14 @@ export function FloatingLinkEditorPlugin() {
     };
   }, []);
 
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       if (animationFrameRef.current !== null) {
         window.cancelAnimationFrame(animationFrameRef.current);
       }
-    };
-  }, []);
+    },
+    []
+  );
 
   useEffect(() => {
     const floatingElement = editorRef.current;
@@ -319,7 +323,7 @@ export function FloatingLinkEditorPlugin() {
         isLinkEditMode={isLinkEditMode}
         linkUrl={linkUrl}
         onEditedLinkUrlChange={(value) =>
-          dispatch({ type: "set-edited-link-url", payload: value })
+          dispatch({ payload: value, type: "set-edited-link-url" })
         }
         onRequestCloseEditMode={() => dispatch({ type: "close-edit-mode" })}
         onRequestEditMode={() => dispatch({ type: "open-edit-mode" })}

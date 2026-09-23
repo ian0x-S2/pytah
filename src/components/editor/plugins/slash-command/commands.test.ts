@@ -1,5 +1,6 @@
 import { deepStrictEqual, strictEqual } from "node:assert/strict";
 import { describe, test } from "node:test";
+
 import { computeResolvedSlashCommands } from "../../core/features";
 import { CORE_SLASH_COMMANDS } from "./commands";
 
@@ -53,7 +54,7 @@ describe("core slash commands", () => {
               keywords: [],
               label: "Fake Math",
             },
-            run: () => undefined,
+            run: () => {},
           },
         ],
       },

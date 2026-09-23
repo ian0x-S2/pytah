@@ -14,6 +14,7 @@ import {
   KEY_ESCAPE_COMMAND,
 } from "lexical";
 import { useEffect, useEffectEvent, useReducer, useRef } from "react";
+
 import {
   Command,
   CommandEmpty,
@@ -22,6 +23,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
+
 import { createSlashMenuAnchor, getSelectionRectangle } from "./anchor";
 import type { FeatureSlashCommand, SlashCommandSelection } from "./types";
 import {
@@ -76,7 +78,7 @@ const applySlashCommandPatch = (
   state: SlashCommandState,
   patch: Partial<SlashCommandState>
 ): SlashCommandState => {
-  for (const key of Object.keys(patch) as Array<keyof SlashCommandState>) {
+  for (const key of Object.keys(patch) as (keyof SlashCommandState)[]) {
     if (state[key] !== patch[key]) {
       return { ...state, ...patch };
     }
@@ -124,9 +126,9 @@ export function SlashCommandPlugin({ commands }: SlashCommandPluginProps) {
     commands.map((entry) => entry.command),
     query
   );
-  const filteredEntries = commands.filter((entry) => {
-    return filteredCommands.some((command) => command.id === entry.command.id);
-  });
+  const filteredEntries = commands.filter((entry) =>
+    filteredCommands.some((command) => command.id === entry.command.id)
+  );
 
   const selectedCommandId: SlashCommandSelection = (() => {
     if (filteredCommands.length === 0) {
@@ -151,13 +153,13 @@ export function SlashCommandPlugin({ commands }: SlashCommandPluginProps) {
       $isRangeSelection(selection) && selection.isCollapsed();
 
     if (!isCollapsedRangeSelection) {
-      dispatch({ type: "patch", payload: { isOpen: false } });
+      dispatch({ payload: { isOpen: false }, type: "patch" });
       return;
     }
 
     const node = selection.anchor.getNode();
     if (!$isTextNode(node)) {
-      dispatch({ type: "patch", payload: { isOpen: false } });
+      dispatch({ payload: { isOpen: false }, type: "patch" });
       return;
     }
 
@@ -167,18 +169,18 @@ export function SlashCommandPlugin({ commands }: SlashCommandPluginProps) {
     const nextQuery = getSlashQueryMatch(textUpToCursor);
 
     if (nextQuery === null) {
-      dispatch({ type: "patch", payload: { isOpen: false } });
+      dispatch({ payload: { isOpen: false }, type: "patch" });
       return;
     }
 
     if (!getSelectionRectangle(editor)) {
-      dispatch({ type: "patch", payload: { isOpen: false } });
+      dispatch({ payload: { isOpen: false }, type: "patch" });
       return;
     }
 
     dispatch({
-      type: "patch",
       payload: { isOpen: true, query: nextQuery },
+      type: "patch",
     });
   };
 
@@ -196,7 +198,7 @@ export function SlashCommandPlugin({ commands }: SlashCommandPluginProps) {
   });
 
   const executeEntry = useEffectEvent((entry: FeatureSlashCommand) => {
-    dispatch({ type: "patch", payload: { isOpen: false } });
+    dispatch({ payload: { isOpen: false }, type: "patch" });
     entry.run(editor);
   });
 
@@ -220,35 +222,38 @@ export function SlashCommandPlugin({ commands }: SlashCommandPluginProps) {
     };
   }, [isOpen, selectedCommandId]);
 
-  useEffect(() => {
-    return editor.registerUpdateListener(() => {
-      scheduleSlashMenuUpdate();
-    });
-  }, [editor]);
+  useEffect(
+    () =>
+      editor.registerUpdateListener(() => {
+        scheduleSlashMenuUpdate();
+      }),
+    [editor]
+  );
 
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       if (animationFrameRef.current !== null) {
         window.cancelAnimationFrame(animationFrameRef.current);
       }
       animationFrameRef.current = null;
-    };
-  }, []);
+    },
+    []
+  );
 
   const onKeyCommand = useEffectEvent(
     (command: "arrow-down" | "arrow-up" | "enter" | "escape") => {
       switch (command) {
         case "arrow-down": {
           dispatch({
-            type: "move-selected-command",
             payload: { commands, direction: "down" },
+            type: "move-selected-command",
           });
           return;
         }
         case "arrow-up": {
           dispatch({
-            type: "move-selected-command",
             payload: { commands, direction: "up" },
+            type: "move-selected-command",
           });
           return;
         }
@@ -260,11 +265,11 @@ export function SlashCommandPlugin({ commands }: SlashCommandPluginProps) {
           return;
         }
         case "escape": {
-          dispatch({ type: "patch", payload: { isOpen: false } });
-          return;
+          dispatch({ payload: { isOpen: false }, type: "patch" });
+          break;
         }
         default: {
-          return;
+          break;
         }
       }
     }
@@ -331,7 +336,7 @@ export function SlashCommandPlugin({ commands }: SlashCommandPluginProps) {
         >
           <PopoverPrimitive.Popup
             className={cn(
-              "data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 z-50 flex w-72 origin-(--transform-origin) flex-col overflow-hidden rounded-lg bg-popover p-0 text-popover-foreground text-sm shadow-md outline-hidden ring-1 ring-foreground/10 duration-100 data-closed:animate-out data-open:animate-in"
+              "z-50 flex w-72 origin-(--transform-origin) flex-col overflow-hidden rounded-lg bg-popover p-0 text-sm text-popover-foreground shadow-md ring-1 ring-foreground/10 outline-hidden duration-100 data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95"
             )}
             data-slot="slash-command-popover"
             finalFocus={false}
@@ -354,7 +359,7 @@ export function SlashCommandPlugin({ commands }: SlashCommandPluginProps) {
               <CommandList ref={commandListRef}>
                 <CommandGroup heading="Blocks">
                   {filteredEntries.map((entry, index) => {
-                    const command = entry.command;
+                    const { command } = entry;
                     return (
                       <CommandItem
                         className={
@@ -384,8 +389,8 @@ export function SlashCommandPlugin({ commands }: SlashCommandPluginProps) {
                           }
 
                           dispatch({
-                            type: "patch",
                             payload: { rawSelectedCommandId: command.id },
+                            type: "patch",
                           });
                         }}
                         onSelect={() => executeEntry(entry)}
@@ -394,7 +399,7 @@ export function SlashCommandPlugin({ commands }: SlashCommandPluginProps) {
                         <command.icon className="size-4 shrink-0 text-muted-foreground" />
                         <div className="flex flex-col">
                           <span className="text-sm">{command.label}</span>
-                          <span className="text-muted-foreground text-xs">
+                          <span className="text-xs text-muted-foreground">
                             {command.description}
                           </span>
                         </div>

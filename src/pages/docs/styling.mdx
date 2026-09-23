@@ -13,8 +13,7 @@ import themeSource from "@/components/editor/core/theme.ts?raw";
 
 ## Styling Layers
 
-The editor separates styling into four independent layers. Each one answers a
-different question, and none of them requires patching internal files:
+The editor separates styling into four independent layers. Each one answers a different question, and none of them requires patching internal files:
 
 | Layer | Question it answers | Where |
 | --- | --- | --- |
@@ -31,10 +30,7 @@ different question, and none of them requires patching internal files:
 
 ## Surface Overrides
 
-Every public editor component accepts a `className` prop merged through
-`cn(defaults, className)`, so callers can override specific utilities without
-losing defaults. The `Editor` additionally exposes `contentClassName`, threaded
-down to the `ContentEditable` surface.
+Every public editor component accepts a `className` prop merged through `cn(defaults, className)`, so callers can override specific utilities without losing defaults. The `Editor` additionally exposes `contentClassName`, threaded down to the `ContentEditable` surface.
 
 ```tsx
 <Editor
@@ -43,18 +39,11 @@ down to the `ContentEditable` surface.
 />
 ```
 
-Common uses for `contentClassName`: tighter padding, a smaller base font size,
-or a minimum height that matches the surrounding layout. For replacing entire
-surfaces (header, action bar, outputs) instead of resizing them, use
-`slots` — see `/docs/composition`.
+Common uses for `contentClassName`: tighter padding, a smaller base font size, or a minimum height that matches the surrounding layout. For replacing entire surfaces (header, action bar, outputs) instead of resizing them, use `slots` — see `/docs/composition`.
 
 ## Content Theme
 
-Rendered content is styled through the Lexical theme in `core/theme.ts`. It is
-a flat map from content roles (headings, lists, tables, code, inline text) to
-Tailwind classes, plugged into the editor config by `createEditorConfig`. This
-is the single place that controls typography and spacing inside the editable
-area.
+Rendered content is styled through the Lexical theme in `core/theme.ts`. It is a flat map from content roles (headings, lists, tables, code, inline text) to Tailwind classes, plugged into the editor config by `createEditorConfig`. This is the single place that controls typography and spacing inside the editable area.
 
 <CodeBlock label="src/components/editor/core/theme.ts" language="typescript">
   {themeSource}
@@ -62,12 +51,9 @@ area.
 
 A few patterns worth keeping if you customize it:
 
-- Reference design tokens (`bg-muted`, `text-primary`) instead of raw colors,
-  so dark mode keeps working for free.
-- Give headings `first:mt-0` and `scroll-mt-*` so the top of the document stays
-  flush and anchor scrolling respects sticky headers.
-- Keep list/checklist styling on the theme's `before:` pseudo-element utilities;
-  the marker glyphs come from there, not from DOM nodes.
+- Reference design tokens (`bg-muted`, `text-primary`) instead of raw colors, so dark mode keeps working for free.
+- Give headings `first:mt-0` and `scroll-mt-*` so the top of the document stays flush and anchor scrolling respects sticky headers.
+- Keep list/checklist styling on the theme's `before:` pseudo-element utilities; the marker glyphs come from there, not from DOM nodes.
 
 <Callout title="Registered, not injected" variant="info">
   The theme ships as part of the editor registry item. To change it, edit the
@@ -79,15 +65,10 @@ A few patterns worth keeping if you customize it:
 
 ## Base Stylesheet
 
-The registry item ships one tiny stylesheet, imported by the editor root. It
-exists because some user-agent defaults fight the content theme — everything
-else lives in Tailwind classes and tokens.
+The registry item ships one tiny stylesheet, imported by the editor root. It exists because some user-agent defaults fight the content theme — everything else lives in Tailwind classes and tokens.
 
 <CodeBlock label="src/components/editor/editor.css" language="css">
   {editorCssSource}
 </CodeBlock>
 
-Without the `mark` reset, the browser's built-in yellow highlight shows behind
-the rounded corners of the themed highlight span. If you compose the editor at
-a lower level without importing `editor.css`, replicate this rule in your own
-global styles.
+Without the `mark` reset, the browser's built-in yellow highlight shows behind the rounded corners of the themed highlight span. If you compose the editor at a lower level without importing `editor.css`, replicate this rule in your own global styles.

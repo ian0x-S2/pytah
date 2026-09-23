@@ -4,6 +4,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { $insertNodeToNearestRoot } from "@lexical/utils";
 import { $createParagraphNode, COMMAND_PRIORITY_EDITOR } from "lexical";
 import { useEffect } from "react";
+
 import {
   $createExcalidrawNode,
   ExcalidrawNode,

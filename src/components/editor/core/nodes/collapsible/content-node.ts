@@ -9,16 +9,15 @@ import type {
   SerializedElementNode,
 } from "lexical";
 import { ElementNode } from "lexical";
+
 import { $isCollapsibleContainerNode } from "./container-node";
 import { domOnBeforeMatch, setDomHiddenUntilFound } from "./dom-utils";
 
 export type SerializedCollapsibleContentNode = SerializedElementNode;
 
-const convertCollapsibleContentElement = (): DOMConversionOutput => {
-  return {
-    node: $createCollapsibleContentNode(),
-  };
-};
+const convertCollapsibleContentElement = (): DOMConversionOutput => ({
+  node: $createCollapsibleContentNode(),
+});
 
 export class CollapsibleContentNode extends ElementNode {
   static getType(): string {
@@ -32,7 +31,7 @@ export class CollapsibleContentNode extends ElementNode {
   static importDOM(): DOMConversionMap | null {
     return {
       div: (domNode: HTMLElement) => {
-        if (!domNode.hasAttribute("data-lexical-collapsible-content")) {
+        if (!Object.hasOwn(domNode.dataset, "lexicalCollapsibleContent")) {
           return null;
         }
 
@@ -52,7 +51,7 @@ export class CollapsibleContentNode extends ElementNode {
 
   createDOM(config: EditorConfig, editor: LexicalEditor): HTMLElement {
     const dom = document.createElement("div");
-    dom.setAttribute("data-lexical-collapsible-content", "true");
+    dom.dataset.lexicalCollapsibleContent = "true";
 
     if (typeof config.theme.collapsibleContent === "string") {
       addClassNamesToElement(dom, config.theme.collapsibleContent);
@@ -97,7 +96,7 @@ export class CollapsibleContentNode extends ElementNode {
 
   exportDOM(): DOMExportOutput {
     const element = document.createElement("div");
-    element.setAttribute("data-lexical-collapsible-content", "true");
+    element.dataset.lexicalCollapsibleContent = "true";
     return { element };
   }
 

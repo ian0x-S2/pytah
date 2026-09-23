@@ -10,12 +10,13 @@ import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPl
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { TabIndentationPlugin } from "@lexical/react/LexicalTabIndentationPlugin";
 import type { LexicalEditor } from "lexical";
-import { type ComponentType, useEffect } from "react";
+import { useEffect } from "react";
+import type { ComponentType } from "react";
+
 import { cn } from "@/lib/utils";
-import {
-  type ResolvedEditorFeatureFlags,
-  renderEditorSlot,
-} from "../core/composition";
+
+import { renderEditorSlot } from "../core/composition";
+import type { ResolvedEditorFeatureFlags } from "../core/composition";
 import { EditorTransformersContext } from "../core/editor-transformers-context";
 import { EDITOR_FEATURES, renderSlashCommandPlugin } from "../core/features";
 import type {
@@ -124,9 +125,10 @@ function DefaultEditorPlugins({
   seededViaConfig,
   transformers,
 }: DefaultEditorPluginsProps) {
-  const featurePlugins = EDITOR_FEATURES.filter((feature) => {
-    return feature.plugin && !feature.editableOnly && features[feature.flag];
-  });
+  const featurePlugins = EDITOR_FEATURES.filter(
+    (feature) =>
+      feature.plugin && !feature.editableOnly && features[feature.flag]
+  );
 
   return (
     <EditorTransformersContext.Provider value={transformers}>
@@ -182,9 +184,9 @@ function EditableEditorPlugins({
   features,
   pluginSlots,
 }: EditableEditorPluginsProps) {
-  const editablePlugins = EDITOR_FEATURES.filter((feature) => {
-    return feature.editableOnly && features[feature.flag];
-  });
+  const editablePlugins = EDITOR_FEATURES.filter(
+    (feature) => feature.editableOnly && features[feature.flag]
+  );
   const slashCommandEnabled = features.slashCommand;
 
   return (

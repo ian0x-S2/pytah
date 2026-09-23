@@ -14,10 +14,12 @@ import {
   FORMAT_ELEMENT_COMMAND,
   KEY_BACKSPACE_COMMAND,
   KEY_DELETE_COMMAND,
-  type NodeKey,
 } from "lexical";
+import type { NodeKey } from "lexical";
 import { useEffect, useRef, useState } from "react";
-import { $isImageNode, type ImageAlignment } from "../../core/nodes/image/node";
+
+import { $isImageNode } from "../../core/nodes/image/node";
+import type { ImageAlignment } from "../../core/nodes/image/node";
 import { ImageResizer } from "./resizer";
 
 interface ImageComponentProps {
@@ -171,13 +173,14 @@ export function ImageComponent({
     setSelected,
   ]);
 
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       document.body.style.removeProperty("cursor");
       document.body.style.removeProperty("-webkit-user-select");
       document.body.style.removeProperty("user-select");
-    };
-  }, []);
+    },
+    []
+  );
 
   return (
     <figure className={figureClassName}>

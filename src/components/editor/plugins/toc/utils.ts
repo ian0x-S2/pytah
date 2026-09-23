@@ -1,11 +1,8 @@
 import type { TableOfContentsEntry } from "@lexical/react/LexicalTableOfContentsPlugin";
 import { $isHeadingNode } from "@lexical/rich-text";
-import {
-  $getSelection,
-  $isRangeSelection,
-  type LexicalEditor,
-  type NodeKey,
-} from "lexical";
+import { $getSelection, $isRangeSelection } from "lexical";
+import type { LexicalEditor, NodeKey } from "lexical";
+
 import {
   ACTIVE_HEADING_TOP_OFFSET,
   DEFAULT_SCROLL_TOP_OFFSET,
@@ -32,7 +29,7 @@ export const getScrollParent = (
 };
 
 export const getScrollTopOffset = () => {
-  const headers = Array.from(document.querySelectorAll("header"));
+  const headers = [...document.querySelectorAll("header")];
   let maxHeaderBottom = 0;
 
   for (const header of headers) {

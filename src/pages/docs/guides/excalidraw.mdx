@@ -38,82 +38,81 @@ import sceneSource from "@/components/editor/plugins/excalidraw/scene.ts?raw";
 
 ## node.tsx
 
-`ExcalidrawNode` extends `DecoratorNode` and stores the whole drawing as a
-serialized JSON string in `__data`, plus optional `__width`/`__height`
-dimensions for resizing and an `__alignment` field that mirrors how
-`ImageNode` handles left/center/right positioning. HTML export embeds the
-currently rendered svg so pasted content stays visible outside the editor,
-applies the same auto-margin alignment styles as images, and tags the element
-with a `data-lexical-excalidraw-json` attribute that `importDOM` uses to
-restore an editable drawing on paste.
+`ExcalidrawNode` extends `DecoratorNode` and stores the whole drawing as a serialized JSON string in `__data`, plus optional `__width`/`__height` dimensions for resizing and an `__alignment` field that mirrors how `ImageNode` handles left/center/right positioning. HTML export embeds the currently rendered svg so pasted content stays visible outside the editor, applies the same auto-margin alignment styles as images, and tags the element with a `data-lexical-excalidraw-json` attribute that `importDOM` uses to restore an editable drawing on paste.
 
-<CodeBlock label="src/components/editor/core/nodes/excalidraw/node.tsx" language="tsx">
+<CodeBlock
+  label="src/components/editor/core/nodes/excalidraw/node.tsx"
+  language="tsx"
+>
   {nodeSource}
 </CodeBlock>
 
 ## scene.ts
 
-The stored payload keeps only what is needed to re-open a drawing: elements,
-the files referenced by image elements, and a small subset of app state. The
-helpers below normalize parsing so corrupt or foreign data degrades to an
-empty scene instead of throwing.
+The stored payload keeps only what is needed to re-open a drawing: elements, the files referenced by image elements, and a small subset of app state. The helpers below normalize parsing so corrupt or foreign data degrades to an empty scene instead of throwing.
 
-<CodeBlock label="src/components/editor/plugins/excalidraw/scene.ts" language="ts">
+<CodeBlock
+  label="src/components/editor/plugins/excalidraw/scene.ts"
+  language="ts"
+>
   {sceneSource}
 </CodeBlock>
 
 ## Lazy loading
 
-The `@excalidraw/excalidraw` runtime is large, so nothing imports it at module
-scope. Both consumers load it on demand:
+The `@excalidraw/excalidraw` runtime is large, so nothing imports it at module scope. Both consumers load it on demand:
 
 - `image.tsx` dynamically imports `exportToSvg` when a scene preview renders.
-- `modal.tsx` lazily loads the `<Excalidraw>` editor plus its stylesheet the
-  first time the drawing surface opens.
+- `modal.tsx` lazily loads the `<Excalidraw>` editor plus its stylesheet the first time the drawing surface opens.
 
 Documents that never contain a drawing never download the package.
 
-<CodeBlock label="src/components/editor/plugins/excalidraw/image.tsx" language="tsx">
+<CodeBlock
+  label="src/components/editor/plugins/excalidraw/image.tsx"
+  language="tsx"
+>
   {imageSource}
 </CodeBlock>
 
-<CodeBlock label="src/components/editor/plugins/excalidraw/modal.tsx" language="tsx">
+<CodeBlock
+  label="src/components/editor/plugins/excalidraw/modal.tsx"
+  language="tsx"
+>
   {modalSource}
 </CodeBlock>
 
 ## component.tsx
 
-The decorator component owns the interaction model: click selects the block,
-double-click (or the pencil affordance) opens the editing surface, drag start
-is suppressed, Backspace/Delete removes a selected empty-handed block, and
-`FORMAT_ELEMENT_COMMAND` repositions the block while it is selected — the
-same left/center/right flow images use. Saving writes the serialized scene
-back into the node; discarding removes the node entirely when it was inserted
-empty.
+The decorator component owns the interaction model: click selects the block, double-click (or the pencil affordance) opens the editing surface, drag start is suppressed, Backspace/Delete removes a selected empty-handed block, and `FORMAT_ELEMENT_COMMAND` repositions the block while it is selected — the same left/center/right flow images use. Saving writes the serialized scene back into the node; discarding removes the node entirely when it was inserted empty.
 
-<CodeBlock label="src/components/editor/plugins/excalidraw/component.tsx" language="tsx">
+<CodeBlock
+  label="src/components/editor/plugins/excalidraw/component.tsx"
+  language="tsx"
+>
   {componentSource}
 </CodeBlock>
 
 ## plugin.tsx
 
-`ExcalidrawPlugin` registers `INSERT_EXCALIDRAW_COMMAND` and inserts an empty
-drawing block via `$insertNodeToNearestRoot`. Because an empty, editable block
-opens its editing surface on mount, slash commands (`/drawing`) and toolbar
-inserts reuse this single path — no dialog plumbing in either surface.
+`ExcalidrawPlugin` registers `INSERT_EXCALIDRAW_COMMAND` and inserts an empty drawing block via `$insertNodeToNearestRoot`. Because an empty, editable block opens its editing surface on mount, slash commands (`/drawing`) and toolbar inserts reuse this single path — no dialog plumbing in either surface.
 
-<CodeBlock label="src/components/editor/plugins/excalidraw/plugin.tsx" language="tsx">
+<CodeBlock
+  label="src/components/editor/plugins/excalidraw/plugin.tsx"
+  language="tsx"
+>
   {pluginSource}
 </CodeBlock>
 
 ## Registration
 
-Excalidraw drawings ship behind the `excalidraw` feature flag. To add the
-capability to a custom composition, contribute a descriptor via
-`extraFeatures`:
+Excalidraw drawings ship behind the `excalidraw` feature flag. To add the capability to a custom composition, contribute a descriptor via `extraFeatures`:
 
 ```tsx
-import { $createExcalidrawNode, $isExcalidrawNode, ExcalidrawNode } from "@/components/editor/core/nodes/excalidraw/node";
+import {
+  $createExcalidrawNode,
+  $isExcalidrawNode,
+  ExcalidrawNode,
+} from "@/components/editor/core/nodes/excalidraw/node";
 import { ExcalidrawPlugin } from "@/components/editor/plugins/excalidraw/plugin";
 
 <Editor
@@ -125,7 +124,7 @@ import { ExcalidrawPlugin } from "@/components/editor/plugins/excalidraw/plugin"
       slashCommandIds: ["excalidraw"],
     },
   ]}
-/>
+/>;
 ```
 
 ### Inserting a drawing programmatically

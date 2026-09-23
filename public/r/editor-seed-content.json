@@ -1,8 +1,13 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry-item.json",
   "author": "Pytah",
-  "categories": ["editor"],
-  "dependencies": ["@lexical/react@^0.42.0", "react@^19.2.4"],
+  "categories": [
+    "editor"
+  ],
+  "dependencies": [
+    "@lexical/react@^0.42.0",
+    "react@^19.2.4"
+  ],
   "description": "Seeds the example document when the editor mounts empty. Intended for demos.",
   "files": [
     {
@@ -12,14 +17,16 @@
       "type": "registry:file"
     },
     {
-      "content": "\"use client\";\n\nimport { useLexicalComposerContext } from \"@lexical/react/LexicalComposerContext\";\nimport { useContext, useEffect } from \"react\";\nimport {\n  DEFAULT_EDITOR_MARKDOWN,\n  EDITOR_SEED_UPDATE_TAG,\n} from \"../../core/constants\";\nimport { EditorTransformersContext } from \"../../core/editor-transformers-context\";\nimport { loadMarkdownContent, readEditorTextContent } from \"../../core/utils\";\n\n/**\n * Seeds the example document when the editor is empty. The transformer set\n * comes from the composition surface via context, so seeding respects every\n * installed feature's markdown syntax.\n */\nexport function SeedContentPlugin() {\n  const [editor] = useLexicalComposerContext();\n  const transformers = useContext(EditorTransformersContext);\n\n  useEffect(() => {\n    if (readEditorTextContent(editor).trim()) {\n      return;\n    }\n\n    loadMarkdownContent(editor, DEFAULT_EDITOR_MARKDOWN, {\n      select: false,\n      tag: EDITOR_SEED_UPDATE_TAG,\n      transformers,\n    });\n  }, [editor, transformers]);\n\n  return null;\n}\n",
+      "content": "\"use client\";\n\nimport { useLexicalComposerContext } from \"@lexical/react/LexicalComposerContext\";\nimport { useContext, useEffect } from \"react\";\n\nimport {\n  DEFAULT_EDITOR_MARKDOWN,\n  EDITOR_SEED_UPDATE_TAG,\n} from \"../../core/constants\";\nimport { EditorTransformersContext } from \"../../core/editor-transformers-context\";\nimport { loadMarkdownContent, readEditorTextContent } from \"../../core/utils\";\n\n/**\n * Seeds the example document when the editor is empty. The transformer set\n * comes from the composition surface via context, so seeding respects every\n * installed feature's markdown syntax.\n */\nexport function SeedContentPlugin() {\n  const [editor] = useLexicalComposerContext();\n  const transformers = useContext(EditorTransformersContext);\n\n  useEffect(() => {\n    if (readEditorTextContent(editor).trim()) {\n      return;\n    }\n\n    loadMarkdownContent(editor, DEFAULT_EDITOR_MARKDOWN, {\n      select: false,\n      tag: EDITOR_SEED_UPDATE_TAG,\n      transformers,\n    });\n  }, [editor, transformers]);\n\n  return null;\n}\n",
       "path": "registry/pytah/editor/components/editor/plugins/core/seed-content.tsx",
       "target": "src/components/editor/plugins/core/seed-content.tsx",
       "type": "registry:file"
     }
   ],
   "name": "editor-seed-content",
-  "registryDependencies": ["@pytah/editor"],
+  "registryDependencies": [
+    "@pytah/editor"
+  ],
   "title": "Pytah Editor — Seed Content",
   "type": "registry:block"
 }

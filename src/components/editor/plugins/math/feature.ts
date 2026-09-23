@@ -1,5 +1,7 @@
-import { $createParagraphNode, type ElementNode } from "lexical";
+import { $createParagraphNode } from "lexical";
+import type { ElementNode } from "lexical";
 import { CalculatorIcon } from "lucide-react";
+
 import { $createMathNode, MathNode } from "../../core/nodes/math/node";
 import {
   MATH_BLOCK_MARKDOWN_TRANSFORMER,

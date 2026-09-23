@@ -14,6 +14,7 @@ import {
   KEY_ARROW_UP_COMMAND,
 } from "lexical";
 import { useEffect } from "react";
+
 import {
   $isCollapsibleContainerNode,
   CollapsibleContainerNode,
@@ -26,10 +27,8 @@ import {
   $isCollapsibleTitleNode,
   CollapsibleTitleNode,
 } from "../../core/nodes/collapsible/title-node";
-import {
-  INSERT_COLLAPSIBLE_COMMAND,
-  type InsertCollapsiblePayload,
-} from "./commands";
+import { INSERT_COLLAPSIBLE_COMMAND } from "./commands";
+import type { InsertCollapsiblePayload } from "./commands";
 import { insertCollapsible } from "./utils";
 
 const shouldInsertParagraphBeforeCollapsible = () => {
@@ -275,9 +274,8 @@ export function CollapsiblePlugin() {
       ),
       editor.registerCommand(
         INSERT_COLLAPSIBLE_COMMAND,
-        (payload?: InsertCollapsiblePayload) => {
-          return insertCollapsible(payload?.targetNodeKey);
-        },
+        (payload?: InsertCollapsiblePayload) =>
+          insertCollapsible(payload?.targetNodeKey),
         COMMAND_PRIORITY_LOW
       )
     );

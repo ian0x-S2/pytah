@@ -1,10 +1,8 @@
 "use client";
 
 import { BlockWithAlignableContents } from "@lexical/react/LexicalBlockWithAlignableContents";
-import {
-  DecoratorBlockNode,
-  type SerializedDecoratorBlockNode,
-} from "@lexical/react/LexicalDecoratorBlockNode";
+import { DecoratorBlockNode } from "@lexical/react/LexicalDecoratorBlockNode";
+import type { SerializedDecoratorBlockNode } from "@lexical/react/LexicalDecoratorBlockNode";
 import type {
   DOMConversionMap,
   DOMConversionOutput,
@@ -62,7 +60,7 @@ export type SerializedYouTubeNode = Spread<
 const convertYouTubeElement = (
   domNode: HTMLElement
 ): DOMConversionOutput | null => {
-  const videoId = domNode.getAttribute("data-lexical-youtube");
+  const videoId = domNode.dataset.lexicalYoutube;
   if (!videoId) {
     return null;
   }
@@ -92,7 +90,7 @@ export class YouTubeNode extends DecoratorBlockNode {
   static importDOM(): DOMConversionMap | null {
     return {
       iframe: (domNode: HTMLElement) => {
-        if (!domNode.hasAttribute("data-lexical-youtube")) {
+        if (!Object.hasOwn(domNode.dataset, "lexicalYoutube")) {
           return null;
         }
 
@@ -112,15 +110,15 @@ export class YouTubeNode extends DecoratorBlockNode {
   exportJSON(): SerializedYouTubeNode {
     return {
       ...super.exportJSON(),
-      videoId: this.__videoId,
       type: "youtube",
       version: 1,
+      videoId: this.__videoId,
     };
   }
 
   exportDOM(): DOMExportOutput {
     const element = document.createElement("iframe");
-    element.setAttribute("data-lexical-youtube", this.__videoId);
+    element.dataset.lexicalYoutube = this.__videoId;
     element.setAttribute(
       "src",
       `https://www.youtube-nocookie.com/embed/${this.__videoId}`

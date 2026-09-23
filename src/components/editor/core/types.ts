@@ -2,6 +2,7 @@ import type { Transformer } from "@lexical/markdown";
 import type { InitialConfigType } from "@lexical/react/LexicalComposer";
 import type { LexicalEditor } from "lexical";
 import type { ComponentType, ReactNode } from "react";
+
 import type { FeatureSlashCommand } from "../plugins/slash-command/types";
 
 /**

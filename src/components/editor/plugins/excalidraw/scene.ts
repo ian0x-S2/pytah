@@ -39,9 +39,7 @@ export const serializeExcalidrawScene = (
   elements: ExcalidrawInitialElements,
   appState: Partial<AppState>,
   files: BinaryFiles
-): string => {
-  return JSON.stringify({ appState, elements, files });
-};
+): string => JSON.stringify({ appState, elements, files });
 export const parseExcalidrawScene = (data: string): ExcalidrawScene => {
   try {
     const parsed: unknown = JSON.parse(data);

@@ -5,6 +5,5 @@ export const EditorTransformersContext = createContext<readonly Transformer[]>(
   []
 );
 
-export const useEditorTransformers = (): readonly Transformer[] => {
-  return useContext(EditorTransformersContext);
-};
+export const useEditorTransformers = (): readonly Transformer[] =>
+  useContext(EditorTransformersContext);

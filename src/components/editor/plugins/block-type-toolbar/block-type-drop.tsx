@@ -3,6 +3,7 @@
 import type { LexicalEditor } from "lexical";
 import { CheckIcon, ChevronDownIcon } from "lucide-react";
 import { memo } from "react";
+
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -14,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+
 import { getSlashRunner } from "../slash-command/executors";
 import {
   BLOCK_ICONS,
@@ -41,87 +43,89 @@ interface BlockTypeDropProps {
   onBlockTypeChange?: (value: BlockTypeValue) => void;
 }
 
-export const BlockTypeDrop = memo(function BlockTypeDrop({
-  blockType,
-  className,
-  commandIds,
-  editor,
-  onBlockTypeChange,
-}: BlockTypeDropProps) {
-  const availableOptions = getAvailableBlockOptions(
-    commandIds ?? BLOCK_OPTIONS.map((option) => option.value)
-  );
-  const conversionOptions = availableOptions.filter(isConversionOption);
-  const insertOptions = availableOptions.filter(
-    (option) => !isConversionOption(option)
-  );
+export const BlockTypeDrop = memo(
+  ({
+    blockType,
+    className,
+    commandIds,
+    editor,
+    onBlockTypeChange,
+  }: BlockTypeDropProps) => {
+    const availableOptions = getAvailableBlockOptions(
+      commandIds ?? BLOCK_OPTIONS.map((option) => option.value)
+    );
+    const conversionOptions = availableOptions.filter(isConversionOption);
+    const insertOptions = availableOptions.filter(
+      (option) => !isConversionOption(option)
+    );
 
-  const currentOption = getCurrentBlockOption(blockType, availableOptions);
-  const CurrentIcon = BLOCK_ICONS[currentOption?.value ?? "paragraph"];
+    const currentOption = getCurrentBlockOption(blockType, availableOptions);
+    const CurrentIcon = BLOCK_ICONS[currentOption?.value ?? "paragraph"];
 
-  const handleChange = (value: BlockTypeValue) => {
-    if (INSERT_SECTION_TYPES.has(value)) {
-      getSlashRunner(value)?.(editor);
-      return;
-    }
+    const handleChange = (value: BlockTypeValue) => {
+      if (INSERT_SECTION_TYPES.has(value)) {
+        getSlashRunner(value)?.(editor);
+        return;
+      }
 
-    applyBlockType(editor, value);
-    onBlockTypeChange?.(value);
-  };
+      applyBlockType(editor, value);
+      onBlockTypeChange?.(value);
+    };
 
-  const renderOption = (option: BlockOption) => {
-    const Icon = BLOCK_ICONS[option.value];
-    const isSelected = option.value === blockType;
+    const renderOption = (option: BlockOption) => {
+      const Icon = BLOCK_ICONS[option.value];
+      const isSelected = option.value === blockType;
+
+      return (
+        <DropdownMenuItem
+          className={cn(
+            "items-start gap-3 px-3 py-2",
+            isSelected && "bg-accent/40"
+          )}
+          key={option.value}
+          onClick={() => handleChange(option.value)}
+        >
+          <span className="mt-0.5 rounded-sm bg-muted p-1 text-muted-foreground">
+            <Icon className="size-4" />
+          </span>
+          <span className="flex flex-col">
+            <span className="text-sm font-medium text-foreground">
+              {option.label}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {option.description}
+            </span>
+          </span>
+          {isSelected && (
+            <CheckIcon className="ml-auto size-3.5 shrink-0 self-center text-muted-foreground" />
+          )}
+        </DropdownMenuItem>
+      );
+    };
 
     return (
-      <DropdownMenuItem
-        className={cn(
-          "items-start gap-3 px-3 py-2",
-          isSelected && "bg-accent/40"
-        )}
-        key={option.value}
-        onClick={() => handleChange(option.value)}
-      >
-        <span className="mt-0.5 rounded-sm bg-muted p-1 text-muted-foreground">
-          <Icon className="size-4" />
-        </span>
-        <span className="flex flex-col">
-          <span className="font-medium text-foreground text-sm">
-            {option.label}
-          </span>
-          <span className="text-muted-foreground text-xs">
-            {option.description}
-          </span>
-        </span>
-        {isSelected && (
-          <CheckIcon className="ml-auto size-3.5 shrink-0 self-center text-muted-foreground" />
-        )}
-      </DropdownMenuItem>
-    );
-  };
+      <DropdownMenu>
+        <DropdownMenuTrigger render={<Button size="sm" variant="outline" />}>
+          <CurrentIcon className="size-4" />
+          <span>{currentOption?.label ?? BLOCK_LABELS.paragraph}</span>
+          <ChevronDownIcon className="size-4 text-muted-foreground" />
+        </DropdownMenuTrigger>
 
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger render={<Button size="sm" variant="outline" />}>
-        <CurrentIcon className="size-4" />
-        <span>{currentOption?.label ?? BLOCK_LABELS.paragraph}</span>
-        <ChevronDownIcon className="size-4 text-muted-foreground" />
-      </DropdownMenuTrigger>
-
-      <DropdownMenuContent className={cn("w-72", className)}>
-        <DropdownMenuGroup>
-          <DropdownMenuLabel>Turn into</DropdownMenuLabel>
-          {conversionOptions.map(renderOption)}
-        </DropdownMenuGroup>
-
-        {insertOptions.length > 0 && (
+        <DropdownMenuContent className={cn("w-72", className)}>
           <DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuLabel>Insert</DropdownMenuLabel>
-            {insertOptions.map(renderOption)}
+            <DropdownMenuLabel>Turn into</DropdownMenuLabel>
+            {conversionOptions.map(renderOption)}
           </DropdownMenuGroup>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-});
+
+          {insertOptions.length > 0 && (
+            <DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Insert</DropdownMenuLabel>
+              {insertOptions.map(renderOption)}
+            </DropdownMenuGroup>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
+);

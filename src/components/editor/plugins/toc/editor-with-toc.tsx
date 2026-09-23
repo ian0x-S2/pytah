@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+
 import type { EditorProps } from "../../core/types";
 import { Editor } from "../../editor";
 import { EditorTableOfContents } from "./sidebar";

@@ -1,10 +1,12 @@
 import { strictEqual } from "node:assert/strict";
 import { describe, test } from "node:test";
+
 import { createHeadlessEditor } from "@lexical/headless";
 import type {
   MultilineElementTransformer,
   TextMatchTransformer,
 } from "@lexical/markdown";
+
 import { createEditorConfig } from "../../core/config";
 import { $createMathNode, MathNode } from "../../core/nodes/math/node";
 import {

@@ -14,22 +14,18 @@ import {
   FORMAT_ELEMENT_COMMAND,
   KEY_BACKSPACE_COMMAND,
   KEY_DELETE_COMMAND,
-  type LexicalEditor,
-  type NodeKey,
 } from "lexical";
+import type { LexicalEditor, NodeKey } from "lexical";
 import { PencilIcon } from "lucide-react";
 import type { RefObject } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  $isExcalidrawNode,
-  type ExcalidrawAlignment,
-} from "../../core/nodes/excalidraw/node";
+
+import { $isExcalidrawNode } from "../../core/nodes/excalidraw/node";
+import type { ExcalidrawAlignment } from "../../core/nodes/excalidraw/node";
 import { ImageResizer } from "../image/resizer";
 import { ExcalidrawImage } from "./image";
-import {
-  ExcalidrawEditorDialog,
-  type SaveExcalidrawScenePayload,
-} from "./modal";
+import { ExcalidrawEditorDialog } from "./modal";
+import type { SaveExcalidrawScenePayload } from "./modal";
 import {
   hasExcalidrawContent,
   parseExcalidrawScene,
@@ -59,9 +55,8 @@ interface SelectionBehaviorOptions {
 const isInsideButton = (
   button: HTMLButtonElement | null,
   target: EventTarget | null
-): boolean => {
-  return Boolean(button && target instanceof Node && button.contains(target));
-};
+): boolean =>
+  Boolean(button && target instanceof Node && button.contains(target));
 
 /**
  * Wires click-to-select, double-click-to-edit, drag suppression, alignment
@@ -339,14 +334,16 @@ export function ExcalidrawComponent({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
 
-  const removeNode = useCallback(() => {
-    return editor.update(() => {
-      const node = $getNodeByKey(nodeKey);
-      if ($isExcalidrawNode(node)) {
-        node.remove();
-      }
-    });
-  }, [editor, nodeKey]);
+  const removeNode = useCallback(
+    () =>
+      editor.update(() => {
+        const node = $getNodeByKey(nodeKey);
+        if ($isExcalidrawNode(node)) {
+          node.remove();
+        }
+      }),
+    [editor, nodeKey]
+  );
 
   const openEditor = useCallback(() => {
     setIsEditorOpen(true);
@@ -364,13 +361,14 @@ export function ExcalidrawComponent({
     setSelected,
   });
 
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       document.body.style.removeProperty("cursor");
       document.body.style.removeProperty("-webkit-user-select");
       document.body.style.removeProperty("user-select");
-    };
-  }, []);
+    },
+    []
+  );
 
   if (!editable && scene.elements.length === 0) {
     return null;

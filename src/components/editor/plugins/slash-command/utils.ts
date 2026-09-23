@@ -1,13 +1,9 @@
-import {
-  $getSelection,
-  $isRangeSelection,
-  $isTextNode,
-  type ElementNode,
-  type LexicalEditor,
-} from "lexical";
+import { $getSelection, $isRangeSelection, $isTextNode } from "lexical";
+import type { ElementNode, LexicalEditor } from "lexical";
+
 import type { SlashCommand, SlashCommandSelection } from "./types";
 
-export const SLASH_QUERY_PATTERN = /^\/(\w*)$/;
+export const SLASH_QUERY_PATTERN = /^\/(?<query>\w*)$/u;
 
 export const filterSlashCommands = (
   commands: SlashCommand[],
@@ -19,26 +15,21 @@ export const filterSlashCommands = (
 
   const normalizedQuery = query.toLowerCase();
 
-  return commands.filter((command) => {
-    return (
+  return commands.filter(
+    (command) =>
       command.label.toLowerCase().includes(normalizedQuery) ||
       command.keywords.some((keyword) => keyword.includes(normalizedQuery))
-    );
-  });
+  );
 };
 
 export const getFirstCommandId = (
   commands: SlashCommand[]
-): SlashCommandSelection => {
-  return commands[0]?.id ?? "";
-};
+): SlashCommandSelection => commands[0]?.id ?? "";
 
 export const getSelectedCommandIndex = (
   commands: SlashCommand[],
   selectedCommandId: SlashCommandSelection
-): number => {
-  return commands.findIndex((command) => command.id === selectedCommandId);
-};
+): number => commands.findIndex((command) => command.id === selectedCommandId);
 
 export const getNeighborCommandId = (
   commands: SlashCommand[],
@@ -62,14 +53,12 @@ export const getNeighborCommandId = (
 export const hasSelectedCommand = (
   commands: SlashCommand[],
   selectedCommandId: SlashCommandSelection
-): boolean => {
-  return commands.some((command) => command.id === selectedCommandId);
-};
+): boolean => commands.some((command) => command.id === selectedCommandId);
 
 export const getSlashQueryMatch = (textUpToCursor: string): string | null => {
   const match = textUpToCursor.match(SLASH_QUERY_PATTERN);
 
-  return match?.[1] ?? null;
+  return match?.groups?.query ?? null;
 };
 
 /**

@@ -7,13 +7,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+
 import { LAYOUT_PRESETS } from "./constants";
 
-const TEMPLATE_COLUMN_SEPARATOR = /\s+/;
+const TEMPLATE_COLUMN_SEPARATOR = /\s+/u;
 
-const getLayoutPreviewColumns = (templateColumns: string) => {
-  return templateColumns.split(TEMPLATE_COLUMN_SEPARATOR).filter(Boolean);
-};
+const getLayoutPreviewColumns = (templateColumns: string) =>
+  templateColumns.split(TEMPLATE_COLUMN_SEPARATOR).filter(Boolean);
 
 function LayoutPresetPreview({ templateColumns }: { templateColumns: string }) {
   const columns = getLayoutPreviewColumns(templateColumns);
@@ -80,10 +80,10 @@ export function LayoutPresetDialog({
                 <span className="flex w-full flex-col items-start gap-3">
                   <LayoutPresetPreview templateColumns={preset.value} />
                   <span className="flex flex-col items-start gap-1">
-                    <span className="font-medium text-foreground text-sm">
+                    <span className="text-sm font-medium text-foreground">
                       {preset.label}
                     </span>
-                    <span className="text-muted-foreground text-xs">
+                    <span className="text-xs text-muted-foreground">
                       {preset.description}
                     </span>
                     <span className="font-mono text-[11px] text-muted-foreground/80">

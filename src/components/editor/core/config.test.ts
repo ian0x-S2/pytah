@@ -1,6 +1,8 @@
 import { deepStrictEqual, strictEqual } from "node:assert/strict";
 import { describe, test } from "node:test";
+
 import { ParagraphNode } from "lexical";
+
 import { BASE_EDITOR_NODES, createEditorConfig } from "./config";
 
 describe("editor config", () => {
@@ -16,9 +18,9 @@ describe("editor config", () => {
   test("appends feature nodes then consumer nodes", () => {
     const config = createEditorConfig({
       editable: false,
-      namespace: "CustomEditor",
-      featureNodes: [ParagraphNode],
       extraNodes: [ParagraphNode],
+      featureNodes: [ParagraphNode],
+      namespace: "CustomEditor",
     });
 
     strictEqual(config.editable, false);

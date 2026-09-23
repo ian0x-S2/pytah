@@ -17,9 +17,8 @@ import resizeGeometrySource from "@/components/editor/plugins/image/resize-geome
 import imageUtilsSource from "@/components/editor/plugins/image/utils.ts?raw";
 
 <Callout title="Extension guide">
-  This page focuses on how the image feature is implemented as a reusable
-  editor block. Use it when building or adapting custom node-backed editor
-  features.
+  This page focuses on how the image feature is implemented as a reusable editor
+  block. Use it when building or adapting custom node-backed editor features.
 </Callout>
 
 ## Files
@@ -40,24 +39,27 @@ import imageUtilsSource from "@/components/editor/plugins/image/utils.ts?raw";
 
 ## node.tsx
 
-`ImageNode` extends `DecoratorNode` and stores `src`, `altText`, `alignment`,
-`width`, and `height`. It renders its React component via `decorate()` and
-handles HTML paste via `importDOM`.
+`ImageNode` extends `DecoratorNode` and stores `src`, `altText`, `alignment`, `width`, and `height`. It renders its React component via `decorate()` and handles HTML paste via `importDOM`.
 
-<CodeBlock label="src/components/editor/core/nodes/image/node.tsx" language="tsx">
+<CodeBlock
+  label="src/components/editor/core/nodes/image/node.tsx"
+  language="tsx"
+>
   {imageNodeSource}
 </CodeBlock>
 
 ## commands.ts
 
-<CodeBlock label="src/components/editor/plugins/image/commands.ts" language="ts">
+<CodeBlock
+  label="src/components/editor/plugins/image/commands.ts"
+  language="ts"
+>
   {imageCommandsSource}
 </CodeBlock>
 
 ## utils.ts
 
-Three small helpers used by the plugin to detect and read image files from
-clipboard / drop events.
+Three small helpers used by the plugin to detect and read image files from clipboard / drop events.
 
 <CodeBlock label="src/components/editor/plugins/image/utils.ts" language="ts">
   {imageUtilsSource}
@@ -65,56 +67,51 @@ clipboard / drop events.
 
 ## plugin.tsx
 
-Registers three Lexical commands: `INSERT_IMAGE_COMMAND` (inserts by URL),
-`DRAG_DROP_PASTE` (handles file drops), and `PASTE_COMMAND` (intercepts image
-file pastes).
+Registers three Lexical commands: `INSERT_IMAGE_COMMAND` (inserts by URL), `DRAG_DROP_PASTE` (handles file drops), and `PASTE_COMMAND` (intercepts image file pastes).
 
-<CodeBlock label="src/components/editor/plugins/image/plugin.tsx" language="tsx">
+<CodeBlock
+  label="src/components/editor/plugins/image/plugin.tsx"
+  language="tsx"
+>
   {imagePluginSource}
 </CodeBlock>
 
 ## component.tsx
 
-The React component rendered by `ImageNode.decorate()`. Handles
-click-to-select, Backspace/Delete to remove, and `FORMAT_ELEMENT_COMMAND` to
-change alignment. Mounts `ImageResizer` when the node is selected.
+The React component rendered by `ImageNode.decorate()`. Handles click-to-select, Backspace/Delete to remove, and `FORMAT_ELEMENT_COMMAND` to change alignment. Mounts `ImageResizer` when the node is selected.
 
-<CodeBlock label="src/components/editor/plugins/image/component.tsx" language="tsx">
+<CodeBlock
+  label="src/components/editor/plugins/image/component.tsx"
+  language="tsx"
+>
   {imageComponentSource}
 </CodeBlock>
 
 ## resizer.tsx
 
-Renders four corner drag handles (`ne`, `se`, `sw`, `nw`) as
-absolute-positioned divs. The overlay mirrors the resized element's true box
-via offset-based bounds syncing, so handles stay glued to it even when an
-ancestor container clamps the element's layout width. Uses pointer events to
-track drag distance and update the image's inline style in real-time, then
-calls `onResizeEnd` with the final pixel dimensions. Other block types (like
-drawings) reuse `ImageResizer` with `edgeHandles` for free axis resizing and
-a `decorations` slot for chrome that must hug the handles.
+Renders four corner drag handles (`ne`, `se`, `sw`, `nw`) as absolute-positioned divs. The overlay mirrors the resized element's true box via offset-based bounds syncing, so handles stay glued to it even when an ancestor container clamps the element's layout width. Uses pointer events to track drag distance and update the image's inline style in real-time, then calls `onResizeEnd` with the final pixel dimensions. Other block types (like drawings) reuse `ImageResizer` with `edgeHandles` for free axis resizing and a `decorations` slot for chrome that must hug the handles.
 
-<CodeBlock label="src/components/editor/plugins/image/resizer.tsx" language="tsx">
+<CodeBlock
+  label="src/components/editor/plugins/image/resizer.tsx"
+  language="tsx"
+>
   {imageResizerSource}
 </CodeBlock>
 
 ## resize-geometry.ts
 
-The pure resize math shared by every consumer of `ImageResizer`: direction
-types, min-size clamps, cursor mapping, and `computeNextSize` (corner drags
-lock the aspect ratio; edge drags move one axis independently). Keeping it
-component-free lets tests cover it headlessly.
+The pure resize math shared by every consumer of `ImageResizer`: direction types, min-size clamps, cursor mapping, and `computeNextSize` (corner drags lock the aspect ratio; edge drags move one axis independently). Keeping it component-free lets tests cover it headlessly.
 
-<CodeBlock label="src/components/editor/plugins/image/resize-geometry.ts" language="ts">
+<CodeBlock
+  label="src/components/editor/plugins/image/resize-geometry.ts"
+  language="ts"
+>
   {resizeGeometrySource}
 </CodeBlock>
 
 ## Registration
 
-The image capability ships in the default editor behind the `images` feature
-flag. To add it (or any whole capability) to a custom composition, contribute
-a descriptor via `extraFeatures` — no edits to `core/config.ts` or
-`ui/content.tsx`:
+The image capability ships in the default editor behind the `images` feature flag. To add it (or any whole capability) to a custom composition, contribute a descriptor via `extraFeatures` — no edits to `core/config.ts` or `ui/content.tsx`:
 
 ```tsx
 <Editor
@@ -130,8 +127,7 @@ a descriptor via `extraFeatures` — no edits to `core/config.ts` or
 />
 ```
 
-Built-in capabilities are registered the same way in `core/features.tsx`, so
-a flag toggles the node, plugin, transformers, and slash command together.
+Built-in capabilities are registered the same way in `core/features.tsx`, so a flag toggles the node, plugin, transformers, and slash command together.
 
 ### Inserting an image programmatically
 
@@ -144,7 +140,7 @@ editor.dispatchCommand(INSERT_IMAGE_COMMAND, {
 ```
 
 <Callout title="File paste / drop is automatic" variant="tip">
-  `ImagePlugin` intercepts `PASTE_COMMAND` and `DROP_COMMAND` automatically.
-  Any image file dragged into the editor or pasted from the clipboard is
-  converted to a data URL and inserted as an `ImageNode`.
+  `ImagePlugin` intercepts `PASTE_COMMAND` and `DROP_COMMAND` automatically. Any
+  image file dragged into the editor or pasted from the clipboard is converted
+  to a data URL and inserted as an `ImageNode`.
 </Callout>

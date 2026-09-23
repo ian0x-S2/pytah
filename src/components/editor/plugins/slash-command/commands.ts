@@ -12,6 +12,7 @@ import {
   TableIcon,
   TypeIcon,
 } from "lucide-react";
+
 import type { SlashCommandId } from "./types";
 
 export interface SlashCommandEntry {

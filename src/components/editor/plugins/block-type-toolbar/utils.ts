@@ -20,10 +20,9 @@ import {
   $getSelection,
   $isParagraphNode,
   $isRangeSelection,
-  type LexicalEditor,
-  type LexicalNode,
-  type RangeSelection,
 } from "lexical";
+import type { LexicalEditor, LexicalNode, RangeSelection } from "lexical";
+
 import { getSlashRunner } from "../slash-command/executors";
 import type { BlockOption, BlockTypeValue } from "./types";
 
@@ -39,21 +38,16 @@ const EXECUTOR_BLOCK_TYPES = [
 
 const isExecutorBlockType = (
   value: BlockTypeValue
-): value is (typeof EXECUTOR_BLOCK_TYPES)[number] => {
-  return EXECUTOR_BLOCK_TYPES.includes(
-    value as (typeof EXECUTOR_BLOCK_TYPES)[number]
-  );
-};
+): value is (typeof EXECUTOR_BLOCK_TYPES)[number] =>
+  EXECUTOR_BLOCK_TYPES.includes(value as (typeof EXECUTOR_BLOCK_TYPES)[number]);
 
 const isHeadingValue = (
   value: BlockTypeValue
-): value is (typeof HEADING_VALUES)[number] => {
-  return HEADING_VALUES.includes(value as (typeof HEADING_VALUES)[number]);
-};
+): value is (typeof HEADING_VALUES)[number] =>
+  HEADING_VALUES.includes(value as (typeof HEADING_VALUES)[number]);
 
-const findSelectedTableAncestor = (node: LexicalNode) => {
-  return $findMatchingParent(node, (parentNode) => $isTableNode(parentNode));
-};
+const findSelectedTableAncestor = (node: LexicalNode) =>
+  $findMatchingParent(node, (parentNode) => $isTableNode(parentNode));
 
 export const getBlockTypeFromSelection = (): BlockTypeValue | null => {
   const selection = $getSelection();
@@ -167,27 +161,24 @@ export const applyBlockType = (
       return;
     }
 
-    editor.dispatchCommand(REMOVE_LIST_COMMAND, undefined);
+    editor.dispatchCommand(REMOVE_LIST_COMMAND);
 
     if (blockType === "bullet") {
-      editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined);
+      editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND);
       return;
     }
 
     if (blockType === "check") {
-      editor.dispatchCommand(INSERT_CHECK_LIST_COMMAND, undefined);
+      editor.dispatchCommand(INSERT_CHECK_LIST_COMMAND);
       return;
     }
 
-    editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined);
+    editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND);
   });
 };
 
 export const getCurrentBlockOption = (
   currentBlockType: BlockTypeValue,
   options: BlockOption[]
-): BlockOption => {
-  return (
-    options.find((option) => option.value === currentBlockType) ?? options[0]
-  );
-};
+): BlockOption =>
+  options.find((option) => option.value === currentBlockType) ?? options[0];

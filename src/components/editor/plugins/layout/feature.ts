@@ -1,4 +1,5 @@
 import { PanelsTopLeftIcon } from "lucide-react";
+
 import { LayoutContainerNode } from "../../core/nodes/layout/container-node";
 import { LayoutItemNode } from "../../core/nodes/layout/item-node";
 import type { ExtraEditorFeature } from "../../core/types";

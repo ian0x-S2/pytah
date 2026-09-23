@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+
 import type {
   EditorChromeOptions,
   EditorFeatureFlags,
@@ -16,12 +17,10 @@ export type ResolvedEditorSnapshotOptions = Required<EditorSnapshotOptions>;
 
 export const resolveEditorSnapshotOptions = (
   options?: EditorSnapshotOptions
-): ResolvedEditorSnapshotOptions => {
-  return {
-    ...DEFAULT_EDITOR_SNAPSHOT_OPTIONS,
-    ...options,
-  };
-};
+): ResolvedEditorSnapshotOptions => ({
+  ...DEFAULT_EDITOR_SNAPSHOT_OPTIONS,
+  ...options,
+});
 
 export type ResolvedEditorFeatureFlags = Required<
   Omit<EditorFeatureFlags, "snapshot">
@@ -66,12 +65,10 @@ export const resolveEditorFeatures = (
 
 export const resolveEditorChrome = (
   chrome?: EditorChromeOptions
-): ResolvedEditorChromeOptions => {
-  return {
-    ...DEFAULT_EDITOR_CHROME,
-    ...chrome,
-  };
-};
+): ResolvedEditorChromeOptions => ({
+  ...DEFAULT_EDITOR_CHROME,
+  ...chrome,
+});
 
 export const renderEditorSlot = <T>(
   slot: ReactNode | ((context: T) => ReactNode) | undefined,

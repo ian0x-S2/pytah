@@ -1,6 +1,7 @@
 import { CodeIcon, PlayIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useLocation, useRoute } from "wouter";
+
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -19,11 +20,9 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { REPOSITORY_URL } from "@/lib/site";
-import {
-  DOCS_PAGE_GROUPS,
-  type DocsPageDefinition,
-  getDocsPageByPath,
-} from "@/pages/docs/manifest";
+import { DOCS_PAGE_GROUPS, getDocsPageByPath } from "@/pages/docs/manifest";
+import type { DocsPageDefinition } from "@/pages/docs/manifest";
+
 import { ThemeToggle } from "./theme-toggle";
 
 function LocalClock() {
@@ -61,14 +60,14 @@ function NavLink({ href, icon: Icon, label }: DocsPageDefinition) {
 function DocsSidebar() {
   return (
     <Sidebar collapsible="offcanvas" variant="sidebar">
-      <SidebarHeader className="border-border/40 border-b">
+      <SidebarHeader className="border-b border-border/40">
         <div className="flex h-10 items-center justify-between px-2">
           <Link
-            className="flex items-center gap-2 font-semibold text-foreground text-xs tracking-tight transition-opacity hover:opacity-80"
+            className="flex items-center gap-2 text-xs font-semibold tracking-tight text-foreground transition-opacity hover:opacity-80"
             href="/"
           >
             <span>Pytah</span>
-            <span className="rounded border border-border/70 px-1 py-0.2 font-mono text-[9.5px] text-muted-foreground">
+            <span className="py-0.5 rounded border border-border/70 px-1 font-mono text-[9.5px] text-muted-foreground">
               docs
             </span>
           </Link>
@@ -80,7 +79,7 @@ function DocsSidebar() {
           <div className="space-y-3 py-2">
             {DOCS_PAGE_GROUPS.map((group) => (
               <SidebarGroup className="p-0" key={group.id}>
-                <SidebarGroupLabel className="h-5 px-2 font-mono text-[9.5px] text-muted-foreground/75 uppercase tracking-wider">
+                <SidebarGroupLabel className="h-5 px-2 font-mono text-[9.5px] tracking-wider text-muted-foreground/75 uppercase">
                   {group.label}
                 </SidebarGroupLabel>
                 <SidebarGroupContent>
@@ -96,7 +95,7 @@ function DocsSidebar() {
         </ScrollArea>
       </SidebarContent>
 
-      <SidebarFooter className="border-border/40 border-t p-1.5">
+      <SidebarFooter className="border-t border-border/40 p-1.5">
         <SidebarMenu className="gap-0.5">
           <SidebarMenuItem>
             <SidebarMenuButton
@@ -144,10 +143,10 @@ export function DocsLayout({ children }: { children: React.ReactNode }) {
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[480px] bg-[radial-gradient(ellipse_75%_45%_at_50%_-10%,hsl(var(--foreground)/0.04),transparent)]" />
 
         {/* Sticky Header matching Home Page styling */}
-        <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center justify-between gap-3 border-border/40 border-b bg-background/70 px-4 backdrop-blur-xl sm:px-6">
+        <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center justify-between gap-3 border-b border-border/40 bg-background/70 px-4 backdrop-blur-xl sm:px-6">
           <div className="flex items-center gap-3">
             <SidebarTrigger className="-ml-1 text-muted-foreground transition-colors hover:text-foreground" />
-            <div className="flex items-center gap-2 font-medium text-muted-foreground text-xs sm:text-sm">
+            <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground sm:text-sm">
               <Link
                 className="transition-colors hover:text-foreground"
                 href="/"

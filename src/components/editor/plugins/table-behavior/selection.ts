@@ -1,9 +1,11 @@
 import {
   $getTableCellNodeFromLexicalNode,
   $isTableSelection,
-  type TableSelection,
 } from "@lexical/table";
-import { $getSelection, $isRangeSelection, type LexicalEditor } from "lexical";
+import type { TableSelection } from "@lexical/table";
+import { $getSelection, $isRangeSelection } from "lexical";
+import type { LexicalEditor } from "lexical";
+
 import type { SelectionCounts, TableMenuContext } from "./types";
 
 export const DEFAULT_SELECTION_COUNTS: SelectionCounts = {
@@ -14,9 +16,7 @@ export const DEFAULT_SELECTION_COUNTS: SelectionCounts = {
 export const areSelectionCountsEqual = (
   left: SelectionCounts,
   right: SelectionCounts
-) => {
-  return left.columns === right.columns && left.rows === right.rows;
-};
+) => left.columns === right.columns && left.rows === right.rows;
 
 export const resolveSelectionCounts = (
   selection: ReturnType<typeof $getSelection>

@@ -6,11 +6,13 @@ import {
 import {
   CHECK_LIST,
   ELEMENT_TRANSFORMERS,
-  type ElementTransformer,
   MULTILINE_ELEMENT_TRANSFORMERS,
-  type MultilineElementTransformer,
   TEXT_FORMAT_TRANSFORMERS,
   TEXT_MATCH_TRANSFORMERS,
+} from "@lexical/markdown";
+import type {
+  ElementTransformer,
+  MultilineElementTransformer,
 } from "@lexical/markdown";
 import {
   $createTableCellNode,
@@ -25,18 +27,17 @@ import {
   $createParagraphNode,
   $createTextNode,
   $isParagraphNode,
-  type ElementNode,
 } from "lexical";
+import type { ElementNode } from "lexical";
 
-const TABLE_DIVIDER_LINE_PATTERN = /^\|(?:\s*:?-+:?\s*\|)+\s*$/;
-const TABLE_ROW_PATTERN = /^\|(.+)\|\s*$/;
+const TABLE_DIVIDER_LINE_PATTERN = /^\|(?:\s*:?-+:?\s*\|)+\s*$/u;
+const TABLE_ROW_PATTERN = /^\|(?<rowContent>.+)\|\s*$/u;
 
-const splitMarkdownTableCells = (line: string): string[] => {
-  return line
+const splitMarkdownTableCells = (line: string): string[] =>
+  line
     .slice(1, -1)
     .split("|")
     .map((cell) => cell.trim());
-};
 
 const createTableCell = (
   textContent: string,
@@ -63,9 +64,9 @@ export const TABLE_MARKDOWN_TRANSFORMER: MultilineElementTransformer = {
       return null;
     }
 
-    const rows = node.getChildren().filter((child): child is TableRowNode => {
-      return child instanceof TableRowNode;
-    });
+    const rows = node
+      .getChildren()
+      .filter((child): child is TableRowNode => child instanceof TableRowNode);
 
     if (rows.length === 0) {
       return null;
@@ -74,13 +75,13 @@ export const TABLE_MARKDOWN_TRANSFORMER: MultilineElementTransformer = {
     const markdownRows = rows.map((row) => {
       const cells = row
         .getChildren()
-        .filter((child): child is TableCellNode => {
-          return child instanceof TableCellNode;
-        });
+        .filter(
+          (child): child is TableCellNode => child instanceof TableCellNode
+        );
 
-      const cellContents = cells.map((cell) => {
-        return cell.getTextContent().replace(/\|/g, "\\|").trim();
-      });
+      const cellContents = cells.map((cell) =>
+        cell.getTextContent().replace(/\|/gu, "\\|").trim()
+      );
 
       return `| ${cellContents.join(" | ")} |`;
     });
@@ -156,14 +157,14 @@ export const TABLE_MARKDOWN_TRANSFORMER: MultilineElementTransformer = {
   },
   regExpEnd: {
     optional: true,
-    regExp: /^$/,
+    regExp: /^$/u,
   },
   regExpStart: TABLE_ROW_PATTERN,
   replace: () => false,
   type: "multiline-element",
 };
 
-const HORIZONTAL_RULE_REGEXP = /^---\s?$/;
+const HORIZONTAL_RULE_REGEXP = /^---\s?$/u;
 
 /**
  * Replaces a paragraph with a horizontal rule node. When `trailingParagraph`

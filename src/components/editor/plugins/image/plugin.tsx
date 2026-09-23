@@ -16,6 +16,7 @@ import {
   PASTE_COMMAND,
 } from "lexical";
 import { useEffect, useState } from "react";
+
 import { $createImageNode, $isImageNode } from "../../core/nodes/image/node";
 import type { InsertImagePayload } from "./commands";
 import { INSERT_IMAGE_COMMAND } from "./commands";
@@ -96,39 +97,41 @@ export function ImagePlugin() {
   // Incomplete payloads (no src) mean "open the pick-a-source dialog". The
   // slash menu and toolbars dispatch the bare command; the target block is
   // captured here so the dialog submit replaces it.
-  useEffect(() => {
-    return editor.registerCommand(
-      INSERT_IMAGE_COMMAND,
-      (payload) => {
-        if (payload.src?.trim()) {
-          return false;
-        }
+  useEffect(
+    () =>
+      editor.registerCommand(
+        INSERT_IMAGE_COMMAND,
+        (payload) => {
+          if (payload.src?.trim()) {
+            return false;
+          }
 
-        let targetNodeKey: string | null = payload.targetNodeKey ?? null;
+          let targetNodeKey: string | null = payload.targetNodeKey ?? null;
 
-        if (!targetNodeKey) {
-          editor.getEditorState().read(() => {
-            const selection = $getSelection();
-            if (!$isRangeSelection(selection)) {
-              return;
-            }
-            const node = selection.anchor.getNode();
-            if ($isTextNode(node)) {
-              targetNodeKey = node.getTopLevelElementOrThrow().getKey();
-            }
+          if (!targetNodeKey) {
+            editor.getEditorState().read(() => {
+              const selection = $getSelection();
+              if (!$isRangeSelection(selection)) {
+                return;
+              }
+              const node = selection.anchor.getNode();
+              if ($isTextNode(node)) {
+                targetNodeKey = node.getTopLevelElementOrThrow().getKey();
+              }
+            });
+          }
+
+          setDialogState({
+            ...EMPTY_DIALOG_STATE,
+            open: true,
+            pendingTargetKey: targetNodeKey,
           });
-        }
-
-        setDialogState({
-          ...EMPTY_DIALOG_STATE,
-          open: true,
-          pendingTargetKey: targetNodeKey,
-        });
-        return true;
-      },
-      COMMAND_PRIORITY_HIGH
-    );
-  }, [editor]);
+          return true;
+        },
+        COMMAND_PRIORITY_HIGH
+      ),
+    [editor]
+  );
 
   useEffect(() => {
     const insertImageFile = async (file: File) => {
@@ -150,48 +153,52 @@ export function ImagePlugin() {
           return false;
         }
 
-        insertImageFile(imageFile).catch(() => undefined);
+        insertImageFile(imageFile).catch(() => {});
         return true;
       },
       COMMAND_PRIORITY_HIGH
     );
   }, [editor]);
 
-  useEffect(() => {
-    return editor.registerCommand(
-      PASTE_COMMAND,
-      (event) => {
-        const [, files] = eventFiles(event);
-        const imageFile = getFirstImageFile(files);
-        if (!imageFile) {
-          return false;
-        }
+  useEffect(
+    () =>
+      editor.registerCommand(
+        PASTE_COMMAND,
+        (event) => {
+          const [, files] = eventFiles(event);
+          const imageFile = getFirstImageFile(files);
+          if (!imageFile) {
+            return false;
+          }
 
-        event.preventDefault();
-        editor.dispatchCommand(DRAG_DROP_PASTE, [imageFile]);
-        return true;
-      },
-      COMMAND_PRIORITY_HIGH
-    );
-  }, [editor]);
+          event.preventDefault();
+          editor.dispatchCommand(DRAG_DROP_PASTE, [imageFile]);
+          return true;
+        },
+        COMMAND_PRIORITY_HIGH
+      ),
+    [editor]
+  );
 
-  useEffect(() => {
-    return editor.registerCommand(
-      DROP_COMMAND,
-      (event) => {
-        const [, files] = eventFiles(event);
-        const imageFile = getFirstImageFile(files);
-        if (!imageFile) {
-          return false;
-        }
+  useEffect(
+    () =>
+      editor.registerCommand(
+        DROP_COMMAND,
+        (event) => {
+          const [, files] = eventFiles(event);
+          const imageFile = getFirstImageFile(files);
+          if (!imageFile) {
+            return false;
+          }
 
-        event.preventDefault();
-        editor.dispatchCommand(DRAG_DROP_PASTE, [imageFile]);
-        return true;
-      },
-      COMMAND_PRIORITY_HIGH
-    );
-  }, [editor]);
+          event.preventDefault();
+          editor.dispatchCommand(DRAG_DROP_PASTE, [imageFile]);
+          return true;
+        },
+        COMMAND_PRIORITY_HIGH
+      ),
+    [editor]
+  );
 
   const closeDialog = () => {
     setDialogState(EMPTY_DIALOG_STATE);

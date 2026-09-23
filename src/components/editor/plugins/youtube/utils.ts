@@ -1,9 +1,9 @@
 const YOUTUBE_URL_PATTERN =
-  /^.*(?:youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  /^.*(?:youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)(?<videoId>[^#&?]*).*/u;
 
 export const parseYouTubeUrl = (url: string): string | null => {
   const match = YOUTUBE_URL_PATTERN.exec(url.trim());
-  const videoId = match?.[1];
+  const videoId = match?.groups?.videoId;
 
   if (videoId?.length === 11) {
     return videoId;

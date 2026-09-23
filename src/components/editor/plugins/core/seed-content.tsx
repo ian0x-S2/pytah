@@ -2,6 +2,7 @@
 
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { useContext, useEffect } from "react";
+
 import {
   DEFAULT_EDITOR_MARKDOWN,
   EDITOR_SEED_UPDATE_TAG,

@@ -1,4 +1,5 @@
 import { MoonIcon, SunIcon } from "lucide-react";
+
 import { useTheme } from "@/components/theme-context";
 import { Button } from "@/components/ui/button";
 
@@ -6,11 +7,7 @@ export function ThemeToggle() {
   const { resolvedTheme, setTheme, theme } = useTheme();
 
   const cycleTheme = () => {
-    const order: Array<"light" | "dark" | "system"> = [
-      "light",
-      "dark",
-      "system",
-    ];
+    const order: ("light" | "dark" | "system")[] = ["light", "dark", "system"];
     const currentIndex = order.indexOf(theme);
     const next = order[(currentIndex + 1) % order.length];
     setTheme(next);

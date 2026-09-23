@@ -1,8 +1,10 @@
 import { strictEqual } from "node:assert/strict";
 import { describe, test } from "node:test";
+
 import { createHeadlessEditor } from "@lexical/headless";
 import type { LexicalEditor } from "lexical";
 import { $createParagraphNode, $createTextNode, $getRoot } from "lexical";
+
 import { createEditorConfig } from "./config";
 import { EDITOR_SEED_UPDATE_TAG } from "./constants";
 import {

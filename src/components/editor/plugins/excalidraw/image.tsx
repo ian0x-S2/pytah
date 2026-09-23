@@ -98,7 +98,7 @@ export function ExcalidrawImage({
       }
     };
 
-    renderScene().catch(() => undefined);
+    renderScene().catch(() => {});
 
     return () => {
       cancelled = true;

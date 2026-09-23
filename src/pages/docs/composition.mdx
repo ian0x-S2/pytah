@@ -14,9 +14,7 @@ import { extractExportedConst } from "@/components/docs/source-utils";
 
 ## Composition Model
 
-The default `Editor` stays opinionated, but the intended DX is no longer "copy
-the editor and edit it from inside". The intended path is to compose from
-public extension points.
+The default `Editor` stays opinionated, but the intended DX is no longer "copy the editor and edit it from inside". The intended path is to compose from public extension points.
 
 | Layer | Purpose | Typical knobs |
 | --- | --- | --- |
@@ -35,28 +33,21 @@ public extension points.
 
 ## Feature Flags
 
-Use `features` to control built-in behavior plugins without forking
-`ui/content.tsx`. Each flag is backed by an `EditorFeature` descriptor in
-`core/features.tsx`, so toggling it drives that feature's nodes, plugin,
-transformers, and slash commands together — never piecemeal.
+Use `features` to control built-in behavior plugins without forking `ui/content.tsx`. Each flag is backed by an `EditorFeature` descriptor in `core/features.tsx`, so toggling it drives that feature's nodes, plugin, transformers, and slash commands together — never piecemeal.
 
-Feature flags also trim dependent slash-menu entries, so disabling a built-in
-block capability keeps the visible command list in sync with the mounted plugin
-stack.
+Feature flags also trim dependent slash-menu entries, so disabling a built-in block capability keeps the visible command list in sync with the mounted plugin stack.
 
 <InterfaceSource name="EditorFeatureFlags" source={editorTypesSource} />
 
 ### Default Feature Stack
 
-These are the built-in, flag-resolved defaults. Each flag maps to an
-`EditorFeature` in `core/features.tsx`, which is the single source of truth for
-that capability's nodes, plugin, transformers, and slash commands.
+These are the built-in, flag-resolved defaults. Each flag maps to an `EditorFeature` in `core/features.tsx`, which is the single source of truth for that capability's nodes, plugin, transformers, and slash commands.
 
-<CodeBlock language="typescript">{extractExportedConst(compositionSource, "DEFAULT_EDITOR_FEATURES")}</CodeBlock>
+<CodeBlock language="typescript">
+  {extractExportedConst(compositionSource, "DEFAULT_EDITOR_FEATURES")}
+</CodeBlock>
 
-Content features (images, tables, drawings, ...) are not flags anymore — they
-ship as separate registry items (`editor-image`, `editor-tables`, ...) and are
-composed through `extraFeatures`. The remaining flags cover core behavior:
+Content features (images, tables, drawings, ...) are not flags anymore — they ship as separate registry items (`editor-image`, `editor-tables`, ...) and are composed through `extraFeatures`. The remaining flags cover core behavior:
 
 ```tsx
 <Editor
@@ -71,12 +62,7 @@ composed through `extraFeatures`. The remaining flags cover core behavior:
 
 ## Snapshot Outputs
 
-Every editor state change serializes the document into the `EditorSnapshot`
-delivered to `onChange`/`onSnapshotReady`. Consumers that only read one output
-(e.g. a notes app that only consumes `markdown`) can skip the others entirely
-through `features.snapshot` — a disabled output is never computed, which
-removes its per-keystroke serialization cost and surfaces as `""` on the
-snapshot.
+Every editor state change serializes the document into the `EditorSnapshot` delivered to `onChange`/`onSnapshotReady`. Consumers that only read one output (e.g. a notes app that only consumes `markdown`) can skip the others entirely through `features.snapshot` — a disabled output is never computed, which removes its per-keystroke serialization cost and surfaces as `""` on the snapshot.
 
 <InterfaceSource name="EditorSnapshotOptions" source={editorTypesSource} />
 
@@ -104,38 +90,30 @@ snapshot.
 
 ## Contributing a Feature
 
-Use `extraFeatures` to add a whole capability as a single descriptor. Each
-`ExtraEditorFeature` bundles its optional plugin, owned Lexical nodes, markdown
-transformers, and slash-command ids — the composition surface wires them
-together automatically, keeping the mounted stack in sync with the visible
-command list.
+Use `extraFeatures` to add a whole capability as a single descriptor. Each `ExtraEditorFeature` bundles its optional plugin, owned Lexical nodes, markdown transformers, and slash-command ids — the composition surface wires them together automatically, keeping the mounted stack in sync with the visible command list.
 
 ```tsx
 import { imageFeature } from "@/components/editor/plugins/image/feature";
 import { myCalloutFeature } from "./my-callout/feature";
 
-<Editor extraFeatures={[imageFeature, myCalloutFeature]} />
+<Editor extraFeatures={[imageFeature, myCalloutFeature]} />;
 ```
 
-Each descriptor bundles its optional plugin, owned Lexical nodes, markdown
-transformers, and `slashCommands` contributions (`{ command, run }` pairs).
-Feature descriptors shipped by the registry live beside their feature
-(`plugins/<feature>/feature.ts`).
+Each descriptor bundles its optional plugin, owned Lexical nodes, markdown transformers, and `slashCommands` contributions (`{ command, run }` pairs). Feature descriptors shipped by the registry live beside their feature (`plugins/<feature>/feature.ts`).
 
-This is the intended alternative to patching `ui/content.tsx` or the built-in
-`core/features.tsx` registry from outside.
+This is the intended alternative to patching `ui/content.tsx` or the built-in `core/features.tsx` registry from outside.
 
 ## Chrome
 
-Use `chrome` when you want to keep the default editor content and plugin stack,
-but remove opinionated product surfaces like the shell, header, footer, or
-output panes.
+Use `chrome` when you want to keep the default editor content and plugin stack, but remove opinionated product surfaces like the shell, header, footer, or output panes.
 
 <InterfaceSource name="EditorChromeOptions" source={editorTypesSource} />
 
 ### Default Chrome
 
-<CodeBlock language="typescript">{extractExportedConst(compositionSource, "DEFAULT_EDITOR_CHROME")}</CodeBlock>
+<CodeBlock language="typescript">
+  {extractExportedConst(compositionSource, "DEFAULT_EDITOR_CHROME")}
+</CodeBlock>
 
 ```tsx
 <Editor
@@ -150,9 +128,7 @@ output panes.
 
 ## Slots
 
-Use `slots` to replace visual surfaces instead of reaching into editor
-internals. Slot values can be static React nodes or render functions when the
-slot needs context.
+Use `slots` to replace visual surfaces instead of reaching into editor internals. Slot values can be static React nodes or render functions when the slot needs context.
 
 <InterfaceSource name="EditorChromeSlots" source={editorTypesSource} />
 
@@ -161,8 +137,12 @@ slot needs context.
   slots={{
     actionBar: ({ onReset, onLoadMarkdown }) => (
       <div className="flex gap-2 px-4 py-3">
-        <button onClick={onLoadMarkdown} type="button">Seed markdown</button>
-        <button onClick={onReset} type="button">Reset</button>
+        <button onClick={onLoadMarkdown} type="button">
+          Seed markdown
+        </button>
+        <button onClick={onReset} type="button">
+          Reset
+        </button>
       </div>
     ),
     header: <MyEditorHeader />,
@@ -173,8 +153,7 @@ slot needs context.
 
 ## Plugin Slots
 
-Use `pluginSlots` when you want to add behavior without editing the built-in
-orchestration file.
+Use `pluginSlots` when you want to add behavior without editing the built-in orchestration file.
 
 <InterfaceSource name="EditorPluginSlots" source={editorTypesSource} />
 
@@ -187,19 +166,17 @@ orchestration file.
 />
 ```
 
-Use `beforeDefault` and `afterDefault` for plugins that should run in both
-editable and read-only modes. Use `beforeEditable` and `afterEditable` for
-edit-only plugin mounts.
+Use `beforeDefault` and `afterDefault` for plugins that should run in both editable and read-only modes. Use `beforeEditable` and `afterEditable` for edit-only plugin mounts.
 
 ## Guidelines
 
 Reach for the smallest public lever that solves the need:
 
-| Need | Preferred tool |
-| --- | --- |
-| Disable built-in behavior | `features` |
+| Need                              | Preferred tool  |
+| --------------------------------- | --------------- |
+| Disable built-in behavior         | `features`      |
 | Contribute a whole custom feature | `extraFeatures` |
-| Hide a default UI surface | `chrome` |
-| Replace a visual surface | `slots` |
-| Add custom behavior | `pluginSlots` |
-| Add custom Lexical node support | `extraNodes` |
+| Hide a default UI surface         | `chrome`        |
+| Replace a visual surface          | `slots`         |
+| Add custom behavior               | `pluginSlots`   |
+| Add custom Lexical node support   | `extraNodes`    |

@@ -1,4 +1,5 @@
 import type { ChangeEvent } from "react";
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -64,7 +65,7 @@ export function InsertImageDialog({
         >
           <div className="grid gap-2">
             <label
-              className="font-medium text-sm"
+              className="text-sm font-medium"
               htmlFor={`${idPrefix}-image-url`}
             >
               Image URL
@@ -85,7 +86,7 @@ export function InsertImageDialog({
 
           <div className="grid gap-2">
             <label
-              className="font-medium text-sm"
+              className="text-sm font-medium"
               htmlFor={`${idPrefix}-image-file`}
             >
               Local file
@@ -97,7 +98,7 @@ export function InsertImageDialog({
               type="file"
             />
             {imageFileName ? (
-              <p className="text-muted-foreground text-xs">
+              <p className="text-xs text-muted-foreground">
                 Selected: {imageFileName}
               </p>
             ) : null}
@@ -105,7 +106,7 @@ export function InsertImageDialog({
 
           <div className="grid gap-2">
             <label
-              className="font-medium text-sm"
+              className="text-sm font-medium"
               htmlFor={`${idPrefix}-image-alt`}
             >
               Alt text

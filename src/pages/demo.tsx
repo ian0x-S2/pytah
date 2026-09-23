@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
+
 import { ThemeToggle } from "@/components/docs/theme-toggle";
 import type {
   EditorSnapshot,
@@ -20,6 +21,7 @@ import { EXPORT_MARKDOWN_COMMAND } from "@/components/editor/plugins/export-mark
 import { EditorWithToc } from "@/components/editor/plugins/toc/editor-with-toc";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+
 import { demoEditorFeatures } from "./demo-features";
 
 const TOOLBAR_CYCLE: EditorToolbar[] = [false, "basic", "full"];
@@ -59,7 +61,7 @@ export function DemoPage() {
   };
 
   const handleExportMarkdown = () => {
-    editorRef.current?.dispatchCommand(EXPORT_MARKDOWN_COMMAND, undefined);
+    editorRef.current?.dispatchCommand(EXPORT_MARKDOWN_COMMAND);
   };
 
   return (
@@ -67,20 +69,20 @@ export function DemoPage() {
       {/* Minimal navigation header */}
       <header
         className={cn(
-          "sticky top-0 z-50 border-border border-b bg-background/80 backdrop-blur-sm transition-all",
+          "sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-sm transition-all",
           zen && "pointer-events-none opacity-0"
         )}
       >
         <div className="mx-auto flex max-w-225 items-center justify-between px-4 py-2">
           <div className="flex items-center gap-3">
             <Link
-              className="font-semibold text-foreground text-sm tracking-tight"
+              className="text-sm font-semibold tracking-tight text-foreground"
               href="/"
             >
               Pytah
             </Link>
             <span className="text-muted-foreground/50">/</span>
-            <span className="text-muted-foreground text-sm">Demo</span>
+            <span className="text-sm text-muted-foreground">Demo</span>
           </div>
           <div className="flex items-center gap-1">
             <ThemeToggle />
@@ -157,11 +159,11 @@ export function DemoPage() {
           {/* Notion-style page title */}
           {!zen && (
             <div className="px-8 pt-16 pb-4">
-              <div className="mb-4 select-none text-5xl leading-none">📄</div>
-              <h1 className="font-bold text-[40px] text-foreground leading-tight tracking-tight">
+              <div className="mb-4 text-5xl leading-none select-none">📄</div>
+              <h1 className="text-[40px] leading-tight font-bold tracking-tight text-foreground">
                 Note Editor
               </h1>
-              <p className="mt-3 text-muted-foreground text-sm leading-relaxed">
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                 Try slash commands, format text, add tables and images.
                 Everything exports to clean HTML and Markdown.
               </p>
@@ -186,7 +188,7 @@ export function DemoPage() {
 
       {/* Minimal footer */}
       {!zen && (
-        <footer className="py-6 text-center text-muted-foreground/50 text-xs">
+        <footer className="py-6 text-center text-xs text-muted-foreground/50">
           Built with Lexical, shadcn, Base UI and Tailwind CSS v4
         </footer>
       )}

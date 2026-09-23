@@ -8,7 +8,9 @@ import type {
 } from "@excalidraw/excalidraw/types";
 import { XIcon } from "lucide-react";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
+
 import { Button } from "@/components/ui/button";
+
 import type {
   ExcalidrawInitialElements,
   ExcalidrawScene,
@@ -79,9 +81,7 @@ export function ExcalidrawEditorDialog({
     dialogRef.current?.focus();
   }, []);
 
-  const hasUnsavedContent = () => {
-    return hasExcalidrawContent(latestSceneRef.current);
-  };
+  const hasUnsavedContent = () => hasExcalidrawContent(latestSceneRef.current);
 
   const requestClose = () => {
     if (hasUnsavedContent()) {
@@ -123,7 +123,7 @@ export function ExcalidrawEditorDialog({
       tabIndex={-1}
     >
       <header className="flex items-center justify-between border-b px-4 py-2">
-        <p className="font-medium text-sm">Excalidraw drawing</p>
+        <p className="text-sm font-medium">Excalidraw drawing</p>
         <div className="flex items-center gap-2">
           <Button onClick={requestClose} size="sm" variant="ghost">
             Discard
@@ -145,7 +145,7 @@ export function ExcalidrawEditorDialog({
       <div className="relative min-h-0 flex-1">
         <Suspense
           fallback={
-            <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
+            <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
               Loading drawing canvas…
             </div>
           }
@@ -171,7 +171,7 @@ export function ExcalidrawEditorDialog({
               role="alertdialog"
             >
               <p className="font-medium">Discard changes?</p>
-              <p className="mt-1 text-muted-foreground text-sm">
+              <p className="mt-1 text-sm text-muted-foreground">
                 Your drawing has unsaved edits that will be lost.
               </p>
               <div className="mt-4 flex justify-end gap-2">

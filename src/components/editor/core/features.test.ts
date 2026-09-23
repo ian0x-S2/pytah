@@ -1,6 +1,8 @@
 import { deepStrictEqual, strictEqual } from "node:assert/strict";
 import { describe, test } from "node:test";
+
 import type { Transformer } from "@lexical/markdown";
+
 import { collapsibleFeature } from "../plugins/collapsible/feature";
 import { seedContentFeature } from "../plugins/core/seed-content-feature";
 import { draggableBlocksFeature } from "../plugins/draggable-block/feature";
@@ -89,21 +91,21 @@ describe("editor feature registry", () => {
 
   test("core slash commands are always resolved; extras append", () => {
     const baseCommands = computeResolvedSlashCommands();
-    const baseIds = baseCommands.map((entry) => entry.command.id);
+    const baseIds = new Set(baseCommands.map((entry) => entry.command.id));
 
-    strictEqual(baseIds.includes("table"), true);
-    strictEqual(baseIds.includes("hr"), true);
-    strictEqual(baseIds.includes("image"), false);
-    strictEqual(baseIds.includes("youtube"), false);
+    strictEqual(baseIds.has("table"), true);
+    strictEqual(baseIds.has("hr"), true);
+    strictEqual(baseIds.has("image"), false);
+    strictEqual(baseIds.has("youtube"), false);
 
     const withExtras = computeResolvedSlashCommands([
       imageFeature,
       youtubeFeature,
     ]);
-    const withExtraIds = withExtras.map((entry) => entry.command.id);
+    const withExtraIds = new Set(withExtras.map((entry) => entry.command.id));
 
-    strictEqual(withExtraIds.includes("image"), true);
-    strictEqual(withExtraIds.includes("youtube"), true);
+    strictEqual(withExtraIds.has("image"), true);
+    strictEqual(withExtraIds.has("youtube"), true);
   });
 
   test("feature descriptors have a valid shape", () => {

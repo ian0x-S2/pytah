@@ -13,6 +13,7 @@ import {
   COMMAND_PRIORITY_HIGH,
 } from "lexical";
 import { useEffect, useState } from "react";
+
 import { $createYouTubeNode, YouTubeNode } from "../../core/nodes/youtube/node";
 import { INSERT_YOUTUBE_COMMAND } from "./commands";
 import { InsertYouTubeDialog } from "./insert-dialog";
@@ -70,39 +71,41 @@ export function YouTubePlugin() {
   }, [editor]);
 
   // Incomplete payloads (no video id) mean "open the embed dialog".
-  useEffect(() => {
-    return editor.registerCommand(
-      INSERT_YOUTUBE_COMMAND,
-      (payload) => {
-        if (payload.videoId?.trim()) {
-          return false;
-        }
+  useEffect(
+    () =>
+      editor.registerCommand(
+        INSERT_YOUTUBE_COMMAND,
+        (payload) => {
+          if (payload.videoId?.trim()) {
+            return false;
+          }
 
-        let targetNodeKey: string | null = payload.targetNodeKey ?? null;
+          let targetNodeKey: string | null = payload.targetNodeKey ?? null;
 
-        if (!targetNodeKey) {
-          editor.getEditorState().read(() => {
-            const selection = $getSelection();
-            if (!$isRangeSelection(selection)) {
-              return;
-            }
-            const node = selection.anchor.getNode();
-            if ($isTextNode(node)) {
-              targetNodeKey = node.getTopLevelElementOrThrow().getKey();
-            }
+          if (!targetNodeKey) {
+            editor.getEditorState().read(() => {
+              const selection = $getSelection();
+              if (!$isRangeSelection(selection)) {
+                return;
+              }
+              const node = selection.anchor.getNode();
+              if ($isTextNode(node)) {
+                targetNodeKey = node.getTopLevelElementOrThrow().getKey();
+              }
+            });
+          }
+
+          setDialogState({
+            ...EMPTY_DIALOG_STATE,
+            open: true,
+            pendingTargetKey: targetNodeKey,
           });
-        }
-
-        setDialogState({
-          ...EMPTY_DIALOG_STATE,
-          open: true,
-          pendingTargetKey: targetNodeKey,
-        });
-        return true;
-      },
-      COMMAND_PRIORITY_HIGH
-    );
-  }, [editor]);
+          return true;
+        },
+        COMMAND_PRIORITY_HIGH
+      ),
+    [editor]
+  );
 
   const closeDialog = () => {
     setDialogState(EMPTY_DIALOG_STATE);

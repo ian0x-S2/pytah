@@ -2,6 +2,7 @@
 
 import type { LucideIcon } from "lucide-react";
 import { useState } from "react";
+
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -14,7 +15,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { COLOR_PALETTE, type ColorSwatch } from "../core/colors";
+
+import { COLOR_PALETTE } from "../core/colors";
+import type { ColorSwatch } from "../core/colors";
 
 interface ColorSwatchesProps {
   /** Currently active color value (hex). Empty string means no color. */
@@ -117,7 +120,7 @@ export function ColorSwatches({
               aria-label={swatch.label}
               className={cn(
                 "size-6 rounded-md border border-border/40 transition-transform hover:scale-110",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+                "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:outline-none",
                 activeColor === swatch.value &&
                   "ring-2 ring-primary ring-offset-1"
               )}
@@ -130,9 +133,9 @@ export function ColorSwatches({
           ))}
         </div>
 
-        <div className="mt-1.5 border-border border-t pt-1.5">
+        <div className="mt-1.5 border-t border-border pt-1.5">
           <button
-            className="w-full rounded-md px-2 py-1 text-center text-muted-foreground text-xs transition-colors hover:bg-muted hover:text-foreground"
+            className="w-full rounded-md px-2 py-1 text-center text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             onClick={() => handleSelect("")}
             type="button"
           >

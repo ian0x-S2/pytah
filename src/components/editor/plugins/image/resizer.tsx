@@ -3,13 +3,13 @@
 import { calculateZoomLevel } from "@lexical/utils";
 import type { LexicalEditor } from "lexical";
 import { useLayoutEffect, useRef } from "react";
-import {
-  type CornerDirection,
-  computeNextSize,
-  type EdgeDirection,
-  getCursor,
-  type ResizeDirection,
-  type ResizeState,
+
+import { computeNextSize, getCursor } from "./resize-geometry";
+import type {
+  CornerDirection,
+  EdgeDirection,
+  ResizeDirection,
+  ResizeState,
 } from "./resize-geometry";
 
 interface ImageResizerProps {
@@ -39,9 +39,9 @@ const EDGE_DIRECTIONS: EdgeDirection[] = ["n", "e", "s", "w"];
 
 const CORNER_CLASSES: Record<CornerDirection, string> = {
   ne: "right-0 top-0 translate-x-1/2 -translate-y-1/2 cursor-nesw-resize",
+  nw: "left-0 top-0 -translate-x-1/2 -translate-y-1/2 cursor-nwse-resize",
   se: "bottom-0 right-0 translate-x-1/2 translate-y-1/2 cursor-nwse-resize",
   sw: "bottom-0 left-0 -translate-x-1/2 translate-y-1/2 cursor-nesw-resize",
-  nw: "left-0 top-0 -translate-x-1/2 -translate-y-1/2 cursor-nwse-resize",
 };
 
 const EDGE_CLASSES: Record<EdgeDirection, string> = {
@@ -130,7 +130,7 @@ export function ImageResizer({
 
     const observer = new ResizeObserver(syncBounds);
     observer.observe(image);
-    const offsetParent = image.offsetParent;
+    const { offsetParent } = image;
     if (offsetParent) {
       observer.observe(offsetParent);
     }

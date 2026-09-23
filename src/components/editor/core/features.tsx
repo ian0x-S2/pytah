@@ -3,6 +3,7 @@
 import type { Transformer } from "@lexical/markdown";
 import type { InitialConfigType } from "@lexical/react/LexicalComposer";
 import type { ComponentType } from "react";
+
 import { FocusOnMountPlugin } from "../plugins/core/focus-on-mount";
 import { MarkdownExportPlugin } from "../plugins/export-markdown/plugin";
 import { FloatingToolbarPlugin } from "../plugins/floating-toolbar/plugin";
@@ -142,6 +143,4 @@ export const computeResolvedSlashCommands = (
  */
 export const renderSlashCommandPlugin = (
   commands: readonly FeatureSlashCommand[]
-) => {
-  return <SlashCommandPlugin commands={commands} />;
-};
+) => <SlashCommandPlugin commands={commands} />;

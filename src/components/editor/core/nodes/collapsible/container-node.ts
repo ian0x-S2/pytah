@@ -3,20 +3,23 @@ import {
   $getSiblingCaret,
   $isElementNode,
   $rewindSiblingCaret,
-  type DOMConversionMap,
-  type DOMConversionOutput,
-  type DOMExportOutput,
-  type EditorConfig,
   ElementNode,
   isHTMLElement,
-  type LexicalEditor,
-  type LexicalNode,
-  type LexicalUpdateJSON,
-  type NodeKey,
-  type RangeSelection,
-  type SerializedElementNode,
-  type Spread,
 } from "lexical";
+import type {
+  DOMConversionMap,
+  DOMConversionOutput,
+  DOMExportOutput,
+  EditorConfig,
+  LexicalEditor,
+  LexicalNode,
+  LexicalUpdateJSON,
+  NodeKey,
+  RangeSelection,
+  SerializedElementNode,
+  Spread,
+} from "lexical";
+
 import { setDomHiddenUntilFound } from "./dom-utils";
 
 export type SerializedCollapsibleContainerNode = Spread<
@@ -44,11 +47,9 @@ const convertDetailsElement = (domNode: HTMLElement): DOMConversionOutput => {
 
 const convertCollapsibleContainerElement = (
   domNode: HTMLElement
-): DOMConversionOutput => {
-  return {
-    node: $createCollapsibleContainerNode(domNode.dataset.open !== "false"),
-  };
-};
+): DOMConversionOutput => ({
+  node: $createCollapsibleContainerNode(domNode.dataset.open !== "false"),
+});
 
 export class CollapsibleContainerNode extends ElementNode {
   __open: boolean;
@@ -73,7 +74,7 @@ export class CollapsibleContainerNode extends ElementNode {
         priority: 1,
       }),
       div: (domNode: HTMLElement) => {
-        if (!domNode.hasAttribute("data-lexical-collapsible-container")) {
+        if (!Object.hasOwn(domNode.dataset, "lexicalCollapsibleContainer")) {
           return null;
         }
 
@@ -109,7 +110,7 @@ export class CollapsibleContainerNode extends ElementNode {
       dom = detailsDom;
     }
 
-    dom.setAttribute("data-lexical-collapsible-container", "true");
+    dom.dataset.lexicalCollapsibleContainer = "true";
     applyContainerOpenState(dom, this.__open);
 
     if (this.__open) {
@@ -156,7 +157,7 @@ export class CollapsibleContainerNode extends ElementNode {
 
   exportDOM(): DOMExportOutput {
     const element = document.createElement("details");
-    element.setAttribute("data-lexical-collapsible-container", "true");
+    element.dataset.lexicalCollapsibleContainer = "true";
     element.dataset.open = this.__open ? "true" : "false";
 
     if (this.__open) {

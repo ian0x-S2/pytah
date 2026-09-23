@@ -1,13 +1,9 @@
 import { $isCodeNode } from "@lexical/code";
 import { $isAutoLinkNode, $isLinkNode } from "@lexical/link";
 import { $getSelectionStyleValueForProperty } from "@lexical/selection";
-import {
-  $getSelection,
-  $isLineBreakNode,
-  $isRangeSelection,
-  type LexicalNode,
-  type RangeSelection,
-} from "lexical";
+import { $getSelection, $isLineBreakNode, $isRangeSelection } from "lexical";
+import type { LexicalNode, RangeSelection } from "lexical";
+
 import { DEFAULT_FORMAT_STATE, EMPTY_TOOLBAR_POSITION } from "./constants";
 import type {
   FloatingToolbarFormatState,
@@ -18,28 +14,23 @@ import type {
 export const areFloatingToolbarFormatsEqual = (
   left: FloatingToolbarFormatState,
   right: FloatingToolbarFormatState
-) => {
-  return (
-    left.bgColor === right.bgColor &&
-    left.isBold === right.isBold &&
-    left.isCode === right.isCode &&
-    left.isHighlight === right.isHighlight &&
-    left.isItalic === right.isItalic &&
-    left.isLink === right.isLink &&
-    left.isStrikethrough === right.isStrikethrough &&
-    left.isSubscript === right.isSubscript &&
-    left.isSuperscript === right.isSuperscript &&
-    left.isUnderline === right.isUnderline &&
-    left.textColor === right.textColor
-  );
-};
+) =>
+  left.bgColor === right.bgColor &&
+  left.isBold === right.isBold &&
+  left.isCode === right.isCode &&
+  left.isHighlight === right.isHighlight &&
+  left.isItalic === right.isItalic &&
+  left.isLink === right.isLink &&
+  left.isStrikethrough === right.isStrikethrough &&
+  left.isSubscript === right.isSubscript &&
+  left.isSuperscript === right.isSuperscript &&
+  left.isUnderline === right.isUnderline &&
+  left.textColor === right.textColor;
 
 export const areFloatingToolbarPositionsEqual = (
   left: FloatingToolbarPosition,
   right: FloatingToolbarPosition
-) => {
-  return left.left === right.left && left.top === right.top;
-};
+) => left.left === right.left && left.top === right.top;
 
 export const getFloatingToolbarSelectedNode = (selection: RangeSelection) => {
   const anchorNode = selection.anchor.getNode();
@@ -116,6 +107,11 @@ const getFormatState = (
   const linkNode = getSelectedLinkNode(node);
 
   return {
+    bgColor: $getSelectionStyleValueForProperty(
+      selection,
+      "background-color",
+      ""
+    ),
     isBold: selection.hasFormat("bold"),
     isCode: selection.hasFormat("code"),
     isHighlight: selection.hasFormat("highlight"),
@@ -125,11 +121,6 @@ const getFormatState = (
     isSubscript: selection.hasFormat("subscript"),
     isSuperscript: selection.hasFormat("superscript"),
     isUnderline: selection.hasFormat("underline"),
-    bgColor: $getSelectionStyleValueForProperty(
-      selection,
-      "background-color",
-      ""
-    ),
     textColor: $getSelectionStyleValueForProperty(selection, "color", ""),
   };
 };

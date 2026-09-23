@@ -50,7 +50,7 @@ export class LayoutContainerNode extends ElementNode {
   static importDOM(): DOMConversionMap | null {
     return {
       div: (domNode: HTMLElement) => {
-        if (!domNode.hasAttribute("data-lexical-layout-container")) {
+        if (!Object.hasOwn(domNode.dataset, "lexicalLayoutContainer")) {
           return null;
         }
 
@@ -70,7 +70,7 @@ export class LayoutContainerNode extends ElementNode {
 
   createDOM(config: EditorConfig): HTMLElement {
     const dom = document.createElement("div");
-    dom.setAttribute("data-lexical-layout-container", "true");
+    dom.dataset.lexicalLayoutContainer = "true";
     dom.style.gridTemplateColumns = this.__templateColumns;
 
     if (typeof config.theme.layoutContainer === "string") {
@@ -90,7 +90,7 @@ export class LayoutContainerNode extends ElementNode {
 
   exportDOM(): DOMExportOutput {
     const element = document.createElement("div");
-    element.setAttribute("data-lexical-layout-container", "true");
+    element.dataset.lexicalLayoutContainer = "true";
     element.style.gridTemplateColumns = this.__templateColumns;
 
     return { element };

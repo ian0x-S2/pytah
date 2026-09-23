@@ -3,11 +3,15 @@
 import { $generateNodesFromDOM } from "@lexical/html";
 import { $convertFromMarkdownString } from "@lexical/markdown";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
+
 import "./editor.css";
-import { $createParagraphNode, $getRoot, type LexicalEditor } from "lexical";
+import { $createParagraphNode, $getRoot } from "lexical";
+import type { LexicalEditor } from "lexical";
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
+
 import { cn } from "@/lib/utils";
+
 import {
   copyEditorOutput,
   loadEditorHtmlExample,
@@ -15,12 +19,12 @@ import {
   resetEditorContent,
 } from "./core/actions";
 import {
-  type ResolvedEditorChromeOptions,
   renderEditorSlot,
   resolveEditorChrome,
   resolveEditorFeatures,
   shouldRenderEditorShell,
 } from "./core/composition";
+import type { ResolvedEditorChromeOptions } from "./core/composition";
 import { createEditorConfig } from "./core/config";
 import { DEFAULT_PLACEHOLDER } from "./core/constants";
 import {
@@ -198,10 +202,10 @@ export function Editor({
 
   const initialConfig = createEditorConfig({
     editable,
-    namespace,
-    featureNodes,
-    extraNodes,
     editorState: seedEditorState,
+    extraNodes,
+    featureNodes,
+    namespace,
   });
 
   const snapshot: EditorSnapshot = {
@@ -276,7 +280,7 @@ export function Editor({
       return;
     }
 
-    editorInstance.dispatchCommand(EXPORT_MARKDOWN_COMMAND, undefined);
+    editorInstance.dispatchCommand(EXPORT_MARKDOWN_COMMAND);
   };
 
   const handleReset = () => {

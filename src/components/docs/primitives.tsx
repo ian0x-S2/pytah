@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 import type { HighlighterGeneric, ThemedToken, TokensResult } from "shiki";
 import { getSingletonHighlighter, getTokenStyleObject } from "shiki";
+
 import { useTheme } from "@/components/theme-context";
 import { cn } from "@/lib/utils";
 
@@ -61,6 +62,12 @@ function getDocsHighlighter() {
   return docsHighlighterPromise;
 }
 
+const getCodeTokenCacheKey = (
+  code: string,
+  language: CodeBlockSyntaxLanguage | null,
+  theme: CodeBlockTheme
+) => (language ? `${theme}:${language}:${code}` : null);
+
 function tokenizeSnippetAllThemes(
   highlighter: HighlighterGeneric<CodeBlockSyntaxLanguage, CodeBlockTheme>,
   code: string,
@@ -102,14 +109,6 @@ const CODE_LANGUAGE_ALIASES = {
 
 type CodeLanguage =
   (typeof CODE_LANGUAGE_ALIASES)[keyof typeof CODE_LANGUAGE_ALIASES];
-
-const getCodeTokenCacheKey = (
-  code: string,
-  language: CodeBlockSyntaxLanguage | null,
-  theme: CodeBlockTheme
-) => {
-  return language ? `${theme}:${language}:${code}` : null;
-};
 
 function useCodeTokens(
   code: string,
@@ -185,7 +184,7 @@ function useCodeTokens(
   return EMPTY_CODE_TOKENS_STATE;
 }
 
-const CSS_KEBAB_CASE_PROPERTY_PATTERN = /-([a-z])/g;
+const CSS_KEBAB_CASE_PROPERTY_PATTERN = /-(?<letter>[a-z])/gu;
 
 function tokenStyleToReactStyle(token: ThemedToken): CSSProperties {
   const styleObject = getTokenStyleObject(token);
@@ -194,7 +193,7 @@ function tokenStyleToReactStyle(token: ThemedToken): CSSProperties {
     Object.entries(styleObject).map(([property, value]) => [
       property.replace(
         CSS_KEBAB_CASE_PROPERTY_PATTERN,
-        (_match, character: string) => character.toUpperCase()
+        (_match, letter: string) => letter.toUpperCase()
       ),
       value,
     ])
@@ -266,17 +265,17 @@ export function PageHeader({
   return (
     <div className={cn("mb-9 space-y-2.5", className)}>
       {badge ? (
-        <div className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-transparent px-2.5 py-0.5 text-muted-foreground text-xs shadow-xs transition-colors hover:border-foreground/20 hover:text-foreground">
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-transparent px-2.5 py-0.5 text-xs text-muted-foreground shadow-xs transition-colors hover:border-foreground/20 hover:text-foreground">
           <span className="size-1.5 rounded-full bg-foreground/80" />
-          <span className="font-mono text-[9.5px] uppercase tracking-wider">
+          <span className="font-mono text-[9.5px] tracking-wider uppercase">
             {badge}
           </span>
         </div>
       ) : null}
-      <h1 className="font-semibold text-2xl text-foreground leading-tight tracking-tight sm:text-3xl">
+      <h1 className="text-2xl leading-tight font-semibold tracking-tight text-foreground sm:text-3xl">
         {title}
       </h1>
-      <p className="max-w-2xl text-balance text-muted-foreground text-xs leading-relaxed sm:text-[13.5px]">
+      <p className="max-w-2xl text-xs leading-relaxed text-balance text-muted-foreground sm:text-[13.5px]">
         {description}
       </p>
       {children}
@@ -293,7 +292,7 @@ export function SectionHeading({
 }) {
   return (
     <h2
-      className="mt-8 mb-3 font-semibold text-foreground text-lg tracking-tight first:mt-0 sm:mt-10 sm:text-xl"
+      className="mt-8 mb-3 text-lg font-semibold tracking-tight text-foreground first:mt-0 sm:mt-10 sm:text-xl"
       id={id}
     >
       {children}
@@ -310,7 +309,7 @@ export function SubHeading({
 }) {
   return (
     <h3
-      className="mt-6 mb-2 font-semibold text-[14px] text-foreground tracking-tight sm:text-[15px]"
+      className="mt-6 mb-2 text-[14px] font-semibold tracking-tight text-foreground sm:text-[15px]"
       id={id}
     >
       {children}
@@ -320,7 +319,7 @@ export function SubHeading({
 
 export function Paragraph({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mb-3.5 text-[13px] text-foreground/80 leading-relaxed sm:text-[13.5px] [&_code]:rounded [&_code]:border [&_code]:border-border/60 [&_code]:bg-muted/40 [&_code]:px-1.5 [&_code]:py-0.2 [&_code]:font-mono [&_code]:text-[0.85em] [&_code]:text-foreground [&_strong]:font-semibold [&_strong]:text-foreground">
+    <p className="[&_code]:py-0.5 mb-3.5 text-[13px] leading-relaxed text-foreground/80 sm:text-[13.5px] [&_code]:rounded [&_code]:border [&_code]:border-border/60 [&_code]:bg-muted/40 [&_code]:px-1.5 [&_code]:font-mono [&_code]:text-[0.85em] [&_code]:text-foreground [&_strong]:font-semibold [&_strong]:text-foreground">
       {children}
     </p>
   );
@@ -354,7 +353,7 @@ export function CodeBlock({
   return (
     <div className="group relative my-4 overflow-hidden rounded-xl border border-border/50 bg-muted/15 shadow-xs transition-colors hover:border-border/80">
       {resolvedLabel ? (
-        <div className="flex items-center justify-between border-border/40 border-b bg-muted/30 px-3.5 py-2">
+        <div className="flex items-center justify-between border-b border-border/40 bg-muted/30 px-3.5 py-2">
           <span className="truncate font-mono text-[10.5px] text-muted-foreground">
             {resolvedLabel}
           </span>
@@ -421,7 +420,7 @@ export function Table({
     <div className="my-4 overflow-x-auto rounded-xl border border-border/50 bg-transparent shadow-xs">
       <table className="w-full text-left text-[12px] sm:text-[13px]">
         <thead>
-          <tr className="border-border/50 border-b bg-muted/25 font-mono text-[10px] text-muted-foreground uppercase tracking-wider">
+          <tr className="border-b border-border/50 bg-muted/25 font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
             {headers.map((header) => (
               <th className="px-3.5 py-2.5 font-medium sm:px-4" key={header}>
                 {header}
@@ -441,7 +440,7 @@ export function TableRow({ children }: { children: React.ReactNode }) {
 
 export function TableCell({ children }: { children: React.ReactNode }) {
   return (
-    <td className="px-3.5 py-2.5 text-foreground/80 leading-relaxed sm:px-4 sm:py-3">
+    <td className="px-3.5 py-2.5 leading-relaxed text-foreground/80 sm:px-4 sm:py-3">
       {children}
     </td>
   );
@@ -480,7 +479,7 @@ export function Callout({
           <span className="size-1 rounded-full bg-foreground/60" />
           <p
             className={cn(
-              "font-semibold text-xs tracking-tight",
+              "text-xs font-semibold tracking-tight",
               tagStyles[variant]
             )}
           >
@@ -488,7 +487,7 @@ export function Callout({
           </p>
         </div>
       ) : null}
-      <div className="text-foreground/80 text-xs leading-relaxed sm:text-[12.5px]">
+      <div className="text-xs leading-relaxed text-foreground/80 sm:text-[12.5px]">
         {children}
       </div>
     </div>

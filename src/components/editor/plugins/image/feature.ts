@@ -1,4 +1,5 @@
 import { ImageIcon } from "lucide-react";
+
 import { ImageNode } from "../../core/nodes/image/node";
 import { IMAGE_MARKDOWN_TRANSFORMER } from "../../core/nodes/image/transformer";
 import type { ExtraEditorFeature } from "../../core/types";

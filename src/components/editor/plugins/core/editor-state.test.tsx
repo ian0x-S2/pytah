@@ -1,8 +1,10 @@
 import { deepStrictEqual, strictEqual } from "node:assert/strict";
 import { after, describe, test } from "node:test";
+
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
 import type { LexicalEditor } from "lexical";
 import type { ReactNode } from "react";
+
 import type { ResolvedEditorSnapshotOptions } from "../../core/composition";
 
 // DOM globals must exist before React and Lexical evaluate their
@@ -14,9 +16,8 @@ GlobalRegistrator.register();
 
 const { act, createElement, useEffect } = await import("react");
 const { createRoot } = await import("react-dom/client");
-const { useLexicalComposerContext } = await import(
-  "@lexical/react/LexicalComposerContext"
-);
+const { useLexicalComposerContext } =
+  await import("@lexical/react/LexicalComposerContext");
 const { LexicalComposer } = await import("@lexical/react/LexicalComposer");
 const { HISTORY_MERGE_TAG } = await import("lexical");
 const {
@@ -26,17 +27,15 @@ const {
   $getSelection,
   $isRangeSelection,
 } = await import("lexical");
-const { DEFAULT_EDITOR_SNAPSHOT_OPTIONS } = await import(
-  "../../core/composition"
-);
+const { DEFAULT_EDITOR_SNAPSHOT_OPTIONS } =
+  await import("../../core/composition");
 const { EDITOR_SEED_UPDATE_TAG } = await import("../../core/constants");
 const { createEditorConfig } = await import("../../core/config");
 const { computeEditorTransformers } = await import("../../core/features");
 const { $convertFromMarkdownString } = await import("@lexical/markdown");
 const { readEditorSnapshot } = await import("../../core/utils");
-const { EditorStatePlugin, shouldEmitSnapshotUpdate } = await import(
-  "./editor-state"
-);
+const { EditorStatePlugin, shouldEmitSnapshotUpdate } =
+  await import("./editor-state");
 
 const INITIAL_CONFIG = createEditorConfig({
   editable: true,
@@ -78,17 +77,19 @@ const SeedUpdateProbe = () => {
   const [editor] = useLexicalComposerContext();
   editorRef = editor;
 
-  useEffect(() => {
-    return editor.registerUpdateListener(
-      ({ editorState, dirtyElements, dirtyLeaves }) => {
-        if (dirtyElements.size === 0 && dirtyLeaves.size === 0) {
-          return;
+  useEffect(
+    () =>
+      editor.registerUpdateListener(
+        ({ editorState, dirtyElements, dirtyLeaves }) => {
+          if (dirtyElements.size === 0 && dirtyLeaves.size === 0) {
+            return;
+          }
+          postMountContentUpdates += 1;
+          postMountUpdateStates.push(editorState);
         }
-        postMountContentUpdates += 1;
-        postMountUpdateStates.push(editorState);
-      }
-    );
-  }, [editor]);
+      ),
+    [editor]
+  );
 
   return null;
 };
@@ -190,12 +191,12 @@ const renderConfigSeededPlugin = async ({
   const transformers = computeEditorTransformers();
   const config = createEditorConfig({
     editable: true,
-    featureNodes: [],
     // Runs inside the composer's first update, before any plugin mounts.
     editorState: () => {
       $getRoot().clear();
       $convertFromMarkdownString(SEED_MARKDOWN, [...transformers]);
     },
+    featureNodes: [],
   });
 
   await act(() => {
@@ -234,15 +235,14 @@ const renderConfigSeededPlugin = async ({
   };
 };
 
-const readAnchorSelection = (editor: LexicalEditor) => {
-  return editor.getEditorState().read(() => {
+const readAnchorSelection = (editor: LexicalEditor) =>
+  editor.getEditorState().read(() => {
     const selection = $getSelection();
     if (!$isRangeSelection(selection)) {
       return null;
     }
     return { key: selection.anchor.key, offset: selection.anchor.offset };
   });
-};
 
 after(() => {
   GlobalRegistrator.unregister();

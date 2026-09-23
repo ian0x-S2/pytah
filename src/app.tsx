@@ -1,4 +1,5 @@
 import { Route, Switch } from "wouter";
+
 import { DemoPage } from "@/pages/demo";
 import { DocsPage } from "@/pages/docs-page";
 import { HomePage } from "@/pages/home";

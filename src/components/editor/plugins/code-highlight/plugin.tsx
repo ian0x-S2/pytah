@@ -13,10 +13,10 @@ import {
   $getSelection,
   $isElementNode,
   $isRangeSelection,
-  type LexicalEditor,
-  type LexicalNode,
 } from "lexical";
+import type { LexicalEditor, LexicalNode } from "lexical";
 import { useEffect, useState } from "react";
+
 import { useTheme } from "@/components/theme-context";
 
 const CODE_BLOCK_THEME_BY_MODE = {
@@ -32,7 +32,7 @@ const preloadShikiThemes = () => {
   }
   shikiThemesPreloaded = true;
   for (const theme of Object.values(CODE_BLOCK_THEME_BY_MODE)) {
-    loadCodeTheme(theme)?.catch(() => undefined);
+    loadCodeTheme(theme)?.catch(() => {});
   }
 };
 

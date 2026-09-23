@@ -1,15 +1,13 @@
 # Pytah — Guia de instalação para agents
 
-Como instalar o editor Pytah (Lexical + React + shadcn/Base UI + Tailwind v4)
-em uma aplicação React. Começa por **Next.js** e depois varia por framework.
+Como instalar o editor Pytah (Lexical + React + shadcn/Base UI + Tailwind v4) em uma aplicação React. Começa por **Next.js** e depois varia por framework.
 
 Há dois métodos:
 
 - **A — CLI do shadcn** (recomendado): `shadcn add` instala arquivos + deps + tokens automaticamente
 - **B — Manual**: copie os arquivos você mesmo, passo a passo
 
-> Pré-requisitos: React 19+, Tailwind CSS 4.x, shadcn/ui 4.x (inicializado com
-> `components.json` e alias `@/` → `./src`).
+> Pré-requisitos: React 19+, Tailwind CSS 4.x, shadcn/ui 4.x (inicializado com `components.json` e alias `@/` → `./src`).
 
 ---
 
@@ -36,8 +34,7 @@ Isso cria o `components.json`, o alias `@/*` no tsconfig e os tokens CSS base.
 
 ### Passo 3A — Adicione os itens do registry
 
-O registry é modular: `editor` é o núcleo enxuto e cada capability de conteúdo
-(images, tabelas, drawings, TOC...) é um item opcional separado.
+O registry é modular: `editor` é o núcleo enxuto e cada capability de conteúdo (images, tabelas, drawings, TOC...) é um item opcional separado.
 
 **Configure o namespace uma vez** no `components.json` do projeto consumidor:
 
@@ -66,28 +63,22 @@ bunx shadcn@latest add @pytah/editor-excalidraw
 bunx shadcn@latest add @pytah/editor-full
 ```
 
-Instalar via namespace é importante: os itens declaram
-`registryDependencies` que só resolvem pelo namespace.
+Instalar via namespace é importante: os itens declaram `registryDependencies` que só resolvem pelo namespace.
 
 O item `editor` instala automaticamente:
 
 - o core do editor (`src/components/editor/` sem as pastas de features)
-- os primitivos `ui` necessários (`button`, `command`, `dialog`, `dropdown-menu`,
-  `input`, `input-group`, `popover`, `separator`, `textarea`, `toggle`, `tooltip`)
+- os primitivos `ui` necessários (`button`, `command`, `dialog`, `dropdown-menu`, `input`, `input-group`, `popover`, `separator`, `textarea`, `toggle`, `tooltip`)
 - `theme-provider.tsx` + `theme-context.ts` (usados pelo code highlight)
 - `lib/utils.ts` (helper `cn()`)
-- apenas as dependências do core (`lexical`, `@lexical/*`, `@base-ui/react`,
-  `cmdk`, ...) — nada de `@excalidraw/excalidraw` ou `katex`
+- apenas as dependências do core (`lexical`, `@lexical/*`, `@base-ui/react`, `cmdk`, ...) — nada de `@excalidraw/excalidraw` ou `katex`
 - os tokens `--highlight` no CSS
 
-Itens de feature trazem só os próprios arquivos e dependências
-(`editor-excalidraw` → `@excalidraw/excalidraw`; `editor-math` → `katex`) e
-puxam o `@pytah/editor` automaticamente.
+Itens de feature trazem só os próprios arquivos e dependências (`editor-excalidraw` → `@excalidraw/excalidraw`; `editor-math` → `katex`) e puxam o `@pytah/editor` automaticamente.
 
 ### Passo 4 — Componha as features instaladas
 
-Features não são flags: quem instala, compõe. Cada item exporta um descritor
-pronto em `plugins/<feature>/feature.ts`:
+Features não são flags: quem instala, compõe. Cada item exporta um descritor pronto em `plugins/<feature>/feature.ts`:
 
 ```tsx
 // src/app/page.tsx
@@ -115,13 +106,9 @@ Não importou o descritor? O código da feature não entra no bundle.
 
 ### Passo 5 — CSS: tokens base + `tw-animate-css`
 
-> Se você rodou `shadcn init`, ele já gerou os tokens abaixo no seu
-> `globals.css` — só confirme que existem e pule para o Passo 6.
+> Se você rodou `shadcn init`, ele já gerou os tokens abaixo no seu `globals.css` — só confirme que existem e pule para o Passo 6.
 >
-> Se está partindo de um app Vite/Next limpo **sem** `init`, cole esta folha
-> completa: as classes do editor (`bg-background`, `text-muted-foreground`,
-> `ring-border`, ...) consomem essas variáveis. Sem elas o editor renderiza
-> sem estilo nenhum.
+> Se está partindo de um app Vite/Next limpo **sem** `init`, cole esta folha completa: as classes do editor (`bg-background`, `text-muted-foreground`, `ring-border`, ...) consomem essas variáveis. Sem elas o editor renderiza sem estilo nenhum.
 
 ```css
 @import "tailwindcss";
@@ -214,13 +201,11 @@ Não importou o descritor? O código da feature não entra no bundle.
 }
 ```
 
-Os tokens `--highlight` também são injetados automaticamente pelo
-`shadcn add` (via `cssVars` do item) — mantê-los na folha não causa conflito.
+Os tokens `--highlight` também são injetados automaticamente pelo `shadcn add` (via `cssVars` do item) — mantê-los na folha não causa conflito.
 
 ### Passo 6 — Monte o ThemeProvider
 
-O code highlight usa `useTheme()`, então o `ThemeProvider` deve envolver o
-editor. Crie um client component:
+O code highlight usa `useTheme()`, então o `ThemeProvider` deve envolver o editor. Crie um client component:
 
 ```tsx
 // src/app/providers.tsx
@@ -265,10 +250,7 @@ Extras por feature: `@excalidraw/excalidraw` (drawings), `katex` (math).
 
 ### Passo 4B — Copie os arquivos do editor
 
-Do repositório Pytah para o seu app, **preservando a estrutura de pastas**.
-O core é tudo em `src/components/editor/` **exceto** as pastas de features que
-você não quiser (`plugins/<feature>/`, `core/nodes/<feature>/` — remova aos
-pares e apague o descritor correspondente):
+Do repositório Pytah para o seu app, **preservando a estrutura de pastas**. O core é tudo em `src/components/editor/` **exceto** as pastas de features que você não quiser (`plugins/<feature>/`, `core/nodes/<feature>/` — remova aos pares e apague o descritor correspondente):
 
 ```text
 src/components/editor/          ← copie o diretório inteiro, menos features indesejadas
@@ -289,8 +271,7 @@ src/components/theme-context.ts
 src/lib/utils.ts
 ```
 
-Não copie arquivos de teste (`*.test.ts`/`*.test.tsx`) nem arquivos `feature.ts`
-de features que você removeu.
+Não copie arquivos de teste (`*.test.ts`/`*.test.tsx`) nem arquivos `feature.ts` de features que você removeu.
 
 ### Passo 5B — Alias `@/` (se ainda não existir)
 
@@ -308,8 +289,7 @@ No `tsconfig.json`:
 
 ### Passo 6B — Tokens CSS do editor
 
-No `globals.css`, adicione os tokens `--highlight` (o `@theme inline` do shadcn
-init já mapeia os `--color-*`, mas esses dois são extras do editor):
+No `globals.css`, adicione os tokens `--highlight` (o `@theme inline` do shadcn init já mapeia os `--color-*`, mas esses dois são extras do editor):
 
 ```css
 :root {
@@ -341,8 +321,7 @@ E garanta o import de `tw-animate-css` no topo:
 
 ### Passo 7B — Monte o ThemeProvider e renderize
 
-Idêntico aos passos 5 e 6 do Método A (`providers.tsx` com `ThemeProvider` +
-`<Editor minimal toolbar="full" />`).
+Idêntico aos passos 5 e 6 do Método A (`providers.tsx` com `ThemeProvider` + `<Editor minimal toolbar="full" />`).
 
 ### Passo 8B — Valide
 

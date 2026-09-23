@@ -1,5 +1,6 @@
 import { deepStrictEqual, strictEqual } from "node:assert/strict";
 import { describe, test } from "node:test";
+
 import { createHeadlessEditor } from "@lexical/headless";
 
 import { createEditorConfig } from "../../config";

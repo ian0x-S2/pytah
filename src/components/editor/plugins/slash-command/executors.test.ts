@@ -1,5 +1,6 @@
 import { strictEqual } from "node:assert/strict";
 import { describe, test } from "node:test";
+
 import { createHeadlessEditor } from "@lexical/headless";
 import {
   $createTextNode,
@@ -8,8 +9,9 @@ import {
   $isElementNode,
   $isParagraphNode,
   $isRangeSelection,
-  type LexicalNode,
 } from "lexical";
+import type { LexicalNode } from "lexical";
+
 import { createEditorConfig } from "../../core/config";
 import { computeFeatureNodes } from "../../core/features";
 import type { ExtraEditorFeature } from "../../core/types";

@@ -1,5 +1,6 @@
 import type { LexicalEditor } from "lexical";
 import { $getSelection, $isNodeSelection, $isRangeSelection } from "lexical";
+
 import {
   getFloatingToolbarSelectedNode,
   getSelectedLinkNode,

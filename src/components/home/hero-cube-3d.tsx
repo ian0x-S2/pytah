@@ -1,6 +1,7 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
-import { BoxGeometry, EdgesGeometry, type Group } from "three";
+import { BoxGeometry, EdgesGeometry } from "three";
+import type { Group } from "three";
 
 function RotatingCube() {
   const groupRef = useRef<Group | null>(null);
@@ -53,7 +54,7 @@ export function HeroCube3D({ className = "" }: { className?: string }) {
   return (
     <div className={`relative flex items-center justify-center ${className}`}>
       <Canvas
-        camera={{ position: [0, 0, 4], fov: 42 }}
+        camera={{ fov: 42, position: [0, 0, 4] }}
         className="pointer-events-none size-full"
         gl={{
           alpha: true,

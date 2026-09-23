@@ -1,8 +1,10 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { Columns2Icon, Rows3Icon, Trash2Icon } from "lucide-react";
 import type { MouseEvent } from "react";
+
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+
 import {
   deleteSelectedTable,
   deleteSelectedTableColumn,

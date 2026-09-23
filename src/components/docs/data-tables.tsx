@@ -1,4 +1,5 @@
 import { docsFeatureRows, docsTransformerRows } from "@/data/docs-metadata";
+
 import { Table, TableCell, TableRow } from "./primitives";
 
 export function FeatureTable() {

@@ -1,9 +1,11 @@
 import type { MDXComponents } from "mdx/types.js";
 import type { ReactElement, ReactNode } from "react";
+
 import {
   extractExportedInterface,
   extractMarkedSource,
 } from "@/components/docs/source-utils";
+
 import { FeatureTable, TransformersTable } from "./data-tables";
 import {
   Callout,
@@ -24,7 +26,7 @@ interface CodeBlockInfo {
   language?: string;
 }
 
-const CODE_LANGUAGE_REGEX = /language-([\w-]+)/;
+const CODE_LANGUAGE_REGEX = /language-(?<language>[\w-]+)/u;
 
 const collectText = (node: ReactNode): string => {
   if (node == null || typeof node === "boolean") {
@@ -74,7 +76,7 @@ const extractCodeBlock = (children: ReactNode): CodeBlockInfo => {
   const languageMatch = CODE_LANGUAGE_REGEX.exec(className);
   return {
     code: collectText(codeElement),
-    language: languageMatch?.[1],
+    language: languageMatch?.groups?.language,
   };
 };
 
@@ -85,7 +87,7 @@ function MDXCodeBlock({ children }: { children?: ReactNode }) {
 
 function InlineCode({ children }: { children?: ReactNode }) {
   return (
-    <code className="rounded border border-border/60 bg-muted/40 px-1.5 py-0.2 font-mono text-[0.85em] text-foreground">
+    <code className="py-0.5 rounded border border-border/60 bg-muted/40 px-1.5 font-mono text-[0.85em] text-foreground">
       {children}
     </code>
   );
@@ -99,7 +101,7 @@ function MDXList({
   ordered?: boolean;
 }) {
   const className =
-    "mb-3.5 space-y-1 text-[13px] text-foreground/80 leading-relaxed sm:text-[13.5px] [&_code]:rounded [&_code]:border [&_code]:border-border/60 [&_code]:bg-muted/40 [&_code]:px-1.5 [&_code]:py-0.2 [&_code]:font-mono [&_code]:text-[0.85em] [&_code]:text-foreground [&_strong]:font-semibold [&_strong]:text-foreground";
+    "mb-3.5 space-y-1 text-[13px] text-foreground/80 leading-relaxed sm:text-[13.5px] [&_code]:rounded [&_code]:border [&_code]:border-border/60 [&_code]:bg-muted/40 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[0.85em] [&_code]:text-foreground [&_strong]:font-semibold [&_strong]:text-foreground";
   return ordered ? (
     <ol className={className}>{children}</ol>
   ) : (
@@ -110,7 +112,7 @@ function MDXList({
 function MDXTable({ children }: { children?: ReactNode }) {
   return (
     <div className="my-4 overflow-x-auto rounded-xl border border-border/50 bg-transparent shadow-xs">
-      <table className="w-full text-left text-[12px] sm:text-[13px] [&_tbody]:divide-y [&_tbody]:divide-border/40 [&_tbody_tr:hover]:bg-muted/15 [&_td]:px-3.5 [&_td]:py-2.5 [&_td]:text-foreground/80 [&_td]:leading-relaxed sm:[&_td]:px-4 sm:[&_td]:py-3 [&_th]:px-3.5 [&_th]:py-2.5 [&_th]:font-medium sm:[&_th]:px-4 [&_thead_tr]:border-border/50 [&_thead_tr]:border-b [&_thead_tr]:bg-muted/25 [&_thead_tr]:font-mono [&_thead_tr]:text-[10px] [&_thead_tr]:text-muted-foreground [&_thead_tr]:uppercase [&_thead_tr]:tracking-wider [&_tr]:transition-colors">
+      <table className="w-full text-left text-[12px] sm:text-[13px] [&_tbody]:divide-y [&_tbody]:divide-border/40 [&_tbody_tr:hover]:bg-muted/15 [&_td]:px-3.5 [&_td]:py-2.5 [&_td]:leading-relaxed [&_td]:text-foreground/80 sm:[&_td]:px-4 sm:[&_td]:py-3 [&_th]:px-3.5 [&_th]:py-2.5 [&_th]:font-medium sm:[&_th]:px-4 [&_thead_tr]:border-b [&_thead_tr]:border-border/50 [&_thead_tr]:bg-muted/25 [&_thead_tr]:font-mono [&_thead_tr]:text-[10px] [&_thead_tr]:tracking-wider [&_thead_tr]:text-muted-foreground [&_thead_tr]:uppercase [&_tr]:transition-colors">
         {children}
       </table>
     </div>
@@ -150,6 +152,13 @@ interface HeadingProps extends ChildrenProps {
 }
 
 export const docsMdxComponents: MDXComponents = {
+  Callout,
+  CodeBlock,
+  FeatureTable,
+  FileTree,
+  InterfaceSource,
+  MarkedSource,
+  TransformersTable,
   a: ({ children, href }: AnchorProps) => (
     <a
       className="font-medium text-foreground underline underline-offset-4 transition-opacity hover:opacity-80"
@@ -161,7 +170,7 @@ export const docsMdxComponents: MDXComponents = {
   blockquote: ({ children }: ChildrenProps) => <Callout>{children}</Callout>,
   code: InlineCode,
   h1: ({ children }: ChildrenProps) => (
-    <h1 className="mt-8 mb-3 font-semibold text-foreground text-lg tracking-tight first:mt-0 sm:mt-10 sm:text-xl">
+    <h1 className="mt-8 mb-3 text-lg font-semibold tracking-tight text-foreground first:mt-0 sm:mt-10 sm:text-xl">
       {children}
     </h1>
   ),
@@ -179,11 +188,4 @@ export const docsMdxComponents: MDXComponents = {
   pre: MDXCodeBlock,
   table: MDXTable,
   ul: ({ children }: ChildrenProps) => <MDXList>{children}</MDXList>,
-  Callout,
-  CodeBlock,
-  FeatureTable,
-  FileTree,
-  InterfaceSource,
-  MarkedSource,
-  TransformersTable,
 };

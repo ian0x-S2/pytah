@@ -27,9 +27,10 @@ import {
   COMMAND_PRIORITY_EDITOR,
   COMMAND_PRIORITY_LOW,
   KEY_ENTER_COMMAND,
-  type LexicalNode,
 } from "lexical";
+import type { LexicalNode } from "lexical";
 import { useEffect } from "react";
+
 import { $replaceWithHorizontalRule } from "../markdown/transformers";
 
 const toggleNodeSelection = (node: LexicalNode, shiftKey = false) => {
@@ -87,8 +88,8 @@ const syncHorizontalRuleSelectionClass = (
 
 const registerHorizontalRuleInsertCommand = (
   editor: ReturnType<typeof useLexicalComposerContext>[0]
-) => {
-  return editor.registerCommand(
+) =>
+  editor.registerCommand(
     INSERT_HORIZONTAL_RULE_COMMAND,
     () => {
       const selection = $getSelection();
@@ -101,12 +102,11 @@ const registerHorizontalRuleInsertCommand = (
     },
     COMMAND_PRIORITY_EDITOR
   );
-};
 
 const registerHorizontalRuleClickCommand = (
   editor: ReturnType<typeof useLexicalComposerContext>[0]
-) => {
-  return editor.registerCommand(
+) =>
+  editor.registerCommand(
     CLICK_COMMAND,
     (event) => {
       const node = getClickedHorizontalRuleNode(event.target);
@@ -119,12 +119,11 @@ const registerHorizontalRuleClickCommand = (
     },
     COMMAND_PRIORITY_LOW
   );
-};
 
 const registerHorizontalRuleEnterShortcut = (
   editor: ReturnType<typeof useLexicalComposerContext>[0]
-) => {
-  return editor.registerCommand(
+) =>
+  editor.registerCommand(
     KEY_ENTER_COMMAND,
     (event) => {
       if (event?.shiftKey) {
@@ -162,13 +161,12 @@ const registerHorizontalRuleEnterShortcut = (
     },
     COMMAND_PRIORITY_LOW
   );
-};
 
 const registerHorizontalRuleMutationListener = (
   editor: ReturnType<typeof useLexicalComposerContext>[0],
   selectedClassName: string
-) => {
-  return editor.registerMutationListener(HorizontalRuleNode, (nodes) => {
+) =>
+  editor.registerMutationListener(HorizontalRuleNode, (nodes) => {
     editor.read(() => {
       for (const [nodeKey, mutation] of nodes) {
         if (mutation === "destroyed") {
@@ -179,7 +177,6 @@ const registerHorizontalRuleMutationListener = (
       }
     });
   });
-};
 
 export function HorizontalRulePlugin() {
   const [editor] = useLexicalComposerContext();

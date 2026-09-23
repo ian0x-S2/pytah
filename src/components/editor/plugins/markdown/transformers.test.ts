@@ -1,5 +1,6 @@
 import { strictEqual } from "node:assert/strict";
 import { describe, test } from "node:test";
+
 import {
   $createHorizontalRuleNode,
   $isHorizontalRuleNode,
@@ -13,9 +14,10 @@ import {
   $createTextNode,
   $getRoot,
   $isParagraphNode,
-  type ElementNode,
   UNDO_COMMAND,
 } from "lexical";
+import type { ElementNode } from "lexical";
+
 import { createEditorConfig } from "../../core/config";
 import {
   $replaceWithHorizontalRule,
@@ -171,7 +173,7 @@ describe("Horizontal rule markdown transformer", () => {
       strictEqual($isParagraphNode(children[1]), true);
     });
 
-    editor.dispatchCommand(UNDO_COMMAND, undefined);
+    editor.dispatchCommand(UNDO_COMMAND);
     await editor.update(() => {
       // Flush the history restore before reading the editor state.
     });

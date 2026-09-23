@@ -2,8 +2,8 @@ import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __filename = import.meta.filename;
+const __dirname = import.meta.dirname;
 const projectRoot = path.resolve(__dirname, "..");
 const outputDirectory = path.join(projectRoot, "public", "r");
 const editorSourceDirectory = path.join(
@@ -132,7 +132,7 @@ const registryBaseUrl =
 const registryNamespace = process.env.PYTAH_REGISTRY_NAMESPACE ?? "@pytah";
 
 const readJson = async (filePath) => {
-  const content = await readFile(filePath, "utf8");
+  const content = await readFile(filePath, "utf-8");
   return JSON.parse(content);
 };
 
@@ -168,7 +168,7 @@ const collectSourceFiles = async (directory) => {
     files.push(absolutePath);
   }
 
-  return files.sort((left, right) => left.localeCompare(right));
+  return files.toSorted((left, right) => left.localeCompare(right));
 };
 
 const createRegistryFileEntry = async ({
@@ -176,7 +176,7 @@ const createRegistryFileEntry = async ({
   registryPath,
   target,
 }) => {
-  const content = await readFile(absolutePath, "utf8");
+  const content = await readFile(absolutePath, "utf-8");
 
   return {
     content,
@@ -189,9 +189,11 @@ const createRegistryFileEntry = async ({
 // Static import/export statements only. Anchored so prose like "# Markdown
 // import" inside string constants never produces a false dependency.
 const FROM_IMPORT_PATTERN =
-  /(?:^|\n)(?:import|export)[\s\S]*?\bfrom\s*["']([^"']+)["']/g;
-const SIDE_EFFECT_IMPORT_PATTERN = /(?:^|\n)\s*import\s*["']([^"']+)["']/g;
-const DYNAMIC_IMPORT_PATTERN = /\bimport\s*\(\s*["']([^"']+)["']\s*\)/g;
+  /(?:^|\n)(?:import|export)[\s\S]*?\bfrom\s*["'](?<specifier>[^"']+)["']/gu;
+const SIDE_EFFECT_IMPORT_PATTERN =
+  /(?:^|\n)\s*import\s*["'](?<specifier>[^"']+)["']/gu;
+const DYNAMIC_IMPORT_PATTERN =
+  /\bimport\s*\(\s*["'](?<specifier>[^"']+)["']\s*\)/gu;
 
 const collectFileImports = (content) => {
   const specifiers = [];
@@ -202,7 +204,7 @@ const collectFileImports = (content) => {
     DYNAMIC_IMPORT_PATTERN,
   ]) {
     for (const match of content.matchAll(pattern)) {
-      specifiers.push(match[1]);
+      specifiers.push(match.groups.specifier);
     }
   }
 
@@ -218,7 +220,7 @@ const resolveFileDependencies = async (files) => {
   const packageNames = new Set();
 
   for (const file of files) {
-    const content = await readFile(file, "utf8");
+    const content = await readFile(file, "utf-8");
 
     for (const specifier of collectFileImports(content)) {
       if (specifier.startsWith(".") || specifier.startsWith("@/")) {
@@ -235,7 +237,7 @@ const resolveFileDependencies = async (files) => {
 
   const names = [...packageNames]
     .filter((name) => !name.startsWith("@types/"))
-    .sort((left, right) => left.localeCompare(right));
+    .toSorted((left, right) => left.localeCompare(right));
 
   return names.map((name) => {
     const version =
@@ -288,8 +290,8 @@ const getCoreEditorEntries = async () => {
   );
 };
 
-const getEditorUiEntries = () => {
-  return Promise.all(
+const getEditorUiEntries = () =>
+  Promise.all(
     editorUiFiles.map((fileName) => {
       const absolutePath = path.join(
         projectRoot,
@@ -306,10 +308,9 @@ const getEditorUiEntries = () => {
       });
     })
   );
-};
 
-const getLibEntries = () => {
-  return Promise.all([
+const getLibEntries = () =>
+  Promise.all([
     createRegistryFileEntry({
       absolutePath: path.join(projectRoot, "src", "lib", "utils.ts"),
       registryPath: path.posix.join(registryPathPrefix, "lib", "utils.ts"),
@@ -361,7 +362,6 @@ const getLibEntries = () => {
       target: path.posix.join("src", "components", "theme-context.ts"),
     }),
   ]);
-};
 
 const getFeatureFolderFiles = async (feature) => {
   const files = [];
@@ -377,7 +377,7 @@ const getFeatureFolderFiles = async (feature) => {
     files.push(...(await collectSourceFiles(absolutePath)));
   }
 
-  return files.sort((left, right) => left.localeCompare(right));
+  return files.toSorted((left, right) => left.localeCompare(right));
 };
 
 const createFeatureItem = async (feature) => {
@@ -414,17 +414,17 @@ const createBaseItem = async ({
     author: "Pytah",
     categories: ["editor"],
     cssVars: {
-      theme: {
-        "color-highlight": "var(--highlight)",
-        "color-highlight-foreground": "var(--highlight-foreground)",
+      dark: {
+        highlight: "oklch(0.35 0.06 85)",
+        "highlight-foreground": "oklch(0.985 0 0)",
       },
       light: {
         highlight: "oklch(0.97 0.05 90)",
         "highlight-foreground": "oklch(0.145 0 0)",
       },
-      dark: {
-        highlight: "oklch(0.35 0.06 85)",
-        "highlight-foreground": "oklch(0.985 0 0)",
+      theme: {
+        "color-highlight": "var(--highlight)",
+        "color-highlight-foreground": "var(--highlight-foreground)",
       },
     },
     dependencies: await resolveFileDependencies([
@@ -465,7 +465,7 @@ const createBaseItem = async ({
 };
 
 const writeJson = async (filePath, value) => {
-  await writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+  await writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`, "utf-8");
 };
 
 const main = async () => {

@@ -17,8 +17,8 @@ import layoutUtilsSource from "@/components/editor/plugins/layout/utils.ts?raw";
 
 <Callout title="Extension guide">
   This page documents a block-level extension pattern: custom nodes plus a
-  feature plugin. It is a good reference when adding new structural block
-  types to the editor.
+  feature plugin. It is a good reference when adding new structural block types
+  to the editor.
 </Callout>
 
 ## Files
@@ -38,46 +38,53 @@ import layoutUtilsSource from "@/components/editor/plugins/layout/utils.ts?raw";
 
 ## container-node.ts
 
-Renders as a `<div>` with `data-lexical-layout-container` and
-`style.gridTemplateColumns` set to the stored template string (e.g.
-`"1fr 1fr"`). Acts as a shadow root.
+Renders as a `<div>` with `data-lexical-layout-container` and `style.gridTemplateColumns` set to the stored template string (e.g. `"1fr 1fr"`). Acts as a shadow root.
 
-<CodeBlock label="src/components/editor/core/nodes/layout/container-node.ts" language="ts">
+<CodeBlock
+  label="src/components/editor/core/nodes/layout/container-node.ts"
+  language="ts"
+>
   {layoutContainerNodeSource}
 </CodeBlock>
 
 ## item-node.ts
 
-Each column is a `LayoutItemNode`. When the user backspaces at the start of
-the first column and all columns are empty, the entire layout container is
-removed via `collapseAtStart()`.
+Each column is a `LayoutItemNode`. When the user backspaces at the start of the first column and all columns are empty, the entire layout container is removed via `collapseAtStart()`.
 
-<CodeBlock label="src/components/editor/core/nodes/layout/item-node.ts" language="ts">
+<CodeBlock
+  label="src/components/editor/core/nodes/layout/item-node.ts"
+  language="ts"
+>
   {layoutItemNodeSource}
 </CodeBlock>
 
 ## commands.ts
 
-<CodeBlock label="src/components/editor/plugins/layout/commands.ts" language="ts">
+<CodeBlock
+  label="src/components/editor/plugins/layout/commands.ts"
+  language="ts"
+>
   {layoutCommandsSource}
 </CodeBlock>
 
 ## constants.ts
 
-Predefined grid templates. `DEFAULT_LAYOUT_TEMPLATE` is used by the
-slash-command executor.
+Predefined grid templates. `DEFAULT_LAYOUT_TEMPLATE` is used by the slash-command executor.
 
-<CodeBlock label="src/components/editor/plugins/layout/constants.ts" language="ts">
+<CodeBlock
+  label="src/components/editor/plugins/layout/constants.ts"
+  language="ts"
+>
   {layoutConstantsSource}
 </CodeBlock>
 
-| Preset value | Description |
-| --- | --- |
-| `1fr 1fr` | Two equal columns (default) |
-| `1fr 3fr` | Narrow sidebar + wide content |
-| `1fr 1fr 1fr` | Three equal columns |
-| `1fr 2fr 1fr` | Three balanced columns |
-| `1fr 1fr 1fr 1fr` | Four equal columns |
+| Preset value      | Description                   |
+| ----------------- | ----------------------------- |
+| `1fr 1fr`         | Two equal columns (default)   |
+| `1fr 3fr`         | Narrow sidebar + wide content |
+| `1fr 1fr 1fr`     | Three equal columns           |
+| `1fr 2fr 1fr`     | Three balanced columns        |
+| `1fr 1fr 1fr 1fr` | Four equal columns            |
 
 ## utils.ts
 
@@ -87,14 +94,16 @@ slash-command executor.
 
 ## plugin.tsx
 
-<CodeBlock label="src/components/editor/plugins/layout/plugin.tsx" language="tsx">
+<CodeBlock
+  label="src/components/editor/plugins/layout/plugin.tsx"
+  language="tsx"
+>
   {layoutPluginSource}
 </CodeBlock>
 
 ### Registration
 
-Layouts ship behind the `layouts` feature flag. To add the capability to a
-custom composition, contribute a descriptor via `extraFeatures`:
+Layouts ship behind the `layouts` feature flag. To add the capability to a custom composition, contribute a descriptor via `extraFeatures`:
 
 ```tsx
 <Editor
@@ -127,8 +136,8 @@ editor.dispatchCommand(INSERT_LAYOUT_COMMAND, {
 
 <Callout title="Any valid CSS grid template works" variant="tip">
   The `templateColumns` value is written directly to
-  `style.gridTemplateColumns`. You can pass any valid CSS grid template string
-  — the column count is derived by splitting on whitespace, so named tracks or
+  `style.gridTemplateColumns`. You can pass any valid CSS grid template string —
+  the column count is derived by splitting on whitespace, so named tracks or
   `repeat()` expressions should be pre-resolved to explicit values before
   passing them in.
 </Callout>

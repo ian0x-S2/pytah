@@ -18,6 +18,7 @@ import {
   TableIcon,
   TypeIcon,
 } from "lucide-react";
+
 import type { BlockOption, BlockTypeValue } from "./types";
 
 /**

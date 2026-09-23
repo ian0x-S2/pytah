@@ -1,13 +1,13 @@
-import { $createParagraphNode, type ElementNode } from "lexical";
+import { $createParagraphNode } from "lexical";
+import type { ElementNode } from "lexical";
+
 import { $createLayoutContainerNode } from "../../core/nodes/layout/container-node";
 import { $createLayoutItemNode } from "../../core/nodes/layout/item-node";
 
-const TEMPLATE_COLUMN_SEPARATOR = /\s+/;
+const TEMPLATE_COLUMN_SEPARATOR = /\s+/u;
 
-const getColumnCount = (templateColumns: string) => {
-  return templateColumns.split(TEMPLATE_COLUMN_SEPARATOR).filter(Boolean)
-    .length;
-};
+const getColumnCount = (templateColumns: string) =>
+  templateColumns.split(TEMPLATE_COLUMN_SEPARATOR).filter(Boolean).length;
 
 export const applyLayoutPreset = (
   targetElement: ElementNode,

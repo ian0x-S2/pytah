@@ -1,5 +1,6 @@
 import { deepStrictEqual, strictEqual } from "node:assert/strict";
 import { after, describe, test } from "node:test";
+
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
 import type { LexicalEditor, LexicalNode } from "lexical";
 
@@ -11,13 +12,11 @@ GlobalRegistrator.register();
 
 const { act, createElement } = await import("react");
 const { createRoot } = await import("react-dom/client");
-const { useLexicalComposerContext } = await import(
-  "@lexical/react/LexicalComposerContext"
-);
+const { useLexicalComposerContext } =
+  await import("@lexical/react/LexicalComposerContext");
 const { LexicalComposer } = await import("@lexical/react/LexicalComposer");
-const { $createCodeNode, $isCodeNode, CodeHighlightNode } = await import(
-  "@lexical/code"
-);
+const { $createCodeNode, $isCodeNode, CodeHighlightNode } =
+  await import("@lexical/code");
 const {
   $createParagraphNode,
   $createTextNode,
@@ -73,7 +72,7 @@ const themeContextValue = (
   resolvedTheme: "light" | "dark"
 ): ThemeContextValue => ({
   resolvedTheme,
-  setTheme: () => undefined,
+  setTheme: () => {},
   theme: resolvedTheme,
 });
 
@@ -97,7 +96,6 @@ const renderCodeHighlightPlugin = async (
 
   const config = createEditorConfig({
     editable: true,
-    featureNodes: [],
     editorState:
       seed ??
       (() => {
@@ -105,6 +103,7 @@ const renderCodeHighlightPlugin = async (
         code.append($createTextNode(CODE_SNIPPET));
         $getRoot().append(code);
       }),
+    featureNodes: [],
   });
 
   await act(() => {
@@ -145,8 +144,8 @@ const rerenderWithTheme = async (resolvedTheme: "light" | "dark") => {
   });
 };
 
-const readCodeNode = (editor: LexicalEditor) => {
-  return editor.getEditorState().read(() => {
+const readCodeNode = (editor: LexicalEditor) =>
+  editor.getEditorState().read(() => {
     for (const child of $getRoot().getChildren()) {
       if ($isCodeNode(child)) {
         return {
@@ -159,7 +158,6 @@ const readCodeNode = (editor: LexicalEditor) => {
     }
     return null;
   });
-};
 
 const pollUntil = async (
   read: () => boolean,
@@ -177,8 +175,8 @@ const pollUntil = async (
   return false;
 };
 
-const pollForHighlightNodes = (): Promise<boolean> => {
-  return pollUntil(() => {
+const pollForHighlightNodes = (): Promise<boolean> =>
+  pollUntil(() => {
     const snapshot = editorRef ? readCodeNode(editorRef) : null;
     return (
       snapshot?.childTypes.some(
@@ -186,12 +184,11 @@ const pollForHighlightNodes = (): Promise<boolean> => {
       ) ?? false
     );
   });
-};
 
 const readSelectionAnchor = (
   editor: LexicalEditor
-): { key: string; offset: number; type: string } | null => {
-  return editor.getEditorState().read(() => {
+): { key: string; offset: number; type: string } | null =>
+  editor.getEditorState().read(() => {
     const selection = $getSelection();
     if (!$isRangeSelection(selection)) {
       return null;
@@ -202,7 +199,6 @@ const readSelectionAnchor = (
       type: selection.anchor.type,
     };
   });
-};
 
 describe("CodeHighlightPlugin arming", () => {
   test("mount paints plain code first; highlighting arms after the arm frames", async () => {
@@ -380,12 +376,11 @@ describe("CodeHighlightPlugin arming", () => {
       // nodes dirty and re-tokenizes. The out-of-node caret must survive.
       await rerenderWithTheme("dark");
 
-      const toggled = await pollUntil(() => {
-        return (
+      const toggled = await pollUntil(
+        () =>
           readCodeNode(editorRef ?? (undefined as never))?.theme ===
           "github-dark"
-        );
-      });
+      );
       strictEqual(toggled, true);
       strictEqual(await pollForHighlightNodes(), true);
 

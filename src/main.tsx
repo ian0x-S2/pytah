@@ -1,7 +1,10 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+
 import { ThemeProvider } from "@/components/theme-provider";
+
 import App from "./app.tsx";
+
 import "./index.css";
 
 // Disable reload scroll restoration before the browser's first layout pass.
@@ -13,7 +16,7 @@ if ("scrollRestoration" in history) {
   history.scrollRestoration = "manual";
 }
 
-const rootElement = document.getElementById("root");
+const rootElement = document.querySelector("#root");
 
 if (!rootElement) {
   throw new Error("Root element #root was not found.");

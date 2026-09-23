@@ -1,9 +1,7 @@
 "use client";
 
-import {
-  TableOfContentsPlugin as LexicalTableOfContentsPlugin,
-  type TableOfContentsEntry,
-} from "@lexical/react/LexicalTableOfContentsPlugin";
+import { TableOfContentsPlugin as LexicalTableOfContentsPlugin } from "@lexical/react/LexicalTableOfContentsPlugin";
+import type { TableOfContentsEntry } from "@lexical/react/LexicalTableOfContentsPlugin";
 import type { LexicalEditor } from "lexical";
 import type { ReactNode } from "react";
 

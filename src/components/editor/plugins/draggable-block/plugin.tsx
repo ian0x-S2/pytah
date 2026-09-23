@@ -15,11 +15,13 @@ export function DraggableBlockPlugin() {
   const targetLineRef = useRef<HTMLDivElement>(null);
   const [anchorElem, setAnchorElem] = useState<HTMLElement | null>(null);
 
-  useEffect(() => {
-    return editor.registerRootListener((rootElement) => {
-      setAnchorElem(rootElement?.parentElement ?? null);
-    });
-  }, [editor]);
+  useEffect(
+    () =>
+      editor.registerRootListener((rootElement) => {
+        setAnchorElem(rootElement?.parentElement ?? null);
+      }),
+    [editor]
+  );
 
   const isOnMenu = (element: HTMLElement) =>
     Boolean(element.closest(`.${DRAG_MENU_CLASS_NAME}`));

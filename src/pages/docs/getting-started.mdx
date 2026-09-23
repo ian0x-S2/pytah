@@ -21,17 +21,13 @@ import { DEMO_EDITOR_USAGE_EXAMPLE } from "@/pages/demo-code";
 
 ## Prerequisites
 
-Your project needs React <code>{compatibility.requirements.react}</code>,
-Tailwind CSS <code>{compatibility.requirements.tailwind}</code>, and
-shadcn/ui <code>{compatibility.requirements.shadcn}</code> already
-configured. The editor is built on <code>@base-ui/react</code> primitives, not
-Radix UI, and is currently validated against Lexical
+Your project needs React <code>{compatibility.requirements.react}</code>, Tailwind CSS <code>{compatibility.requirements.tailwind}</code>, and shadcn/ui <code>{compatibility.requirements.shadcn}</code> already configured. The editor is built on <code>@base-ui/react</code> primitives, not Radix UI, and is currently validated against Lexical
+
 <code>{compatibility.requirements.lexical}</code>.
 
 ## 1. Install with shadcn CLI
 
-There are two supported install styles: a **namespace registry** (recommended,
-enables optional feature items) and **direct URLs** (single-item installs).
+There are two supported install styles: a **namespace registry** (recommended, enables optional feature items) and **direct URLs** (single-item installs).
 
 ### Option A: Namespace registry (recommended)
 
@@ -62,8 +58,7 @@ bunx --bun shadcn add @pytah/editor-image
   URL fails to pull the base editor automatically.
 </Callout>
 
-For local development, point the namespace at the dev server instead:
-`http://localhost:5173/r/{name}.json`.
+For local development, point the namespace at the dev server instead: `http://localhost:5173/r/{name}.json`.
 
 ### Option B: Direct URL
 
@@ -77,8 +72,7 @@ bun x shadcn@latest add http://localhost:5173/r/editor.json
 bun x shadcn@latest add https://pytah.vercel.app/r/editor.json
 ```
 
-The path is always `/r/editor.json`. Only the origin changes between local and
-deployed environments.
+The path is always `/r/editor.json`. Only the origin changes between local and deployed environments.
 
 <Callout title="What gets installed" variant="tip">
   The registry item installs the full editor tree, the required `ui` wrappers,
@@ -86,11 +80,11 @@ deployed environments.
   tokens.
 </Callout>
 
-Your app still needs the normal <code>shadcn/ui</code> foundations in place:
-React <code>{compatibility.requirements.react}</code>, Tailwind CSS
+Your app still needs the normal <code>shadcn/ui</code> foundations in place: React <code>{compatibility.requirements.react}</code>, Tailwind CSS
+
 <code>{compatibility.requirements.tailwind}</code>, a valid
-<code>components.json</code>, and the standard <code>@/</code> alias pointing
-at <code>src</code>.
+<code>components.json</code>, and the standard <code>@/</code> alias pointing at
+<code>src</code>.
 
 <Callout title="Compatibility" variant="tip">
   React <code>{compatibility.requirements.react}</code>, Tailwind CSS
@@ -102,8 +96,7 @@ at <code>src</code>.
 
 ## 2. Manual Copy-Paste Fallback
 
-If you do not want to consume the registry item, install the editor manually.
-First install the Lexical editor framework and its companion packages:
+If you do not want to consume the registry item, install the editor manually. First install the Lexical editor framework and its companion packages:
 
 ```bash
 bun add lexical @lexical/react @lexical/rich-text @lexical/list \
@@ -119,8 +112,7 @@ bun add @base-ui/react class-variance-authority clsx \
   tailwind-merge cmdk lucide-react
 ```
 
-Then copy these directories and files into your project, preserving their
-relative paths:
+Then copy these directories and files into your project, preserving their relative paths:
 
 ```text
 src/
@@ -146,22 +138,17 @@ src/
   `tsconfig.json` and your bundler config, or rewrite the imports.
 </Callout>
 
-Your global Tailwind v4 stylesheet should import `tw-animate-css`. The registry
-item injects the editor highlight tokens automatically.
+Your global Tailwind v4 stylesheet should import `tw-animate-css`. The registry item injects the editor highlight tokens automatically.
 
 ## 3. Add CSS Tokens
 
-The CLI path adds these automatically. For manual installs, the editor uses two
-custom design tokens not in the default ShadCN palette. Add these to your CSS
-`:root` and `.dark` blocks:
+The CLI path adds these automatically. For manual installs, the editor uses two custom design tokens not in the default ShadCN palette. Add these to your CSS `:root` and `.dark` blocks:
 
 <CodeBlock language="css">{`:root {
 ${extractMarkedSource(indexCssSource, "highlight-tokens-light")}
 }
 
-.dark {
-${extractMarkedSource(indexCssSource, "highlight-tokens-dark")}
-}`}</CodeBlock>
+.dark { ${extractMarkedSource(indexCssSource, "highlight-tokens-dark")} }`}</CodeBlock>
 
 Then register them in your Tailwind v4 `@theme inline` block:
 
@@ -171,18 +158,13 @@ ${extractMarkedSource(indexCssSource, "highlight-theme-bridge")}
 
 ## 4. Render the Editor
 
-After installation, import `Editor` from `@/components/editor/editor`. The demo
-page is the smallest real integration in this repository. It toggles edit mode
-and mounts the editor in minimal mode:
+After installation, import `Editor` from `@/components/editor/editor`. The demo page is the smallest real integration in this repository. It toggles edit mode and mounts the editor in minimal mode:
 
 <CodeBlock language="tsx">{DEMO_EDITOR_USAGE_EXAMPLE}</CodeBlock>
 
 ### Composition First
 
-The default `Editor` is intentionally ready-made, but it now also exposes
-lego-like extension points so consumers can disable chrome, replace surfaces,
-add plugins, and register custom Lexical nodes without editing the internal
-editor files.
+The default `Editor` is intentionally ready-made, but it now also exposes lego-like extension points so consumers can disable chrome, replace surfaces, add plugins, and register custom Lexical nodes without editing the internal editor files.
 
 ```tsx
 import { Editor } from "@/components/editor/editor";
@@ -226,18 +208,16 @@ The `Editor` component accepts the following props:
 The most important composition hooks are:
 
 ```tsx
-features        // enable/disable built-in behavior plugins (core only)
-extraFeatures   // install content features (images, tables...) and custom capabilities
-chrome          // show/hide default shell/header/footer/action bar/output panels
-slots           // replace default visual surfaces
-pluginSlots     // mount extra plugins around the built-in plugin stack
-extraNodes      // register additional Lexical nodes
-namespace       // customize the Lexical namespace when embedding multiple editors
+features; // enable/disable built-in behavior plugins (core only)
+extraFeatures; // install content features (images, tables...) and custom capabilities
+chrome; // show/hide default shell/header/footer/action bar/output panels
+slots; // replace default visual surfaces
+pluginSlots; // mount extra plugins around the built-in plugin stack
+extraNodes; // register additional Lexical nodes
+namespace; // customize the Lexical namespace when embedding multiple editors
 ```
 
-Installed feature items are composed through their feature descriptors — see
-`/docs/composition` for `extraFeatures`. For a deeper breakdown of those
-contracts, continue with the `Composition` and `API` pages.
+Installed feature items are composed through their feature descriptors — see `/docs/composition` for `extraFeatures`. For a deeper breakdown of those contracts, continue with the `Composition` and `API` pages.
 
 <Callout title="That's it" variant="tip">
   The editor is self-contained. It manages its own Lexical composer, plugins,

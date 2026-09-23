@@ -1,6 +1,5 @@
-const escapeRegex = (value: string) => {
-  return value.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&");
-};
+const escapeRegex = (value: string) =>
+  value.replaceAll(/[.*+?^${}()|[\]\\]/gu, "\\$&");
 
 const matchSource = (
   source: string,
@@ -20,12 +19,13 @@ export function extractMarkedSource(source: string, marker: string) {
   return matchSource(
     source,
     new RegExp(
-      `/\\* docs:start ${escapeRegex(marker)} \\*/([\\s\\S]*?)/\\* docs:end ${escapeRegex(marker)} \\*/`
+      `/\\* docs:start ${escapeRegex(marker)} \\*/([\\s\\S]*?)/\\* docs:end ${escapeRegex(marker)} \\*/`,
+      "u"
     ),
     `Marked source was not found for: ${marker}`
   )
-    .replace(new RegExp(`^/\\* docs:start ${escapeRegex(marker)} \\*/\\n?`), "")
-    .replace(new RegExp(`\\n?/\\* docs:end ${escapeRegex(marker)} \\*/$`), "")
+    .replace(new RegExp(`^/\\* docs:start ${escapeRegex(marker)} \\*/\\n?`, "u"), "")
+    .replace(new RegExp(`\\n?/\\* docs:end ${escapeRegex(marker)} \\*/$`, "u"), "")
     .trim();
 }
 
@@ -34,7 +34,7 @@ export function extractExportedInterface(source: string, name: string) {
     source,
     new RegExp(
       `export interface ${escapeRegex(name)}\\s*\\{[\\s\\S]*?^\\}`,
-      "m"
+      "mu"
     ),
     `Interface source was not found for: ${name}`
   );
@@ -43,7 +43,7 @@ export function extractExportedInterface(source: string, name: string) {
 export function extractExportedConst(source: string, name: string) {
   return matchSource(
     source,
-    new RegExp(`export const ${escapeRegex(name)}\\s*=\\s*[\\s\\S]*?;`, "m"),
+    new RegExp(`export const ${escapeRegex(name)}\\s*=\\s*[\\s\\S]*?;`, "mu"),
     `Const source was not found for: ${name}`
   );
 }

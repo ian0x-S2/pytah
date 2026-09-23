@@ -1,5 +1,6 @@
 import type { Transformer } from "@lexical/markdown";
 import type { LexicalEditor } from "lexical";
+
 import { downloadMarkdownContent } from "../../core/actions";
 import { readEditorSnapshot } from "../../core/utils";
 
@@ -15,8 +16,8 @@ export const getMarkdownExportFilename = (textContent: string): string => {
   const slugified = (firstLine ?? "document")
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
+    .replaceAll(/[^a-z0-9]+/gu, "-")
+    .replaceAll(/^-+|-+$/gu, "")
     .slice(0, 60);
 
   return slugified || "document";

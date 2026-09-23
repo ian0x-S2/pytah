@@ -12,12 +12,14 @@ import {
 import { ChevronDownIcon } from "lucide-react";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+
 import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+
 import { TableActionMenu } from "./menu";
 import {
   areSelectionCountsEqual,
@@ -53,17 +55,17 @@ function TableCellActionMenuContainer({
 
   const applyMenuContext = (context: TableMenuContext) => {
     activeCellKeyRef.current = context.cellKey;
-    setPosition((currentPosition) => {
-      return currentPosition.left === context.position.left &&
-        currentPosition.top === context.position.top
+    setPosition((currentPosition) =>
+      currentPosition.left === context.position.left &&
+      currentPosition.top === context.position.top
         ? currentPosition
-        : context.position;
-    });
-    setSelectionCounts((currentCounts) => {
-      return areSelectionCountsEqual(currentCounts, context.selectionCounts)
+        : context.position
+    );
+    setSelectionCounts((currentCounts) =>
+      areSelectionCountsEqual(currentCounts, context.selectionCounts)
         ? currentCounts
-        : context.selectionCounts;
-    });
+        : context.selectionCounts
+    );
     setIsVisible((currentIsVisible) =>
       currentIsVisible ? currentIsVisible : true
     );
@@ -74,11 +76,11 @@ function TableCellActionMenuContainer({
     setIsVisible((currentIsVisible) =>
       currentIsVisible ? false : currentIsVisible
     );
-    setSelectionCounts((currentCounts) => {
-      return areSelectionCountsEqual(currentCounts, DEFAULT_SELECTION_COUNTS)
+    setSelectionCounts((currentCounts) =>
+      areSelectionCountsEqual(currentCounts, DEFAULT_SELECTION_COUNTS)
         ? currentCounts
-        : DEFAULT_SELECTION_COUNTS;
-    });
+        : DEFAULT_SELECTION_COUNTS
+    );
   };
 
   const closeMenuAtCurrentPosition = () => {
@@ -171,7 +173,7 @@ function TableCellActionMenuContainer({
   }, []);
 
   const onMenuClickOutside = useEffectEvent((event: MouseEvent) => {
-    const target = event.target;
+    const { target } = event;
     if (!(target && isDOMNode(target))) {
       return;
     }
@@ -273,11 +275,13 @@ export function TableBehaviorPlugin() {
   const isEditable = useLexicalEditable();
   const [anchorElem, setAnchorElem] = useState<HTMLElement | null>(null);
 
-  useEffect(() => {
-    return editor.registerRootListener((rootElement) => {
-      setAnchorElem(rootElement?.parentElement ?? null);
-    });
-  }, [editor]);
+  useEffect(
+    () =>
+      editor.registerRootListener((rootElement) => {
+        setAnchorElem(rootElement?.parentElement ?? null);
+      }),
+    [editor]
+  );
 
   return (
     <>

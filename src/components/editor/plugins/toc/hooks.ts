@@ -2,8 +2,10 @@
 
 import type { TableOfContentsEntry } from "@lexical/react/LexicalTableOfContentsPlugin";
 import { mergeRegister } from "@lexical/utils";
-import { $getNodeByKey, type LexicalEditor, type NodeKey } from "lexical";
+import { $getNodeByKey } from "lexical";
+import type { LexicalEditor, NodeKey } from "lexical";
 import { useEffect, useEffectEvent, useReducer, useRef } from "react";
+
 import { OBSERVER_ROOT_MARGIN } from "./constants";
 import type { TocState } from "./types";
 import {
@@ -19,16 +21,19 @@ type TocAction =
 
 const tocReducer = (state: TocState, action: TocAction): TocState => {
   switch (action.type) {
-    case "set_active":
+    case "set_active": {
       return state.activeKey === action.payload
         ? state
         : { ...state, activeKey: action.payload };
-    case "set_selected":
+    }
+    case "set_selected": {
       return state.selectedHeadingKey === action.payload
         ? state
         : { ...state, selectedHeadingKey: action.payload };
-    default:
+    }
+    default: {
       return state;
+    }
   }
 };
 
@@ -78,7 +83,7 @@ export function useActiveHeading(
 
   // Find fixed/sticky headers once and cache them
   const updateStickyHeaders = () => {
-    const headers = Array.from(document.querySelectorAll("header"));
+    const headers = [...document.querySelectorAll("header")];
     const sticky: HTMLElement[] = [];
     for (const header of headers) {
       if (header instanceof HTMLElement) {
@@ -136,30 +141,32 @@ export function useActiveHeading(
       updateCachedOffset();
 
       dispatch({
-        type: "set_active",
         payload: resolveActiveHeadingKey(entriesRef.current, editor, {
           currentActiveKey: stateRef.current.activeKey,
+          offset: cachedOffset.current,
           scrollDirection: scrollDirection.current,
           scrollParent,
-          offset: cachedOffset.current,
         }),
+        type: "set_active",
       });
     });
   });
 
   // Handle selected heading (cursor selection)
-  useEffect(() => {
-    return mergeRegister(
-      editor.registerUpdateListener(({ editorState }) => {
-        editorState.read(() => {
-          dispatch({
-            type: "set_selected",
-            payload: resolveSelectedHeadingKey(),
+  useEffect(
+    () =>
+      mergeRegister(
+        editor.registerUpdateListener(({ editorState }) => {
+          editorState.read(() => {
+            dispatch({
+              payload: resolveSelectedHeadingKey(),
+              type: "set_selected",
+            });
           });
-        });
-      })
-    );
-  }, [editor]);
+        })
+      ),
+    [editor]
+  );
 
   // Listen to keys of entries. Re-setup observers only when the keys list changes.
   const keysStr = entries.map(([key]) => key).join(",");
@@ -224,8 +231,8 @@ export function useActiveHeading(
 
     // Instantly update active heading highlight in the UI for premium UX
     isProgrammaticScrolling.current = true;
-    dispatch({ type: "set_active", payload: key });
-    dispatch({ type: "set_selected", payload: key });
+    dispatch({ payload: key, type: "set_active" });
+    dispatch({ payload: key, type: "set_selected" });
 
     // Focus editor and place cursor
     editor.update(
@@ -287,7 +294,7 @@ export function useActiveHeading(
 
   return {
     activeKey: state.activeKey,
-    selectedKey: state.selectedHeadingKey,
     handleHeadingClick,
+    selectedKey: state.selectedHeadingKey,
   };
 }

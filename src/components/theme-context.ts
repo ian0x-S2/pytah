@@ -37,12 +37,12 @@ export function readStoredTheme(): Theme {
 
 export function disableTransitions(): () => void {
   const css = document.createElement("style");
-  css.appendChild(
+  css.append(
     document.createTextNode(
       "*,*::before,*::after{-webkit-transition:none!important;-moz-transition:none!important;-o-transition:none!important;-ms-transition:none!important;transition:none!important;-webkit-animation-play-state:paused!important;animation-play-state:paused!important}"
     )
   );
-  document.head.appendChild(css);
+  document.head.append(css);
 
   let removed = false;
 
@@ -88,11 +88,7 @@ export function applyThemeToDOM(resolved: "light" | "dark"): void {
 
   const restoreTransitions = disableTransitions();
 
-  if (shouldBeDark) {
-    root.classList.add("dark");
-  } else {
-    root.classList.remove("dark");
-  }
+  root.classList.toggle("dark", shouldBeDark);
 
   restoreTransitions();
 }

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+
 import { Table, TableCell, TableRow } from "./primitives";
 
 interface ThreeColumnRow {

@@ -1,13 +1,13 @@
 import { useEffect, useLayoutEffect, useState } from "react";
+
 import {
   applyThemeToDOM,
   getSystemTheme,
   readStoredTheme,
   STORAGE_KEY,
-  type Theme,
   ThemeContext,
-  type ThemeProviderState,
 } from "./theme-context";
+import type { Theme, ThemeProviderState } from "./theme-context";
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(readStoredTheme);

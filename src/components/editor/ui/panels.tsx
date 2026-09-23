@@ -1,8 +1,10 @@
 "use client";
 
 import { DownloadIcon, FileCode2Icon, FileTextIcon } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+
 import type { EditorSnapshot } from "../core/types";
 import { OutputPanel } from "./chrome";
 
@@ -23,7 +25,7 @@ export function EditorActionBar({
 }: EditorActionBarProps) {
   return (
     <div
-      className={cn("border-border border-b bg-muted/20 px-4 py-3", className)}
+      className={cn("border-b border-border bg-muted/20 px-4 py-3", className)}
     >
       <div className="flex flex-wrap items-center gap-2">
         <Button

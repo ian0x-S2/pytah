@@ -4,7 +4,9 @@ import type { TableOfContentsEntry } from "@lexical/react/LexicalTableOfContents
 import type { LexicalEditor, NodeKey } from "lexical";
 import { AlignLeftIcon } from "lucide-react";
 import { useRef, useState } from "react";
+
 import { cn } from "@/lib/utils";
+
 import { useActiveHeading } from "./hooks";
 import { EditorTableOfContentsPlugin } from "./plugin";
 
@@ -89,11 +91,11 @@ function EditorTocPopoverCard({
 }) {
   if (entries.length === 0) {
     return (
-      <div className="fade-in-0 zoom-in-95 absolute top-0 right-0 z-50 flex min-w-[180px] animate-in flex-col items-center justify-center gap-1.5 rounded-lg border border-border/50 bg-popover/95 px-4 py-5 text-center shadow-2xl backdrop-blur-md duration-150">
+      <div className="absolute top-0 right-0 z-50 flex min-w-[180px] animate-in flex-col items-center justify-center gap-1.5 rounded-lg border border-border/50 bg-popover/95 px-4 py-5 text-center shadow-2xl backdrop-blur-md duration-150 fade-in-0 zoom-in-95">
         <div className="flex size-6 items-center justify-center rounded-md bg-muted/20 text-muted-foreground/60">
           <AlignLeftIcon className="size-3.5" />
         </div>
-        <p className="font-medium text-muted-foreground text-xs">
+        <p className="text-xs font-medium text-muted-foreground">
           No outline available
         </p>
       </div>
@@ -103,7 +105,7 @@ function EditorTocPopoverCard({
   return (
     <nav
       aria-label="Table of contents popover"
-      className="fade-in-0 zoom-in-95 scrollbar-hidden relative top-0 right-0 z-50 max-h-[55vh] min-w-[200px] max-w-[260px] animate-in overflow-y-auto rounded-lg border border-border/50 bg-popover/95 p-2 shadow-2xl backdrop-blur-md duration-150"
+      className="scrollbar-hidden relative top-0 right-0 z-50 max-h-[55vh] max-w-[260px] min-w-[200px] animate-in overflow-y-auto rounded-lg border border-border/50 bg-popover/95 p-2 shadow-2xl backdrop-blur-md duration-150 fade-in-0 zoom-in-95"
     >
       <ul className="flex flex-col">
         {entries.map(([key, text, tag]) => {
@@ -116,7 +118,7 @@ function EditorTocPopoverCard({
               <button
                 aria-current={isActive ? "location" : undefined}
                 className={cn(
-                  "relative flex w-full cursor-pointer select-none items-center gap-2 rounded-md px-2 py-1 text-left text-xs outline-none transition-colors duration-100 ease-linear",
+                  "relative flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1 text-left text-xs transition-colors duration-100 ease-linear outline-none select-none",
                   indentClass,
                   isActive
                     ? "bg-primary/10 font-medium text-primary"
@@ -166,7 +168,7 @@ function EditorTableOfContentsInner({
     <aside
       aria-label="Table of contents outline"
       className={cn(
-        "group relative flex select-none flex-col items-end",
+        "group relative flex flex-col items-end select-none",
         className
       )}
       onMouseEnter={handleMouseEnter}

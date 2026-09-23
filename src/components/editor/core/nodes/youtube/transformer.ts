@@ -1,8 +1,9 @@
 import type { ElementTransformer } from "@lexical/markdown";
+
 import { parseYouTubeUrl } from "../../../plugins/youtube/utils";
 import { $createYouTubeNode, $isYouTubeNode, YouTubeNode } from "./node";
 
-const YOUTUBE_URL_REGEXP = /^https?:\/\/\S+$/;
+const YOUTUBE_URL_REGEXP = /^https?:\/\/\S+$/u;
 
 export const YOUTUBE_MARKDOWN_TRANSFORMER: ElementTransformer = {
   dependencies: [YouTubeNode],

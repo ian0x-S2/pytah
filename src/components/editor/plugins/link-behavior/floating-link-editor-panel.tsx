@@ -6,10 +6,12 @@ import {
   Trash2Icon,
   XIcon,
 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+
 import {
   clearToolbarLink,
   submitToolbarLink,
@@ -42,7 +44,7 @@ export function FloatingLinkEditorPanel({
       <div
         className={cn(
           "flex min-w-72 items-center gap-2 rounded-lg bg-popover p-2 shadow-md ring-1 ring-foreground/10",
-          "fade-in-0 zoom-in-95 animate-in duration-100"
+          "animate-in duration-100 fade-in-0 zoom-in-95"
         )}
       >
         <Input
@@ -93,11 +95,11 @@ export function FloatingLinkEditorPanel({
     <div
       className={cn(
         "flex min-w-72 items-center gap-2 rounded-lg bg-popover p-2 shadow-md ring-1 ring-foreground/10",
-        "fade-in-0 zoom-in-95 animate-in duration-100"
+        "animate-in duration-100 fade-in-0 zoom-in-95"
       )}
     >
       <a
-        className="max-w-64 truncate text-primary text-xs underline underline-offset-4"
+        className="max-w-64 truncate text-xs text-primary underline underline-offset-4"
         href={sanitizeEditorLinkUrl(linkUrl)}
         rel="noopener noreferrer"
         target="_blank"

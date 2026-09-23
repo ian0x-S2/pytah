@@ -27,26 +27,23 @@ import draggableBlockPluginSource from "@/components/editor/plugins/draggable-bl
 
 ## plugin.tsx
 
-`DraggableBlockPlugin` wraps Lexical's experimental
-`DraggableBlockPlugin_EXPERIMENTAL`. It listens for the root element via
-`registerRootListener` to obtain the `anchorElem` (the root's parent container)
-and only renders when the editor is editable. The grip handle is a
-`GripVerticalIcon` that appears on hover, and a thin primary-coloured line
-shows the drop target position.
+`DraggableBlockPlugin` wraps Lexical's experimental `DraggableBlockPlugin_EXPERIMENTAL`. It listens for the root element via `registerRootListener` to obtain the `anchorElem` (the root's parent container) and only renders when the editor is editable. The grip handle is a `GripVerticalIcon` that appears on hover, and a thin primary-coloured line shows the drop target position.
 
-<CodeBlock label="src/components/editor/plugins/draggable-block/plugin.tsx" language="tsx">
+<CodeBlock
+  label="src/components/editor/plugins/draggable-block/plugin.tsx"
+  language="tsx"
+>
   {draggableBlockPluginSource}
 </CodeBlock>
 
 ## Registration
 
-Draggable blocks ship as the `editor-draggable-blocks` registry item. Install
-it and contribute the ready-made descriptor via `extraFeatures`:
+Draggable blocks ship as the `editor-draggable-blocks` registry item. Install it and contribute the ready-made descriptor via `extraFeatures`:
 
 ```tsx
 import { draggableBlocksFeature } from "@/components/editor/plugins/draggable-block/feature";
 
-<Editor extraFeatures={[draggableBlocksFeature]} />
+<Editor extraFeatures={[draggableBlocksFeature]} />;
 ```
 
 <Callout title="Editor-only" variant="tip">
@@ -57,6 +54,6 @@ import { draggableBlocksFeature } from "@/components/editor/plugins/draggable-bl
 <Callout title="Anchor element">
   The plugin needs the root element's *parent* as the anchor so the floating
   grip can be positioned outside the scrollable content area.
-  `registerRootListener` fires once on mount (and again if the root changes),
-  so `anchorElem` is always up to date.
+  `registerRootListener` fires once on mount (and again if the root changes), so
+  `anchorElem` is always up to date.
 </Callout>

@@ -7,7 +7,8 @@ import {
   $insertTableRowAtSelection,
   $isTableSelection,
 } from "@lexical/table";
-import { $getSelection, $isRangeSelection, type LexicalEditor } from "lexical";
+import { $getSelection, $isRangeSelection } from "lexical";
+import type { LexicalEditor } from "lexical";
 
 export const insertTableRows = (
   editor: LexicalEditor,

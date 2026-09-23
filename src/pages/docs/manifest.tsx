@@ -8,7 +8,6 @@ import {
   ImageIcon,
   LayoutIcon,
   LinkIcon,
-  type LucideIcon,
   PaletteIcon,
   PencilRulerIcon,
   PlugIcon,
@@ -18,6 +17,7 @@ import {
   VideoIcon,
   WrenchIcon,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import type { ComponentType } from "react";
 
 const ICON_BY_NAME = {
@@ -70,8 +70,8 @@ interface DocsMdxModule {
   frontmatter: DocsFrontmatter;
 }
 
-const RELATIVE_PATH_REGEX = /^\.\//;
-const MDX_EXTENSION_REGEX = /\.mdx$/;
+const RELATIVE_PATH_REGEX = /^\.\//u;
+const MDX_EXTENSION_REGEX = /\.mdx$/u;
 
 const mdxModules = import.meta.glob<DocsMdxModule>("./**/*.mdx", {
   eager: true,
@@ -81,7 +81,7 @@ const createDocsPage = (
   path: string,
   mod: DocsMdxModule
 ): DocsPageDefinition => {
-  const frontmatter = mod.frontmatter;
+  const { frontmatter } = mod;
   const slug = path
     .replace(RELATIVE_PATH_REGEX, "")
     .replace(MDX_EXTENSION_REGEX, "");
@@ -104,7 +104,7 @@ const createDocsPage = (
 
 export const DOCS_PAGES: DocsPageDefinition[] = Object.entries(mdxModules)
   .map(([path, mod]) => createDocsPage(path, mod))
-  .sort((a, b) => a.order - b.order);
+  .toSorted((a, b) => a.order - b.order);
 
 export const DOCS_PAGE_GROUPS: DocsPageGroup[] = [
   {
@@ -128,10 +128,7 @@ export const DOCS_PAGE_BY_SLUG = Object.fromEntries(
   DOCS_PAGES.map((page) => [page.slug, page])
 ) as Record<string, DocsPageDefinition>;
 
-export const getDocsPageByPath = (path: string) => {
-  return (
-    DOCS_PAGES.find(
-      (page) => path === page.href || path.startsWith(`${page.href}/`)
-    ) ?? null
-  );
-};
+export const getDocsPageByPath = (path: string) =>
+  DOCS_PAGES.find(
+    (page) => path === page.href || path.startsWith(`${page.href}/`)
+  ) ?? null;

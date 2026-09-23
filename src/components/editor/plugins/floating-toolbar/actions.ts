@@ -4,12 +4,9 @@ import {
   TOGGLE_LINK_COMMAND,
 } from "@lexical/link";
 import { $patchStyleText } from "@lexical/selection";
-import {
-  $getSelection,
-  $isRangeSelection,
-  FORMAT_TEXT_COMMAND,
-  type LexicalEditor,
-} from "lexical";
+import { $getSelection, $isRangeSelection, FORMAT_TEXT_COMMAND } from "lexical";
+import type { LexicalEditor } from "lexical";
+
 import {
   isValidEditorLinkUrl,
   normalizeEditorLinkUrl,

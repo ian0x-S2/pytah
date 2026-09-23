@@ -5,6 +5,7 @@ import { ListItemNode, ListNode } from "@lexical/list";
 import type { InitialConfigType } from "@lexical/react/LexicalComposer";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
+
 import type { LexicalNodeList } from "./features";
 import { editorTheme } from "./theme";
 

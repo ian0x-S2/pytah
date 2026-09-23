@@ -9,6 +9,7 @@ export const EMPTY_TOOLBAR_POSITION: FloatingToolbarPosition = {
 };
 
 export const DEFAULT_FORMAT_STATE: FloatingToolbarFormatState = {
+  bgColor: "",
   isBold: false,
   isCode: false,
   isHighlight: false,
@@ -18,6 +19,5 @@ export const DEFAULT_FORMAT_STATE: FloatingToolbarFormatState = {
   isSubscript: false,
   isSuperscript: false,
   isUnderline: false,
-  bgColor: "",
   textColor: "",
 };

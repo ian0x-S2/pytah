@@ -1,4 +1,5 @@
 import type { LexicalEditor } from "lexical";
+
 import { HTML_EXAMPLE, MARKDOWN_EXAMPLE } from "./constants";
 import {
   createEmptyEditorState,

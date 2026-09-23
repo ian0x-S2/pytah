@@ -37,7 +37,7 @@ Installed features are composed through descriptors:
 ```tsx
 import { imageFeature } from "@/components/editor/plugins/image/feature";
 
-<Editor extraFeatures={[imageFeature]} />
+<Editor extraFeatures={[imageFeature]} />;
 ```
 
 Full walkthrough in [`AGENT_GUIDE.md`](./AGENT_GUIDE.md).

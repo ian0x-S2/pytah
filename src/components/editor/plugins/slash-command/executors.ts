@@ -1,15 +1,9 @@
 import { $createCodeNode } from "@lexical/code";
 import { $createHorizontalRuleNode } from "@lexical/extension";
-import {
-  $createListItemNode,
-  $createListNode,
-  type ListType,
-} from "@lexical/list";
-import {
-  $createHeadingNode,
-  $createQuoteNode,
-  type HeadingTagType,
-} from "@lexical/rich-text";
+import { $createListItemNode, $createListNode } from "@lexical/list";
+import type { ListType } from "@lexical/list";
+import { $createHeadingNode, $createQuoteNode } from "@lexical/rich-text";
+import type { HeadingTagType } from "@lexical/rich-text";
 import {
   $createTableCellNode,
   $createTableNode,
@@ -19,8 +13,9 @@ import {
   $createParagraphNode,
   $createTextNode,
   $isParagraphNode,
-  type ElementNode,
 } from "lexical";
+import type { ElementNode } from "lexical";
+
 import type { FeatureSlashCommand, SlashCommandId } from "./types";
 import { replaceCurrentBlock } from "./utils";
 

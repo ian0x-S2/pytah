@@ -2,6 +2,7 @@ import type {
   MultilineElementTransformer,
   TextMatchTransformer,
 } from "@lexical/markdown";
+
 import { $createMathNode, $isMathNode, MathNode } from "./node";
 
 export const MATH_INLINE_MARKDOWN_TRANSFORMER: TextMatchTransformer = {
@@ -12,10 +13,10 @@ export const MATH_INLINE_MARKDOWN_TRANSFORMER: TextMatchTransformer = {
     }
     return `$${node.getEquation()}$`;
   },
-  importRegExp: /\$([^$]+)\$/,
-  regExp: /\$([^$]+)\$/,
+  importRegExp: /\$(?<equation>[^$]+)\$/u,
+  regExp: /\$(?<equation>[^$]+)\$/u,
   replace: (node, match) => {
-    const [, equation] = match;
+    const equation = match.groups?.equation;
     if (!equation) {
       return;
     }
@@ -71,9 +72,9 @@ export const MATH_BLOCK_MARKDOWN_TRANSFORMER: MultilineElementTransformer = {
   },
   regExpEnd: {
     optional: true,
-    regExp: /^\$\$\s*$/,
+    regExp: /^\$\$\s*$/u,
   },
-  regExpStart: /^\$\$\s*$/,
+  regExpStart: /^\$\$\s*$/u,
   replace: () => false,
   type: "multiline-element",
 };

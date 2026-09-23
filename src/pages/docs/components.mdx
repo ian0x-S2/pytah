@@ -10,13 +10,9 @@ badge: "Core Doc"
 
 ## Overview
 
-The editor depends on **9 ShadCN UI primitives** from `src/components/ui/`.
-These are standard shadcn/ui components using the `base-nova` style (Base UI
-headless primitives instead of Radix).
+The editor depends on **9 ShadCN UI primitives** from `src/components/ui/`. These are standard shadcn/ui components using the `base-nova` style (Base UI headless primitives instead of Radix).
 
-All components follow the same patterns: `data-slot` attributes for CSS
-targeting, `cn()` for class merging, ShadCN design tokens for all colors, and
-React 19 ref-as-prop (no `forwardRef`).
+All components follow the same patterns: `data-slot` attributes for CSS targeting, `cn()` for class merging, ShadCN design tokens for all colors, and React 19 ref-as-prop (no `forwardRef`).
 
 ## Component Map
 
@@ -34,36 +30,24 @@ React 19 ref-as-prop (no `forwardRef`).
 
 ## Variant System
 
-The `Button` component has the richest variant matrix: 6 visual variants
-(`default`, `secondary`, `outline`, `ghost`, `link`, `destructive`) and 8
-size variants including icon-specific sizes (`icon-xs`, `icon-sm`, `icon`,
-`icon-lg`).
+The `Button` component has the richest variant matrix: 6 visual variants (`default`, `secondary`, `outline`, `ghost`, `link`, `destructive`) and 8 size variants including icon-specific sizes (`icon-xs`, `icon-sm`, `icon`, `icon-lg`).
 
-The `Toggle` has 2 variants (`default`, `outline`) and 3 sizes. All variants
-are implemented with `class-variance-authority` (CVA).
+The `Toggle` has 2 variants (`default`, `outline`) and 3 sizes. All variants are implemented with `class-variance-authority` (CVA).
 
 ## Consistent Design Patterns
 
 ### Focus Ring
 
-All interactive components use the same focus pattern:
-`focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50`.
-This creates a consistent ring using the `--ring` design token.
+All interactive components use the same focus pattern: `focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50`. This creates a consistent ring using the `--ring` design token.
 
 ### Disabled State
 
-The standard disabled pattern is
-`disabled:pointer-events-none disabled:opacity-50`. Some components add
-`disabled:bg-input/50` for input-like elements.
+The standard disabled pattern is `disabled:pointer-events-none disabled:opacity-50`. Some components add `disabled:bg-input/50` for input-like elements.
 
 ### Error/Invalid State
 
-Input components support
-`aria-invalid:border-destructive aria-invalid:ring-3` for accessible error
-indication driven by the `--destructive` token.
+Input components support `aria-invalid:border-destructive aria-invalid:ring-3` for accessible error indication driven by the `--destructive` token.
 
 ### Dark Mode
 
-Dark mode is class-based via a `.dark` ancestor. Some components apply
-`dark:` overrides for fine-tuned contrast (e.g., `dark:bg-input/30`,
-`dark:hover:bg-muted/50`).
+Dark mode is class-based via a `.dark` ancestor. Some components apply `dark:` overrides for fine-tuned contrast (e.g., `dark:bg-input/30`, `dark:hover:bg-muted/50`).

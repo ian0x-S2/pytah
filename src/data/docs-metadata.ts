@@ -1,4 +1,5 @@
 import type { Transformer } from "@lexical/markdown";
+
 import { IMAGE_MARKDOWN_TRANSFORMER } from "@/components/editor/core/nodes/image/transformer";
 import {
   MATH_BLOCK_MARKDOWN_TRANSFORMER,
@@ -67,36 +68,36 @@ export interface DocsTransformerRow {
 }
 
 const TRANSFORMER_LABELS: Record<string, { markdown: string; name: string }> = {
-  "^(#{1,6})\\s": { markdown: "# ", name: "Heading" },
-  "^>\\s": { markdown: "> ", name: "Quote" },
-  "^(\\s*)[-*+]\\s": { markdown: "- ", name: "Bullet List" },
-  "^(\\d{1,})\\.\\s": { markdown: "1. ", name: "Numbered List" },
-  "^---\\s?$": { markdown: "---", name: "Horizontal Rule" },
-  "^(\\s*)(?:[-*+]\\s)?\\s?(\\[(\\s|x)?\\])\\s": {
-    markdown: "- [ ] ",
-    name: "Checklist",
-  },
   "!\\[([^\\]]*)\\]\\(([^)\\s]+)\\)$": {
     markdown: "![alt](url)",
     name: "Image",
   },
-  "^https?:\\/\\/\\S+$": { markdown: "https://…", name: "YouTube URL" },
   "\\$([^$]+)\\$": { markdown: "$math$", name: "Inline Math" },
+  "^(#{1,6})\\s": { markdown: "# ", name: "Heading" },
+  "^(\\d{1,})\\.\\s": { markdown: "1. ", name: "Numbered List" },
+  "^(\\s*)(?:[-*+]\\s)?\\s?(\\[(\\s|x)?\\])\\s": {
+    markdown: "- [ ] ",
+    name: "Checklist",
+  },
+  "^(\\s*)[-*+]\\s": { markdown: "- ", name: "Bullet List" },
+  "^---\\s?$": { markdown: "---", name: "Horizontal Rule" },
+  "^>\\s": { markdown: "> ", name: "Quote" },
+  "^https?:\\/\\/\\S+$": { markdown: "https://…", name: "YouTube URL" },
 };
 
 const TRANSFORMER_TAG_LABELS: Record<
   string,
   { markdown: string; name: string }
 > = {
-  "**": { markdown: "**text**", name: "Bold" },
   "*": { markdown: "*text*", name: "Italic" },
+  "**": { markdown: "**text**", name: "Bold" },
   "***": { markdown: "***text***", name: "Bold Italic" },
-  ___: { markdown: "___text___", name: "Bold Italic" },
-  __: { markdown: "__text__", name: "Bold" },
-  _: { markdown: "_text_", name: "Italic" },
-  "~~": { markdown: "~~text~~", name: "Strikethrough" },
   "==": { markdown: "==text==", name: "Highlight" },
+  _: { markdown: "_text_", name: "Italic" },
+  __: { markdown: "__text__", name: "Bold" },
+  ___: { markdown: "___text___", name: "Bold Italic" },
   "`": { markdown: "`code`", name: "Inline Code" },
+  "~~": { markdown: "~~text~~", name: "Strikethrough" },
 };
 
 const describeTransformer = (transformer: Transformer): DocsTransformerRow => {

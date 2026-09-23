@@ -4,6 +4,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { mergeRegister } from "@lexical/utils";
 import { COMMAND_PRIORITY_LOW, SELECTION_CHANGE_COMMAND } from "lexical";
 import { useEffect, useState } from "react";
+
 import type { BlockTypeValue } from "../block-type-toolbar/types";
 import { getBlockTypeFromSelection } from "../block-type-toolbar/utils";
 import { DEFAULT_FORMAT_STATE } from "../floating-toolbar/constants";

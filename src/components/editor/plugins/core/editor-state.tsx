@@ -5,10 +5,9 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import type { EditorState, LexicalEditor } from "lexical";
 import { HISTORY_MERGE_TAG } from "lexical";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
-import {
-  DEFAULT_EDITOR_SNAPSHOT_OPTIONS,
-  type ResolvedEditorSnapshotOptions,
-} from "../../core/composition";
+
+import { DEFAULT_EDITOR_SNAPSHOT_OPTIONS } from "../../core/composition";
+import type { ResolvedEditorSnapshotOptions } from "../../core/composition";
 import { EDITOR_SEED_UPDATE_TAG } from "../../core/constants";
 import type { EditorSnapshot } from "../../core/types";
 import {
@@ -175,9 +174,7 @@ export function EditorStatePlugin({
     }
   });
 
-  useEffect(() => {
-    return editor.registerUpdateListener(handleUpdate);
-  }, [editor]);
+  useEffect(() => editor.registerUpdateListener(handleUpdate), [editor]);
 
   return null;
 }

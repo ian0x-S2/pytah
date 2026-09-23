@@ -14,6 +14,7 @@ import type {
 } from "lexical";
 import { DecoratorNode } from "lexical";
 import type { JSX } from "react";
+
 import { MathComponent } from "../../../plugins/math/component";
 
 export type SerializedMathNode = Spread<
@@ -35,12 +36,12 @@ const convertMathElement = (domNode: Node): DOMConversionOutput | null => {
     return null;
   }
 
-  const equation = domNode.getAttribute("data-equation");
+  const equation = domNode.dataset.equation;
   if (equation === null) {
     return null;
   }
 
-  const inline = domNode.getAttribute("data-inline") !== "false";
+  const inline = domNode.dataset.inline !== "false";
 
   return {
     node: $createMathNode({
@@ -73,7 +74,7 @@ export class MathNode extends DecoratorNode<JSX.Element> {
       div: (domNode: Node) => {
         if (
           domNode instanceof HTMLElement &&
-          domNode.hasAttribute("data-equation")
+          Object.hasOwn(domNode.dataset, "equation")
         ) {
           return {
             conversion: convertMathElement,
@@ -85,7 +86,7 @@ export class MathNode extends DecoratorNode<JSX.Element> {
       span: (domNode: Node) => {
         if (
           domNode instanceof HTMLElement &&
-          domNode.hasAttribute("data-equation")
+          Object.hasOwn(domNode.dataset, "equation")
         ) {
           return {
             conversion: convertMathElement,
@@ -113,9 +114,9 @@ export class MathNode extends DecoratorNode<JSX.Element> {
 
   exportDOM(): DOMExportOutput {
     const element = document.createElement(this.__inline ? "span" : "div");
-    element.setAttribute("data-lexical-math", "true");
-    element.setAttribute("data-equation", this.__equation);
-    element.setAttribute("data-inline", this.__inline ? "true" : "false");
+    element.dataset.lexicalMath = "true";
+    element.dataset.equation = this.__equation;
+    element.dataset.inline = this.__inline ? "true" : "false";
     element.textContent = this.__equation;
     return { element };
   }

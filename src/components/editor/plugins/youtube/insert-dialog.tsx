@@ -8,6 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+
 import { parseYouTubeUrl } from "../youtube/utils";
 
 interface InsertYouTubeDialogProps {
@@ -53,7 +54,7 @@ export function InsertYouTubeDialog({
         >
           <div className="grid gap-2">
             <label
-              className="font-medium text-sm"
+              className="text-sm font-medium"
               htmlFor={`${idPrefix}-youtube-url`}
             >
               YouTube URL
@@ -70,7 +71,7 @@ export function InsertYouTubeDialog({
               type="url"
               value={youTubeUrl}
             />
-            <p className="text-muted-foreground text-xs">
+            <p className="text-xs text-muted-foreground">
               Supports `youtube.com`, `youtu.be`, and embed links.
             </p>
           </div>

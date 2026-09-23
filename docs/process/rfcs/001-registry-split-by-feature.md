@@ -16,7 +16,7 @@ Consumers either accept the full dependency graph or hand-delete files from thei
 ## Ownership
 
 - **Packaging:** `scripts/generate-registry.mjs` — already derives the registry item from the source tree; emitting multiple items extends its existing job.
-- **Composition:** `core/features.tsx` — remains the source of truth for what *core* ships; removable content features move out of it.
+- **Composition:** `core/features.tsx` — remains the source of truth for what _core_ ships; removable content features move out of it.
 - **Feature layer:** each `plugins/<feature>/feature.ts` — a feature folder already owns its plugin and its nodes under `core/nodes/<feature>/`, so the descriptor that binds them belongs in the same folder.
 
 ## Product Shape
@@ -27,13 +27,13 @@ Consumers either accept the full dependency graph or hand-delete files from thei
 
 ```tsx
 // before (monolith)
-<Editor />
+<Editor />;
 
 // after (opt-in composition)
 import { imageFeature } from "@/components/editor/plugins/image/feature";
 import { tableFeature } from "@/components/editor/plugins/table-behavior/feature";
 
-<Editor extraFeatures={[imageFeature, tableFeature]} />
+<Editor extraFeatures={[imageFeature, tableFeature]} />;
 ```
 
 - `chrome`, `slots`, `pluginSlots`, `extraNodes` are untouched.
@@ -67,16 +67,11 @@ Registry items produced by the generator:
 | `editor-toc` | `plugins/toc/` incl. `EditorWithToc` wrapper | — |
 | `editor-draggable-blocks` | `plugins/draggable-block/` | — |
 | `editor-seed-content` | `plugins/core/seed-content*` | — |
-| `editor-full` | *(meta item, no files)* | resolves all feature items |
+| `editor-full` | _(meta item, no files)_ | resolves all feature items |
 
-Also moved out of the default stack per review: **seed content**,
-**draggable blocks** (self-gates on editability) and the **TOC sidebar**
-(`tocFeature` descriptor or the `EditorWithToc` slots-based composition).
-Core behavior flags are now exactly: `history`, `markdownShortcuts`,
-`tabIndentation`, `floatingToolbar`, `floatingLinkEditor`, `focusOnMount`,
-`slashCommand`.
+Also moved out of the default stack per review: **seed content**, **draggable blocks** (self-gates on editability) and the **TOC sidebar** (`tocFeature` descriptor or the `EditorWithToc` slots-based composition). Core behavior flags are now exactly: `history`, `markdownShortcuts`, `tabIndentation`, `floatingToolbar`, `floatingLinkEditor`, `focusOnMount`, `slashCommand`.
 
-**Paste-fidelity exception:** the base `TableNode` registration, `@lexical/table`, and the table markdown transformer stay in core so HTML/markdown paste of tables never drops content for consumers who skipped the *behavior* item. For other opted-out features, paste fidelity degrades by design (an `<img>` pastes as text/skipped when `editor-image` is absent) — this is documented, intentional behavior.
+**Paste-fidelity exception:** the base `TableNode` registration, `@lexical/table`, and the table markdown transformer stay in core so HTML/markdown paste of tables never drops content for consumers who skipped the _behavior_ item. For other opted-out features, paste fidelity degrades by design (an `<img>` pastes as text/skipped when `editor-image` is absent) — this is documented, intentional behavior.
 
 ## Command and Composition Impact
 
@@ -96,12 +91,7 @@ Core behavior flags are now exactly: `history`, `markdownShortcuts`,
 
 ## Command Execution Ownership
 
-Feature slash contributions (`{ command, run }`) are registered at mount time
-into a runtime runner registry (`plugins/slash-command/executors.ts`). Core
-surfaces — the slash menu and both toolbars — execute through that registry,
-so no core file imports a feature module statically. Dialog flows moved into
-their features: image/youtube/layout plugins treat incomplete insert-command
-payloads as "open my own dialog".
+Feature slash contributions (`{ command, run }`) are registered at mount time into a runtime runner registry (`plugins/slash-command/executors.ts`). Core surfaces — the slash menu and both toolbars — execute through that registry, so no core file imports a feature module statically. Dialog flows moved into their features: image/youtube/layout plugins treat incomplete insert-command payloads as "open my own dialog".
 
 ## Validation
 

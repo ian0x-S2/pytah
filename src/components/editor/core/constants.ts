@@ -8,7 +8,7 @@ import {
 export const DEFAULT_PLACEHOLDER =
   "Type / for commands, or just start writing...";
 
-export const WORD_SEPARATOR_PATTERN = /\s+/;
+export const WORD_SEPARATOR_PATTERN = /\s+/u;
 
 /**
  * Update tag applied to the programmatic seed update that loads
@@ -20,24 +20,24 @@ export const EDITOR_SEED_UPDATE_TAG = "pytah-seed";
 
 export const FEATURE_ITEMS = [
   {
+    description: "Quick insert menu inspired by Notion.",
     icon: SparklesIcon,
     label: "Slash commands",
-    description: "Quick insert menu inspired by Notion.",
   },
   {
+    description: "Type #, -, > and more to format while writing.",
     icon: KeyboardIcon,
     label: "Markdown shortcuts",
-    description: "Type #, -, > and more to format while writing.",
   },
   {
+    description: "Change block type, alignment and indentation fast.",
     icon: ListTreeIcon,
     label: "Block toolbar",
-    description: "Change block type, alignment and indentation fast.",
   },
   {
+    description: "Always keep HTML, markdown and plain text in sync.",
     icon: FileTextIcon,
     label: "Markdown export",
-    description: "Always keep HTML, markdown and plain text in sync.",
   },
 ] as const;
 

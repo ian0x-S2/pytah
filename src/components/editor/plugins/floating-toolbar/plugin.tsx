@@ -23,10 +23,12 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
+
 import { Separator } from "@/components/ui/separator";
 import { Toggle } from "@/components/ui/toggle";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+
 import { ColorSwatches } from "../../ui/color-swatches";
 import { ToolbarTooltip } from "../../ui/toolbar-tooltip";
 import { LINK_PLACEHOLDER_URL } from "../link-behavior/utils";
@@ -117,48 +119,47 @@ export function FloatingToolbarPlugin() {
     editor.getEditorState().read(() => {
       const toolbarState = readFloatingToolbarState();
 
-      setFormats((currentFormats) => {
-        return areFloatingToolbarFormatsEqual(
-          currentFormats,
-          toolbarState.formats
-        )
+      setFormats((currentFormats) =>
+        areFloatingToolbarFormatsEqual(currentFormats, toolbarState.formats)
           ? currentFormats
-          : toolbarState.formats;
-      });
+          : toolbarState.formats
+      );
 
       if (!isColorPickerOpenRef.current) {
-        setIsVisible((currentIsVisible) => {
-          return currentIsVisible === toolbarState.isVisible
+        setIsVisible((currentIsVisible) =>
+          currentIsVisible === toolbarState.isVisible
             ? currentIsVisible
-            : toolbarState.isVisible;
-        });
-        setPosition((currentPosition) => {
-          return areFloatingToolbarPositionsEqual(
+            : toolbarState.isVisible
+        );
+        setPosition((currentPosition) =>
+          areFloatingToolbarPositionsEqual(
             currentPosition,
             toolbarState.position
           )
             ? currentPosition
-            : toolbarState.position;
-        });
+            : toolbarState.position
+        );
       }
     });
   });
 
-  useEffect(() => {
-    return mergeRegister(
-      editor.registerCommand(
-        SELECTION_CHANGE_COMMAND,
-        () => {
+  useEffect(
+    () =>
+      mergeRegister(
+        editor.registerCommand(
+          SELECTION_CHANGE_COMMAND,
+          () => {
+            updateToolbar();
+            return false;
+          },
+          COMMAND_PRIORITY_LOW
+        ),
+        editor.registerUpdateListener(() => {
           updateToolbar();
-          return false;
-        },
-        COMMAND_PRIORITY_LOW
+        })
       ),
-      editor.registerUpdateListener(() => {
-        updateToolbar();
-      })
-    );
-  }, [editor]);
+    [editor]
+  );
 
   const handleLinkToggle = () => {
     if (formats.isLink) {
@@ -167,7 +168,7 @@ export function FloatingToolbarPlugin() {
     }
 
     editor.dispatchCommand(TOGGLE_LINK_COMMAND, LINK_PLACEHOLDER_URL);
-    editor.dispatchCommand(OPEN_FLOATING_LINK_EDITOR_COMMAND, undefined);
+    editor.dispatchCommand(OPEN_FLOATING_LINK_EDITOR_COMMAND);
   };
 
   const handleColorPickerOpenChange = (open: boolean) => {
@@ -192,7 +193,7 @@ export function FloatingToolbarPlugin() {
         aria-label="Formatting options"
         className={cn(
           "flex items-center gap-0.5 rounded-xl bg-popover p-1.5 shadow-lg ring-1 ring-border",
-          "fade-in-0 zoom-in-95 animate-in duration-100"
+          "animate-in duration-100 fade-in-0 zoom-in-95"
         )}
         role="toolbar"
       >

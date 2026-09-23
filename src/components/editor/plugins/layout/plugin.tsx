@@ -11,6 +11,7 @@ import {
   COMMAND_PRIORITY_HIGH,
 } from "lexical";
 import { useEffect, useState } from "react";
+
 import { INSERT_LAYOUT_COMMAND } from "./commands";
 import { LayoutPresetDialog } from "./preset-dialog";
 import { applyLayoutPreset } from "./utils";
@@ -24,73 +25,77 @@ export function LayoutPlugin() {
   const [editor] = useLexicalComposerContext();
   const [dialogState, setDialogState] = useState(EMPTY_DIALOG_STATE);
 
-  useEffect(() => {
-    return editor.registerCommand(
-      INSERT_LAYOUT_COMMAND,
-      ({ targetNodeKey, templateColumns }) => {
-        if (!templateColumns) {
-          return false;
-        }
-
-        if (targetNodeKey) {
-          const targetNode = $getNodeByKey(targetNodeKey);
-          if (!$isElementNode(targetNode)) {
+  useEffect(
+    () =>
+      editor.registerCommand(
+        INSERT_LAYOUT_COMMAND,
+        ({ targetNodeKey, templateColumns }) => {
+          if (!templateColumns) {
             return false;
           }
 
-          applyLayoutPreset(targetNode, templateColumns);
+          if (targetNodeKey) {
+            const targetNode = $getNodeByKey(targetNodeKey);
+            if (!$isElementNode(targetNode)) {
+              return false;
+            }
+
+            applyLayoutPreset(targetNode, templateColumns);
+            return true;
+          }
+
+          const selection = $getSelection();
+          if (!$isRangeSelection(selection)) {
+            return false;
+          }
+
+          const targetElement = selection.anchor
+            .getNode()
+            .getTopLevelElementOrThrow();
+          applyLayoutPreset(targetElement, templateColumns);
           return true;
-        }
-
-        const selection = $getSelection();
-        if (!$isRangeSelection(selection)) {
-          return false;
-        }
-
-        const targetElement = selection.anchor
-          .getNode()
-          .getTopLevelElementOrThrow();
-        applyLayoutPreset(targetElement, templateColumns);
-        return true;
-      },
-      COMMAND_PRIORITY_EDITOR
-    );
-  }, [editor]);
+        },
+        COMMAND_PRIORITY_EDITOR
+      ),
+    [editor]
+  );
 
   // Incomplete payloads (no template) mean "open the preset picker".
-  useEffect(() => {
-    return editor.registerCommand(
-      INSERT_LAYOUT_COMMAND,
-      (payload) => {
-        if (payload.templateColumns) {
-          return false;
-        }
+  useEffect(
+    () =>
+      editor.registerCommand(
+        INSERT_LAYOUT_COMMAND,
+        (payload) => {
+          if (payload.templateColumns) {
+            return false;
+          }
 
-        let targetNodeKey: string | null = payload.targetNodeKey ?? null;
+          let targetNodeKey: string | null = payload.targetNodeKey ?? null;
 
-        if (!targetNodeKey) {
-          editor.getEditorState().read(() => {
-            const selection = $getSelection();
-            if (!$isRangeSelection(selection)) {
-              return;
-            }
-            const node = selection.anchor.getNode();
-            if ($isTextNode(node)) {
-              targetNodeKey = node.getTopLevelElementOrThrow().getKey();
-            }
+          if (!targetNodeKey) {
+            editor.getEditorState().read(() => {
+              const selection = $getSelection();
+              if (!$isRangeSelection(selection)) {
+                return;
+              }
+              const node = selection.anchor.getNode();
+              if ($isTextNode(node)) {
+                targetNodeKey = node.getTopLevelElementOrThrow().getKey();
+              }
+            });
+          }
+
+          setDialogState({
+            ...EMPTY_DIALOG_STATE,
+            open: true,
+            pendingTargetKey: targetNodeKey,
           });
-        }
-
-        setDialogState({
-          ...EMPTY_DIALOG_STATE,
-          open: true,
-          pendingTargetKey: targetNodeKey,
-        });
-        return true;
-      },
-      COMMAND_PRIORITY_HIGH
-    );
-  }, [editor]);
+          return true;
+        },
+        COMMAND_PRIORITY_HIGH
+      ),
+    [editor]
+  );
 
   const closeDialog = () => {
     setDialogState(EMPTY_DIALOG_STATE);

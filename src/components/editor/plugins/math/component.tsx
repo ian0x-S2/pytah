@@ -17,16 +17,18 @@ import {
   COMMAND_PRIORITY_LOW,
   KEY_BACKSPACE_COMMAND,
   KEY_DELETE_COMMAND,
-  type NodeKey,
 } from "lexical";
+import type { NodeKey } from "lexical";
 import { CheckIcon, Trash2Icon } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+
 import { $isMathNode } from "../../core/nodes/math/node";
 
 interface MathComponentProps {
@@ -35,14 +37,13 @@ interface MathComponentProps {
   nodeKey: NodeKey;
 }
 
-const escapeHtml = (value: string) => {
-  return value
+const escapeHtml = (value: string) =>
+  value
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
-};
 
 export function MathComponent({
   equation,
@@ -81,7 +82,7 @@ export function MathComponent({
         errorColor: "#cc0000",
         throwOnError: false,
       });
-    } catch (_err) {
+    } catch {
       return `<span class="text-destructive">${escapeHtml(equation || "math")}</span>`;
     }
   }, [equation, inline]);
@@ -93,7 +94,7 @@ export function MathComponent({
         errorColor: "#cc0000",
         throwOnError: false,
       });
-    } catch (_err) {
+    } catch {
       return `<span class="text-destructive">${escapeHtml(draftEquation || "math")}</span>`;
     }
   }, [draftEquation, draftInline]);
@@ -239,12 +240,12 @@ export function MathComponent({
             sideOffset={4}
           >
             <div className="flex flex-col gap-2.5">
-              <div className="flex items-center justify-between font-medium text-muted-foreground text-xs">
+              <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
                 <span>Edit TeX Equation</span>
                 <div className="flex items-center gap-1 rounded-md bg-muted/50 p-0.5">
                   <button
                     className={cn(
-                      "rounded px-2 py-0.5 font-medium text-[11px] transition-colors",
+                      "rounded px-2 py-0.5 text-[11px] font-medium transition-colors",
                       draftInline
                         ? "bg-background text-foreground shadow-xs"
                         : "text-muted-foreground hover:text-foreground"
@@ -256,7 +257,7 @@ export function MathComponent({
                   </button>
                   <button
                     className={cn(
-                      "rounded px-2 py-0.5 font-medium text-[11px] transition-colors",
+                      "rounded px-2 py-0.5 text-[11px] font-medium transition-colors",
                       draftInline
                         ? "text-muted-foreground hover:text-foreground"
                         : "bg-background text-foreground shadow-xs"
@@ -271,7 +272,7 @@ export function MathComponent({
 
               <textarea
                 aria-label="TeX equation"
-                className="w-full rounded-md border border-input bg-background px-3 py-1.5 font-mono text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="w-full rounded-md border border-input bg-background px-3 py-1.5 font-mono text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 onChange={(e) => setDraftEquation(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
@@ -295,7 +296,7 @@ export function MathComponent({
 
               <div className="flex items-center justify-between pt-1">
                 <button
-                  className="inline-flex items-center gap-1 rounded px-2 py-1 font-medium text-destructive text-xs transition-colors hover:bg-destructive/10 hover:text-destructive/80"
+                  className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-destructive transition-colors hover:bg-destructive/10 hover:text-destructive/80"
                   onClick={handleDelete}
                   type="button"
                 >
@@ -305,14 +306,14 @@ export function MathComponent({
 
                 <div className="flex items-center gap-1.5">
                   <button
-                    className="rounded px-2.5 py-1 font-medium text-muted-foreground text-xs transition-colors hover:bg-muted hover:text-foreground"
+                    className="rounded px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                     onClick={() => setIsEditing(false)}
                     type="button"
                   >
                     Cancel
                   </button>
                   <button
-                    className="inline-flex items-center gap-1 rounded bg-primary px-2.5 py-1 font-medium text-primary-foreground text-xs shadow-xs transition-colors hover:bg-primary/90"
+                    className="inline-flex items-center gap-1 rounded bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground shadow-xs transition-colors hover:bg-primary/90"
                     onClick={handleSave}
                     type="button"
                   >

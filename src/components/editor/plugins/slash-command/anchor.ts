@@ -1,4 +1,5 @@
 import type { LexicalEditor } from "lexical";
+
 import type { SlashMenuAnchor } from "./types";
 
 const getFirstTextDescendant = (element: HTMLElement): HTMLElement => {
@@ -49,52 +50,50 @@ export const getSelectionRectangle = (
 
 export const createSlashMenuAnchor = (
   editor: LexicalEditor
-): SlashMenuAnchor => {
-  return {
-    getBoundingClientRect: () => {
-      const rectangle = getSelectionRectangle(editor);
+): SlashMenuAnchor => ({
+  getBoundingClientRect: () => {
+    const rectangle = getSelectionRectangle(editor);
 
-      if (!rectangle) {
-        return new DOMRect();
-      }
+    if (!rectangle) {
+      return new DOMRect();
+    }
 
-      return new DOMRect(
-        rectangle.left,
-        rectangle.top,
-        Math.max(rectangle.width, 1),
-        Math.max(rectangle.height, 1)
-      );
-    },
-    getClientRects: () => {
-      const rect = getSelectionRectangle(editor);
+    return new DOMRect(
+      rectangle.left,
+      rectangle.top,
+      Math.max(rectangle.width, 1),
+      Math.max(rectangle.height, 1)
+    );
+  },
+  getClientRects: () => {
+    const rect = getSelectionRectangle(editor);
 
-      if (!rect) {
-        return {
-          item: () => null,
-          length: 0,
-          [Symbol.iterator](): IterableIterator<DOMRect> {
-            return [][Symbol.iterator]();
-          },
-        } as unknown as DOMRectList;
-      }
-
-      const anchorRect = new DOMRect(
-        rect.left,
-        rect.top,
-        Math.max(rect.width, 1),
-        Math.max(rect.height, 1)
-      );
-
+    if (!rect) {
       return {
-        0: anchorRect,
-        item: (index: number) => {
-          return index === 0 ? anchorRect : null;
-        },
-        length: 1,
-        *[Symbol.iterator](): IterableIterator<DOMRect> {
-          yield anchorRect;
+        item: () => null,
+        length: 0,
+        [Symbol.iterator](): IterableIterator<DOMRect> {
+          return [][Symbol.iterator]();
         },
       } as unknown as DOMRectList;
-    },
-  };
-};
+    }
+
+    const anchorRect = new DOMRect(
+      rect.left,
+      rect.top,
+      Math.max(rect.width, 1),
+      Math.max(rect.height, 1)
+    );
+
+    return {
+      0: anchorRect,
+      item: (index: number) => {
+        return index === 0 ? anchorRect : null;
+      },
+      length: 1,
+      *[Symbol.iterator](): IterableIterator<DOMRect> {
+        yield anchorRect;
+      },
+    } as unknown as DOMRectList;
+  },
+});

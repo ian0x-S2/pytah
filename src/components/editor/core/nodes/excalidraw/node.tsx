@@ -15,6 +15,7 @@ import type {
 } from "lexical";
 import { DecoratorNode } from "lexical";
 import type { JSX } from "react";
+
 import { ExcalidrawComponent } from "../../../plugins/excalidraw/component";
 
 export type ExcalidrawDimension = number | "inherit";

@@ -1,5 +1,6 @@
 import { deepStrictEqual, strictEqual } from "node:assert/strict";
 import { describe, test } from "node:test";
+
 import { createHeadlessEditor } from "@lexical/headless";
 
 import { createEditorConfig } from "../../config";
@@ -7,8 +8,8 @@ import {
   $createExcalidrawNode,
   $isExcalidrawNode,
   ExcalidrawNode,
-  type SerializedExcalidrawNode,
 } from "./node";
+import type { SerializedExcalidrawNode } from "./node";
 
 const SCENE_JSON = JSON.stringify({
   appState: { viewBackgroundColor: "#ffffff" },

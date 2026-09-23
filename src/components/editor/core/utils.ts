@@ -9,8 +9,9 @@ import {
   $createParagraphNode,
   $createTextNode,
   $getRoot,
-  type LexicalEditor,
 } from "lexical";
+import type { LexicalEditor } from "lexical";
+
 import { BUILTIN_MARKDOWN_TRANSFORMERS } from "../plugins/markdown/transformers";
 import type { EditorSnapshot, EditorSnapshotOutputs } from "./types";
 

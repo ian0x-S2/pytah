@@ -10,16 +10,15 @@ import type {
   SerializedElementNode,
 } from "lexical";
 import { $createParagraphNode, $isElementNode, ElementNode } from "lexical";
+
 import { $isCollapsibleContainerNode } from "./container-node";
 import { $isCollapsibleContentNode } from "./content-node";
 
 export type SerializedCollapsibleTitleNode = SerializedElementNode;
 
-const convertSummaryElement = (): DOMConversionOutput => {
-  return {
-    node: $createCollapsibleTitleNode(),
-  };
-};
+const convertSummaryElement = (): DOMConversionOutput => ({
+  node: $createCollapsibleTitleNode(),
+});
 
 export class CollapsibleTitleNode extends ElementNode {
   static getType(): string {
@@ -47,7 +46,7 @@ export class CollapsibleTitleNode extends ElementNode {
 
   createDOM(config: EditorConfig, editor: LexicalEditor): HTMLElement {
     const dom = document.createElement("summary");
-    dom.setAttribute("data-lexical-collapsible-trigger", "true");
+    dom.dataset.lexicalCollapsibleTrigger = "true";
 
     const open = editor.getEditorState().read(() => {
       const container = this.getParent();

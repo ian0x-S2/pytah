@@ -10,22 +10,15 @@ badge: "Core Doc"
 
 ## Overview
 
-The editor is a self-contained module inside `src/components/editor/`. It
-composes a Lexical editor instance with a set of plugins and a themed UI layer.
-The architecture follows three rules:
+The editor is a self-contained module inside `src/components/editor/`. It composes a Lexical editor instance with a set of plugins and a themed UI layer. The architecture follows three rules:
 
-**1. Separation of concerns** -- Lexical node definitions, React composition,
-and plugin behavior live in separate directories.
+**1. Separation of concerns** -- Lexical node definitions, React composition, and plugin behavior live in separate directories.
 
-**2. Feature-first organization** -- Complex features get their own directory
-under `plugins/` and `core/nodes/`, aligned by name.
+**2. Feature-first organization** -- Complex features get their own directory under `plugins/` and `core/nodes/`, aligned by name.
 
-**3. ShadCN-first styling** -- All visual decisions go through ShadCN design
-tokens. No hardcoded colors.
+**3. ShadCN-first styling** -- All visual decisions go through ShadCN design tokens. No hardcoded colors.
 
-**4. Lego-like composition** -- The default editor remains opinionated, but
-consumers can opt out of chrome, replace surfaces, add plugin mounts, and
-register extra nodes through the public API.
+**4. Lego-like composition** -- The default editor remains opinionated, but consumers can opt out of chrome, replace surfaces, add plugin mounts, and register extra nodes through the public API.
 
 <Callout title="New to the repo?" variant="tip">
   Start with `/docs/overview` for project context and `/docs/contributing` for
@@ -80,8 +73,7 @@ register extra nodes through the public API.
 
 ## Where to Change Things
 
-When you are editing the core, start in the layer that owns the concern instead
-of reaching for `ui/content.tsx` first.
+When you are editing the core, start in the layer that owns the concern instead of reaching for `ui/content.tsx` first.
 
 | Need | Start in | Why |
 | --- | --- | --- |
@@ -94,53 +86,35 @@ of reaching for `ui/content.tsx` first.
 
 ## Data Flow
 
-The `Editor` component in `editor.tsx` is the composition root. It creates the
-`LexicalComposer` and manages a snapshot state (`EditorSnapshot`) containing the
-current HTML, Markdown, and plain text output.
+The `Editor` component in `editor.tsx` is the composition root. It creates the `LexicalComposer` and manages a snapshot state (`EditorSnapshot`) containing the current HTML, Markdown, and plain text output.
 
-Changes flow like this: user edits content → Lexical fires an update → the
-`EditorStatePlugin` serializes the new state → `editor.tsx` receives the
-snapshot via callback → the output panels re-render.
+Changes flow like this: user edits content → Lexical fires an update → the `EditorStatePlugin` serializes the new state → `editor.tsx` receives the snapshot via callback → the output panels re-render.
 
 ## Public Composition
 
-The top-level `Editor` now exposes a two-layer model: opinionated defaults for
-product usage, plus public extension points for custom composition.
+The top-level `Editor` now exposes a two-layer model: opinionated defaults for product usage, plus public extension points for custom composition.
 
-`features` toggles built-in behavior plugins such as slash command, floating
-toolbar, focus-on-mount, and markdown shortcuts. `chrome` controls the default
-shell, header, action bar, footer, and output panels.
+`features` toggles built-in behavior plugins such as slash command, floating toolbar, focus-on-mount, and markdown shortcuts. `chrome` controls the default shell, header, action bar, footer, and output panels.
 
-`slots` replaces visual surfaces without forking the editor internals, while
-`pluginSlots` mounts additional React plugins around the built-in plugin stack.
-`extraNodes` adds custom Lexical nodes without editing `core/config.ts`.
+`slots` replaces visual surfaces without forking the editor internals, while `pluginSlots` mounts additional React plugins around the built-in plugin stack. `extraNodes` adds custom Lexical nodes without editing `core/config.ts`.
 
-For whole-feature contribution, `extraFeatures` accepts one descriptor per
-capability (id, plugin, nodes, transformers, slash commands), mirroring the
-built-in `EditorFeature` registry in `core/features.tsx`.
+For whole-feature contribution, `extraFeatures` accepts one descriptor per capability (id, plugin, nodes, transformers, slash commands), mirroring the built-in `EditorFeature` registry in `core/features.tsx`.
 
-See the dedicated `Composition` and `API` pages for the consumer-facing
-contracts. This page focuses on how those public levers map onto the internal
-editor structure.
+See the dedicated `Composition` and `API` pages for the consumer-facing contracts. This page focuses on how those public levers map onto the internal editor structure.
 
 ## Styling Strategy
 
-The editor has **zero hardcoded colors**. Every color reference goes through
-Tailwind utility classes backed by ShadCN CSS custom properties.
+The editor has **zero hardcoded colors**. Every color reference goes through Tailwind utility classes backed by ShadCN CSS custom properties.
 
-Lexical content styling is defined in `core/theme.ts` as a map of Tailwind class
-strings. This keeps the visual mapping declarative and theme-aware.
+Lexical content styling is defined in `core/theme.ts` as a map of Tailwind class strings. This keeps the visual mapping declarative and theme-aware.
 
-Editor UI components (toolbar, menus, dialogs) import ShadCN primitives from
-`src/components/ui/`. This ensures visual consistency with the host application.
+Editor UI components (toolbar, menus, dialogs) import ShadCN primitives from `src/components/ui/`. This ensures visual consistency with the host application.
 
 ### Editor-Specific Tokens
 
 The editor extends the ShadCN palette with two custom tokens:
 
-`--highlight` / `--highlight-foreground` -- used for text highlighting (the
-marker pen formatting option). These are defined in the project's CSS alongside
-the standard ShadCN tokens.
+`--highlight` / `--highlight-foreground` -- used for text highlighting (the marker pen formatting option). These are defined in the project's CSS alongside the standard ShadCN tokens.
 
 <Callout title="Theme compatibility" variant="info">
   Any ShadCN theme that defines the standard token set (background, foreground,
@@ -150,13 +124,8 @@ the standard ShadCN tokens.
 
 ## Plugin Conventions
 
-Each plugin directory contains at minimum a `plugin.tsx` file that exports a
-single React component. This component is rendered inside the Lexical composer
-context.
+Each plugin directory contains at minimum a `plugin.tsx` file that exports a single React component. This component is rendered inside the Lexical composer context.
 
-Plugins that render UI (toolbars, menus, popovers) use ShadCN primitives.
-Plugins that only modify editor behavior (collapsible transforms, markdown
-shortcuts) return `null` and are headless.
+Plugins that render UI (toolbars, menus, popovers) use ShadCN primitives. Plugins that only modify editor behavior (collapsible transforms, markdown shortcuts) return `null` and are headless.
 
-Support files (`types.ts`, `constants.ts`, `utils.ts`, `commands.ts`) keep the
-plugin component focused on React wiring.
+Support files (`types.ts`, `constants.ts`, `utils.ts`, `commands.ts`) keep the plugin component focused on React wiring.

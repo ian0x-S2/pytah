@@ -10,6 +10,9 @@ import { defineConfig } from "vite";
 
 // https://vite.dev/config/
 export default defineConfig({
+  optimizeDeps: {
+    entries: ["index.html"],
+  },
   plugins: [
     mdx({
       rehypePlugins: [rehypeSlug],
@@ -19,9 +22,6 @@ export default defineConfig({
     react(),
     babel({ presets: [reactCompilerPreset()] }),
   ],
-  optimizeDeps: {
-    entries: ["index.html"],
-  },
   resolve: {
     alias: {
       "@": new URL("./src", import.meta.url).pathname,

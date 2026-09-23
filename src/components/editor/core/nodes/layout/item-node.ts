@@ -10,11 +10,9 @@ import { $isParagraphNode, ElementNode } from "lexical";
 
 export type SerializedLayoutItemNode = SerializedElementNode;
 
-const convertLayoutItemElement = (): DOMConversionOutput => {
-  return {
-    node: $createLayoutItemNode(),
-  };
-};
+const convertLayoutItemElement = (): DOMConversionOutput => ({
+  node: $createLayoutItemNode(),
+});
 
 export function $isEmptyLayoutItemNode(node: LexicalNode): boolean {
   if (!$isLayoutItemNode(node) || node.getChildrenSize() !== 1) {
@@ -37,7 +35,7 @@ export class LayoutItemNode extends ElementNode {
   static importDOM(): DOMConversionMap | null {
     return {
       div: (domNode: HTMLElement) => {
-        if (!domNode.hasAttribute("data-lexical-layout-item")) {
+        if (!Object.hasOwn(domNode.dataset, "lexicalLayoutItem")) {
           return null;
         }
 
@@ -55,7 +53,7 @@ export class LayoutItemNode extends ElementNode {
 
   createDOM(config: EditorConfig): HTMLElement {
     const dom = document.createElement("div");
-    dom.setAttribute("data-lexical-layout-item", "true");
+    dom.dataset.lexicalLayoutItem = "true";
 
     if (typeof config.theme.layoutItem === "string") {
       addClassNamesToElement(dom, config.theme.layoutItem);

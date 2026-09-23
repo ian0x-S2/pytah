@@ -1,5 +1,7 @@
-import { $createParagraphNode, type ElementNode } from "lexical";
+import { $createParagraphNode } from "lexical";
+import type { ElementNode } from "lexical";
 import { PencilRulerIcon } from "lucide-react";
+
 import {
   $createExcalidrawNode,
   ExcalidrawNode,

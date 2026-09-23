@@ -1,9 +1,11 @@
 "use client";
 
 import type { FileTextIcon } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+
 import { FEATURE_ITEMS, WORD_SEPARATOR_PATTERN } from "../core/constants";
 import type { EditorSnapshot } from "../core/types";
 
@@ -29,12 +31,12 @@ export function EditorShell({
 export function EditorHeader({ className }: { className?: string }) {
   return (
     <div
-      className={cn("border-border border-b bg-muted/40 px-4 py-3", className)}
+      className={cn("border-b border-border bg-muted/40 px-4 py-3", className)}
     >
       <div className="flex flex-wrap items-center gap-2">
         {FEATURE_ITEMS.map((item) => (
           <div
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1 text-muted-foreground text-xs"
+            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1 text-xs text-muted-foreground"
             key={item.label}
           >
             <item.icon className="size-3.5" />
@@ -62,7 +64,7 @@ export function EditorFooter({
   return (
     <div
       className={cn(
-        "border-border border-t bg-muted/30 px-4 py-2 text-muted-foreground text-xs",
+        "border-t border-border bg-muted/30 px-4 py-2 text-xs text-muted-foreground",
         className
       )}
     >
@@ -91,8 +93,8 @@ export function OutputPanel({
 }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-background shadow-sm">
-      <div className="flex items-center justify-between border-border border-b px-4 py-3">
-        <div className="flex items-center gap-2 font-medium text-foreground text-sm">
+      <div className="flex items-center justify-between border-b border-border px-4 py-3">
+        <div className="flex items-center gap-2 text-sm font-medium text-foreground">
           <Icon className="size-4 text-muted-foreground" />
           <span>{label}</span>
         </div>
