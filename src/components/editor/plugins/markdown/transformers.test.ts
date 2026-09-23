@@ -173,7 +173,7 @@ describe("Horizontal rule markdown transformer", () => {
       strictEqual($isParagraphNode(children[1]), true);
     });
 
-    editor.dispatchCommand(UNDO_COMMAND);
+    editor.dispatchCommand(UNDO_COMMAND, undefined);
     await editor.update(() => {
       // Flush the history restore before reading the editor state.
     });

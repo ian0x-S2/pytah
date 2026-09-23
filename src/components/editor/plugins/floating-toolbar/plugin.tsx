@@ -168,7 +168,7 @@ export function FloatingToolbarPlugin() {
     }
 
     editor.dispatchCommand(TOGGLE_LINK_COMMAND, LINK_PLACEHOLDER_URL);
-    editor.dispatchCommand(OPEN_FLOATING_LINK_EDITOR_COMMAND);
+    editor.dispatchCommand(OPEN_FLOATING_LINK_EDITOR_COMMAND, undefined);
   };
 
   const handleColorPickerOpenChange = (open: boolean) => {

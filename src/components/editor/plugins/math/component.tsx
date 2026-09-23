@@ -8,7 +8,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { useLexicalEditable } from "@lexical/react/useLexicalEditable";
 import { useLexicalNodeSelection } from "@lexical/react/useLexicalNodeSelection";
 import { mergeRegister } from "@lexical/utils";
-import katex from "katex";
+import { renderToString } from "katex";
 import {
   $getNodeByKey,
   $getSelection,
@@ -77,7 +77,7 @@ export function MathComponent({
 
   const html = useMemo(() => {
     try {
-      return katex.renderToString(equation || "\\text{math}", {
+      return renderToString(equation || "\\text{math}", {
         displayMode: !inline,
         errorColor: "#cc0000",
         throwOnError: false,
@@ -89,7 +89,7 @@ export function MathComponent({
 
   const previewHtml = useMemo(() => {
     try {
-      return katex.renderToString(draftEquation || "\\text{math}", {
+      return renderToString(draftEquation || "\\text{math}", {
         displayMode: !draftInline,
         errorColor: "#cc0000",
         throwOnError: false,
@@ -245,7 +245,7 @@ export function MathComponent({
                 <div className="flex items-center gap-1 rounded-md bg-muted/50 p-0.5">
                   <button
                     className={cn(
-                      "rounded px-2 py-0.5 text-[11px] font-medium transition-colors",
+                      "rounded px-2 py-0.5 text-xs font-medium transition-colors",
                       draftInline
                         ? "bg-background text-foreground shadow-xs"
                         : "text-muted-foreground hover:text-foreground"
@@ -257,7 +257,7 @@ export function MathComponent({
                   </button>
                   <button
                     className={cn(
-                      "rounded px-2 py-0.5 text-[11px] font-medium transition-colors",
+                      "rounded px-2 py-0.5 text-xs font-medium transition-colors",
                       draftInline
                         ? "text-muted-foreground hover:text-foreground"
                         : "bg-background text-foreground shadow-xs"

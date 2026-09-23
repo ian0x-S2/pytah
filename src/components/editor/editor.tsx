@@ -107,11 +107,19 @@ const getEditorOutputs = (
     return null;
   }
 
+  // Aliased to `handle*` names so JSX handler props receive functions
+  // with the `handle` prefix convention.
+  const {
+    onCopyHtml: handleCopyHtml,
+    onCopyMarkdown: handleCopyMarkdown,
+    snapshot,
+  } = context;
+
   return slots?.outputs === undefined ? (
     <EditorOutputGrid
-      onCopyHtml={context.onCopyHtml}
-      onCopyMarkdown={context.onCopyMarkdown}
-      snapshot={context.snapshot}
+      onCopyHtml={handleCopyHtml}
+      onCopyMarkdown={handleCopyMarkdown}
+      snapshot={snapshot}
     />
   ) : (
     (renderEditorSlot(slots.outputs, context) ?? null)
@@ -280,7 +288,7 @@ export function Editor({
       return;
     }
 
-    editorInstance.dispatchCommand(EXPORT_MARKDOWN_COMMAND);
+    editorInstance.dispatchCommand(EXPORT_MARKDOWN_COMMAND, undefined);
   };
 
   const handleReset = () => {

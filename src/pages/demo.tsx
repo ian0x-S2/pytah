@@ -61,7 +61,7 @@ export function DemoPage() {
   };
 
   const handleExportMarkdown = () => {
-    editorRef.current?.dispatchCommand(EXPORT_MARKDOWN_COMMAND);
+    editorRef.current?.dispatchCommand(EXPORT_MARKDOWN_COMMAND, undefined);
   };
 
   return (
@@ -160,7 +160,7 @@ export function DemoPage() {
           {!zen && (
             <div className="px-8 pt-16 pb-4">
               <div className="mb-4 text-5xl leading-none select-none">📄</div>
-              <h1 className="text-[40px] leading-tight font-bold tracking-tight text-foreground">
+              <h1 className="text-display-40 leading-tight font-bold tracking-tight text-foreground">
                 Note Editor
               </h1>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">

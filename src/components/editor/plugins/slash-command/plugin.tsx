@@ -393,7 +393,15 @@ export function SlashCommandPlugin({ commands }: SlashCommandPluginProps) {
                             type: "patch",
                           });
                         }}
-                        onSelect={() => executeEntry(entry)}
+                        onSelect={() => {
+                          // Inline (not `executeEntry`): cmdk invokes this
+                          // from user-interaction handlers, outside Effects.
+                          dispatch({
+                            payload: { isOpen: false },
+                            type: "patch",
+                          });
+                          entry.run(editor);
+                        }}
                         value={command.id}
                       >
                         <command.icon className="size-4 shrink-0 text-muted-foreground" />

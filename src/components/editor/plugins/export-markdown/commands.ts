@@ -6,6 +6,6 @@ import { createCommand } from "lexical";
  * handler so the conversion logic stays lego-scoped and reusable outside the
  * built-in chrome.
  */
-export const EXPORT_MARKDOWN_COMMAND = createCommand<void>(
+export const EXPORT_MARKDOWN_COMMAND = createCommand<undefined>(
   "export-markdown-command"
 );

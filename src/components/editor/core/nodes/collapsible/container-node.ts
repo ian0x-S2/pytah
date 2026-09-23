@@ -138,7 +138,7 @@ export class CollapsibleContainerNode extends ElementNode {
     }
 
     if (IS_CHROME) {
-      const contentDom = dom.children[1];
+      const [, contentDom] = dom.children;
       if (!isHTMLElement(contentDom)) {
         throw new Error("Expected collapsible content DOM element");
       }

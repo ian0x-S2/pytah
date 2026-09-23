@@ -1,4 +1,10 @@
-import { useEffect, useLayoutEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from "react";
 
 import {
   applyThemeToDOM,
@@ -16,10 +22,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   );
   const resolvedTheme = theme === "system" ? systemTheme : theme;
 
-  const updateTheme = (next: Theme) => {
+  const updateTheme = useCallback((next: Theme) => {
     localStorage.setItem(STORAGE_KEY, next);
     setTheme(next);
-  };
+  }, []);
 
   // Layout effect so the .dark class flips in the same commit as consumers
   // (e.g. Shiki inline colors) — avoids a painted frame with mismatched
@@ -45,11 +51,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     };
   }, [theme]);
 
-  const value: ThemeProviderState = {
-    resolvedTheme,
-    setTheme: updateTheme,
-    theme,
-  };
+  const value = useMemo<ThemeProviderState>(
+    () => ({ resolvedTheme, setTheme: updateTheme, theme }),
+    [resolvedTheme, theme, updateTheme]
+  );
 
   return (
     <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>

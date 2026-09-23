@@ -161,19 +161,19 @@ export const applyBlockType = (
       return;
     }
 
-    editor.dispatchCommand(REMOVE_LIST_COMMAND);
+    editor.dispatchCommand(REMOVE_LIST_COMMAND, undefined);
 
     if (blockType === "bullet") {
-      editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND);
+      editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined);
       return;
     }
 
     if (blockType === "check") {
-      editor.dispatchCommand(INSERT_CHECK_LIST_COMMAND);
+      editor.dispatchCommand(INSERT_CHECK_LIST_COMMAND, undefined);
       return;
     }
 
-    editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND);
+    editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined);
   });
 };
 

@@ -1,6 +1,5 @@
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 const __filename = import.meta.filename;
 const __dirname = import.meta.dirname;
@@ -405,7 +404,8 @@ const createBaseItem = async ({
   libEntries,
   uiEntries,
 }) => {
-  const baseFiles = (await collectSourceFiles(editorSourceDirectory)).filter(
+  const collectedSourceFiles = await collectSourceFiles(editorSourceDirectory);
+  const baseFiles = collectedSourceFiles.filter(
     (file) => !isFeatureFile(file)
   );
 

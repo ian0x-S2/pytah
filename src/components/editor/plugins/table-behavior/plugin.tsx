@@ -66,9 +66,7 @@ function TableCellActionMenuContainer({
         ? currentCounts
         : context.selectionCounts
     );
-    setIsVisible((currentIsVisible) =>
-      currentIsVisible ? currentIsVisible : true
-    );
+    setIsVisible(true);
   };
 
   const hideMenu = () => {

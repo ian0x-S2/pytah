@@ -8,6 +8,9 @@ import { useEffect, useRef, useState } from "react";
 
 const DRAG_MENU_CLASS_NAME = "editor-draggable-block-menu";
 
+const isOnMenu = (element: HTMLElement) =>
+  Boolean(element.closest(`.${DRAG_MENU_CLASS_NAME}`));
+
 export function DraggableBlockPlugin() {
   const [editor] = useLexicalComposerContext();
   const isEditable = useLexicalEditable();
@@ -23,9 +26,6 @@ export function DraggableBlockPlugin() {
     [editor]
   );
 
-  const isOnMenu = (element: HTMLElement) =>
-    Boolean(element.closest(`.${DRAG_MENU_CLASS_NAME}`));
-
   if (!(isEditable && anchorElem)) {
     return null;
   }
@@ -36,7 +36,7 @@ export function DraggableBlockPlugin() {
       isOnMenu={isOnMenu}
       menuComponent={
         <div
-          className={`${DRAG_MENU_CLASS_NAME} absolute top-0 left-0 z-40 flex cursor-grab items-center gap-0.5 rounded-md p-0.5 text-muted-foreground opacity-0 transition-[transform,opacity] duration-150 ease-in-out active:cursor-grabbing`}
+          className={`${DRAG_MENU_CLASS_NAME} absolute top-0 left-0 z-40 flex cursor-grab items-center gap-0.5 rounded-md p-0.5 text-muted-foreground opacity-0 transition-transform-opacity duration-150 ease-in-out active:cursor-grabbing`}
           ref={menuRef}
         >
           <div className="flex size-4 items-center justify-center rounded-sm opacity-50 transition hover:bg-muted hover:opacity-100">

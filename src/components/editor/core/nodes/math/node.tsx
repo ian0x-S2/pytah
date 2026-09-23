@@ -36,8 +36,8 @@ const convertMathElement = (domNode: Node): DOMConversionOutput | null => {
     return null;
   }
 
-  const equation = domNode.dataset.equation;
-  if (equation === null) {
+  const { equation } = domNode.dataset;
+  if (equation === undefined) {
     return null;
   }
 
@@ -138,11 +138,9 @@ export class MathNode extends DecoratorNode<JSX.Element> {
       addClassNamesToElement(element, config.theme.math);
     }
 
-    if (this.__inline) {
-      element.className = "inline-block cursor-pointer select-none";
-    } else {
-      element.className = "block my-2 cursor-pointer select-none text-center";
-    }
+    element.className = this.__inline
+      ? "inline-block cursor-pointer select-none"
+      : "block my-2 cursor-pointer select-none text-center";
 
     return element;
   }

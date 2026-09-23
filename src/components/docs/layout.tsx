@@ -34,7 +34,7 @@ function LocalClock() {
   }, []);
 
   return (
-    <span className="hidden items-center font-mono text-[11px] text-muted-foreground tabular-nums sm:inline-flex">
+    <span className="hidden items-center font-mono text-xs text-muted-foreground tabular-nums sm:inline-flex">
       {time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
     </span>
   );
@@ -67,7 +67,7 @@ function DocsSidebar() {
             href="/"
           >
             <span>Pytah</span>
-            <span className="py-0.5 rounded border border-border/70 px-1 font-mono text-[9.5px] text-muted-foreground">
+            <span className="py-0.5 rounded border border-border/70 px-1 font-mono text-xs text-muted-foreground">
               docs
             </span>
           </Link>
@@ -79,7 +79,7 @@ function DocsSidebar() {
           <div className="space-y-3 py-2">
             {DOCS_PAGE_GROUPS.map((group) => (
               <SidebarGroup className="p-0" key={group.id}>
-                <SidebarGroupLabel className="h-5 font-mono text-[9.5px] tracking-wider text-muted-foreground/75 uppercase">
+                <SidebarGroupLabel className="h-5 font-mono text-xs tracking-wider text-muted-foreground/75 uppercase">
                   {group.label}
                 </SidebarGroupLabel>
                 <SidebarGroupContent>
@@ -99,7 +99,7 @@ function DocsSidebar() {
         <SidebarMenu className="gap-0.5">
           <SidebarMenuItem>
             <SidebarMenuButton
-              className="h-7 rounded-md px-2 text-[11.5px]"
+              className="h-7 rounded-md px-2 text-xs"
               render={<Link href="/demo" />}
             >
               <PlayIcon className="size-3" />
@@ -108,10 +108,11 @@ function DocsSidebar() {
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton
-              className="h-7 rounded-md px-2 text-[11.5px]"
+              className="h-7 rounded-md px-2 text-xs"
               render={
                 // biome-ignore lint/a11y/useAnchorContent: content is injected by useRender at runtime
                 <a
+                  aria-label="Source"
                   href={REPOSITORY_URL}
                   rel="noopener noreferrer"
                   target="_blank"
@@ -140,7 +141,7 @@ export function DocsLayout({ children }: { children: React.ReactNode }) {
       <DocsSidebar />
       <SidebarInset className="relative min-h-screen selection:bg-foreground selection:text-background">
         {/* Top ambient lighting matching Home Page */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-[480px] bg-[radial-gradient(ellipse_75%_45%_at_50%_-10%,hsl(var(--foreground)/0.04),transparent)]" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-[480px] bg-ambient-docs" />
 
         {/* Sticky Header matching Home Page styling */}
         <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center justify-between gap-3 border-b border-border/40 bg-background/70 px-4 backdrop-blur-xl sm:px-6">

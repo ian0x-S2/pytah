@@ -46,7 +46,7 @@ export const InsertPopover = memo(
     onOpenChange,
   }: InsertPopoverProps) => {
     const [editor] = useLexicalComposerContext();
-    const insertOptionRefs = useRef<Array<HTMLButtonElement | null>>([]);
+    const insertOptionRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
     const availableOptions = getAvailableBlockOptions(
       commandIds ?? BLOCK_TYPE_ORDER

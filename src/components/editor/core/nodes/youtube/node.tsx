@@ -43,6 +43,7 @@ function YouTubeComponent({
         allowFullScreen
         className="aspect-video h-auto w-full max-w-full rounded-xl border border-border/70 bg-muted shadow-xs md:w-[70%]"
         frameBorder="0"
+        sandbox="allow-scripts allow-same-origin allow-presentation"
         src={`https://www.youtube-nocookie.com/embed/${videoId}`}
         title="YouTube video"
       />

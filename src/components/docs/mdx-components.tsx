@@ -29,7 +29,7 @@ interface CodeBlockInfo {
 const CODE_LANGUAGE_REGEX = /language-(?<language>[\w-]+)/u;
 
 const collectText = (node: ReactNode): string => {
-  if (node == null || typeof node === "boolean") {
+  if (node === null || node === undefined || typeof node === "boolean") {
     return "";
   }
   if (typeof node === "string" || typeof node === "number") {
@@ -48,7 +48,7 @@ const collectText = (node: ReactNode): string => {
 const findCodeElement = (
   node: ReactNode
 ): ReactElement<CodeProps> | undefined => {
-  if (node == null || typeof node !== "object") {
+  if (node === null || node === undefined || typeof node !== "object") {
     return undefined;
   }
   if (Array.isArray(node)) {
@@ -87,7 +87,7 @@ function MDXCodeBlock({ children }: { children?: ReactNode }) {
 
 function InlineCode({ children }: { children?: ReactNode }) {
   return (
-    <code className="py-0.5 rounded border border-border/60 bg-muted/40 px-1.5 font-mono text-[0.85em] text-foreground">
+    <code className="py-0.5 rounded border border-border/60 bg-muted/40 px-1.5 font-mono text-sm text-foreground">
       {children}
     </code>
   );
@@ -101,7 +101,7 @@ function MDXList({
   ordered?: boolean;
 }) {
   const className =
-    "mb-3.5 space-y-1 text-[13px] text-foreground/80 leading-relaxed sm:text-[13.5px] [&_code]:rounded [&_code]:border [&_code]:border-border/60 [&_code]:bg-muted/40 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[0.85em] [&_code]:text-foreground [&_strong]:font-semibold [&_strong]:text-foreground";
+    "mb-3.5 space-y-1 text-xs text-foreground/80 leading-relaxed sm:text-sm [&_code]:rounded [&_code]:border [&_code]:border-border/60 [&_code]:bg-muted/40 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-sm [&_code]:text-foreground [&_strong]:font-semibold [&_strong]:text-foreground";
   return ordered ? (
     <ol className={className}>{children}</ol>
   ) : (
@@ -112,7 +112,7 @@ function MDXList({
 function MDXTable({ children }: { children?: ReactNode }) {
   return (
     <div className="my-4 overflow-x-auto rounded-xl border border-border/50 bg-transparent shadow-xs">
-      <table className="w-full text-left text-xs sm:text-[13px] [&_tbody]:divide-y [&_tbody]:divide-border/40 [&_tbody_tr:hover]:bg-muted/15 [&_td]:px-3.5 [&_td]:py-2.5 [&_td]:leading-relaxed [&_td]:text-foreground/80 sm:[&_td]:px-4 sm:[&_td]:py-3 [&_th]:px-3.5 [&_th]:py-2.5 [&_th]:font-medium sm:[&_th]:px-4 [&_thead_tr]:border-b [&_thead_tr]:border-border/50 [&_thead_tr]:bg-muted/25 [&_thead_tr]:font-mono [&_thead_tr]:text-[10px] [&_thead_tr]:tracking-wider [&_thead_tr]:text-muted-foreground [&_thead_tr]:uppercase [&_tr]:transition-colors">
+      <table className="w-full text-left text-xs sm:text-xs [&_tbody]:divide-y [&_tbody]:divide-border/40 [&_tbody_tr:hover]:bg-muted/15 [&_td]:px-3.5 [&_td]:py-2.5 [&_td]:leading-relaxed [&_td]:text-foreground/80 sm:[&_td]:px-4 sm:[&_td]:py-3 [&_th]:px-3.5 [&_th]:py-2.5 [&_th]:font-medium sm:[&_th]:px-4 [&_thead_tr]:border-b [&_thead_tr]:border-border/50 [&_thead_tr]:bg-muted/25 [&_thead_tr]:font-mono [&_thead_tr]:text-xs [&_thead_tr]:tracking-wider [&_thead_tr]:text-muted-foreground [&_thead_tr]:uppercase [&_tr]:transition-colors">
         {children}
       </table>
     </div>

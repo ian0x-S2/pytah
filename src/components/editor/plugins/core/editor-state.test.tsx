@@ -2,7 +2,7 @@ import { deepStrictEqual, strictEqual } from "node:assert/strict";
 import { after, describe, test } from "node:test";
 
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
-import type { LexicalEditor } from "lexical";
+import type { EditorState, LexicalEditor } from "lexical";
 import type { ReactNode } from "react";
 
 import type { ResolvedEditorSnapshotOptions } from "../../core/composition";
@@ -481,7 +481,7 @@ describe("EditorStatePlugin (seeded via composer initial state)", () => {
       // post-mount seeding effect would produce a second content update.
       strictEqual(postMountContentUpdates, 1);
       const firstUpdateHasHeading = (
-        postMountUpdateStates[0] as import("lexical").EditorState
+        postMountUpdateStates[0] as EditorState
       ).read(() => {
         const first = $getRoot().getFirstChild();
         return first !== null && first.getType() === "heading";

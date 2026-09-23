@@ -41,7 +41,7 @@ export function HomePage() {
   return (
     <div className="relative min-h-screen bg-background font-sans text-foreground selection:bg-foreground selection:text-background">
       {/* Subtle top ambient lighting */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(ellipse_75%_45%_at_50%_-10%,hsl(var(--foreground)/0.05),transparent)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-ambient-home" />
 
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/70 backdrop-blur-xl">
@@ -87,13 +87,13 @@ export function HomePage() {
             {/* Eyebrow badge */}
             <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-transparent px-3.5 py-1 text-xs text-muted-foreground shadow-xs transition-colors hover:border-foreground/20 hover:text-foreground">
               <span className="size-1.5 rounded-full bg-foreground/80" />
-              <span className="font-mono text-[11px] tracking-wider uppercase">
+              <span className="font-mono text-xs tracking-wider uppercase">
                 shadcn registry item · React & Lexical
               </span>
             </div>
 
             {/* Headline */}
-            <h1 className="mt-6 text-4xl leading-[1.08] font-semibold tracking-tight text-foreground sm:text-5xl xl:text-6xl">
+            <h1 className="mt-6 text-4xl leading-display font-semibold tracking-tight text-foreground sm:text-5xl xl:text-6xl">
               The rich text editor
               <br />
               <span className="font-normal text-muted-foreground">
@@ -135,7 +135,7 @@ export function HomePage() {
             <div className="mt-10 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
               {highlights.map((item) => (
                 <span
-                  className="rounded-md border border-border/50 bg-transparent px-3 py-1 font-mono text-[11px] text-muted-foreground"
+                  className="rounded-md border border-border/50 bg-transparent px-3 py-1 font-mono text-xs text-muted-foreground"
                   key={item}
                 >
                   {item}
@@ -148,7 +148,7 @@ export function HomePage() {
           <div className="flex items-center justify-center lg:col-span-5">
             <div className="relative flex size-64 items-center justify-center sm:size-80 lg:size-96">
               {/* Subtle ambient circle backing */}
-              <div className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,hsl(var(--foreground)/0.03),transparent_70%)]" />
+              <div className="pointer-events-none absolute inset-0 rounded-full bg-ambient-circle" />
               <HeroCube3D className="size-full" />
             </div>
           </div>
@@ -163,7 +163,7 @@ export function HomePage() {
               key={feature.title}
             >
               <div>
-                <span className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
+                <span className="font-mono text-xs tracking-widest text-muted-foreground uppercase">
                   {feature.tag}
                 </span>
 

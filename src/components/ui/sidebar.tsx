@@ -7,9 +7,11 @@ import type { VariantProps } from "class-variance-authority";
 import { PanelLeftIcon } from "lucide-react";
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useEffectEvent,
+  useMemo,
   useState,
 } from "react";
 import type { ComponentProps, CSSProperties } from "react";
@@ -81,22 +83,30 @@ function SidebarProvider({
   // We use openProp and setOpenProp for control from outside the component.
   const [openState, setOpenState] = useState(() => defaultOpen);
   const open = openProp ?? openState;
-  const setOpen = (value: boolean | ((value: boolean) => boolean)) => {
-    const nextOpen = typeof value === "function" ? value(open) : value;
-    if (setOpenProp) {
-      setOpenProp(nextOpen);
-    } else {
-      setOpenState(nextOpen);
-    }
+  const setOpen = useCallback(
+    (value: boolean | ((value: boolean) => boolean)) => {
+      const nextOpen = typeof value === "function" ? value(open) : value;
+      if (setOpenProp) {
+        setOpenProp(nextOpen);
+      } else {
+        setOpenState(nextOpen);
+      }
 
-    // This sets the cookie to keep the sidebar state.
-    // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API not available in all environments
-    document.cookie = `${SIDEBAR_COOKIE_NAME}=${nextOpen}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
-  };
+      // This sets the cookie to keep the sidebar state.
+      // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API not available in all environments
+      document.cookie = `${SIDEBAR_COOKIE_NAME}=${nextOpen}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+    },
+    [open, setOpenProp]
+  );
 
   // Helper to toggle the sidebar.
-  const toggleSidebar = () =>
-    isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open);
+  const toggleSidebar = useCallback(
+    () =>
+      isMobile
+        ? setOpenMobile((currentMobileOpen) => !currentMobileOpen)
+        : setOpen((currentOpen) => !currentOpen),
+    [isMobile, setOpen]
+  );
 
   // Keyboard shortcut handler. Uses an Effect Event so it always reads the
   // latest toggleSidebar without forcing the Effect to re-subscribe on every
@@ -125,15 +135,18 @@ function SidebarProvider({
   // This makes it easier to style the sidebar with Tailwind classes.
   const state = open ? "expanded" : "collapsed";
 
-  const contextValue: SidebarContextProps = {
-    isMobile,
-    open,
-    openMobile,
-    setOpen,
-    setOpenMobile,
-    state,
-    toggleSidebar,
-  };
+  const contextValue = useMemo<SidebarContextProps>(
+    () => ({
+      isMobile,
+      open,
+      openMobile,
+      setOpen,
+      setOpenMobile,
+      state,
+      toggleSidebar,
+    }),
+    [isMobile, open, openMobile, setOpen, setOpenMobile, state, toggleSidebar]
+  );
 
   return (
     <SidebarContext.Provider value={contextValue}>

@@ -146,12 +146,13 @@ function DefaultEditorPlugins({
       })}
       {/* Extras without `editableOnly` mount for every mode, so read-only
             surfaces keep rendering installed nodes. */}
-      {extraFeatures
-        .filter((extra) => !extra.editableOnly && extra.plugin)
-        .map((extra) => {
-          const Plugin = extra.plugin as ComponentType;
-          return <Plugin key={extra.id} />;
-        })}
+      {extraFeatures.flatMap((extra) => {
+        if (extra.editableOnly || !extra.plugin) {
+          return [];
+        }
+        const Plugin = extra.plugin as ComponentType;
+        return [<Plugin key={extra.id} />];
+      })}
       <HorizontalRulePlugin />
       {features.tabIndentation ? <TabIndentationPlugin /> : null}
       {features.markdownShortcuts ? (
@@ -200,12 +201,13 @@ function EditableEditorPlugins({
         return null;
       })}
       {/* Editable-only extras (e.g. drag handles). */}
-      {extraFeatures
-        .filter((extra) => extra.editableOnly && extra.plugin)
-        .map((extra) => {
-          const Plugin = extra.plugin as ComponentType;
-          return <Plugin key={extra.id} />;
-        })}
+      {extraFeatures.flatMap((extra) => {
+        if (!extra.editableOnly || !extra.plugin) {
+          return [];
+        }
+        const Plugin = extra.plugin as ComponentType;
+        return [<Plugin key={extra.id} />];
+      })}
       {slashCommandEnabled ? renderSlashCommandPlugin(commands) : null}
       {pluginSlots?.afterEditable}
     </>
@@ -274,7 +276,7 @@ export function EditorContent({
             <ContentEditable
               aria-placeholder={placeholder}
               className={cn(
-                "ContentEditable__root relative min-h-105 px-8 py-10 text-[17px] leading-8 focus:outline-none",
+                "ContentEditable__root relative min-h-105 px-8 py-10 text-content leading-8 focus:outline-none",
                 contentClassName
               )}
               placeholder={

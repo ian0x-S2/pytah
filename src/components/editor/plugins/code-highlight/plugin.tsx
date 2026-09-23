@@ -141,11 +141,11 @@ const collectHighlightAssetLoads = (
   editor: LexicalEditor,
   activeTheme: string
 ): Promise<unknown>[] => {
-  const loads: Promise<unknown>[] = [];
-
   // The loaders return undefined for unknown ids (and shiki dedupes loads),
   // so unconditional calls are safe — already-loaded assets resolve fast.
-  loads.push(loadCodeTheme(activeTheme) ?? Promise.resolve());
+  const loads: Promise<unknown>[] = [
+    loadCodeTheme(activeTheme) ?? Promise.resolve(),
+  ];
 
   editor.getEditorState().read(() => {
     const queue: LexicalNode[] = [$getRoot()];

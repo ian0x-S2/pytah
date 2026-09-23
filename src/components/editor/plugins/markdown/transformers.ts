@@ -80,7 +80,7 @@ export const TABLE_MARKDOWN_TRANSFORMER: MultilineElementTransformer = {
         );
 
       const cellContents = cells.map((cell) =>
-        cell.getTextContent().replace(/\|/gu, "\\|").trim()
+        cell.getTextContent().replaceAll("|", "\\|").trim()
       );
 
       return `| ${cellContents.join(" | ")} |`;

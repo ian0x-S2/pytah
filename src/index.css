@@ -12,6 +12,10 @@
  * `scrollbar-hidden` hides scrollbars while keeping the region scrollable
  * (used by the table-of-contents rail and popover). There is no Tailwind
  * core utility for this, so it is declared here per shadcn(no-unknown-classes).
+ * The `bg-ambient-*`, `leading-display`, and `text-display-*` utilities below
+ * preserve exact product-design values (display sizes, hero leading, ambient
+ * radial gradients) that must not be snapped to the type/spacing scale per
+ * shadcn(no-arbitrary-values).
  * ========================================================================== */
 
 @utility scrollbar-hidden {
@@ -20,6 +24,46 @@
   &::-webkit-scrollbar {
     display: none;
   }
+}
+
+@utility bg-ambient-home {
+  background-image: radial-gradient(
+    ellipse 75% 45% at 50% -10%,
+    hsl(var(--foreground) / 0.05),
+    transparent
+  );
+}
+
+@utility bg-ambient-docs {
+  background-image: radial-gradient(
+    ellipse 75% 45% at 50% -10%,
+    hsl(var(--foreground) / 0.04),
+    transparent
+  );
+}
+
+@utility bg-ambient-circle {
+  background-image: radial-gradient(
+    circle at center,
+    hsl(var(--foreground) / 0.03),
+    transparent 70%
+  );
+}
+
+@utility leading-display {
+  line-height: 1.08;
+}
+
+@utility text-display-40 {
+  font-size: 40px;
+}
+
+@utility text-content {
+  font-size: 17px;
+}
+
+@utility transition-transform-opacity {
+  transition-property: transform, opacity;
 }
 
 /* ==========================================================================

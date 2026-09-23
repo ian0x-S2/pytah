@@ -86,7 +86,7 @@ export function LayoutPresetDialog({
                     <span className="text-xs text-muted-foreground">
                       {preset.description}
                     </span>
-                    <span className="font-mono text-[11px] text-muted-foreground/80">
+                    <span className="font-mono text-xs text-muted-foreground/80">
                       {preset.value}
                     </span>
                   </span>
