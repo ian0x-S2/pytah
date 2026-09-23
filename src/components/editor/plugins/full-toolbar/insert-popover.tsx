@@ -149,7 +149,7 @@ export const InsertPopover = memo(
           render={
             <Button
               aria-label="Insert"
-              className="h-7 gap-1.5 rounded-full px-2.5 text-xs"
+              className="h-7 gap-1.5 rounded-full text-xs"
               size="sm"
               type="button"
               variant="ghost"
@@ -208,3 +208,5 @@ export const InsertPopover = memo(
     );
   }
 );
+
+InsertPopover.displayName = "InsertPopover";

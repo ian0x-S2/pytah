@@ -112,7 +112,7 @@ export function HomePage() {
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
               <Link href="/docs/overview">
                 <Button
-                  className="h-10 px-5 text-sm font-medium shadow-xs"
+                  className="h-10 px-5 shadow-xs"
                   size="default"
                 >
                   Get Started
@@ -121,7 +121,7 @@ export function HomePage() {
               </Link>
               <Link href="/demo">
                 <Button
-                  className="h-10 px-5 text-sm font-medium"
+                  className="h-10 px-5"
                   size="default"
                   variant="outline"
                 >
@@ -158,7 +158,7 @@ export function HomePage() {
         <div className="mt-24 grid w-full grid-cols-1 gap-6 sm:grid-cols-3">
           {features.map((feature) => (
             <Link
-              className="group relative flex flex-col justify-between rounded-2xl border border-border/50 bg-transparent p-7 text-left transition-all duration-300 hover:-translate-y-0.5 hover:border-border"
+              className="group relative flex flex-col justify-between rounded-2xl border border-border/50 bg-transparent p-7 text-left transition-colors transition-transform duration-300 hover:-translate-y-0.5 hover:border-border"
               href={feature.href}
               key={feature.title}
             >

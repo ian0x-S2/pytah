@@ -181,12 +181,11 @@ export function FloatingToolbarPlugin() {
 
   return createPortal(
     <div
-      className="fixed z-50"
+      className="fixed z-50 -translate-x-1/2 -translate-y-full"
       ref={toolbarRef}
       style={{
         left: `${adjustedPosition.left}px`,
         top: `${adjustedPosition.top}px`,
-        transform: "translate(-50%, -100%)",
       }}
     >
       <div

@@ -48,16 +48,17 @@ function getDocsHighlighter() {
     return Promise.resolve(loadedDocsHighlighter);
   }
 
-  docsHighlighterPromise ??= getSingletonHighlighter({
-    langs: [...CODE_BLOCK_LANGUAGES],
-    themes: [CODE_BLOCK_THEMES.light, CODE_BLOCK_THEMES.dark],
-  }).then((highlighter) => {
+  docsHighlighterPromise ??= (async () => {
+    const highlighter = await getSingletonHighlighter({
+      langs: [...CODE_BLOCK_LANGUAGES],
+      themes: [CODE_BLOCK_THEMES.light, CODE_BLOCK_THEMES.dark],
+    });
     loadedDocsHighlighter = highlighter as HighlighterGeneric<
       CodeBlockSyntaxLanguage,
       CodeBlockTheme
     >;
     return loadedDocsHighlighter;
-  });
+  })();
 
   return docsHighlighterPromise;
 }
@@ -145,8 +146,9 @@ function useCodeTokens(
 
     let cancelled = false;
 
-    getDocsHighlighter()
-      .then((highlighter) => {
+    void (async () => {
+      try {
+        const highlighter = await getDocsHighlighter();
         tokenizeSnippetAllThemes(highlighter, code, language);
         if (cancelled) {
           return;
@@ -154,12 +156,12 @@ function useCodeTokens(
 
         const tokensResult = codeTokenCache.get(cacheKey) ?? null;
         setAsyncState({ cacheKey, error: false, tokensResult });
-      })
-      .catch(() => {
+      } catch {
         if (!cancelled) {
           setAsyncState({ cacheKey, error: true, tokensResult: null });
         }
-      });
+      }
+    })();
 
     return () => {
       cancelled = true;
@@ -309,7 +311,7 @@ export function SubHeading({
 }) {
   return (
     <h3
-      className="mt-6 mb-2 text-[14px] font-semibold tracking-tight text-foreground sm:text-[15px]"
+      className="mt-6 mb-2 text-sm font-semibold tracking-tight text-foreground sm:text-[15px]"
       id={id}
     >
       {children}
@@ -371,11 +373,9 @@ export function CodeBlock({
         </pre>
       ) : (
         <pre
-          className="overflow-x-auto p-3.5 font-mono text-[11.5px] leading-relaxed sm:p-4 sm:text-xs"
+          className="overflow-x-auto bg-transparent p-3.5 font-mono text-[11.5px] leading-relaxed m-0 sm:p-4 sm:text-xs"
           style={{
-            backgroundColor: "transparent",
             color: codeForegroundColor ?? undefined,
-            margin: 0,
           }}
         >
           <code>
@@ -418,7 +418,7 @@ export function Table({
 }) {
   return (
     <div className="my-4 overflow-x-auto rounded-xl border border-border/50 bg-transparent shadow-xs">
-      <table className="w-full text-left text-[12px] sm:text-[13px]">
+      <table className="w-full text-left text-xs sm:text-[13px]">
         <thead>
           <tr className="border-b border-border/50 bg-muted/25 font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
             {headers.map((header) => (
