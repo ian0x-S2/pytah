@@ -7,6 +7,22 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ==========================================================================
+ * Custom Utilities
+ *
+ * `scrollbar-hidden` hides scrollbars while keeping the region scrollable
+ * (used by the table-of-contents rail and popover). There is no Tailwind
+ * core utility for this, so it is declared here per shadcn(no-unknown-classes).
+ * ========================================================================== */
+
+@utility scrollbar-hidden {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ==========================================================================
  * Tailwind v4 Theme Bridge
  *
  * Maps ShadCN CSS custom properties (defined in :root / .dark below)

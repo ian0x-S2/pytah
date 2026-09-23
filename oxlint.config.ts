@@ -13,5 +13,22 @@ export default defineConfig({
   extends: [core, react, shadcn, jsPlugins],
   ignorePatterns: core.ignorePatterns,
   jsPlugins: [...(jsPlugins.jsPlugins ?? []), ...(shadcn.jsPlugins ?? [])],
+  rules: {
+    // Lexical's idiom is `export function $createXNode/$isXNode` factories;
+    // function declarations also hoist across the node files' circular
+    // imports, so the preset's "expression" style does not fit this codebase.
+    "func-style": "off",
+    // Plugins export `export function *Plugin` components and memo-wrapped
+    // arrows (`export const X = memo(({...}) => ...)`); neither converts
+    // mechanically, so the arrow-function component style is not enforced.
+    "react/function-component-definition": "off",
+    // `ContentEditable__root` (Lexical playground convention) and
+    // `editor-draggable-block-menu` are unstyled JS hooks, not design tokens:
+    // an empty `@utility` is a Tailwind build error, so they are allowlisted.
+    "shadcn/no-unknown-classes": [
+      "error",
+      { allow: ["ContentEditable__root", "editor-draggable-block-menu"] },
+    ],
+  },
   settings: jsPluginSettings,
 });
