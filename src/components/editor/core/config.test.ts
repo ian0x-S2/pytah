@@ -5,6 +5,10 @@ import { ParagraphNode } from "lexical";
 
 import { BASE_EDITOR_NODES, createEditorConfig } from "./config";
 
+const seedEditorState = () => {
+  // A real builder mutates the document; identity is what matters here.
+};
+
 describe("editor config", () => {
   test("builds config with base nodes when no features contribute", () => {
     const config = createEditorConfig({ editable: true });
@@ -30,9 +34,6 @@ describe("editor config", () => {
   });
 
   test("passes through an initial-state builder when provided", () => {
-    const seedEditorState = () => {
-      // A real builder mutates the document; identity is what matters here.
-    };
     const config = createEditorConfig({
       editable: true,
       editorState: seedEditorState,

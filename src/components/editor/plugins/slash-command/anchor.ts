@@ -87,9 +87,7 @@ export const createSlashMenuAnchor = (
 
     return {
       0: anchorRect,
-      item: (index: number) => {
-        return index === 0 ? anchorRect : null;
-      },
+      item: (index: number) => (index === 0 ? anchorRect : null),
       length: 1,
       *[Symbol.iterator](): IterableIterator<DOMRect> {
         yield anchorRect;

@@ -101,13 +101,20 @@ export function FocusOnMountPlugin() {
     const fontsReady = document.fonts
       ? document.fonts.ready
       : Promise.resolve();
-    fontsReady.then(settle).catch(settle);
+    // `settle` runs for both outcomes (fonts loaded or failed), matching the
+    // previous `.then(settle).catch(settle)` chain.
+    void (async () => {
+      try {
+        await fontsReady;
+      } catch {
+        // Font loading is best-effort; the caret is placed regardless.
+      }
+      settle();
+    })();
     const fallbackTimer = window.setTimeout(settle, 1000);
 
     return () => {
-      if (!cancelled) {
-        release();
-      }
+      release();
       window.clearTimeout(fallbackTimer);
     };
   }, [editor]);

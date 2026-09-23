@@ -79,19 +79,19 @@ function SidebarProvider({
 
   // This is the internal state of the sidebar.
   // We use openProp and setOpenProp for control from outside the component.
-  const [_open, _setOpen] = useState(() => defaultOpen);
-  const open = openProp ?? _open;
+  const [openState, setOpenState] = useState(() => defaultOpen);
+  const open = openProp ?? openState;
   const setOpen = (value: boolean | ((value: boolean) => boolean)) => {
-    const openState = typeof value === "function" ? value(open) : value;
+    const nextOpen = typeof value === "function" ? value(open) : value;
     if (setOpenProp) {
-      setOpenProp(openState);
+      setOpenProp(nextOpen);
     } else {
-      _setOpen(openState);
+      setOpenState(nextOpen);
     }
 
     // This sets the cookie to keep the sidebar state.
     // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API not available in all environments
-    document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+    document.cookie = `${SIDEBAR_COOKIE_NAME}=${nextOpen}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
   };
 
   // Helper to toggle the sidebar.
@@ -306,6 +306,7 @@ function SidebarRail({ className, ...props }: ComponentProps<"button">) {
       onClick={toggleSidebar}
       tabIndex={-1}
       title="Toggle Sidebar"
+      type="button"
       {...props}
     />
   );
@@ -534,11 +535,12 @@ function SidebarMenuButton({
     return comp;
   }
 
-  if (typeof tooltip === "string") {
-    tooltip = {
-      children: tooltip,
-    };
-  }
+  const tooltipProps =
+    typeof tooltip === "string"
+      ? {
+          children: tooltip,
+        }
+      : tooltip;
 
   return (
     <Tooltip>
@@ -547,7 +549,7 @@ function SidebarMenuButton({
         align="center"
         hidden={state !== "collapsed" || isMobile}
         side="right"
-        {...tooltip}
+        {...tooltipProps}
       />
     </Tooltip>
   );

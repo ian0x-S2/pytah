@@ -10,15 +10,15 @@ import {
 import type { Theme, ThemeProviderState } from "./theme-context";
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(readStoredTheme);
+  const [theme, setTheme] = useState<Theme>(readStoredTheme);
   const [systemTheme, setSystemTheme] = useState<"light" | "dark">(
     getSystemTheme
   );
   const resolvedTheme = theme === "system" ? systemTheme : theme;
 
-  const setTheme = (next: Theme) => {
+  const updateTheme = (next: Theme) => {
     localStorage.setItem(STORAGE_KEY, next);
-    setThemeState(next);
+    setTheme(next);
   };
 
   // Layout effect so the .dark class flips in the same commit as consumers
@@ -45,7 +45,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     };
   }, [theme]);
 
-  const value: ThemeProviderState = { resolvedTheme, setTheme, theme };
+  const value: ThemeProviderState = {
+    resolvedTheme,
+    setTheme: updateTheme,
+    theme,
+  };
 
   return (
     <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>

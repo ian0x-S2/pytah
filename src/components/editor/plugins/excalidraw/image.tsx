@@ -81,6 +81,7 @@ export function ExcalidrawImage({
     let cancelled = false;
 
     const renderScene = async () => {
+      // oxlint-disable-next-line react/todo -- dynamic import() for code-splitting; oxlint HIR cannot lower it (upstream limitation, not a code issue)
       const { exportToSvg } = await import("@excalidraw/excalidraw");
       const nextSvg = await exportToSvg({
         appState,
@@ -98,7 +99,13 @@ export function ExcalidrawImage({
       }
     };
 
-    renderScene().catch(() => {});
+    void (async () => {
+      try {
+        await renderScene();
+      } catch {
+        // Scene export is best-effort; a failed render leaves the placeholder.
+      }
+    })();
 
     return () => {
       cancelled = true;

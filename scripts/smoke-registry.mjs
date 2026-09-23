@@ -21,18 +21,19 @@ const startRegistryServer = () =>
       const fileName = path.basename(url.pathname);
       const filePath = path.join(registryDirectory, fileName);
 
-      readFile(filePath)
-        .then((content) => {
+      void (async () => {
+        try {
+          const content = await readFile(filePath);
           response.writeHead(200, {
             "access-control-allow-origin": "*",
             "content-type": "application/json",
           });
           response.end(content);
-        })
-        .catch(() => {
+        } catch {
           response.writeHead(404);
           response.end("not found");
-        });
+        }
+      })();
     });
 
     server.listen(0, "127.0.0.1", () => {
@@ -165,7 +166,7 @@ import { imageFeature } from "@/components/editor/plugins/image/feature";
 import { layoutFeature } from "@/components/editor/plugins/layout/feature";
 import { mathFeature } from "@/components/editor/plugins/math/feature";
 import { tableFeature } from "@/components/editor/plugins/table-behavior/feature";
-import { tocFeature } from "@/components/editor/plugins/toc/feature";
+import { tocFeature } from "@/components/editor/plugins/toc/descriptor";
 import { youtubeFeature } from "@/components/editor/plugins/youtube/feature";
 
 const features = [

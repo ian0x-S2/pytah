@@ -2,8 +2,7 @@
 
 import type { Transformer } from "@lexical/markdown";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import type { EditorState, LexicalEditor } from "lexical";
-import { HISTORY_MERGE_TAG } from "lexical";
+import type { LexicalEditor } from "lexical";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 
 import { DEFAULT_EDITOR_SNAPSHOT_OPTIONS } from "../../core/composition";
@@ -16,6 +15,8 @@ import {
   readEditorTextContent,
   replaceEditorHtmlContent,
 } from "../../core/utils";
+import type { SnapshotUpdateSignal } from "./snapshot-update";
+import { shouldEmitSnapshotUpdate } from "./snapshot-update";
 
 export interface EditorStatePluginProps {
   initialHtml?: string;
@@ -35,39 +36,6 @@ export interface EditorStatePluginProps {
   snapshotOptions?: ResolvedEditorSnapshotOptions;
   transformers?: readonly Transformer[];
 }
-
-/** Structural subset of Lexical's update-listener payload used for filtering. */
-export interface SnapshotUpdateSignal {
-  dirtyElements: { readonly size: number };
-  dirtyLeaves: { readonly size: number };
-  prevEditorState: EditorState;
-  tags: ReadonlySet<string>;
-}
-
-/**
- * Decides whether an editor update should produce serialized outputs.
- * Mirrors OnChangePlugin semantics (selection-only, history-merge and
- * initial-empty updates are ignored) plus suppression of the tagged mount
- * seed when `emitInitialSnapshot` is `false`.
- */
-export const shouldEmitSnapshotUpdate = (
-  update: SnapshotUpdateSignal,
-  options: { emitInitialSnapshot: boolean }
-): boolean => {
-  if (update.dirtyElements.size === 0 && update.dirtyLeaves.size === 0) {
-    return false;
-  }
-  if (update.tags.has(HISTORY_MERGE_TAG)) {
-    return false;
-  }
-  if (update.prevEditorState.isEmpty()) {
-    return false;
-  }
-  if (!options.emitInitialSnapshot && update.tags.has(EDITOR_SEED_UPDATE_TAG)) {
-    return false;
-  }
-  return true;
-};
 
 export function EditorStatePlugin({
   initialHtml,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { DraggableBlockPlugin_EXPERIMENTAL } from "@lexical/react/LexicalDraggableBlockPlugin";
+import { DraggableBlockPlugin_EXPERIMENTAL as DraggableBlockPluginExperimental } from "@lexical/react/LexicalDraggableBlockPlugin";
 import { useLexicalEditable } from "@lexical/react/useLexicalEditable";
 import { GripVerticalIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -31,7 +31,7 @@ export function DraggableBlockPlugin() {
   }
 
   return (
-    <DraggableBlockPlugin_EXPERIMENTAL
+    <DraggableBlockPluginExperimental
       anchorElem={anchorElem}
       isOnMenu={isOnMenu}
       menuComponent={

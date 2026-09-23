@@ -60,7 +60,7 @@ export function disableTransitions(): () => void {
           return;
         }
         removed = true;
-        document.head.removeChild(css);
+        css.remove();
       });
     });
     setTimeout(() => {
@@ -68,7 +68,7 @@ export function disableTransitions(): () => void {
         return;
       }
       removed = true;
-      document.head.removeChild(css);
+      css.remove();
     }, 100);
   };
 }

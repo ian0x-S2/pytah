@@ -15,7 +15,7 @@ import { layoutFeature } from "@/components/editor/plugins/layout/feature";
 import { BUILTIN_MARKDOWN_TRANSFORMERS } from "@/components/editor/plugins/markdown/transformers";
 import { mathFeature } from "@/components/editor/plugins/math/feature";
 import { tableFeature } from "@/components/editor/plugins/table-behavior/feature";
-import { tocFeature } from "@/components/editor/plugins/toc/feature";
+import { tocFeature } from "@/components/editor/plugins/toc/descriptor";
 import { youtubeFeature } from "@/components/editor/plugins/youtube/feature";
 
 const EDITOR_MARKDOWN_TRANSFORMERS = [

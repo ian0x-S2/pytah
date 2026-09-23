@@ -153,7 +153,13 @@ export function ImagePlugin() {
           return false;
         }
 
-        insertImageFile(imageFile).catch(() => {});
+        void (async () => {
+          try {
+            await insertImageFile(imageFile);
+          } catch {
+            // File reads are best-effort; a failed drop leaves the document.
+          }
+        })();
         return true;
       },
       COMMAND_PRIORITY_HIGH
@@ -230,22 +236,21 @@ export function ImagePlugin() {
         setDialogState((state) => ({ ...state, altText: value }))
       }
       onCancel={closeDialog}
-      onImageFileChange={(event) => {
+      onImageFileChange={async (event) => {
         const file = event.target.files?.[0];
         if (!file) {
           return;
         }
-        readFileAsDataUrl(file)
-          .then((src) => {
-            setDialogState((state) => ({
-              ...state,
-              fileName: file.name,
-              fileSrc: src,
-            }));
-          })
-          .catch(() => {
-            setDialogState((state) => ({ ...state, fileSrc: null }));
-          });
+        try {
+          const src = await readFileAsDataUrl(file);
+          setDialogState((state) => ({
+            ...state,
+            fileName: file.name,
+            fileSrc: src,
+          }));
+        } catch {
+          setDialogState((state) => ({ ...state, fileSrc: null }));
+        }
       }}
       onSubmit={handleSubmit}
       onUrlChange={(value) =>

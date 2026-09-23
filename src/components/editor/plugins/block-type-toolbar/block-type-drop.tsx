@@ -129,3 +129,5 @@ export const BlockTypeDrop = memo(
     );
   }
 );
+
+BlockTypeDrop.displayName = "BlockTypeDrop";

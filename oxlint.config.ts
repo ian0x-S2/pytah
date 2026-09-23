@@ -13,6 +13,42 @@ export default defineConfig({
   extends: [core, react, shadcn, jsPlugins],
   ignorePatterns: core.ignorePatterns,
   jsPlugins: [...(jsPlugins.jsPlugins ?? []), ...(shadcn.jsPlugins ?? [])],
+  overrides: [
+    {
+      // Every Lexical node defines createDOM/updateDOM/exportDOM/decorate as
+      // instance methods overriding the base class; `static` would break the
+      // editor's dispatch.
+      files: ["src/components/editor/core/nodes/**"],
+      rules: {
+        "class-methods-use-this": "off",
+        // Node files are inherently cyclic (converters reference $create
+        // factories that reference the class): no linear order exists.
+        "no-use-before-define": "off",
+        // `extends DecoratorNode` Lexical nodes are not React class
+        // components; converting them would break the editor.
+        "react/prefer-function-component": "off",
+      },
+    },
+    {
+      // `cleanup` <-> `onScrollEnd`/`handleUserInterrupt` are mutually
+      // recursive by design; no definition order satisfies the rule.
+      files: ["src/components/editor/plugins/toc/hooks.ts"],
+      rules: {
+        "no-use-before-define": "off",
+      },
+    },
+    {
+      // Lexical's `dispatchCommand` requires an explicit payload argument;
+      // the one-argument call does not typecheck.
+      files: [
+        "src/components/editor/plugins/block-type-toolbar/plugin.tsx",
+        "src/components/editor/plugins/full-toolbar/plugin.tsx",
+      ],
+      rules: {
+        "no-useless-undefined": "off",
+      },
+    },
+  ],
   rules: {
     // Lexical's idiom is `export function $createXNode/$isXNode` factories;
     // function declarations also hoist across the node files' circular

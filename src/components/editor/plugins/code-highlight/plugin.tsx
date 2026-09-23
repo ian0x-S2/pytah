@@ -32,7 +32,13 @@ const preloadShikiThemes = () => {
   }
   shikiThemesPreloaded = true;
   for (const theme of Object.values(CODE_BLOCK_THEME_BY_MODE)) {
-    loadCodeTheme(theme)?.catch(() => {});
+    void (async () => {
+      try {
+        await loadCodeTheme(theme);
+      } catch {
+        // Theme preloads are best-effort; per-node fallback handles misses.
+      }
+    })();
   }
 };
 
@@ -57,7 +63,7 @@ const $tokensDiffer = (
   if (current.length !== tokens.length) {
     return true;
   }
-  for (let index = 0; index < tokens.length; index++) {
+  for (let index = 0; index < tokens.length; index += 1) {
     const currentNode = current[index];
     const tokenNode = tokens[index];
     if (currentNode.getType() !== tokenNode.getType()) {
@@ -205,11 +211,16 @@ export function CodeHighlightPlugin() {
     const loads = collectHighlightAssetLoads(editor, codeBlockTheme);
     // Arm even when a load fails: `$ensureShikiDiffIsNoOp` falls back per
     // node to Shiki's async flow instead of never arming.
-    Promise.all(loads).finally(() => {
+    void (async () => {
+      try {
+        await Promise.all(loads);
+      } catch {
+        // Load failures still arm; per-node fallback handles misses.
+      }
       if (!cancelled) {
         setReady(true);
       }
-    });
+    })();
     return () => {
       cancelled = true;
     };

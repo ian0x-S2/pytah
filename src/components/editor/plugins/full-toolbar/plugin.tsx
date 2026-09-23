@@ -257,3 +257,5 @@ export const FullToolbarPlugin = memo(
     );
   }
 );
+
+FullToolbarPlugin.displayName = "FullToolbarPlugin";

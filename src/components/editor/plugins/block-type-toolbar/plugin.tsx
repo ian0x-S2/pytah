@@ -177,3 +177,5 @@ export const BlockTypeToolbarPlugin = memo(
     );
   }
 );
+
+BlockTypeToolbarPlugin.displayName = "BlockTypeToolbarPlugin";

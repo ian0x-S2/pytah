@@ -150,8 +150,14 @@ export function RepositoryMentalModelTable() {
   );
 }
 
+const DEFAULT_WHERE_TO_CHANGE_HEADERS: [string, string, string] = [
+  "Need",
+  "Start in",
+  "Why",
+];
+
 export function WhereToChangeTable({
-  headers = ["Need", "Start in", "Why"],
+  headers = DEFAULT_WHERE_TO_CHANGE_HEADERS,
 }: {
   headers?: [string, string, string];
 }) {

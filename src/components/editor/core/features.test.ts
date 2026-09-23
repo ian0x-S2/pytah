@@ -11,7 +11,7 @@ import { imageFeature } from "../plugins/image/feature";
 import { layoutFeature } from "../plugins/layout/feature";
 import { mathFeature } from "../plugins/math/feature";
 import { tableFeature } from "../plugins/table-behavior/feature";
-import { tocFeature } from "../plugins/toc/feature";
+import { tocFeature } from "../plugins/toc/descriptor";
 import { youtubeFeature } from "../plugins/youtube/feature";
 import { DEFAULT_EDITOR_FEATURES } from "./composition";
 import {

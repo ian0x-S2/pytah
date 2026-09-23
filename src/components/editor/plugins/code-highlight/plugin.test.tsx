@@ -10,7 +10,7 @@ import type { LexicalEditor, LexicalNode } from "lexical";
 GlobalRegistrator.register();
 (globalThis as Record<string, unknown>).IS_REACT_ACT_ENVIRONMENT = true;
 
-const { act, createElement } = await import("react");
+const { act, createElement, useEffect } = await import("react");
 const { createRoot } = await import("react-dom/client");
 const { useLexicalComposerContext } =
   await import("@lexical/react/LexicalComposerContext");
@@ -82,7 +82,9 @@ let containerRef: HTMLElement | null = null;
 
 const EditorProbe = () => {
   const [editor] = useLexicalComposerContext();
-  editorRef = editor;
+  useEffect(() => {
+    editorRef = editor;
+  }, [editor]);
   return null;
 };
 
@@ -164,7 +166,7 @@ const pollUntil = async (
   attempts = 240,
   delayMs = 25
 ): Promise<boolean> => {
-  for (let attempt = 0; attempt < attempts; attempt++) {
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
     if (read()) {
       return true;
     }
@@ -254,7 +256,7 @@ describe("CodeHighlightPlugin arming", () => {
 
       // Give any (incorrectly) eager registration plenty of event-loop
       // turns to tokenize; nothing should appear without the arm frames.
-      for (let attempt = 0; attempt < 6; attempt++) {
+      for (let attempt = 0; attempt < 6; attempt += 1) {
         await new Promise<void>((resolve) => {
           setTimeout(resolve, 25);
         });

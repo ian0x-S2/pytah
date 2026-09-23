@@ -19,16 +19,16 @@ interface TableActionMenuProps {
   selectionCounts: SelectionCounts;
 }
 
+const handleTableActionMouseDown = (event: MouseEvent<HTMLButtonElement>) => {
+  event.preventDefault();
+  event.stopPropagation();
+};
+
 export function TableActionMenu({
   onClose,
   selectionCounts,
 }: TableActionMenuProps) {
   const [editor] = useLexicalComposerContext();
-
-  const handleMouseDown = (event: MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-  };
 
   const rowLabel =
     selectionCounts.rows === 1 ? "row" : `${selectionCounts.rows} rows`;
@@ -45,7 +45,7 @@ export function TableActionMenu({
           insertTableRows(editor, false, selectionCounts.rows);
           onClose();
         }}
-        onMouseDown={handleMouseDown}
+        onMouseDown={handleTableActionMouseDown}
         size="sm"
         type="button"
         variant="ghost"
@@ -59,7 +59,7 @@ export function TableActionMenu({
           insertTableRows(editor, true, selectionCounts.rows);
           onClose();
         }}
-        onMouseDown={handleMouseDown}
+        onMouseDown={handleTableActionMouseDown}
         size="sm"
         type="button"
         variant="ghost"
@@ -73,7 +73,7 @@ export function TableActionMenu({
           insertTableColumns(editor, false, selectionCounts.columns);
           onClose();
         }}
-        onMouseDown={handleMouseDown}
+        onMouseDown={handleTableActionMouseDown}
         size="sm"
         type="button"
         variant="ghost"
@@ -87,7 +87,7 @@ export function TableActionMenu({
           insertTableColumns(editor, true, selectionCounts.columns);
           onClose();
         }}
-        onMouseDown={handleMouseDown}
+        onMouseDown={handleTableActionMouseDown}
         size="sm"
         type="button"
         variant="ghost"
@@ -102,7 +102,7 @@ export function TableActionMenu({
           deleteSelectedTableRow(editor);
           onClose();
         }}
-        onMouseDown={handleMouseDown}
+        onMouseDown={handleTableActionMouseDown}
         size="sm"
         type="button"
         variant="ghost"
@@ -116,7 +116,7 @@ export function TableActionMenu({
           deleteSelectedTableColumn(editor);
           onClose();
         }}
-        onMouseDown={handleMouseDown}
+        onMouseDown={handleTableActionMouseDown}
         size="sm"
         type="button"
         variant="ghost"
@@ -130,7 +130,7 @@ export function TableActionMenu({
           deleteSelectedTable(editor);
           onClose();
         }}
-        onMouseDown={handleMouseDown}
+        onMouseDown={handleTableActionMouseDown}
         size="sm"
         type="button"
         variant="ghost"

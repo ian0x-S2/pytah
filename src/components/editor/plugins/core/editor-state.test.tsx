@@ -34,8 +34,8 @@ const { createEditorConfig } = await import("../../core/config");
 const { computeEditorTransformers } = await import("../../core/features");
 const { $convertFromMarkdownString } = await import("@lexical/markdown");
 const { readEditorSnapshot } = await import("../../core/utils");
-const { EditorStatePlugin, shouldEmitSnapshotUpdate } =
-  await import("./editor-state");
+const { EditorStatePlugin } = await import("./editor-state");
+const { shouldEmitSnapshotUpdate } = await import("./snapshot-update");
 
 const INITIAL_CONFIG = createEditorConfig({
   editable: true,
@@ -61,7 +61,9 @@ let editorRef: LexicalEditor | null = null;
 
 const EditorProbe = () => {
   const [editor] = useLexicalComposerContext();
-  editorRef = editor;
+  useEffect(() => {
+    editorRef = editor;
+  }, [editor]);
   return null;
 };
 
@@ -75,7 +77,9 @@ let postMountUpdateStates: unknown[] = [];
  */
 const SeedUpdateProbe = () => {
   const [editor] = useLexicalComposerContext();
-  editorRef = editor;
+  useEffect(() => {
+    editorRef = editor;
+  }, [editor]);
 
   useEffect(
     () =>
