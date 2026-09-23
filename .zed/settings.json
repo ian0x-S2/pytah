@@ -39,8 +39,6 @@
   "languages": {
     "JavaScript": {
       "code_actions_on_format": {
-        "source.fixAll.biome": true,
-        "source.organizeImports.biome": true,
         "source.fixAll.oxc": true,
         "source.organizeImports.oxc": true
       },
@@ -52,8 +50,6 @@
     },
     "TSX": {
       "code_actions_on_format": {
-        "source.fixAll.biome": true,
-        "source.organizeImports.biome": true,
         "source.fixAll.oxc": true,
         "source.organizeImports.oxc": true
       },
@@ -65,8 +61,6 @@
     },
     "TypeScript": {
       "code_actions_on_format": {
-        "source.fixAll.biome": true,
-        "source.organizeImports.biome": true,
         "source.fixAll.oxc": true,
         "source.organizeImports.oxc": true
       },

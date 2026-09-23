@@ -14,7 +14,7 @@
   "scripts": {
     "dev": "vite",
     "build": "bun run registry:build && tsc -b && vite build",
-    "lint": "eslint .",
+    "lint": "ultracite check",
     "preview": "vite preview",
     "registry:build": "node scripts/generate-registry.mjs && bun x ultracite fix public/r",
     "registry:smoke": "bun run registry:build && node scripts/smoke-registry.mjs",
@@ -70,10 +70,9 @@
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",
-    "@biomejs/biome": "2.4.9",
-    "@eslint/js": "^9.39.4",
     "@happy-dom/global-registrator": "^20.11.13",
     "@rolldown/plugin-babel": "^0.2.1",
+    "@shadcn/lint": "^0.2.0",
     "@types/babel__core": "^7.20.5",
     "@types/katex": "^0.16.8",
     "@types/node": "^24.12.0",
@@ -81,17 +80,13 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
     "babel-plugin-react-compiler": "^1.0.0",
-    "eslint": "^9.39.4",
-    "eslint-plugin-react-hooks": "^7.0.1",
-    "eslint-plugin-react-refresh": "^0.5.2",
-    "globals": "^17.4.0",
     "happy-dom": "^20.11.13",
     "lefthook": "^2.1.14",
     "oxfmt": "^0.70.0",
     "oxlint": "^1.85.0",
+    "oxlint-plugin-react-doctor": "^0.9.14",
     "typescript": "~5.9.3",
-    "typescript-eslint": "^8.57.0",
-    "ultracite": "7.4.0",
+    "ultracite": "7.12.0",
     "vite": "^8.0.1"
   }
 }
