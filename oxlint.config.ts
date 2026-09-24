@@ -278,9 +278,17 @@ export default defineConfig({
     // `ContentEditable__root` (Lexical playground convention) and
     // `editor-draggable-block-menu` are unstyled JS hooks, not design tokens:
     // an empty `@utility` is a Tailwind build error, so they are allowlisted.
+    // `twinkleplop` is the theme class from `@twinkleplop/theme-github`
+    // (plain CSS import, not a Tailwind utility).
     "shadcn/no-unknown-classes": [
       "error",
-      { allow: ["ContentEditable__root", "editor-draggable-block-menu"] },
+      {
+        allow: [
+          "ContentEditable__root",
+          "editor-draggable-block-menu",
+          "twinkleplop",
+        ],
+      },
     ],
   },
   settings: jsPluginSettings,
