@@ -132,10 +132,7 @@ export default defineConfig({
     },
     {
       // Variant factories are public API consumed across the app.
-      files: [
-        "src/components/ui/button.tsx",
-        "src/components/ui/toggle.tsx",
-      ],
+      files: ["src/components/ui/button.tsx", "src/components/ui/toggle.tsx"],
       rules: {
         "react-doctor/only-export-components": "off",
       },

@@ -87,7 +87,7 @@ function MDXCodeBlock({ children }: { children?: ReactNode }) {
 
 function InlineCode({ children }: { children?: ReactNode }) {
   return (
-    <code className="py-0.5 rounded border border-border/60 bg-muted/40 px-1.5 font-mono text-sm text-foreground">
+    <code className="rounded border border-border/60 bg-muted/40 px-1.5 py-0.5 font-mono text-sm text-foreground">
       {children}
     </code>
   );

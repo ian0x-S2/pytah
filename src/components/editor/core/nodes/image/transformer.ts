@@ -17,8 +17,7 @@ export const IMAGE_MARKDOWN_TRANSFORMER: ElementTransformer = {
   replace: (parentNode, _children, match) => {
     // Typed as `Array<string>` by Lexical, but at runtime this is the
     // `RegExpMatchArray` from `IMAGE_REGEXP`, so named groups are present.
-    const { altText = "", src = "" } =
-      (match as RegExpMatchArray).groups ?? {};
+    const { altText = "", src = "" } = (match as RegExpMatchArray).groups ?? {};
     parentNode.replace(
       $createImageNode({
         altText,

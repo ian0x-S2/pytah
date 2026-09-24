@@ -1,9 +1,7 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry-item.json",
   "author": "Pytah",
-  "categories": [
-    "editor"
-  ],
+  "categories": ["editor"],
   "dependencies": [
     "@lexical/react@^0.42.0",
     "lucide-react@^1.7.0",
@@ -25,9 +23,7 @@
     }
   ],
   "name": "editor-draggable-blocks",
-  "registryDependencies": [
-    "@pytah/editor"
-  ],
+  "registryDependencies": ["@pytah/editor"],
   "title": "Pytah Editor — Draggable Blocks",
   "type": "registry:block"
 }

@@ -67,7 +67,7 @@ function DocsSidebar() {
             href="/"
           >
             <span>Pytah</span>
-            <span className="py-0.5 rounded border border-border/70 px-1 font-mono text-xs text-muted-foreground">
+            <span className="rounded border border-border/70 px-1 py-0.5 font-mono text-xs text-muted-foreground">
               docs
             </span>
           </Link>

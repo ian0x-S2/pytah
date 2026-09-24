@@ -321,7 +321,7 @@ export function SubHeading({
 
 export function Paragraph({ children }: { children: React.ReactNode }) {
   return (
-    <p className="[&_code]:py-0.5 mb-3.5 text-xs leading-relaxed text-foreground/80 sm:text-sm [&_code]:rounded [&_code]:border [&_code]:border-border/60 [&_code]:bg-muted/40 [&_code]:px-1.5 [&_code]:font-mono [&_code]:text-sm [&_code]:text-foreground [&_strong]:font-semibold [&_strong]:text-foreground">
+    <p className="mb-3.5 text-xs leading-relaxed text-foreground/80 sm:text-sm [&_code]:rounded [&_code]:border [&_code]:border-border/60 [&_code]:bg-muted/40 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-sm [&_code]:text-foreground [&_strong]:font-semibold [&_strong]:text-foreground">
       {children}
     </p>
   );
@@ -373,7 +373,7 @@ export function CodeBlock({
         </pre>
       ) : (
         <pre
-          className="overflow-x-auto bg-transparent p-3.5 font-mono text-xs leading-relaxed m-0 sm:p-4 sm:text-xs"
+          className="m-0 overflow-x-auto bg-transparent p-3.5 font-mono text-xs leading-relaxed sm:p-4 sm:text-xs"
           style={{
             color: codeForegroundColor ?? undefined,
           }}

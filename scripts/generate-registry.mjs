@@ -405,9 +405,7 @@ const createBaseItem = async ({
   uiEntries,
 }) => {
   const collectedSourceFiles = await collectSourceFiles(editorSourceDirectory);
-  const baseFiles = collectedSourceFiles.filter(
-    (file) => !isFeatureFile(file)
-  );
+  const baseFiles = collectedSourceFiles.filter((file) => !isFeatureFile(file));
 
   return {
     $schema: "https://ui.shadcn.com/schema/registry-item.json",

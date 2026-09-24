@@ -1,9 +1,7 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry-item.json",
   "author": "Pytah",
-  "categories": [
-    "editor"
-  ],
+  "categories": ["editor"],
   "dependencies": [
     "@excalidraw/excalidraw@^0.18.1",
     "@lexical/react@^0.42.0",
@@ -64,9 +62,7 @@
     }
   ],
   "name": "editor-excalidraw",
-  "registryDependencies": [
-    "@pytah/editor"
-  ],
+  "registryDependencies": ["@pytah/editor"],
   "title": "Pytah Editor — Drawings",
   "type": "registry:block"
 }

@@ -24,8 +24,14 @@ export function extractMarkedSource(source: string, marker: string) {
     ),
     `Marked source was not found for: ${marker}`
   )
-    .replace(new RegExp(`^/\\* docs:start ${escapeRegex(marker)} \\*/\\n?`, "u"), "")
-    .replace(new RegExp(`\\n?/\\* docs:end ${escapeRegex(marker)} \\*/$`, "u"), "")
+    .replace(
+      new RegExp(`^/\\* docs:start ${escapeRegex(marker)} \\*/\\n?`, "u"),
+      ""
+    )
+    .replace(
+      new RegExp(`\\n?/\\* docs:end ${escapeRegex(marker)} \\*/$`, "u"),
+      ""
+    )
     .trim();
 }
 

@@ -111,20 +111,13 @@ export function HomePage() {
             {/* Action Buttons */}
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
               <Link href="/docs/overview">
-                <Button
-                  className="h-10 px-5 shadow-xs"
-                  size="default"
-                >
+                <Button className="h-10 px-5 shadow-xs" size="default">
                   Get Started
                   <ArrowRightIcon className="size-4" />
                 </Button>
               </Link>
               <Link href="/demo">
-                <Button
-                  className="h-10 px-5"
-                  size="default"
-                  variant="outline"
-                >
+                <Button className="h-10 px-5" size="default" variant="outline">
                   <PlayIcon className="size-3.5" />
                   Live Demo
                 </Button>

@@ -1,9 +1,7 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry-item.json",
   "author": "Pytah",
-  "categories": [
-    "editor"
-  ],
+  "categories": ["editor"],
   "dependencies": [
     "@lexical/react@^0.42.0",
     "@lexical/table@^0.42.0",
@@ -59,9 +57,7 @@
     }
   ],
   "name": "editor-tables",
-  "registryDependencies": [
-    "@pytah/editor"
-  ],
+  "registryDependencies": ["@pytah/editor"],
   "title": "Pytah Editor — Table Behavior",
   "type": "registry:block"
 }

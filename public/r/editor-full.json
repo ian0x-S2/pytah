@@ -1,9 +1,7 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry-item.json",
   "author": "Pytah",
-  "categories": [
-    "editor"
-  ],
+  "categories": ["editor"],
   "description": "Every optional Pytah editor feature in one install. Compose descriptors through the `extraFeatures` prop.",
   "files": [],
   "name": "editor-full",

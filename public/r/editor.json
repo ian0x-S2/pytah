@@ -1,9 +1,7 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry-item.json",
   "author": "Pytah",
-  "categories": [
-    "editor"
-  ],
+  "categories": ["editor"],
   "cssVars": {
     "dark": {
       "highlight": "oklch(0.35 0.06 85)",

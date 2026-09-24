@@ -1,13 +1,8 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry-item.json",
   "author": "Pytah",
-  "categories": [
-    "editor"
-  ],
-  "dependencies": [
-    "@lexical/react@^0.42.0",
-    "react@^19.2.4"
-  ],
+  "categories": ["editor"],
+  "dependencies": ["@lexical/react@^0.42.0", "react@^19.2.4"],
   "description": "Seeds the example document when the editor mounts empty. Intended for demos.",
   "files": [
     {
@@ -24,9 +19,7 @@
     }
   ],
   "name": "editor-seed-content",
-  "registryDependencies": [
-    "@pytah/editor"
-  ],
+  "registryDependencies": ["@pytah/editor"],
   "title": "Pytah Editor — Seed Content",
   "type": "registry:block"
 }
