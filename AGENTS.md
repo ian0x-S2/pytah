@@ -259,3 +259,5 @@ When changing this codebase, keep these facts in mind:
 - architecture changes should update the nearest relevant `AGENTS.md` so future work keeps the same mental model
 - if a feature-specific README duplicates agent context, prefer `AGENTS.md` as the durable source of truth
 - the `lexical/` submodule must be ignored by git (ensure it's in `.gitignore` before committing)
+- never read layout (`getBoundingClientRect`, `getElementByKey` for positioning) or call `scrollIntoView` synchronously after `editor.update` inside a Lexical command listener: `triggerCommandListeners` wraps listeners in its own outer `updateEditorSync`, so the update is nested and the DOM only commits after the listener returns — do post-commit DOM work in the update's `onUpdate` callback instead
+- after drag-and-drop, only scroll when the dropped block is actually outside the viewport: the drop point is visible by definition, so an unconditional `scrollIntoView` yanks the viewport away from where the user dropped the block

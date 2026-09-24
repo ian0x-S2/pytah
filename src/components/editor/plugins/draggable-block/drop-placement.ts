@@ -31,17 +31,27 @@ function selectDroppedNode(node: LexicalNode): void {
 
 /**
  * Moves the dragged top-level block before/after the drop target (resolved
- * in viewport space) and parks the selection on it. The update is discrete
- * so the DOM move commits synchronously: the returned element is already in
- * its new position and safe to focus/scroll to. Returns the moved DOM
- * element, or `null` when the payload did not reference a live node.
+ * in viewport space) and parks the selection on it.
+ *
+ * DROP_COMMAND listeners run inside Lexical's own outer update
+ * (`triggerCommandListeners` wraps every priority level in
+ * `updateEditorSync`), so this `editor.update` is a *nested* update: the DOM
+ * move only commits when the outer update flushes, after this listener
+ * returns. Reading layout or scrolling synchronously here would therefore
+ * observe the pre-move DOM. Pass `onMoved` to run focus/scroll work after
+ * the commit, when `editor.getElementByKey` resolves to the moved element
+ * with fresh layout. Returns `true` when the payload referenced live nodes
+ * and the drop was claimed.
  */
 export function moveDraggedBlock(
   editor: LexicalEditor,
   draggedKey: string,
   targetElem: HTMLElement,
-  clientY: number
-): HTMLElement | null {
+  clientY: number,
+  onMoved?: (element: HTMLElement) => void
+): boolean {
+  let claimed = false;
+
   editor.update(
     () => {
       const draggedNode = $getNodeByKey(draggedKey);
@@ -50,6 +60,8 @@ export function moveDraggedBlock(
       if (draggedNode === null || targetNode === null) {
         return;
       }
+
+      claimed = true;
 
       if (targetNode.getKey() !== draggedNode.getKey()) {
         const targetTop = targetElem.getBoundingClientRect().top;
@@ -63,22 +75,46 @@ export function moveDraggedBlock(
 
       selectDroppedNode(draggedNode);
     },
-    { discrete: true }
+    {
+      discrete: true,
+      onUpdate: () => {
+        if (!claimed || onMoved === undefined) {
+          return;
+        }
+
+        const movedElement = editor.getElementByKey(draggedKey);
+
+        if (movedElement !== null) {
+          onMoved(movedElement);
+        }
+      },
+    }
   );
 
-  return editor.getElementByKey(draggedKey);
+  return claimed;
 }
 
 /**
- * Hands DOM focus back to the editor without scrolling, then pins the
- * viewport at the dropped block with a minimal nearest-edge scroll. This
- * runs on every browser (the upstream experimental plugin only restores
- * focus on Firefox), so the caret genuinely lands where the block did.
+ * Hands DOM focus back to the editor without scrolling, then reveals the
+ * dropped block only when it is actually outside the viewport. The drop
+ * point is visible by definition, so an unconditional `scrollIntoView` would
+ * yank the viewport away from where the user just dropped the block; the
+ * nearest-edge scroll is purely a fallback for edge-clamped drops whose
+ * target resolved off-screen. This runs on every browser (the upstream
+ * experimental plugin only restores focus on Firefox), so the caret
+ * genuinely lands where the block did.
  */
 export function focusDroppedBlock(
   editor: LexicalEditor,
   element: HTMLElement
 ): void {
   editor.getRootElement()?.focus({ preventScroll: true });
-  element.scrollIntoView({ block: "nearest", inline: "nearest" });
+
+  const { bottom, top } = element.getBoundingClientRect();
+  const viewportHeight =
+    element.ownerDocument.defaultView?.innerHeight ?? window.innerHeight;
+
+  if (top < 0 || bottom > viewportHeight) {
+    element.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }
 }

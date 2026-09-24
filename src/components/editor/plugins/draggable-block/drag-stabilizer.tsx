@@ -150,25 +150,28 @@ export function BlockDragStabilizer({
               return false;
             }
 
-            const movedElement = moveDraggedBlock(
+            const moved = moveDraggedBlock(
               editor,
               draggedKey,
               target,
-              event.clientY
+              event.clientY,
+              (movedElement) => {
+                focusDroppedBlock(editor, movedElement);
+              }
             );
             hideTargetLine(targetLineRef.current);
             ownDragRef.current = false;
 
-            if (movedElement === null) {
+            if (!moved) {
               return false;
             }
 
             // Claim the drop: without this the browser performs its native
             // drop action afterwards (drop-caret placement, navigation for
             // exotic payloads), yanking the caret/scroll away from the
-            // dropped block we just selected.
+            // dropped block we just selected. Focus/scroll itself runs in
+            // the move's onUpdate, after the DOM commit lands.
             event.preventDefault();
-            focusDroppedBlock(editor, movedElement);
             return true;
           },
           COMMAND_PRIORITY_CRITICAL

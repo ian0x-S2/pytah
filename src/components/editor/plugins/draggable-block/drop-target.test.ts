@@ -157,7 +157,7 @@ describe("resolveDropTarget", () => {
 });
 
 describe("focusDroppedBlock", () => {
-  test("restores editor focus and keeps the moved block in view", () => {
+  test("restores editor focus and only scrolls when the block is out of view", () => {
     const editor = createEditor({
       onError: (error) => {
         throw error;
@@ -181,18 +181,34 @@ describe("focusDroppedBlock", () => {
       nativeFocus(options);
     }) as typeof root.focus;
 
+    let scrollCalls = 0;
     let scrollOptions: ScrollIntoViewOptions | undefined;
     movedBlock.scrollIntoView = ((
       options?: boolean | ScrollIntoViewOptions
     ) => {
+      scrollCalls += 1;
       scrollOptions = typeof options === "object" ? options : undefined;
     }) as typeof movedBlock.scrollIntoView;
 
+    // In-view block (happy-dom reports a zero rect): focus restored, no
+    // scroll — the viewport already sits exactly where the block landed.
     root.blur();
     focusDroppedBlock(editor, movedBlock);
 
     strictEqual(document.activeElement, root);
     strictEqual(focusOptions?.preventScroll, true);
+    strictEqual(scrollCalls, 0);
+
+    // Out-of-view block (above the viewport): minimal nearest-edge scroll.
+    stubRect(movedBlock, {
+      bottom: -10,
+      left: 0,
+      right: 100,
+      top: -50,
+    });
+    focusDroppedBlock(editor, movedBlock);
+
+    strictEqual(scrollCalls, 1);
     deepStrictEqual(scrollOptions, { block: "nearest", inline: "nearest" });
   });
 });
@@ -236,8 +252,15 @@ describe("moveDraggedBlock", () => {
     ok(target instanceof HTMLElement);
     stubRect(target, { bottom: 100, left: 0, right: 800, top: 0 });
 
+    const movedElements: HTMLElement[] = [];
+    const onMoved = (element: HTMLElement): void => {
+      movedElements.push(element);
+    };
+
     // Drop above the first block: charlie moves before alpha.
-    const moved = moveDraggedBlock(editor, keys[2], target, -10);
+    strictEqual(moveDraggedBlock(editor, keys[2], target, -10, onMoved), true);
+    strictEqual(movedElements.length, 1);
+    const [moved] = movedElements;
     ok(moved instanceof HTMLElement);
     deepStrictEqual(readOrder(), ["charlie", "alpha", "bravo"]);
 
@@ -258,12 +281,13 @@ describe("moveDraggedBlock", () => {
     strictEqual(caretKey, firstTextKey);
 
     // Dropping a block onto itself keeps order and still selects it.
-    const same = moveDraggedBlock(editor, keys[2], moved, 10);
-    ok(same instanceof HTMLElement);
+    strictEqual(moveDraggedBlock(editor, keys[2], moved, 10, onMoved), true);
+    strictEqual(movedElements.length, 2);
     deepStrictEqual(readOrder(), ["charlie", "alpha", "bravo"]);
 
-    // Unknown keys resolve to null without touching the document.
-    strictEqual(moveDraggedBlock(editor, "nope", target, 10), null);
+    // Unknown keys claim nothing, move nothing, and never fire onMoved.
+    strictEqual(moveDraggedBlock(editor, "nope", target, 10, onMoved), false);
+    strictEqual(movedElements.length, 2);
     deepStrictEqual(readOrder(), ["charlie", "alpha", "bravo"]);
   });
 });
