@@ -275,10 +275,18 @@ export function CodeBlock({
   children,
   language,
   label,
+  lineNumbers,
 }: {
   children: string;
   language?: string;
   label?: string;
+  /**
+   * Line numbers (`<span class="ln">`) per the Twinkleplop `line_numbers`
+   * render option: `true` numbers from 1, `{ start }` numbers from `start`,
+   * `false` disables. Defaults to on for multiline highlighted blocks.
+   * Plain-text blocks never render numbers.
+   */
+  lineNumbers?: boolean | { start?: number };
 }) {
   const { label: resolvedLabel, syntaxLanguage } = resolveCodeBlockMeta(
     language,
@@ -290,6 +298,13 @@ export function CodeBlock({
     shouldHighlight ? syntaxLanguage : null
   );
   const shouldRenderPlainText = !shouldHighlight || !tokenLines;
+  const lineNumberStart =
+    typeof lineNumbers === "object" ? (lineNumbers.start ?? 1) : 1;
+  const showLineNumbers =
+    !shouldRenderPlainText &&
+    (lineNumbers === undefined
+      ? (tokenLines?.length ?? 0) > 1
+      : lineNumbers !== false);
 
   return (
     <div className="group relative my-4 overflow-hidden rounded-xl border border-border/50 bg-muted/15 shadow-xs transition-colors hover:border-border/80">
@@ -319,6 +334,11 @@ export function CodeBlock({
 
               return (
                 <span className="block" key={lineKey}>
+                  {showLineNumbers ? (
+                    <span aria-hidden="true" className="ln">
+                      {lineNumberStart + lineIndex}
+                    </span>
+                  ) : null}
                   {line.length > 0
                     ? line.map((token, tokenIndex) => {
                         const tokenKey = `${lineKey}:${tokenIndex}:${token.text}`;
