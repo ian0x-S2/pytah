@@ -16,6 +16,16 @@ import type {
 } from "lexical";
 import type { JSX } from "react";
 
+/**
+ * Sandboxed embed permissions for the YouTube nocookie player. Scripts and
+ * same-origin are required for playback; presentation enables fullscreen/PiP.
+ * Kept in a shared constant so the live decorate path and the HTML export
+ * path never drift (see `react/iframe-missing-sandbox` override in
+ * oxlint.config.ts for why both tokens stand).
+ */
+const YOUTUBE_IFRAME_SANDBOX =
+  "allow-scripts allow-same-origin allow-presentation";
+
 type YouTubeComponentProps = Readonly<{
   className: Readonly<{
     base: string;
@@ -42,8 +52,7 @@ function YouTubeComponent({
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
         className="aspect-video h-auto w-full max-w-full rounded-xl border border-border/70 bg-muted shadow-xs md:w-[70%]"
-        frameBorder="0"
-        sandbox="allow-scripts allow-same-origin allow-presentation"
+        sandbox={YOUTUBE_IFRAME_SANDBOX}
         src={`https://www.youtube-nocookie.com/embed/${videoId}`}
         title="YouTube video"
       />
@@ -129,7 +138,10 @@ export class YouTubeNode extends DecoratorBlockNode {
       "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
     );
     element.setAttribute("allowfullscreen", "true");
-    element.setAttribute("frameborder", "0");
+    element.setAttribute("sandbox", YOUTUBE_IFRAME_SANDBOX);
+    // Replaces the obsolete `frameborder` attribute; keeps pasted/exported
+    // embeds borderless in contexts without the editor stylesheet.
+    element.style.border = "0";
     element.setAttribute("title", "YouTube video");
     return { element };
   }
