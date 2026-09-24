@@ -67,6 +67,7 @@ export default defineConfig({
       // geometry, theme-driven colors) with no static class equivalent.
       files: [
         "src/components/docs/primitives.tsx",
+        "src/components/editor/plugins/code-highlight/line-numbers.tsx",
         "src/components/editor/plugins/excalidraw/image.tsx",
         "src/components/editor/plugins/floating-toolbar/plugin.tsx",
         "src/components/editor/plugins/layout/preset-dialog.tsx",
@@ -76,6 +77,23 @@ export default defineConfig({
       ],
       rules: {
         "shadcn/no-inline-styles": "off",
+      },
+    },
+    {
+      // The gutter overlay syncs React state from Lexical commits (an
+      // external system): the root element attaches after mount and
+      // measurements refresh on every editor update.
+      files: ["src/components/editor/plugins/code-highlight/line-numbers.tsx"],
+      rules: {
+        "react/set-state-in-effect": "off",
+      },
+    },
+    {
+      // Computed CSS values arrive with units ("32px"): Number() yields
+      // NaN while parseFloat extracts the magnitude.
+      files: ["src/components/editor/plugins/code-highlight/line-numbers.tsx"],
+      rules: {
+        "unicorn/prefer-number-coercion": "off",
       },
     },
     {
