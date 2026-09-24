@@ -6,6 +6,8 @@ import { useLexicalEditable } from "@lexical/react/useLexicalEditable";
 import { GripVerticalIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import { BlockDragStabilizer } from "./drag-stabilizer";
+
 const DRAG_MENU_CLASS_NAME = "editor-draggable-block-menu";
 
 const isOnMenu = (element: HTMLElement) =>
@@ -31,27 +33,34 @@ export function DraggableBlockPlugin() {
   }
 
   return (
-    <DraggableBlockPluginExperimental
-      anchorElem={anchorElem}
-      isOnMenu={isOnMenu}
-      menuComponent={
-        <div
-          className={`${DRAG_MENU_CLASS_NAME} absolute top-0 left-0 z-40 flex cursor-grab items-center gap-0.5 rounded-md p-0.5 text-muted-foreground opacity-0 transition-transform-opacity duration-150 ease-in-out active:cursor-grabbing`}
-          ref={menuRef}
-        >
-          <div className="flex size-4 items-center justify-center rounded-sm opacity-50 transition hover:bg-muted hover:opacity-100">
-            <GripVerticalIcon className="size-3.5" />
+    <>
+      <DraggableBlockPluginExperimental
+        anchorElem={anchorElem}
+        isOnMenu={isOnMenu}
+        menuComponent={
+          <div
+            className={`${DRAG_MENU_CLASS_NAME} absolute top-0 left-0 z-40 flex cursor-grab items-center gap-0.5 rounded-md p-0.5 text-muted-foreground opacity-0 transition-transform-opacity duration-150 ease-in-out active:cursor-grabbing`}
+            ref={menuRef}
+          >
+            <div className="flex size-4 items-center justify-center rounded-sm opacity-50 transition hover:bg-muted hover:opacity-100">
+              <GripVerticalIcon className="size-3.5" />
+            </div>
           </div>
-        </div>
-      }
-      menuRef={menuRef}
-      targetLineComponent={
-        <div
-          className="pointer-events-none absolute top-0 left-0 z-30 h-1 rounded-full bg-primary opacity-0"
-          ref={targetLineRef}
-        />
-      }
-      targetLineRef={targetLineRef}
-    />
+        }
+        menuRef={menuRef}
+        targetLineComponent={
+          <div
+            className="pointer-events-none absolute top-0 left-0 z-30 h-1 rounded-full bg-primary opacity-0"
+            ref={targetLineRef}
+          />
+        }
+        targetLineRef={targetLineRef}
+      />
+      <BlockDragStabilizer
+        anchorElem={anchorElem}
+        menuRef={menuRef}
+        targetLineRef={targetLineRef}
+      />
+    </>
   );
 }
