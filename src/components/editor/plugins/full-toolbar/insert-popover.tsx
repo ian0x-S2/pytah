@@ -161,7 +161,7 @@ export const InsertPopover = memo(
         </PopoverTrigger>
         <PopoverContent align="start" className="w-44 p-1">
           <div
-            className="space-y-0.5"
+            className="space-y-1"
             onKeyDown={handleInsertListKeyDown}
             role="listbox"
           >
@@ -173,7 +173,7 @@ export const InsertPopover = memo(
                 <button
                   aria-selected={isActive}
                   className={cn(
-                    "flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none",
+                    "flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors outline-none select-none focus-visible:outline-none",
                     isActive && "bg-accent"
                   )}
                   key={option.value}

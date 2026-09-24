@@ -78,10 +78,7 @@ export const BlockTypeDrop = memo(
 
       return (
         <DropdownMenuItem
-          className={cn(
-            "items-start gap-3 px-3 py-2",
-            isSelected && "bg-accent/40"
-          )}
+          className="items-start gap-3 px-3 py-2"
           key={option.value}
           onClick={() => handleChange(option.value)}
         >
