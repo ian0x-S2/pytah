@@ -107,7 +107,7 @@ function EditorTocPopoverCard({
       aria-label="Table of contents popover"
       className="relative top-0 right-0 z-50 scrollbar-hidden max-h-[55vh] max-w-[260px] min-w-[200px] animate-in overflow-y-auto rounded-lg border border-border/50 bg-popover/95 p-2 shadow-2xl backdrop-blur-md duration-150 fade-in-0 zoom-in-95"
     >
-      <ul className="flex flex-col">
+      <ul className="flex flex-col gap-1">
         {entries.map(([key, text, tag]) => {
           const headingText = text.trim() || "Untitled";
           const isActive = key === activeKey;
