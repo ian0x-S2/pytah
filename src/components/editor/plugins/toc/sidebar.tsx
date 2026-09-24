@@ -91,7 +91,7 @@ function EditorTocPopoverCard({
 }) {
   if (entries.length === 0) {
     return (
-      <div className="absolute top-0 right-0 z-50 flex min-w-[180px] animate-in flex-col items-center justify-center gap-1.5 rounded-lg border border-border/50 bg-popover/95 px-4 py-5 text-center shadow-2xl backdrop-blur-md duration-150 fade-in-0 zoom-in-95">
+      <div className="absolute top-0 right-0 z-50 flex min-w-45 animate-in flex-col items-center justify-center gap-1.5 rounded-lg border border-border/50 bg-popover/95 px-4 py-5 text-center shadow-2xl backdrop-blur-md duration-150 fade-in-0 zoom-in-95">
         <div className="flex size-6 items-center justify-center rounded-md bg-muted/20 text-muted-foreground/60">
           <AlignLeftIcon className="size-3.5" />
         </div>
@@ -105,7 +105,7 @@ function EditorTocPopoverCard({
   return (
     <nav
       aria-label="Table of contents popover"
-      className="relative top-0 right-0 z-50 scrollbar-hidden max-h-[55vh] max-w-[260px] min-w-[200px] animate-in overflow-y-auto rounded-lg border border-border/50 bg-popover/95 p-2 shadow-2xl backdrop-blur-md duration-150 fade-in-0 zoom-in-95"
+      className="relative top-0 right-0 z-50 scrollbar-hidden max-h-[55vh] max-w-65 min-w-50 animate-in overflow-y-auto rounded-lg border border-border/50 bg-popover/95 p-2 shadow-2xl backdrop-blur-md duration-150 fade-in-0 zoom-in-95"
     >
       <ul className="flex flex-col gap-1">
         {entries.map(([key, text, tag]) => {
