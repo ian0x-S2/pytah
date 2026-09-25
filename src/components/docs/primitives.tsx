@@ -374,6 +374,11 @@ export function CodeBlock({
     (lineNumbers === undefined
       ? (tokenLines?.length ?? 0) > 1
       : lineNumbers !== false);
+  const lastLineNumber = lineNumberStart + (tokenLines?.length ?? 1) - 1;
+  // Gutter column fits the widest number (monospace digits are 1ch each),
+  // so single-digit blocks keep numbers close to the container edge
+  // instead of floating right-aligned in a fixed wide column.
+  const lineNumberWidth = `${String(Math.max(lastLineNumber, 1)).length}ch`;
 
   return (
     <div className="group relative my-4 overflow-hidden rounded-xl border border-border/50 bg-muted/15 shadow-xs transition-colors hover:border-border/80">
@@ -404,7 +409,11 @@ export function CodeBlock({
               return (
                 <span className="block" key={lineKey}>
                   {showLineNumbers ? (
-                    <span aria-hidden="true" className="ln">
+                    <span
+                      aria-hidden="true"
+                      className="ln"
+                      style={{ width: lineNumberWidth }}
+                    >
                       {lineNumberStart + lineIndex}
                     </span>
                   ) : null}

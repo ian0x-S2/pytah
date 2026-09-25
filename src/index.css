@@ -176,12 +176,14 @@
  * gutters (`.twinkleplop .ln`, emitted when `line_numbers` is on) are
  * user-land styling per https://twinkleplop.pngwn.at/docs/line_numbers.
  * `user-select: none` keeps gutter digits out of copied snippets.
+ * Width is set inline per block from the widest line number (1ch per
+ * monospace digit); the fixed value below is only a fallback.
  * ========================================================================== */
 
 .twinkleplop .ln {
   display: inline-block;
-  width: 2.5rem;
-  margin-right: 1rem;
+  width: 2rem;
+  margin-right: 0.75rem;
   color: var(--muted-foreground);
   text-align: right;
   user-select: none;
