@@ -170,6 +170,24 @@
 }
 
 /* ==========================================================================
+ * Twinkleplop docs code blocks
+ *
+ * The theme stylesheet colors `.twinkleplop .<token>` spans; line-number
+ * gutters (`.twinkleplop .ln`, emitted when `line_numbers` is on) are
+ * user-land styling per https://twinkleplop.pngwn.at/docs/line_numbers.
+ * `user-select: none` keeps gutter digits out of copied snippets.
+ * ========================================================================== */
+
+.twinkleplop .ln {
+  display: inline-block;
+  width: 2.5rem;
+  margin-right: 1rem;
+  color: var(--muted-foreground);
+  text-align: right;
+  user-select: none;
+}
+
+/* ==========================================================================
  * ShadCN Theme Tokens (oklch)
  *
  * This is the SINGLE source of truth for all design tokens.

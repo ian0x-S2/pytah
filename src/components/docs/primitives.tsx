@@ -1,205 +1,218 @@
-import type { CSSProperties } from "react";
-import { useEffect, useState } from "react";
-import type { HighlighterGeneric, ThemedToken, TokensResult } from "shiki";
-import { getSingletonHighlighter, getTokenStyleObject } from "shiki";
+import { tokenize as tokenizeBash } from "@twinkleplop/bash";
+import { tokenize as tokenizeCss } from "@twinkleplop/css";
+import { tokenize as tokenizeDiff } from "@twinkleplop/diff";
+import { tokenize as tokenizeDotenv } from "@twinkleplop/dotenv";
+import { tokenize as tokenizeGo } from "@twinkleplop/go";
+import { tokenize as tokenizeHtml } from "@twinkleplop/html";
+import { tokenize as tokenizeHttp } from "@twinkleplop/http";
+import { tokenize as tokenizeIni } from "@twinkleplop/ini";
+import { tokenize as tokenizeJavascript } from "@twinkleplop/javascript";
+import { tokenize as tokenizeJson } from "@twinkleplop/json";
+import { tokenize as tokenizeJsonc } from "@twinkleplop/jsonc";
+import { tokenize as tokenizeMarkdown } from "@twinkleplop/markdown";
+import { tokenize as tokenizePython } from "@twinkleplop/python";
+import { tokenize as tokenizeRust } from "@twinkleplop/rust";
+import { tokenize as tokenizeShellsession } from "@twinkleplop/shellsession";
+import { tokenize as tokenizeSql } from "@twinkleplop/sql";
+import { tokenize as tokenizeSvelte } from "@twinkleplop/svelte";
+import "@twinkleplop/theme-github";
+import { tokenize as tokenizeToml } from "@twinkleplop/toml";
+import { tokenize as tokenizeTsx } from "@twinkleplop/tsx";
+import { tokenize as tokenizeTypescript } from "@twinkleplop/typescript";
+import { tokenize as tokenizeYaml } from "@twinkleplop/yaml";
+import { useMemo } from "react";
 
-import { useTheme } from "@/components/theme-context";
 import { cn } from "@/lib/utils";
 
-const CODE_BLOCK_THEMES = {
-  dark: "github-dark",
-  light: "github-light",
-} as const;
+type TokenizeFactory = typeof tokenizeTypescript;
+type TokenizerFn = ReturnType<TokenizeFactory>;
 
+const TOKENIZERS: Record<string, TokenizerFn> = {
+  bash: tokenizeBash(),
+  css: tokenizeCss(),
+  diff: tokenizeDiff(),
+  dotenv: tokenizeDotenv(),
+  go: tokenizeGo(),
+  html: tokenizeHtml(),
+  http: tokenizeHttp(),
+  ini: tokenizeIni(),
+  javascript: tokenizeJavascript(),
+  json: tokenizeJson(),
+  jsonc: tokenizeJsonc(),
+  markdown: tokenizeMarkdown(),
+  python: tokenizePython(),
+  rust: tokenizeRust(),
+  shellsession: tokenizeShellsession(),
+  sql: tokenizeSql(),
+  svelte: tokenizeSvelte(),
+  toml: tokenizeToml(),
+  tsx: tokenizeTsx(),
+  typescript: tokenizeTypescript(),
+  yaml: tokenizeYaml(),
+};
+
+// JSX has no dedicated package: TSX covers it.
 const CODE_BLOCK_LANGUAGES = [
   "bash",
   "css",
+  "diff",
+  "dotenv",
+  "go",
+  "html",
+  "http",
+  "ini",
   "javascript",
-  "jsx",
+  "json",
+  "jsonc",
   "markdown",
-  "typescript",
+  "python",
+  "rust",
+  "shellsession",
+  "sql",
+  "svelte",
+  "toml",
   "tsx",
+  "typescript",
+  "yaml",
 ] as const;
 
-type CodeBlockTheme =
-  (typeof CODE_BLOCK_THEMES)[keyof typeof CODE_BLOCK_THEMES];
 type CodeBlockSyntaxLanguage = (typeof CODE_BLOCK_LANGUAGES)[number];
 
-let docsHighlighterPromise: Promise<
-  HighlighterGeneric<CodeBlockSyntaxLanguage, CodeBlockTheme>
-> | null = null;
-let loadedDocsHighlighter: HighlighterGeneric<
-  CodeBlockSyntaxLanguage,
-  CodeBlockTheme
-> | null = null;
-
-const codeTokenCache = new Map<string, TokensResult>();
-
-const EMPTY_CODE_TOKENS_STATE = {
-  error: false,
-  tokensResult: null,
-} as const satisfies {
-  error: boolean;
-  tokensResult: TokensResult | null;
-};
-
-function getDocsHighlighter() {
-  if (loadedDocsHighlighter) {
-    return Promise.resolve(loadedDocsHighlighter);
-  }
-
-  docsHighlighterPromise ??= (async () => {
-    const highlighter = await getSingletonHighlighter({
-      langs: [...CODE_BLOCK_LANGUAGES],
-      themes: [CODE_BLOCK_THEMES.light, CODE_BLOCK_THEMES.dark],
-    });
-    loadedDocsHighlighter = highlighter as HighlighterGeneric<
-      CodeBlockSyntaxLanguage,
-      CodeBlockTheme
-    >;
-    return loadedDocsHighlighter;
-  })();
-
-  return docsHighlighterPromise;
+interface TokenSegment {
+  text: string;
+  type: string | null;
 }
+
+const codeTokenCache = new Map<string, TokenSegment[][]>();
 
 const getCodeTokenCacheKey = (
   code: string,
-  language: CodeBlockSyntaxLanguage | null,
-  theme: CodeBlockTheme
-) => (language ? `${theme}:${language}:${code}` : null);
+  language: CodeBlockSyntaxLanguage | null
+) => (language ? `${language}:${code}` : null);
 
-function tokenizeSnippetAllThemes(
-  highlighter: HighlighterGeneric<CodeBlockSyntaxLanguage, CodeBlockTheme>,
+function tokenizeToLines(
   code: string,
   language: CodeBlockSyntaxLanguage
-) {
-  for (const t of [CODE_BLOCK_THEMES.light, CODE_BLOCK_THEMES.dark]) {
-    const key = getCodeTokenCacheKey(code, language, t);
-    if (key && !codeTokenCache.has(key)) {
-      try {
-        const tokensResult = highlighter.codeToTokens(code, {
-          lang: language,
-          theme: t,
-        });
-        codeTokenCache.set(key, tokensResult);
-      } catch {
-        // ignore errors
+): TokenSegment[][] | null {
+  const tokenizeFn = TOKENIZERS[language];
+  if (!tokenizeFn) {
+    return null;
+  }
+  let result: ReturnType<TokenizerFn>;
+  try {
+    result = tokenizeFn(code);
+  } catch {
+    return null;
+  }
+  const lines: TokenSegment[][] = [[]];
+  const pushText = (text: string, type: string | null) => {
+    const parts = text.split("\n");
+    for (let index = 0; index < parts.length; index += 1) {
+      if (index > 0) {
+        lines.push([]);
+      }
+      const part = parts[index] ?? "";
+      if (part !== "") {
+        lines.at(-1)?.push({ text: part, type });
       }
     }
+  };
+  const { token_types, tokens } = result;
+  let cursor = 0;
+  for (let i = 0; i < tokens.length; i += 3) {
+    const typeIndex = tokens[i] as number;
+    const start = tokens[i + 1] as number;
+    const end = tokens[i + 2] as number;
+    if (start > cursor) {
+      pushText(code.slice(cursor, start), null);
+    }
+    pushText(code.slice(start, end), token_types[typeIndex] ?? null);
+    cursor = end;
   }
+  if (cursor < code.length) {
+    pushText(code.slice(cursor), null);
+  }
+  return lines;
+}
+
+function getCachedTokenLines(
+  code: string,
+  language: CodeBlockSyntaxLanguage
+): TokenSegment[][] | null {
+  const key = getCodeTokenCacheKey(code, language);
+  if (!key) {
+    return null;
+  }
+  const cached = codeTokenCache.get(key);
+  if (cached) {
+    return cached;
+  }
+  const lines = tokenizeToLines(code, language);
+  if (lines) {
+    codeTokenCache.set(key, lines);
+  }
+  return lines;
 }
 
 const CODE_LANGUAGE_ALIASES = {
   bash: "bash",
+  console: "shellsession",
   css: "css",
+  diff: "diff",
+  dotenv: "dotenv",
+  env: "dotenv",
+  go: "go",
+  golang: "go",
+  html: "html",
+  http: "http",
+  ini: "ini",
   javascript: "javascript",
   js: "javascript",
-  jsx: "jsx",
+  json: "json",
+  jsonc: "jsonc",
+  jsx: "tsx",
   markdown: "markdown",
   md: "markdown",
   plain: "text",
+  py: "python",
+  python: "python",
+  rest: "http",
+  rs: "rust",
+  rust: "rust",
   sh: "bash",
   shell: "bash",
+  shellsession: "shellsession",
+  sql: "sql",
+  svelte: "svelte",
+  terminal: "shellsession",
   text: "text",
+  toml: "toml",
   ts: "typescript",
   tsx: "tsx",
   txt: "text",
   typescript: "typescript",
+  xml: "html",
+  yaml: "yaml",
+  yml: "yaml",
 } as const satisfies Record<string, CodeBlockSyntaxLanguage | "text">;
 
 type CodeLanguage =
   (typeof CODE_LANGUAGE_ALIASES)[keyof typeof CODE_LANGUAGE_ALIASES];
 
-function useCodeTokens(
+function useCodeTokenLines(
   code: string,
-  language: CodeBlockSyntaxLanguage | null,
-  theme: CodeBlockTheme
+  language: CodeBlockSyntaxLanguage | null
 ) {
-  const cacheKey = getCodeTokenCacheKey(code, language, theme);
-
-  if (
-    loadedDocsHighlighter &&
-    language &&
-    cacheKey &&
-    !codeTokenCache.has(cacheKey)
-  ) {
-    tokenizeSnippetAllThemes(loadedDocsHighlighter, code, language);
-  }
-
-  const cachedTokens = cacheKey ? (codeTokenCache.get(cacheKey) ?? null) : null;
-
-  const [asyncState, setAsyncState] = useState<{
-    cacheKey: string | null;
-    error: boolean;
-    tokensResult: TokensResult | null;
-  }>({
-    cacheKey: null,
-    error: false,
-    tokensResult: null,
-  });
-
-  useEffect(() => {
-    if (!(language && cacheKey && !cachedTokens)) {
-      return;
+  return useMemo(() => {
+    if (!language) {
+      return null;
     }
-
-    let cancelled = false;
-
-    void (async () => {
-      try {
-        const highlighter = await getDocsHighlighter();
-        tokenizeSnippetAllThemes(highlighter, code, language);
-        if (cancelled) {
-          return;
-        }
-
-        const tokensResult = codeTokenCache.get(cacheKey) ?? null;
-        setAsyncState({ cacheKey, error: false, tokensResult });
-      } catch {
-        if (!cancelled) {
-          setAsyncState({ cacheKey, error: true, tokensResult: null });
-        }
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [cacheKey, cachedTokens, code, language]);
-
-  if (!cacheKey) {
-    return EMPTY_CODE_TOKENS_STATE;
-  }
-
-  if (cachedTokens) {
-    return { error: false, tokensResult: cachedTokens };
-  }
-
-  if (asyncState.cacheKey === cacheKey && asyncState.tokensResult) {
-    return {
-      error: asyncState.error,
-      tokensResult: asyncState.tokensResult,
-    };
-  }
-
-  return EMPTY_CODE_TOKENS_STATE;
-}
-
-const CSS_KEBAB_CASE_PROPERTY_PATTERN = /-(?<letter>[a-z])/gu;
-
-function tokenStyleToReactStyle(token: ThemedToken): CSSProperties {
-  const styleObject = getTokenStyleObject(token);
-
-  return Object.fromEntries(
-    Object.entries(styleObject).map(([property, value]) => [
-      property.replace(
-        CSS_KEBAB_CASE_PROPERTY_PATTERN,
-        (_match, letter: string) => letter.toUpperCase()
-      ),
-      value,
-    ])
-  );
+    try {
+      return getCachedTokenLines(code, language);
+    } catch {
+      return null;
+    }
+  }, [code, language]);
 }
 
 function normalizeCodeLanguage(language?: string): CodeLanguage | null {
@@ -331,26 +344,36 @@ export function CodeBlock({
   children,
   language,
   label,
+  lineNumbers,
 }: {
   children: string;
   language?: string;
   label?: string;
+  /**
+   * Line numbers (`<span class="ln">`) per the Twinkleplop `line_numbers`
+   * render option: `true` numbers from 1, `{ start }` numbers from `start`,
+   * `false` disables. Defaults to on for multiline highlighted blocks.
+   * Plain-text blocks never render numbers.
+   */
+  lineNumbers?: boolean | { start?: number };
 }) {
-  const { resolvedTheme } = useTheme();
-  const codeBlockTheme = CODE_BLOCK_THEMES[resolvedTheme];
   const { label: resolvedLabel, syntaxLanguage } = resolveCodeBlockMeta(
     language,
     label
   );
   const shouldHighlight = syntaxLanguage && syntaxLanguage !== "text";
-  const { error, tokensResult } = useCodeTokens(
+  const tokenLines = useCodeTokenLines(
     children,
-    shouldHighlight ? syntaxLanguage : null,
-    codeBlockTheme
+    shouldHighlight ? syntaxLanguage : null
   );
-  const highlightedTokens = tokensResult?.tokens ?? null;
-  const shouldRenderPlainText = !shouldHighlight || error || !highlightedTokens;
-  const codeForegroundColor = tokensResult?.fg;
+  const shouldRenderPlainText = !shouldHighlight || !tokenLines;
+  const lineNumberStart =
+    typeof lineNumbers === "object" ? (lineNumbers.start ?? 1) : 1;
+  const showLineNumbers =
+    !shouldRenderPlainText &&
+    (lineNumbers === undefined
+      ? (tokenLines?.length ?? 0) > 1
+      : lineNumbers !== false);
 
   return (
     <div className="group relative my-4 overflow-hidden rounded-xl border border-border/50 bg-muted/15 shadow-xs transition-colors hover:border-border/80">
@@ -367,35 +390,34 @@ export function CodeBlock({
         </div>
       ) : null}
 
-      {shouldRenderPlainText ? (
+      {shouldRenderPlainText || !tokenLines ? (
         <pre className="overflow-x-auto p-3.5 font-mono text-xs leading-relaxed sm:p-4 sm:text-xs">
           <code>{children}</code>
         </pre>
       ) : (
-        <pre
-          className="m-0 overflow-x-auto bg-transparent p-3.5 font-mono text-xs leading-relaxed sm:p-4 sm:text-xs"
-          style={{
-            color: codeForegroundColor ?? undefined,
-          }}
-        >
+        <pre className="twinkleplop m-0 overflow-x-auto bg-transparent p-3.5 font-mono text-xs leading-relaxed sm:p-4 sm:text-xs">
           <code>
-            {highlightedTokens.map((line, lineIndex) => {
-              const lineText = line.map((token) => token.content).join("");
+            {tokenLines.map((line, lineIndex) => {
+              const lineText = line.map((token) => token.text).join("");
               const lineKey = `${lineIndex}:${lineText}`;
 
               return (
                 <span className="block" key={lineKey}>
+                  {showLineNumbers ? (
+                    <span aria-hidden="true" className="ln">
+                      {lineNumberStart + lineIndex}
+                    </span>
+                  ) : null}
                   {line.length > 0
                     ? line.map((token, tokenIndex) => {
-                        const tokenKey = `${lineKey}:${tokenIndex}:${token.content}`;
+                        const tokenKey = `${lineKey}:${tokenIndex}:${token.text}`;
 
-                        return (
-                          <span
-                            key={tokenKey}
-                            style={tokenStyleToReactStyle(token)}
-                          >
-                            {token.content}
+                        return token.type ? (
+                          <span className={token.type} key={tokenKey}>
+                            {token.text}
                           </span>
+                        ) : (
+                          <span key={tokenKey}>{token.text}</span>
                         );
                       })
                     : " "}

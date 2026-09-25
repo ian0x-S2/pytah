@@ -10,7 +10,7 @@ import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPl
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { TabIndentationPlugin } from "@lexical/react/LexicalTabIndentationPlugin";
 import type { LexicalEditor } from "lexical";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import type { ComponentType } from "react";
 
 import { cn } from "@/lib/utils";
@@ -28,6 +28,9 @@ import type {
   ExtraEditorFeature,
 } from "../core/types";
 import { BlockTypeToolbarPlugin } from "../plugins/block-type-toolbar/plugin";
+import { CodeGutterHostContext } from "../plugins/code-highlight/gutter-host";
+import { CodeLanguageSelectPlugin } from "../plugins/code-highlight/language-select";
+import { CodeLineNumbersPlugin } from "../plugins/code-highlight/line-numbers";
 import { CodeHighlightPlugin } from "../plugins/code-highlight/plugin";
 import { EditablePlugin } from "../plugins/core/editable";
 import { EditorStatePlugin } from "../plugins/core/editor-state";
@@ -136,6 +139,8 @@ function DefaultEditorPlugins({
     <EditorTransformersContext.Provider value={transformers}>
       {features.history ? <HistoryPlugin /> : null}
       <CodeHighlightPlugin />
+      <CodeLineNumbersPlugin />
+      <CodeLanguageSelectPlugin />
       <ListPlugin />
       <CheckListPlugin />
       <LinkBehaviorPlugin editable={editable} />
@@ -264,8 +269,10 @@ export function EditorContent({
       renderEditorSlot(footerSlot, { snapshot })
     );
 
+  const [gutterHost, setGutterHost] = useState<HTMLElement | null>(null);
+
   return (
-    <>
+    <CodeGutterHostContext.Provider value={gutterHost}>
       <EditorTopToolbar
         commandIds={commands.map((entry) => entry.command.id)}
         editable={editable}
@@ -297,6 +304,12 @@ export function EditorContent({
           }
           ErrorBoundary={LexicalErrorBoundary}
         />
+        {/* Host for the code gutter overlay (React-owned DOM the editor
+            reconciler never touches). */}
+        <div
+          className="pointer-events-none absolute inset-0"
+          ref={setGutterHost}
+        />
       </div>
 
       {!minimal && showFooter ? footerContent : null}
@@ -322,6 +335,6 @@ export function EditorContent({
         />
       ) : null}
       {pluginSlots?.afterDefault}
-    </>
+    </CodeGutterHostContext.Provider>
   );
 }

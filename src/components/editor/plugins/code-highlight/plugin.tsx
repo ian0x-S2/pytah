@@ -1,46 +1,21 @@
 "use client";
 
-import { $isCodeHighlightNode, $isCodeNode, CodeNode } from "@lexical/code";
-import {
-  loadCodeLanguage,
-  loadCodeTheme,
-  registerCodeHighlighting,
-  ShikiTokenizer,
-} from "@lexical/code-shiki";
+import { $isCodeHighlightNode, CodeNode } from "@lexical/code";
+import { registerCodeHighlighting } from "@lexical/code-shiki";
+import type { Tokenizer } from "@lexical/code-shiki";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import {
-  $getRoot,
-  $getSelection,
-  $isElementNode,
-  $isRangeSelection,
-} from "lexical";
-import type { LexicalEditor, LexicalNode } from "lexical";
+import { $getSelection, $isRangeSelection } from "lexical";
+import type { LexicalNode } from "lexical";
 import { useEffect, useState } from "react";
 
 import { useTheme } from "@/components/theme-context";
+
+import { TwinkleplopTokenizer } from "./twinkleplop-tokenizer";
 
 const CODE_BLOCK_THEME_BY_MODE = {
   dark: "github-dark",
   light: "github-light",
 } as const;
-
-let shikiThemesPreloaded = false;
-
-const preloadShikiThemes = () => {
-  if (shikiThemesPreloaded) {
-    return;
-  }
-  shikiThemesPreloaded = true;
-  for (const theme of Object.values(CODE_BLOCK_THEME_BY_MODE)) {
-    void (async () => {
-      try {
-        await loadCodeTheme(theme);
-      } catch {
-        // Theme preloads are best-effort; per-node fallback handles misses.
-      }
-    })();
-  }
-};
 
 const $selectionIsInside = (node: LexicalNode): boolean => {
   const selection = $getSelection();
@@ -52,9 +27,9 @@ const $selectionIsInside = (node: LexicalNode): boolean => {
 };
 
 /**
- * Mirrors upstream Shiki's own diff equality (text + token style + token
+ * Mirrors the tokenizer diff equality (text + token style + token
  * type): `true` only when re-tokenizing would produce a splice, i.e. when
- * letting Shiki run its transform would change the node.
+ * letting the highlighter run its transform would change the node.
  */
 const $tokensDiffer = (
   current: LexicalNode[],
@@ -83,15 +58,15 @@ const $tokensDiffer = (
 };
 
 /**
- * Front-runs Shiki's CodeNode transform so its own tokenize pass diffs to a
- * no-op whenever the caret is NOT inside this code node.
+ * Front-runs the highlighter's CodeNode transform so its own tokenize pass
+ * diffs to a no-op whenever the caret is NOT inside this code node.
  *
  * Upstream's `$updateAndRetainSelection` does not verify that the current
  * selection belongs to the code node: whenever its tokenize diff produces
- * changes (first highlight, theme swap, a language that just finished
- * loading) it relocates ANY range selection in the document into the code
- * block, and the untagged nested update then re-applies the DOM selection and
- * scrolls the page to the caret (mount and theme-toggle scroll jump).
+ * changes (first highlight, theme swap, a newly usable language) it
+ * relocates ANY range selection in the document into the code block, and
+ * the untagged nested update then re-applies the DOM selection and scrolls
+ * the page to the caret (mount and theme-toggle scroll jump).
  *
  * By tokenizing inline with the final theme first, the diff upstream computes
  * is empty and it returns before touching the selection. This transform must
@@ -100,12 +75,13 @@ const $tokensDiffer = (
  * execution follows registration order, so ours always runs first in a pass.
  *
  * When the caret IS inside the node, only a stale theme is fixed and the
- * re-tokenize is left to Shiki, whose selection-retention logic correctly
- * remaps an in-node caret across the token swap.
+ * re-tokenize is left to the registered tokenizer, whose selection-retention
+ * logic correctly remaps an in-node caret across the token swap.
  */
-const $ensureShikiDiffIsNoOp = (
+const $ensureTwinkleDiffIsNoOp = (
   node: CodeNode,
-  codeBlockTheme: string
+  codeBlockTheme: string,
+  tokenizer: Tokenizer
 ): void => {
   if (node.getTheme() !== codeBlockTheme) {
     // Theme must be final before tokenizing: the tokens carry it.
@@ -116,55 +92,17 @@ const $ensureShikiDiffIsNoOp = (
   }
 
   try {
-    const tokens = ShikiTokenizer.$tokenize(
+    const tokens = tokenizer.$tokenize(
       node,
-      node.getLanguage() ?? ShikiTokenizer.defaultLanguage
+      node.getLanguage() ?? tokenizer.defaultLanguage
     );
     if ($tokensDiffer(node.getChildren(), tokens)) {
       node.splice(0, node.getChildrenSize(), tokens);
     }
   } catch {
-    // A theme/language asset is still loading: leave this node to Shiki's
-    // async flow. When the load resolves it re-dirties the node and this
-    // transform runs first in that pass, making Shiki's pass a no-op.
+    // Tokenizer threw (unknown language): leave this node to the registered
+    // transform's own error path.
   }
-};
-
-/**
- * Starts loading every highlighter asset needed to tokenize the code nodes
- * already in the document (the active theme plus each node's language), so
- * registration below tokenizes synchronously instead of going through
- * Shiki's async load flow. Arming waits for these loads so the first
- * highlight lands after the document has painted with plain code text.
- */
-const collectHighlightAssetLoads = (
-  editor: LexicalEditor,
-  activeTheme: string
-): Promise<unknown>[] => {
-  // The loaders return undefined for unknown ids (and shiki dedupes loads),
-  // so unconditional calls are safe — already-loaded assets resolve fast.
-  const loads: Promise<unknown>[] = [
-    loadCodeTheme(activeTheme) ?? Promise.resolve(),
-  ];
-
-  editor.getEditorState().read(() => {
-    const queue: LexicalNode[] = [$getRoot()];
-    while (queue.length > 0) {
-      const node = queue.shift();
-      if (!node) {
-        continue;
-      }
-
-      if ($isCodeNode(node)) {
-        const language = node.getLanguage() ?? ShikiTokenizer.defaultLanguage;
-        loads.push(loadCodeLanguage(language) ?? Promise.resolve());
-      } else if ($isElementNode(node)) {
-        queue.push(...node.getChildren());
-      }
-    }
-  });
-
-  return loads;
 };
 
 export function CodeHighlightPlugin() {
@@ -172,18 +110,22 @@ export function CodeHighlightPlugin() {
   const { resolvedTheme } = useTheme();
   const codeBlockTheme = CODE_BLOCK_THEME_BY_MODE[resolvedTheme];
 
-  // Shiki tokenization + per-node diff/re-splice is the most expensive
+  // Tokenization + per-node diff/re-splice is the most expensive
   // synchronous work an editor mount can do; with many code blocks the
-  // chained async→sync updates starve the first paint (observed multi-second
+  // chained updates starve the first paint (observed multi-second
   // blank freeze opening a code-heavy document). Arm highlighting after the
   // document has painted: content shows first as plain code text, colors
   // land one frame later, off the critical path.
   const [armed, setArmed] = useState(false);
 
-  // Registration waits until the assets for the already-mounted code nodes
-  // are loaded, keeping Shiki's transform on its synchronous path from the
-  // first dirty pass onward (see `collectHighlightAssetLoads`).
-  const [ready, setReady] = useState(false);
+  // Registration follows the post-paint arm, keeping the transform on
+  // its synchronous path from the first dirty pass onward.
+  // Twinkleplop grammars compile at import time and palettes are static
+  // imports: there are no async highlighter assets, so registration can
+  // follow the arm directly with no `await` in between. Do NOT add an
+  // async boundary here: awaiting even an already-resolved promise would
+  // push registration outside `act()` in tests, stalling it on React's
+  // act queue until the next test's `act()` call.
 
   useEffect(() => {
     if (armed) {
@@ -203,51 +145,29 @@ export function CodeHighlightPlugin() {
     };
   }, [armed]);
 
-  useEffect(() => {
-    if (!armed) {
-      return;
-    }
-    let cancelled = false;
-    const loads = collectHighlightAssetLoads(editor, codeBlockTheme);
-    // Arm even when a load fails: `$ensureShikiDiffIsNoOp` falls back per
-    // node to Shiki's async flow instead of never arming.
-    void (async () => {
-      try {
-        await Promise.all(loads);
-      } catch {
-        // Load failures still arm; per-node fallback handles misses.
-      }
-      if (!cancelled) {
-        setReady(true);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [armed, codeBlockTheme, editor]);
-
   // ORDERING IS LOAD-BEARING: this transform must be registered before
   // `registerCodeHighlighting` below. Registering a transform marks all
   // existing nodes of its type dirty immediately, so the very first pass
   // after arming already runs through here — tokenizing inline keeps
-  // Shiki's own first pass (and every later pass) a no-op while the caret
-  // is elsewhere, which is what prevents the mount scroll jump.
+  // the registered tokenizer's own first pass (and every later pass) a
+  // no-op while the caret is elsewhere, which is what prevents the mount
+  // scroll jump.
   useEffect(() => {
-    if (!ready) {
+    if (!armed) {
       return;
     }
-    preloadShikiThemes();
-    return editor.registerNodeTransform(CodeNode, (codeNode) => {
-      $ensureShikiDiffIsNoOp(codeNode, codeBlockTheme);
+    const unregisterPre = editor.registerNodeTransform(CodeNode, (codeNode) => {
+      $ensureTwinkleDiffIsNoOp(codeNode, codeBlockTheme, TwinkleplopTokenizer);
     });
-  }, [ready, codeBlockTheme, editor]);
-
-  useEffect(() => {
-    if (!ready) {
-      return;
-    }
-    return registerCodeHighlighting(editor);
-  }, [ready, editor]);
+    const unregisterUpstream = registerCodeHighlighting(
+      editor,
+      TwinkleplopTokenizer
+    );
+    return () => {
+      unregisterPre();
+      unregisterUpstream();
+    };
+  }, [armed, codeBlockTheme, editor]);
 
   return null;
 }

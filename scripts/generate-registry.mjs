@@ -26,6 +26,7 @@ const editorUiFiles = [
   "input.tsx",
   "input-group.tsx",
   "popover.tsx",
+  "select.tsx",
   "separator.tsx",
   "textarea.tsx",
   "toggle.tsx",
