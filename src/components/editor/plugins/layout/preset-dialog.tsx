@@ -20,7 +20,7 @@ function LayoutPresetPreview({ templateColumns }: { templateColumns: string }) {
   const columnOccurrences = new Map<string, number>();
 
   return (
-    <div className="grid h-14 w-full gap-2 rounded-xl border border-border/70 bg-muted/40 p-2">
+    <div className="editor-layout-preview h-14 w-full">
       <div
         className="grid h-full gap-2"
         style={{ gridTemplateColumns: templateColumns }}
@@ -31,7 +31,7 @@ function LayoutPresetPreview({ templateColumns }: { templateColumns: string }) {
 
           return (
             <div
-              className="rounded-md border border-border/70 bg-background/90 shadow-xs"
+              className="editor-layout-preview-cell shadow-xs"
               key={`${templateColumns}-${column}-${currentCount}`}
             />
           );
@@ -71,7 +71,7 @@ export function LayoutPresetDialog({
           <div className="grid gap-3 sm:grid-cols-2">
             {LAYOUT_PRESETS.map((preset) => (
               <Button
-                className="h-auto min-h-32 justify-start rounded-2xl border border-border/80 px-4 py-4 text-left hover:bg-muted/60"
+                className="editor-layout-option h-auto min-h-32 justify-start text-left hover:bg-muted/60"
                 key={preset.value}
                 onClick={() => onSelectPreset(preset.value)}
                 type="button"

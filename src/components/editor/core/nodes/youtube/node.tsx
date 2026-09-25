@@ -51,7 +51,7 @@ function YouTubeComponent({
       <iframe
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
-        className="aspect-video h-auto w-full max-w-full rounded-xl border border-border/70 bg-muted shadow-xs md:w-[70%]"
+        className="editor-youtube-frame aspect-video h-auto w-full max-w-full shadow-xs"
         sandbox={YOUTUBE_IFRAME_SANDBOX}
         src={`https://www.youtube-nocookie.com/embed/${videoId}`}
         title="YouTube video"

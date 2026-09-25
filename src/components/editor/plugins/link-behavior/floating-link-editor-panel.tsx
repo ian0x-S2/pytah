@@ -43,7 +43,7 @@ export function FloatingLinkEditorPanel({
     return (
       <div
         className={cn(
-          "flex min-w-72 items-center gap-2 rounded-lg bg-popover p-2 shadow-md ring-1 ring-foreground/10",
+          "editor-floating editor-floating-padding-md flex min-w-72 items-center gap-2",
           "animate-in duration-100 fade-in-0 zoom-in-95"
         )}
       >
@@ -94,7 +94,7 @@ export function FloatingLinkEditorPanel({
   return (
     <div
       className={cn(
-        "flex min-w-72 items-center gap-2 rounded-lg bg-popover p-2 shadow-md ring-1 ring-foreground/10",
+        "editor-floating editor-floating-padding-md flex min-w-72 items-center gap-2",
         "animate-in duration-100 fade-in-0 zoom-in-95"
       )}
     >

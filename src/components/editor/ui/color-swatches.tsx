@@ -109,7 +109,7 @@ export function ColorSwatches({
        * button keeps focus in the editor instead of moving it to the popup.
        */}
       <PopoverContent
-        className="editor-floating w-auto p-2"
+        className="editor-floating editor-floating-padding-md w-auto"
         onMouseDown={(e) => e.preventDefault()}
         side="bottom"
         sideOffset={6}

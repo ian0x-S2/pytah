@@ -253,7 +253,7 @@ function TableCellActionMenuContainer({
         </PopoverTrigger>
         <PopoverContent
           align="start"
-          className="w-56 p-0"
+          className="editor-table-menu"
           side="right"
           sideOffset={8}
         >

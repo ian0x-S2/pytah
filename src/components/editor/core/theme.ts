@@ -1,8 +1,10 @@
 import type { EditorThemeClasses } from "lexical";
 
 export const editorTheme: EditorThemeClasses = {
-  // legacy-literal (v1.1): code blocks move to --editor-code-* tokens.
-  code: "!bg-muted rounded-lg p-4 font-mono text-sm my-3 block overflow-x-auto dark:!bg-muted/50",
+  code: "editor-code-block",
+  // Fixed Prism syntax palette: swap the whole map for another syntax
+  // theme. Per-token vars would just re-list these pairs, so the palette
+  // stays literal by design.
   codeHighlight: {
     atrule: "text-sky-700 dark:text-sky-300",
     attr: "text-sky-700 dark:text-sky-300",
@@ -36,14 +38,12 @@ export const editorTheme: EditorThemeClasses = {
     url: "text-amber-700 dark:text-amber-300",
     variable: "text-orange-700 dark:text-orange-300",
   },
-  // legacy-literal (v1.1): collapsible + layout move to tokens.
-  collapsibleContainer:
-    "group/collapsible my-4 overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-xs",
-  collapsibleContent: "px-4 py-3 pl-10 text-foreground [&>p:last-child]:mb-0",
+  collapsibleContainer: "editor-collapsible-container shadow-xs",
+  collapsibleContent: "editor-collapsible-content [&>p:last-child]:mb-0",
   collapsibleTitle:
-    "relative block cursor-pointer list-none border-b border-border/70 px-4 py-3 pl-10 font-medium outline-none marker:content-none [&::-webkit-details-marker]:hidden [&>p]:mb-0 before:absolute before:left-4 before:top-1/2 before:-translate-y-1/2 before:text-xs before:text-muted-foreground before:transition-transform before:content-['▸'] data-[open=true]:before:rotate-90",
+    "editor-collapsible-title marker:content-none [&::-webkit-details-marker]:hidden [&>p]:mb-0 before:absolute before:left-4 before:top-1/2 before:-translate-y-1/2 before:text-xs before:text-muted-foreground before:transition-transform before:content-['▸'] data-[open=true]:before:rotate-90",
   embedBlock: {
-    base: "my-4",
+    base: "editor-embed",
     focus: "outline-none",
   },
   heading: {
@@ -57,11 +57,9 @@ export const editorTheme: EditorThemeClasses = {
   hr: "my-6 h-px cursor-pointer border-0 bg-border transition-colors",
   hrSelected: "bg-primary h-0.5",
   image: "block",
-  // legacy-literal (v1.1): layout + link move to tokens.
-  layoutContainer:
-    "my-4 grid gap-3 rounded-xl border border-border/70 bg-muted/20 p-3 md:gap-4",
-  layoutItem:
-    "min-w-0 rounded-lg border border-dashed border-border/80 bg-background/80 p-3",
+  layoutContainer: "editor-layout-container",
+  layoutItem: "editor-layout-item",
+  // Already token-based (primary + underline tokens); no owned geometry.
   link: "text-primary underline underline-offset-4 cursor-pointer hover:text-primary/80",
   list: {
     listitem: "editor-listitem",
@@ -93,7 +91,7 @@ export const editorTheme: EditorThemeClasses = {
   tableSelection: "bg-primary/10",
   text: {
     bold: "font-bold",
-    code: "bg-muted text-foreground px-1.5 py-0.5 rounded-md font-mono text-[0.875em]",
+    code: "editor-inline-code text-foreground",
     highlight: "rounded-sm bg-highlight px-0.5 text-highlight-foreground",
     italic: "italic",
     strikethrough: "line-through",

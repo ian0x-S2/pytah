@@ -185,7 +185,7 @@ export function MathComponent({
     <span
       className={cn(
         "relative inline-block align-middle",
-        !inline && "my-2 block text-center"
+        !inline && "editor-math-block"
       )}
       ref={mathRef}
     >
@@ -207,8 +207,8 @@ export function MathComponent({
             <span
               aria-label="Math formula"
               className={cn(
-                "rounded px-1.5 py-0.5 transition-all duration-150",
-                isSelected && editable && "bg-muted/30 ring-2 ring-primary/40",
+                "editor-math-trigger transition-all duration-150",
+                isSelected && editable && "editor-math-trigger-selected",
                 editable && "cursor-pointer hover:bg-muted/40"
               )}
               // biome-ignore lint/security/noDangerouslySetInnerHtml: KaTeX output HTML is sanitized equation output
@@ -242,7 +242,7 @@ export function MathComponent({
             <div className="flex flex-col gap-2.5">
               <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
                 <span>Edit TeX Equation</span>
-                <div className="flex items-center gap-1 rounded-md bg-muted/50 p-0.5">
+                <div className="editor-math-segment flex items-center gap-1">
                   <button
                     className={cn(
                       "rounded px-2 py-0.5 text-xs font-medium transition-colors",
@@ -289,7 +289,7 @@ export function MathComponent({
                 value={draftEquation}
               />
 
-              <div className="flex min-h-9 items-center justify-center overflow-x-auto rounded-md border border-border/40 bg-muted/20 p-2">
+              <div className="editor-math-preview flex items-center justify-center overflow-x-auto">
                 {/* biome-ignore lint/security/noDangerouslySetInnerHtml: KaTeX output HTML is sanitized equation preview */}
                 <span dangerouslySetInnerHTML={{ __html: previewHtml }} />
               </div>

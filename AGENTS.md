@@ -251,10 +251,15 @@ Single source of truth for editor restyling. Consumers override `--editor-*` var
 | `floating` | alias + owned | `--editor-floating-bg/foreground/ring` (alias -> `--popover/--border`), `--editor-floating-radius/shadow/padding-*` (owned) | every alias has an explicit oklch fallback so a `shadcn update` degrades to a pinned value instead of `unset` |
 | `table` | owned + alias | `--editor-table-cell-px/py/min-w/radius`, `--editor-table-header-bg/striped-bg/selected-*` | header/striped/selected are `color-mix` tints of `--muted/--primary` |
 | `image/handles` | owned + alias | `--editor-image-gap-y/radius/frame-radius/border/bg/selected-ring`, `--editor-handle-size/bg/border` |  |
+| `code` | owned + alias | `--editor-code-bg/radius/padding/gap-y/font-size`, `--editor-inline-code-*` | dark code bg is a 50% muted mix; the `codeHighlight` Prism palette stays fixed by design (swap the whole map for another syntax theme) |
+| `collapsible` | owned + alias | `--editor-collapsible-gap-y/radius/border/bg/indent/header-px/py` |  |
+| `layout` | owned + alias | `--editor-layout-gap-y/gap/gap-md/radius/border/bg/padding`, item/preview/option vars | `gap-md` applies from `48rem` up; the preset picker reuses the same vars |
+| `math` | owned + alias | `--editor-math-radius/px/py/hover-bg/selected-bg/ring`, block/segment/preview vars |  |
+| `youtube/embed` | owned + alias | `--editor-youtube-radius/border/bg/width-md`, `--editor-embed-gap-y` | `width-md` (70%) applies from `48rem` up |
 | `type scale` | owned | `--editor-h1..h6-size/mt/mb`, `--editor-block-gap`, `--editor-paragraph-line-height`, `--editor-quote-border`, `--editor-list-indent/gap` | comfortable defaults mirror the old `theme.ts` literals exactly |
 
 - Density: `:root` = `comfortable` (Notion-like). `<Editor density="compact">` sets `data-density="compact"`, switching the spacing/line-height subset (Linear-like). Portalled chrome follows via `:root:has([data-density="compact"])` — single-density-per-page is the v1 contract.
-- v1 scope: content + toolbar + chrome + floating + table + image. `code`, `math`, `youtube`, `collapsible`, `layout`, `link` are `legacy-literal` in `theme.ts` and move to tokens in v1.1.
+- v1.1: all built-in surfaces tokenized — code container, collapsible, layout (+ preset picker), math, youtube, link panel (canonicalized to `editor-floating`), table menu width. Slash/TOC popovers and the Excalidraw preview keep their translucent/custom variants (future work).
 - Token migrations must close with the visual checklist (light/dark x comfortable/compact x editable/read-only) across canvas, toolbar basic/full, floating toolbar, slash, link editor, table menu + selection, image + resizer + dialogs — day-1 rule is zero visual diff.
 
 ---

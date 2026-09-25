@@ -17,9 +17,11 @@
  * the spacing/line-height subset below — Linear-like density.
  *
  * v1 scope: canvas content + toolbar + chrome + floating surfaces + table +
- * image. `code`, `math`, `youtube`, `collapsible`, `layout`, `link` keep
- * hardcoded Tailwind literals (marked `legacy-literal` in theme.ts) and
- * move to tokens in v1.1.
+ * image. v1.1 tokenized the rest: code container, collapsible, layout
+ * (+ preset picker), math, youtube, link panel, table menu width.
+ * The `codeHighlight` Prism palette stays literal by design (swap the whole
+ * map for another syntax theme); slash/TOC popovers and the Excalidraw
+ * preview keep custom variants.
  * ========================================================================== */
 
 :root {
@@ -108,6 +110,7 @@
   --editor-floating-padding-lg: 1rem; /* p-4 */
 
   /* --- Tables (owned geometry + alias colors) --- */
+  --editor-table-gap-y: 1rem; /* my-4 */
   --editor-table-radius: 0.5rem; /* rounded-lg */
   --editor-table-border: var(--border, oklch(0.922 0 0)); /* alias */
   --editor-table-cell-px: 0.75rem; /* px-3 */
@@ -157,10 +160,146 @@
     var(--background, oklch(1 0 0)) 20%,
     transparent
   ); /* alias-tinted */
+
+  /* --- Code blocks (owned geometry + alias colors) --- */
+  --editor-code-bg: var(--muted, oklch(0.97 0 0)); /* alias */
+  --editor-code-radius: 0.5rem; /* rounded-lg */
+  --editor-code-padding: 1rem; /* p-4 */
+  --editor-code-gap-y: 0.75rem; /* my-3 */
+  --editor-code-font-size: 0.875rem; /* text-sm */
+  --editor-inline-code-bg: var(--muted, oklch(0.97 0 0)); /* alias */
+  --editor-inline-code-radius: 0.375rem; /* rounded-md */
+  --editor-inline-code-px: 0.375rem; /* px-1.5 */
+  --editor-inline-code-py: 0.125rem; /* py-0.5 */
+
+  /* --- Collapsible sections (owned geometry + alias colors) --- */
+  --editor-collapsible-gap-y: 1rem; /* my-4 */
+  --editor-collapsible-radius: 0.75rem; /* rounded-xl */
+  --editor-collapsible-border: var(--border, oklch(0.922 0 0)); /* alias */
+  --editor-collapsible-bg: var(--card, oklch(1 0 0)); /* alias */
+  --editor-collapsible-foreground: var(
+    --card-foreground,
+    oklch(0.145 0 0)
+  ); /* alias */
+  --editor-collapsible-header-px: 1rem; /* px-4 */
+  --editor-collapsible-header-py: 0.75rem; /* py-3 */
+  --editor-collapsible-indent: 2.5rem; /* pl-10 */
+  --editor-collapsible-title-border: color-mix(
+    in oklch,
+    var(--border, oklch(0.922 0 0)) 70%,
+    transparent
+  ); /* alias-tinted */
+
+  /* --- Multi-column layout (owned geometry + alias colors) --- */
+  --editor-layout-gap-y: 1rem; /* my-4 */
+  --editor-layout-gap: 0.75rem; /* gap-3 */
+  --editor-layout-gap-md: 1rem; /* md:gap-4 */
+  --editor-layout-radius: 0.75rem; /* rounded-xl */
+  --editor-layout-border: color-mix(
+    in oklch,
+    var(--border, oklch(0.922 0 0)) 70%,
+    transparent
+  ); /* alias-tinted */
+  --editor-layout-bg: color-mix(
+    in oklch,
+    var(--muted, oklch(0.97 0 0)) 20%,
+    transparent
+  ); /* alias-tinted */
+  --editor-layout-padding: 0.75rem; /* p-3 */
+  --editor-layout-item-radius: 0.5rem; /* rounded-lg */
+  --editor-layout-item-border: color-mix(
+    in oklch,
+    var(--border, oklch(0.922 0 0)) 80%,
+    transparent
+  ); /* alias-tinted */
+  --editor-layout-item-bg: color-mix(
+    in oklch,
+    var(--background, oklch(1 0 0)) 80%,
+    transparent
+  ); /* alias-tinted */
+  --editor-layout-item-padding: 0.75rem; /* p-3 */
+  --editor-layout-preview-bg: color-mix(
+    in oklch,
+    var(--muted, oklch(0.97 0 0)) 40%,
+    transparent
+  ); /* alias-tinted */
+  --editor-layout-preview-padding: 0.5rem; /* p-2 */
+  --editor-layout-preview-gap: 0.5rem; /* gap-2 */
+  --editor-layout-preview-cell-radius: 0.375rem; /* rounded-md */
+  --editor-layout-preview-cell-bg: color-mix(
+    in oklch,
+    var(--background, oklch(1 0 0)) 90%,
+    transparent
+  ); /* alias-tinted */
+  --editor-layout-option-radius: 1rem; /* rounded-2xl */
+  --editor-layout-option-border: color-mix(
+    in oklch,
+    var(--border, oklch(0.922 0 0)) 80%,
+    transparent
+  ); /* alias-tinted */
+  --editor-layout-option-px: 1rem; /* px-4 */
+  --editor-layout-option-py: 1rem; /* py-4 */
+
+  /* --- Math equations (owned geometry + alias colors) --- */
+  --editor-math-radius: 0.25rem; /* rounded */
+  --editor-math-px: 0.375rem; /* px-1.5 */
+  --editor-math-py: 0.125rem; /* py-0.5 */
+  --editor-math-hover-bg: color-mix(
+    in oklch,
+    var(--muted, oklch(0.97 0 0)) 40%,
+    transparent
+  ); /* alias-tinted */
+  --editor-math-selected-bg: color-mix(
+    in oklch,
+    var(--muted, oklch(0.97 0 0)) 30%,
+    transparent
+  ); /* alias-tinted */
+  --editor-math-selected-ring: color-mix(
+    in oklch,
+    var(--primary, oklch(0.205 0 0)) 40%,
+    transparent
+  ); /* alias-tinted */
+  --editor-math-block-gap-y: 0.5rem; /* my-2 */
+  --editor-math-segment-bg: color-mix(
+    in oklch,
+    var(--muted, oklch(0.97 0 0)) 50%,
+    transparent
+  ); /* alias-tinted */
+  --editor-math-segment-radius: 0.375rem; /* rounded-md */
+  --editor-math-segment-padding: 0.125rem; /* p-0.5 */
+  --editor-math-preview-min-h: 2.25rem; /* min-h-9 */
+  --editor-math-preview-radius: 0.375rem; /* rounded-md */
+  --editor-math-preview-border: color-mix(
+    in oklch,
+    var(--border, oklch(0.922 0 0)) 40%,
+    transparent
+  ); /* alias-tinted */
+  --editor-math-preview-bg: color-mix(
+    in oklch,
+    var(--muted, oklch(0.97 0 0)) 20%,
+    transparent
+  ); /* alias-tinted */
+  --editor-math-preview-padding: 0.5rem; /* p-2 */
+
+  /* --- YouTube embeds + generic embed wrapper --- */
+  --editor-embed-gap-y: 1rem; /* my-4 */
+  --editor-youtube-radius: 0.75rem; /* rounded-xl */
+  --editor-youtube-border: color-mix(
+    in oklch,
+    var(--border, oklch(0.922 0 0)) 70%,
+    transparent
+  ); /* alias-tinted */
+  --editor-youtube-bg: var(--muted, oklch(0.97 0 0)); /* alias */
+  --editor-youtube-width-md: 70%; /* md:w-[70%] */
 }
 
 .dark {
   /* Aliases follow automatically via var(--*) — only owned dark deltas here. */
+  --editor-code-bg: color-mix(
+    in oklch,
+    var(--muted, oklch(0.269 0 0)) 50%,
+    transparent
+  ); /* dark:!bg-muted/50 */
   --editor-image-bg: color-mix(
     in oklch,
     var(--muted, oklch(0.269 0 0)) 20%,
@@ -191,6 +330,9 @@
   --editor-h3-mb: 0.5rem;
   --editor-table-cell-py: 0.375rem;
   --editor-image-gap-y: 0.75rem;
+  --editor-table-gap-y: 0.75rem;
+  --editor-embed-gap-y: 0.75rem;
+  --editor-layout-gap-y: 0.75rem;
   --editor-floating-padding-sm: 0.25rem;
   --editor-floating-padding-md: 0.375rem;
 }
@@ -350,7 +492,7 @@
 }
 
 .editor-table {
-  margin-block: var(--editor-image-gap-y);
+  margin-block: var(--editor-table-gap-y);
   width: 100%;
   border-collapse: collapse;
   overflow: hidden;
@@ -391,6 +533,12 @@
   background-color: var(--editor-table-selected-bg);
 }
 
+.editor-table-scroll-wrapper {
+  margin-block: var(--editor-table-gap-y);
+  width: 100%;
+  overflow-x: auto;
+}
+
 .editor-image-figure {
   margin-block: var(--editor-image-gap-y);
   max-width: 100%;
@@ -423,4 +571,166 @@
   border-radius: 9999px;
   border: 1px solid var(--editor-handle-border);
   background-color: var(--editor-handle-bg);
+}
+
+.editor-floating-padding-sm {
+  padding: var(--editor-floating-padding-sm);
+}
+
+.editor-floating-padding-md {
+  padding: var(--editor-floating-padding-md);
+}
+
+.editor-floating-padding-lg {
+  padding: var(--editor-floating-padding-lg);
+}
+
+.editor-code-block {
+  display: block;
+  margin-block: var(--editor-code-gap-y);
+  padding: var(--editor-code-padding);
+  overflow-x: auto;
+  border-radius: var(--editor-code-radius);
+  /* `!important` preserves the old `!bg-muted`: Shiki's pre background
+     would otherwise win over the theme class. */
+  background-color: var(--editor-code-bg) !important;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, monospace);
+  font-size: var(--editor-code-font-size);
+}
+
+.editor-inline-code {
+  padding-block: var(--editor-inline-code-py);
+  padding-inline: var(--editor-inline-code-px);
+  border-radius: var(--editor-inline-code-radius);
+  background-color: var(--editor-inline-code-bg);
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, monospace);
+  font-size: 0.875em;
+}
+
+.editor-collapsible-container {
+  margin-block: var(--editor-collapsible-gap-y);
+  overflow: hidden;
+  border: 1px solid var(--editor-collapsible-border);
+  border-radius: var(--editor-collapsible-radius);
+  background-color: var(--editor-collapsible-bg);
+  color: var(--editor-collapsible-foreground);
+}
+
+.editor-collapsible-content {
+  padding-block: var(--editor-collapsible-header-py);
+  padding-inline: var(--editor-collapsible-header-px);
+  padding-left: var(--editor-collapsible-indent);
+  color: var(--foreground, oklch(0.145 0 0));
+}
+
+.editor-collapsible-title {
+  position: relative;
+  display: block;
+  cursor: pointer;
+  list-style: none;
+  border-bottom: 1px solid var(--editor-collapsible-title-border);
+  padding-block: var(--editor-collapsible-header-py);
+  padding-inline: var(--editor-collapsible-header-px);
+  padding-left: var(--editor-collapsible-indent);
+  font-weight: 500;
+  outline: none;
+}
+
+.editor-layout-container {
+  margin-block: var(--editor-layout-gap-y);
+  display: grid;
+  gap: var(--editor-layout-gap);
+  border: 1px solid var(--editor-layout-border);
+  border-radius: var(--editor-layout-radius);
+  background-color: var(--editor-layout-bg);
+  padding: var(--editor-layout-padding);
+}
+
+@media (min-width: 48rem) {
+  .editor-layout-container {
+    gap: var(--editor-layout-gap-md);
+  }
+}
+
+.editor-layout-item {
+  min-width: 0;
+  border: 1px dashed var(--editor-layout-item-border);
+  border-radius: var(--editor-layout-item-radius);
+  background-color: var(--editor-layout-item-bg);
+  padding: var(--editor-layout-item-padding);
+}
+
+.editor-layout-preview {
+  display: grid;
+  width: 100%;
+  gap: var(--editor-layout-preview-gap);
+  border: 1px solid var(--editor-layout-border);
+  border-radius: var(--editor-layout-radius);
+  background-color: var(--editor-layout-preview-bg);
+  padding: var(--editor-layout-preview-padding);
+}
+
+.editor-layout-preview-cell {
+  border: 1px solid var(--editor-layout-item-border);
+  border-radius: var(--editor-layout-preview-cell-radius);
+  background-color: var(--editor-layout-preview-cell-bg);
+}
+
+.editor-layout-option {
+  border: 1px solid var(--editor-layout-option-border);
+  border-radius: var(--editor-layout-option-radius);
+  padding-block: var(--editor-layout-option-py);
+  padding-inline: var(--editor-layout-option-px);
+}
+
+.editor-math-trigger {
+  border-radius: var(--editor-math-radius);
+  padding-block: var(--editor-math-py);
+  padding-inline: var(--editor-math-px);
+}
+
+.editor-math-trigger-selected {
+  background-color: var(--editor-math-selected-bg);
+  box-shadow: 0 0 0 2px var(--editor-math-selected-ring);
+}
+
+.editor-math-block {
+  display: block;
+  margin-block: var(--editor-math-block-gap-y);
+  text-align: center;
+}
+
+.editor-math-segment {
+  border-radius: var(--editor-math-segment-radius);
+  background-color: var(--editor-math-segment-bg);
+  padding: var(--editor-math-segment-padding);
+}
+
+.editor-math-preview {
+  min-height: var(--editor-math-preview-min-h);
+  border: 1px solid var(--editor-math-preview-border);
+  border-radius: var(--editor-math-preview-radius);
+  background-color: var(--editor-math-preview-bg);
+  padding: var(--editor-math-preview-padding);
+}
+
+.editor-youtube-frame {
+  border: 1px solid var(--editor-youtube-border);
+  border-radius: var(--editor-youtube-radius);
+  background-color: var(--editor-youtube-bg);
+}
+
+@media (min-width: 48rem) {
+  .editor-youtube-frame {
+    width: var(--editor-youtube-width-md);
+  }
+}
+
+.editor-embed {
+  margin-block: var(--editor-embed-gap-y);
+}
+
+.editor-table-menu {
+  width: var(--editor-table-menu-w);
+  padding: 0;
 }
