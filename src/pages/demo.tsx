@@ -3,11 +3,13 @@ import {
   BookOpenIcon,
   DownloadIcon,
   EyeIcon,
+  FoldVerticalIcon,
   ListTreeIcon,
   MaximizeIcon,
   MinimizeIcon,
   PanelTopIcon,
   PencilIcon,
+  UnfoldVerticalIcon,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
@@ -35,6 +37,7 @@ export function DemoPage() {
   const [editable, setEditable] = useState(true);
   const [zen, setZen] = useState(false);
   const [toolbar, setToolbar] = useState<EditorToolbar>(false);
+  const [compact, setCompact] = useState(false);
   const [showToc, setShowToc] = useState(false);
   const editorRef = useRef<LexicalEditor | null>(null);
 
@@ -106,6 +109,22 @@ export function DemoPage() {
             </Button>
             <Button
               className="gap-1.5"
+              onClick={() => setCompact((prev) => !prev)}
+              size="sm"
+              variant={compact ? "secondary" : "ghost"}
+            >
+              {compact ? (
+                <>
+                  <FoldVerticalIcon className="size-3.5" /> Compact
+                </>
+              ) : (
+                <>
+                  <UnfoldVerticalIcon className="size-3.5" /> Comfortable
+                </>
+              )}
+            </Button>
+            <Button
+              className="gap-1.5"
               onClick={() => setEditable((prev) => !prev)}
               size="sm"
               variant="ghost"
@@ -173,6 +192,7 @@ export function DemoPage() {
           {/* Editor flows as the page body — no card, no border */}
           <div className={cn(zen && "pt-20")}>
             <EditorWithToc
+              density={compact ? "compact" : "comfortable"}
               editable={editable}
               extraFeatures={demoEditorFeatures}
               minimal
