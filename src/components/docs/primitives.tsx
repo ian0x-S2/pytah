@@ -1,10 +1,25 @@
 import { tokenize as tokenizeBash } from "@twinkleplop/bash";
 import { tokenize as tokenizeCss } from "@twinkleplop/css";
+import { tokenize as tokenizeDiff } from "@twinkleplop/diff";
+import { tokenize as tokenizeDotenv } from "@twinkleplop/dotenv";
+import { tokenize as tokenizeGo } from "@twinkleplop/go";
+import { tokenize as tokenizeHtml } from "@twinkleplop/html";
+import { tokenize as tokenizeHttp } from "@twinkleplop/http";
+import { tokenize as tokenizeIni } from "@twinkleplop/ini";
 import { tokenize as tokenizeJavascript } from "@twinkleplop/javascript";
+import { tokenize as tokenizeJson } from "@twinkleplop/json";
+import { tokenize as tokenizeJsonc } from "@twinkleplop/jsonc";
 import { tokenize as tokenizeMarkdown } from "@twinkleplop/markdown";
-import { tokenize as tokenizeTsx } from "@twinkleplop/tsx";
+import { tokenize as tokenizePython } from "@twinkleplop/python";
+import { tokenize as tokenizeRust } from "@twinkleplop/rust";
+import { tokenize as tokenizeShellsession } from "@twinkleplop/shellsession";
+import { tokenize as tokenizeSql } from "@twinkleplop/sql";
+import { tokenize as tokenizeSvelte } from "@twinkleplop/svelte";
 import "@twinkleplop/theme-github";
+import { tokenize as tokenizeToml } from "@twinkleplop/toml";
+import { tokenize as tokenizeTsx } from "@twinkleplop/tsx";
 import { tokenize as tokenizeTypescript } from "@twinkleplop/typescript";
+import { tokenize as tokenizeYaml } from "@twinkleplop/yaml";
 import { useMemo } from "react";
 
 import { cn } from "@/lib/utils";
@@ -15,20 +30,50 @@ type TokenizerFn = ReturnType<TokenizeFactory>;
 const TOKENIZERS: Record<string, TokenizerFn> = {
   bash: tokenizeBash(),
   css: tokenizeCss(),
+  diff: tokenizeDiff(),
+  dotenv: tokenizeDotenv(),
+  go: tokenizeGo(),
+  html: tokenizeHtml(),
+  http: tokenizeHttp(),
+  ini: tokenizeIni(),
   javascript: tokenizeJavascript(),
+  json: tokenizeJson(),
+  jsonc: tokenizeJsonc(),
   markdown: tokenizeMarkdown(),
+  python: tokenizePython(),
+  rust: tokenizeRust(),
+  shellsession: tokenizeShellsession(),
+  sql: tokenizeSql(),
+  svelte: tokenizeSvelte(),
+  toml: tokenizeToml(),
   tsx: tokenizeTsx(),
   typescript: tokenizeTypescript(),
+  yaml: tokenizeYaml(),
 };
 
 // JSX has no dedicated package: TSX covers it.
 const CODE_BLOCK_LANGUAGES = [
   "bash",
   "css",
+  "diff",
+  "dotenv",
+  "go",
+  "html",
+  "http",
+  "ini",
   "javascript",
+  "json",
+  "jsonc",
   "markdown",
+  "python",
+  "rust",
+  "shellsession",
+  "sql",
+  "svelte",
+  "toml",
   "tsx",
   "typescript",
+  "yaml",
 ] as const;
 
 type CodeBlockSyntaxLanguage = (typeof CODE_BLOCK_LANGUAGES)[number];
@@ -111,20 +156,44 @@ function getCachedTokenLines(
 
 const CODE_LANGUAGE_ALIASES = {
   bash: "bash",
+  console: "shellsession",
   css: "css",
+  diff: "diff",
+  dotenv: "dotenv",
+  env: "dotenv",
+  go: "go",
+  golang: "go",
+  html: "html",
+  http: "http",
+  ini: "ini",
   javascript: "javascript",
   js: "javascript",
+  json: "json",
+  jsonc: "jsonc",
   jsx: "tsx",
   markdown: "markdown",
   md: "markdown",
   plain: "text",
+  py: "python",
+  python: "python",
+  rest: "http",
+  rs: "rust",
+  rust: "rust",
   sh: "bash",
   shell: "bash",
+  shellsession: "shellsession",
+  sql: "sql",
+  svelte: "svelte",
+  terminal: "shellsession",
   text: "text",
+  toml: "toml",
   ts: "typescript",
   tsx: "tsx",
   txt: "text",
   typescript: "typescript",
+  xml: "html",
+  yaml: "yaml",
+  yml: "yaml",
 } as const satisfies Record<string, CodeBlockSyntaxLanguage | "text">;
 
 type CodeLanguage =

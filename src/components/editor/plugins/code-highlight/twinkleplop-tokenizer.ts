@@ -5,44 +5,60 @@ import type { CodeNode } from "@lexical/code";
 import type { Tokenizer } from "@lexical/code-shiki";
 import { tokenize as tokenizeBash } from "@twinkleplop/bash";
 import { tokenize as tokenizeCss } from "@twinkleplop/css";
+import { tokenize as tokenizeDiff } from "@twinkleplop/diff";
+import { tokenize as tokenizeDotenv } from "@twinkleplop/dotenv";
+import { tokenize as tokenizeGo } from "@twinkleplop/go";
+import { tokenize as tokenizeHtml } from "@twinkleplop/html";
+import { tokenize as tokenizeHttp } from "@twinkleplop/http";
+import { tokenize as tokenizeIni } from "@twinkleplop/ini";
 import { tokenize as tokenizeJavascript } from "@twinkleplop/javascript";
+import { tokenize as tokenizeJson } from "@twinkleplop/json";
+import { tokenize as tokenizeJsonc } from "@twinkleplop/jsonc";
 import { tokenize as tokenizeMarkdown } from "@twinkleplop/markdown";
+import { tokenize as tokenizePython } from "@twinkleplop/python";
+import { tokenize as tokenizeRust } from "@twinkleplop/rust";
+import { tokenize as tokenizeShellsession } from "@twinkleplop/shellsession";
+import { tokenize as tokenizeSql } from "@twinkleplop/sql";
+import { tokenize as tokenizeSvelte } from "@twinkleplop/svelte";
 import { dark, light } from "@twinkleplop/theme-github/tokens";
+import { tokenize as tokenizeToml } from "@twinkleplop/toml";
 import { tokenize as tokenizeTsx } from "@twinkleplop/tsx";
 import { tokenize as tokenizeTypescript } from "@twinkleplop/typescript";
+import { tokenize as tokenizeYaml } from "@twinkleplop/yaml";
 import { $createLineBreakNode, $createTabNode } from "lexical";
 import type { LexicalNode } from "lexical";
+
+import { CODE_LANGUAGE_ALIASES, DEFAULT_CODE_LANGUAGE } from "./languages";
 
 type TokenizeFn = ReturnType<typeof tokenizeTypescript>;
 
 const TOKENIZERS: Record<string, TokenizeFn> = {
   bash: tokenizeBash(),
   css: tokenizeCss(),
+  diff: tokenizeDiff(),
+  dotenv: tokenizeDotenv(),
+  go: tokenizeGo(),
+  html: tokenizeHtml(),
+  http: tokenizeHttp(),
+  ini: tokenizeIni(),
   javascript: tokenizeJavascript(),
+  json: tokenizeJson(),
+  jsonc: tokenizeJsonc(),
   markdown: tokenizeMarkdown(),
+  python: tokenizePython(),
+  rust: tokenizeRust(),
+  shellsession: tokenizeShellsession(),
+  sql: tokenizeSql(),
+  svelte: tokenizeSvelte(),
+  toml: tokenizeToml(),
   tsx: tokenizeTsx(),
   typescript: tokenizeTypescript(),
+  yaml: tokenizeYaml(),
 };
 
-// Lexical language ids (toolbar, markdown fences, persisted nodes) map onto
-// the installed Twinkleplop grammars. JSX has no dedicated package: TSX
-// covers it. Unknown ids fall back to the default language like Shiki does.
-const LANGUAGE_ALIASES: Record<string, string> = {
-  bash: "bash",
-  css: "css",
-  javascript: "javascript",
-  js: "javascript",
-  jsx: "tsx",
-  markdown: "markdown",
-  md: "markdown",
-  sh: "bash",
-  shell: "bash",
-  ts: "typescript",
-  tsx: "tsx",
-  typescript: "typescript",
-};
+const LANGUAGE_ALIASES = CODE_LANGUAGE_ALIASES;
 
-const DEFAULT_LANGUAGE = "javascript";
+const DEFAULT_LANGUAGE = DEFAULT_CODE_LANGUAGE;
 
 const PALETTES = { dark, light } as const;
 
@@ -119,10 +135,6 @@ export const TwinkleplopTokenizer: Tokenizer = {
       .trim()
       .toLowerCase();
     const grammarKey = LANGUAGE_ALIASES[rawLanguage] ?? DEFAULT_LANGUAGE;
-    const tokenizeFn = TOKENIZERS[grammarKey] ?? TOKENIZERS[DEFAULT_LANGUAGE];
-    if (!tokenizeFn) {
-      return [];
-    }
 
     const code = codeNode.getTextContent();
     if (code === "") {
@@ -142,6 +154,19 @@ export const TwinkleplopTokenizer: Tokenizer = {
     }
     if (codeNode.getStyle() !== nodeStyle) {
       codeNode.setStyle(nodeStyle);
+    }
+
+    // Plain-text blocks keep uncolored nodes: no grammar pass, just
+    // whitespace-aware plain nodes so content is never wiped.
+    if (grammarKey === "plaintext") {
+      const nodes: LexicalNode[] = [];
+      pushGapNodes(nodes, code);
+      return nodes;
+    }
+
+    const tokenizeFn = TOKENIZERS[grammarKey] ?? TOKENIZERS[DEFAULT_LANGUAGE];
+    if (!tokenizeFn) {
+      return [];
     }
 
     let result: ReturnType<TokenizeFn>;

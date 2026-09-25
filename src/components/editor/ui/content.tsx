@@ -28,6 +28,7 @@ import type {
 } from "../core/types";
 import { BlockTypeToolbarPlugin } from "../plugins/block-type-toolbar/plugin";
 import { CodeGutterHostContext } from "../plugins/code-highlight/gutter-host";
+import { CodeLanguageSelectPlugin } from "../plugins/code-highlight/language-select";
 import { CodeLineNumbersPlugin } from "../plugins/code-highlight/line-numbers";
 import { CodeHighlightPlugin } from "../plugins/code-highlight/plugin";
 import { EditablePlugin } from "../plugins/core/editable";
@@ -137,6 +138,7 @@ function DefaultEditorPlugins({
       {features.history ? <HistoryPlugin /> : null}
       <CodeHighlightPlugin />
       <CodeLineNumbersPlugin />
+      <CodeLanguageSelectPlugin />
       <ListPlugin />
       <CheckListPlugin />
       <LinkBehaviorPlugin editable={editable} />
