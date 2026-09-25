@@ -39,7 +39,7 @@ Every public editor component accepts a `className` prop merged through `cn(defa
 />
 ```
 
-Common uses for `contentClassName`: tighter padding, a smaller base font size, or a minimum height that matches the surrounding layout. For replacing entire surfaces (header, action bar, outputs) instead of resizing them, use `slots` — see `/docs/composition`.
+Common uses for `contentClassName`: constraining max-width, or a minimum height that matches the surrounding layout. For rhythm changes — density, content padding, table and image spacing — prefer the `density` prop or overriding `--editor-*` vars (see `/docs/theming`), which stay in sync across light/dark and portalled chrome. For replacing entire surfaces (header, action bar, outputs) instead of resizing them, use `slots` — see `/docs/composition`.
 
 ## Content Theme
 
