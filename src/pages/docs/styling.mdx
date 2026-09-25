@@ -43,7 +43,7 @@ Common uses for `contentClassName`: constraining max-width, or a minimum height 
 
 ## Content Theme
 
-Rendered content is styled through the Lexical theme in `core/theme.ts`. It is a flat map from content roles (headings, lists, tables, code, inline text) to Tailwind classes, plugged into the editor config by `createEditorConfig`. This is the single place that controls typography and spacing inside the editable area.
+Rendered content is styled through the Lexical theme in `core/theme.ts`. It is a flat map from content roles (headings, lists, tables, code, inline text) to `editor-*` token classes and Tailwind utilities, plugged into the editor config by `createEditorConfig`. This is the single place that controls typography and spacing inside the editable area.
 
 <CodeBlock label="src/components/editor/core/theme.ts" language="typescript">
   {themeSource}
@@ -51,7 +51,7 @@ Rendered content is styled through the Lexical theme in `core/theme.ts`. It is a
 
 A few patterns worth keeping if you customize it:
 
-- Reference design tokens (`bg-muted`, `text-primary`) instead of raw colors, so dark mode keeps working for free.
+- Reference design tokens (`bg-muted`, `text-primary`, `--editor-*`) instead of raw colors, so dark mode keeps working for free.
 - Give headings `first:mt-0` and `scroll-mt-*` so the top of the document stays flush and anchor scrolling respects sticky headers.
 - Keep list/checklist styling on the theme's `before:` pseudo-element utilities; the marker glyphs come from there, not from DOM nodes.
 
