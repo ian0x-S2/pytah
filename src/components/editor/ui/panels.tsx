@@ -24,9 +24,7 @@ export function EditorActionBar({
   onReset,
 }: EditorActionBarProps) {
   return (
-    <div
-      className={cn("border-b border-border bg-muted/20 px-4 py-3", className)}
-    >
+    <div className={cn("editor-actionbar", className)}>
       <div className="flex flex-wrap items-center gap-2">
         <Button
           onClick={onLoadMarkdown}

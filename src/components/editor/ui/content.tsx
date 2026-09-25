@@ -21,6 +21,7 @@ import { EditorTransformersContext } from "../core/editor-transformers-context";
 import { EDITOR_FEATURES, renderSlashCommandPlugin } from "../core/features";
 import type {
   EditorChromeSlots,
+  EditorDensity,
   EditorPluginSlots,
   EditorSnapshot,
   EditorToolbar,
@@ -66,7 +67,7 @@ function EditorTopToolbar({
   }
 
   return (
-    <div className="px-8 py-2">
+    <div className="editor-toolbar">
       <div className="overflow-x-auto">
         {toolbar === "full" ? (
           <FullToolbarPlugin commandIds={commandIds} />
@@ -81,6 +82,7 @@ function EditorTopToolbar({
 interface EditorContentProps {
   commands: readonly FeatureSlashCommand[];
   contentClassName?: string;
+  density?: EditorDensity;
   editable: boolean;
   extraFeatures: readonly ExtraEditorFeature[];
   features: ResolvedEditorFeatureFlags;
@@ -217,6 +219,7 @@ function EditableEditorPlugins({
 export function EditorContent({
   commands,
   contentClassName,
+  density = "comfortable",
   editable,
   extraFeatures,
   features,
@@ -270,17 +273,17 @@ export function EditorContent({
         topToolbar={topToolbar}
       />
 
-      <div className="group relative bg-background">
+      <div className="group relative bg-background" data-density={density}>
         <RichTextPlugin
           contentEditable={
             <ContentEditable
               aria-placeholder={placeholder}
               className={cn(
-                "ContentEditable__root relative min-h-105 px-8 py-10 text-content leading-8 focus:outline-none",
+                "ContentEditable__root editor-content focus:outline-none",
                 contentClassName
               )}
               placeholder={
-                <div className="pointer-events-none absolute top-10 left-8 text-muted-foreground">
+                <div className="editor-content-placeholder pointer-events-none text-muted-foreground">
                   {placeholder}
                 </div>
               }

@@ -167,7 +167,7 @@ export function ExcalidrawEditorDialog({
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/80 backdrop-blur-xs">
             <div
               aria-label="Discard changes"
-              className="w-80 rounded-xl bg-popover p-4 shadow-lg ring-1 ring-border"
+              className="editor-floating w-80 p-4"
               role="alertdialog"
             >
               <p className="font-medium">Discard changes?</p>

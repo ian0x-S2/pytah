@@ -206,24 +206,27 @@ function EditorFoo({ className }: { className?: string }) {
 
 #### Toolbar layout
 
-- The top toolbar (`EditorTopToolbar`) uses `px-8 py-2` so its content aligns with the editor text column (`px-8`)
-- The toolbar background is `bg-muted/20` — a subtle tint that visually separates it from the content area without hard contrast
+- The top toolbar (`EditorTopToolbar`) uses the `editor-toolbar` class (`--editor-toolbar-px: 2rem`, `--editor-toolbar-py: 0.5rem`) so its content aligns with the editor text column (`--editor-content-px: 2rem`)
+- The action bar uses `editor-actionbar` (`--editor-actionbar-bg`, a `color-mix` tint of `--muted`) — a subtle tint that visually separates it from the content area without hard contrast
 - Toolbar action buttons that represent a single icon use `size="icon-sm"` (28px) — never text labels for format/alignment/indent actions
 - Always provide `aria-label` on icon-only buttons
 - Active state in dropdown lists is indicated by a `<CheckIcon className="ml-auto size-3.5 shrink-0 self-center text-muted-foreground" />` on the right, not by background color alone
 
 #### Floating surfaces (toolbars, popovers, link editors)
 
-Use this set of classes for any floating panel that appears over editor content:
+Use the `editor-floating` class (plain CSS in `core/tokens.css`, shipped via the registry — not a Tailwind `@utility`, so it renders in consumer builds with zero compilation) for any floating panel that appears over editor content. It expands to the canonical set:
 
 ```
-rounded-xl bg-popover shadow-lg ring-1 ring-border
+background: var(--editor-floating-bg);      /* alias -> --popover */
+border-radius: var(--editor-floating-radius); /* owned: 0.75rem = rounded-xl */
+box-shadow: 0 0 0 1px var(--editor-floating-ring), var(--editor-floating-shadow);
 ```
 
-- `rounded-xl` — softer than `rounded-lg`, feels more premium
-- `shadow-lg` — enough elevation to read clearly over content
-- `ring-1 ring-border` — uses the semantic border token, not `ring-foreground/10`
+- `radius` — softer than `rounded-lg`, feels more premium
+- `shadow` — enough elevation to read clearly over content
+- `ring` — uses the semantic border token (`--editor-floating-ring` -> `--border`), not `ring-foreground/10`
 - Animate in with `fade-in-0 zoom-in-95 animate-in duration-100`
+- Padding stays as Tailwind (`p-1.5` toolbar, `p-2` panels, `p-4` dialogs) via `--editor-floating-padding-*`
 
 #### Positional anchoring for floating UI
 
@@ -236,6 +239,23 @@ When a floating element is anchored to a DOM rectangle (e.g. table cell, selecti
 #### Separator usage
 
 Use `<Separator orientation="vertical" className="mx-0.5 h-4" />` to divide logical groups within a single floating row (e.g. between a URL display and its action buttons). Avoid using it as decoration — only when grouping semantically distinct controls.
+
+#### Editor design tokens (`core/tokens.css`)
+
+Single source of truth for editor restyling. Consumers override `--editor-*` vars; never hunt scattered Tailwind literals. Tokens ship with the registry via `editor.css` -> `core/tokens.css`.
+
+| Token family | Kind | Examples | Notes |
+| --- | --- | --- | --- |
+| `content` | owned + alias | `--editor-content-px/py/max-w/min-h/font-size/line-height/bg` | `max-w: none` preserves current full-width; set `44rem` + `margin-inline: auto` (already in `editor-content`) for a Notion-like column |
+| `toolbar/chrome/shell` | owned + alias-tinted | `--editor-toolbar-px/py`, `--editor-shell-bg/border/radius`, `--editor-header/footer/actionbar-bg` | alias-tinted = `color-mix(in oklch, var(--muted/background) x%, transparent)`; follows shadcn automatically |
+| `floating` | alias + owned | `--editor-floating-bg/foreground/ring` (alias -> `--popover/--border`), `--editor-floating-radius/shadow/padding-*` (owned) | every alias has an explicit oklch fallback so a `shadcn update` degrades to a pinned value instead of `unset` |
+| `table` | owned + alias | `--editor-table-cell-px/py/min-w/radius`, `--editor-table-header-bg/striped-bg/selected-*` | header/striped/selected are `color-mix` tints of `--muted/--primary` |
+| `image/handles` | owned + alias | `--editor-image-gap-y/radius/frame-radius/border/bg/selected-ring`, `--editor-handle-size/bg/border` |  |
+| `type scale` | owned | `--editor-h1..h6-size/mt/mb`, `--editor-block-gap`, `--editor-paragraph-line-height`, `--editor-quote-border`, `--editor-list-indent/gap` | comfortable defaults mirror the old `theme.ts` literals exactly |
+
+- Density: `:root` = `comfortable` (Notion-like). `<Editor density="compact">` sets `data-density="compact"`, switching the spacing/line-height subset (Linear-like). Portalled chrome follows via `:root:has([data-density="compact"])` — single-density-per-page is the v1 contract.
+- v1 scope: content + toolbar + chrome + floating + table + image. `code`, `math`, `youtube`, `collapsible`, `layout`, `link` are `legacy-literal` in `theme.ts` and move to tokens in v1.1.
+- Token migrations must close with the visual checklist (light/dark x comfortable/compact x editable/read-only) across canvas, toolbar basic/full, floating toolbar, slash, link editor, table menu + selection, image + resizer + dialogs — day-1 rule is zero visual diff.
 
 ---
 

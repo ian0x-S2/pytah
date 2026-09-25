@@ -1,6 +1,7 @@
 import type { EditorThemeClasses } from "lexical";
 
 export const editorTheme: EditorThemeClasses = {
+  // legacy-literal (v1.1): code blocks move to --editor-code-* tokens.
   code: "!bg-muted rounded-lg p-4 font-mono text-sm my-3 block overflow-x-auto dark:!bg-muted/50",
   codeHighlight: {
     atrule: "text-sky-700 dark:text-sky-300",
@@ -35,6 +36,7 @@ export const editorTheme: EditorThemeClasses = {
     url: "text-amber-700 dark:text-amber-300",
     variable: "text-orange-700 dark:text-orange-300",
   },
+  // legacy-literal (v1.1): collapsible + layout move to tokens.
   collapsibleContainer:
     "group/collapsible my-4 overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-xs",
   collapsibleContent: "px-4 py-3 pl-10 text-foreground [&>p:last-child]:mb-0",
@@ -45,50 +47,47 @@ export const editorTheme: EditorThemeClasses = {
     focus: "outline-none",
   },
   heading: {
-    h1: "text-4xl font-extrabold tracking-tight mt-12 mb-5 text-foreground first:mt-0 scroll-mt-24",
-    h2: "text-3xl font-semibold tracking-tight mt-10 mb-4 text-foreground first:mt-0 scroll-mt-24",
-    h3: "text-2xl font-semibold tracking-tight mt-8 mb-3 text-foreground first:mt-0 scroll-mt-24",
-    h4: "text-xl font-semibold tracking-tight mt-6 mb-2 text-foreground first:mt-0 scroll-mt-24",
-    h5: "text-lg font-semibold tracking-tight mt-5 mb-2 text-foreground first:mt-0 scroll-mt-24",
-    h6: "text-base font-semibold tracking-tight mt-4 mb-2 text-foreground first:mt-0 scroll-mt-24",
+    h1: "editor-h1 first:mt-0 text-foreground",
+    h2: "editor-h2 first:mt-0 text-foreground",
+    h3: "editor-h3 first:mt-0 text-foreground",
+    h4: "editor-h4 first:mt-0 text-foreground",
+    h5: "editor-h5 first:mt-0 text-foreground",
+    h6: "editor-h6 first:mt-0 text-foreground",
   },
   hr: "my-6 h-px cursor-pointer border-0 bg-border transition-colors",
   hrSelected: "bg-primary h-0.5",
   image: "block",
+  // legacy-literal (v1.1): layout + link move to tokens.
   layoutContainer:
     "my-4 grid gap-3 rounded-xl border border-border/70 bg-muted/20 p-3 md:gap-4",
   layoutItem:
     "min-w-0 rounded-lg border border-dashed border-border/80 bg-background/80 p-3",
   link: "text-primary underline underline-offset-4 cursor-pointer hover:text-primary/80",
   list: {
-    listitem: "mb-0.5",
+    listitem: "editor-listitem",
     listitemChecked:
-      "mb-0.5 list-none outline-none focus:outline-none focus-visible:outline-none before:mr-2 before:inline-flex before:size-4 before:items-center before:justify-center before:rounded-sm before:border before:border-primary before:bg-primary before:text-[10px] before:text-primary-foreground before:content-['✓']",
+      "editor-listitem list-none outline-none focus:outline-none focus-visible:outline-none before:mr-2 before:inline-flex before:size-4 before:items-center before:justify-center before:rounded-sm before:border before:border-primary before:bg-primary before:text-[10px] before:text-primary-foreground before:content-['✓']",
     listitemUnchecked:
-      "mb-0.5 list-none outline-none focus:outline-none focus-visible:outline-none before:mr-2 before:inline-flex before:size-4 before:items-center before:justify-center before:rounded-sm before:border before:border-border before:bg-background before:content-['']",
+      "editor-listitem list-none outline-none focus:outline-none focus-visible:outline-none before:mr-2 before:inline-flex before:size-4 before:items-center before:justify-center before:rounded-sm before:border before:border-border before:bg-background before:content-['']",
     nested: {
       listitem: "list-none",
     },
-    ol: "list-decimal ml-6 mb-2",
-    ul: "list-disc ml-6 mb-2",
+    ol: "editor-list-ol",
+    ul: "editor-list-ul",
   },
-  paragraph: "mb-1 leading-7 text-foreground",
-  quote:
-    "border-l-2 border-foreground/20 pl-4 italic text-muted-foreground my-3",
+  paragraph: "editor-paragraph text-foreground",
+  quote: "editor-quote",
   root: "outline-none min-h-[200px] px-1",
-  table:
-    "my-4 w-full border-collapse overflow-hidden rounded-lg border border-border text-sm",
+  table: "editor-table",
   tableAddColumns: "bg-muted hover:bg-muted/80",
   tableAddRows: "bg-muted hover:bg-muted/80",
-  tableCell:
-    "relative min-w-32 border border-border px-3 py-2 align-top outline-none [&_*]:mb-0",
+  tableCell: "editor-table-cell [&_*]:mb-0",
   tableCellActionButton:
     "rounded-full border border-border bg-background shadow-sm hover:bg-muted",
   tableCellActionButtonContainer: "absolute right-1.5 top-1.5 z-10",
-  tableCellHeader:
-    "min-w-32 border border-border bg-muted/60 px-3 py-2 text-left font-semibold align-top outline-none [&_*]:mb-0",
-  tableCellSelected: "!border-primary bg-primary/10",
-  tableRow: "even:bg-muted/10",
+  tableCellHeader: "editor-table-header [&_*]:mb-0",
+  tableCellSelected: "editor-table-selected",
+  tableRow: "editor-table-row-striped-even",
   tableScrollableWrapper:
     "editor-table-scroll-wrapper my-4 w-full overflow-x-auto",
   tableSelection: "bg-primary/10",

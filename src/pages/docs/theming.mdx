@@ -8,6 +8,8 @@ order: 90
 badge: "Core Doc"
 ---
 
+import editorTokensSource from "@/components/editor/core/tokens.css?raw";
+
 ## How It Works
 
 The entire visual system is driven by **CSS custom properties** (design tokens). The editor and all its UI components reference these tokens through Tailwind utility classes like `bg-background`, `text-muted-foreground`, `border-border`, etc.
@@ -83,6 +85,37 @@ These are the ShadCN tokens consumed by the editor. All must be present for the 
 | `--ring` | Focus rings on interactive elements |
 | `--highlight` | Text highlight marker background |
 | `--highlight-foreground` | Text color on highlighted text |
+
+## Editor Tokens
+
+Beyond the ShadCN palette, fine-grained editor styling lives in `--editor-*` custom properties (`core/tokens.css`, shipped with the registry). There are two kinds:
+
+- `alias` — `var(--shadcn-token, <oklch fallback>)`. Follows your ShadCN theme automatically in light and dark mode. The explicit fallback means a `shadcn update` that renames base tokens degrades to a pinned value instead of silently unsetting the property.
+- `owned` — editor-specific geometry and type (content padding, heading sizes, table cell rhythm, image radii). Light defaults live in `:root`; dark deltas (if any) live in `.dark`.
+
+<CodeBlock label="src/components/editor/core/tokens.css" language="css">
+  {editorTokensSource}
+</CodeBlock>
+
+To restyle, override the vars — no component edits needed:
+
+```css
+/* Example: Notion-like centered column + tighter table */
+.my-editor {
+  --editor-content-max-w: 44rem;
+  --editor-table-cell-py: 0.375rem;
+}
+```
+
+### Density presets
+
+`:root` is `comfortable` (Notion-like whitespace). Pass `density="compact"` for Linear-like rhythm — same palette, tighter spacing and line-height:
+
+```tsx
+<Editor density="compact" />
+```
+
+This sets `data-density="compact"` on the editor root, switching the spacing subset. Body-portalled chrome (floating toolbar, slash popover) follows through `:root:has([data-density="compact"])`, so one density per page is the v1 contract.
 
 ## Dark Mode
 

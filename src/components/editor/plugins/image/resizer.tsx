@@ -261,7 +261,7 @@ export function ImageResizer({
     >
       {CORNER_DIRECTIONS.map((direction) => (
         <div
-          className={`absolute size-2 rounded-full border border-background/20 bg-foreground shadow-sm ${CORNER_CLASSES[direction]}`}
+          className={`editor-resize-handle shadow-sm ${CORNER_CLASSES[direction]}`}
           key={direction}
           onPointerDown={(event) => handlePointerDown(event, direction)}
         />

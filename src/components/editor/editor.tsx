@@ -130,6 +130,7 @@ export function Editor({
   className,
   chrome,
   contentClassName,
+  density = "comfortable",
   editable = true,
   extraFeatures,
   extraNodes,
@@ -352,6 +353,7 @@ export function Editor({
     <EditorContent
       commands={commands}
       contentClassName={contentClassName}
+      density={density}
       editable={editable}
       extraFeatures={extraFeatures ?? []}
       features={resolvedFeatures}
@@ -407,7 +409,10 @@ export function Editor({
   );
 
   return (
-    <div className={cn(!minimal && "space-y-6", className)}>
+    <div
+      className={cn(!minimal && "space-y-6", className)}
+      data-density={density}
+    >
       <LexicalComposer initialConfig={initialConfig}>
         {editorBody}
       </LexicalComposer>

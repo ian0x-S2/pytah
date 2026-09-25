@@ -275,12 +275,49 @@ export default defineConfig({
     // arrows (`export const X = memo(({...}) => ...)`); neither converts
     // mechanically, so the arrow-function component style is not enforced.
     "react/function-component-definition": "off",
-    // `ContentEditable__root` (Lexical playground convention) and
-    // `editor-draggable-block-menu` are unstyled JS hooks, not design tokens:
-    // an empty `@utility` is a Tailwind build error, so they are allowlisted.
+    // `ContentEditable__root` (Lexical playground convention),
+    // `editor-draggable-block-menu`, and the `editor-*` design-token classes
+    // (plain CSS in `core/tokens.css`, shipped via the registry — see the
+    // comment at the top of the utilities section there) are unstyled JS
+    // hooks or registry CSS, not Tailwind utilities: an empty `@utility` is
+    // a Tailwind build error, so they are allowlisted.
     "shadcn/no-unknown-classes": [
       "error",
-      { allow: ["ContentEditable__root", "editor-draggable-block-menu"] },
+      {
+        allow: [
+          "ContentEditable__root",
+          "editor-draggable-block-menu",
+          "editor-actionbar",
+          "editor-content",
+          "editor-content-placeholder",
+          "editor-floating",
+          "editor-footer",
+          "editor-h1",
+          "editor-h2",
+          "editor-h3",
+          "editor-h4",
+          "editor-h5",
+          "editor-h6",
+          "editor-header",
+          "editor-image-figure",
+          "editor-image-frame",
+          "editor-image-frame-selected",
+          "editor-image-img",
+          "editor-list-ol",
+          "editor-list-ul",
+          "editor-listitem",
+          "editor-paragraph",
+          "editor-quote",
+          "editor-resize-handle",
+          "editor-shell",
+          "editor-table",
+          "editor-table-cell",
+          "editor-table-header",
+          "editor-table-row-striped-even",
+          "editor-table-selected",
+          "editor-toolbar",
+        ],
+      },
     ],
   },
   settings: jsPluginSettings,

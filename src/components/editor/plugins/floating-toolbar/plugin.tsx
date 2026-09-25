@@ -191,7 +191,7 @@ export function FloatingToolbarPlugin() {
       <div
         aria-label="Formatting options"
         className={cn(
-          "flex items-center gap-0.5 rounded-xl bg-popover p-1.5 shadow-lg ring-1 ring-border",
+          "editor-floating flex items-center gap-0.5 p-1.5",
           "animate-in duration-100 fade-in-0 zoom-in-95"
         )}
         role="toolbar"

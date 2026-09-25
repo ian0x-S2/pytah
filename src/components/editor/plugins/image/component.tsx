@@ -59,14 +59,14 @@ export function ImageComponent({
     });
   })();
   const isFocused = (isSelected || isResizing) && editable;
-  let figureClassName = "my-4 w-fit max-w-full";
+  let figureClassName = "editor-image-figure w-fit";
   let alignmentClassName = "inline-flex max-w-full";
 
   if (alignment === "center") {
-    figureClassName = "my-4 w-full";
+    figureClassName = "editor-image-figure w-full";
     alignmentClassName = "flex max-w-full justify-center";
   } else if (alignment === "right") {
-    figureClassName = "my-4 ml-auto w-fit max-w-full";
+    figureClassName = "editor-image-figure ml-auto w-fit";
     alignmentClassName = "flex max-w-full justify-end";
   }
 
@@ -188,14 +188,12 @@ export function ImageComponent({
         <div className="relative inline-flex max-w-full">
           <div
             className={
-              isFocused
-                ? "rounded-2xl ring-1 ring-primary/40 ring-offset-2 ring-offset-background"
-                : "rounded-2xl"
+              isFocused ? "editor-image-frame-selected" : "editor-image-frame"
             }
           >
             <img
               alt={altText}
-              className="block h-auto max-w-full rounded-xl border border-border/60 bg-muted/20 shadow-xs"
+              className="editor-image-img h-auto shadow-xs"
               draggable="false"
               height={height === "inherit" ? undefined : height}
               ref={imageRef}

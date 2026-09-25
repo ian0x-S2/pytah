@@ -109,7 +109,7 @@ export function ColorSwatches({
        * button keeps focus in the editor instead of moving it to the popup.
        */}
       <PopoverContent
-        className="w-auto rounded-xl p-2 ring-border"
+        className="editor-floating w-auto p-2"
         onMouseDown={(e) => e.preventDefault()}
         side="bottom"
         sideOffset={6}

@@ -17,22 +17,13 @@ export function EditorShell({
   className?: string;
 }) {
   return (
-    <div
-      className={cn(
-        "overflow-hidden rounded-2xl border border-border bg-background/95 shadow-sm",
-        className
-      )}
-    >
-      {children}
-    </div>
+    <div className={cn("editor-shell shadow-sm", className)}>{children}</div>
   );
 }
 
 export function EditorHeader({ className }: { className?: string }) {
   return (
-    <div
-      className={cn("border-b border-border bg-muted/40 px-4 py-3", className)}
-    >
+    <div className={cn("editor-header", className)}>
       <div className="flex flex-wrap items-center gap-2">
         {FEATURE_ITEMS.map((item) => (
           <div
@@ -63,10 +54,7 @@ export function EditorFooter({
 
   return (
     <div
-      className={cn(
-        "border-t border-border bg-muted/30 px-4 py-2 text-xs text-muted-foreground",
-        className
-      )}
+      className={cn("editor-footer text-xs text-muted-foreground", className)}
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-3">
@@ -92,7 +80,7 @@ export function OutputPanel({
   value: string;
 }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-background shadow-sm">
+    <div className="editor-shell shadow-sm">
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div className="flex items-center gap-2 text-sm font-medium text-foreground">
           <Icon className="size-4 text-muted-foreground" />

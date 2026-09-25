@@ -132,10 +132,22 @@ export interface EditorChromeSlots {
  */
 export type EditorToolbar = false | "basic" | "full";
 
+/**
+ * Density preset for the editor rhythm (spacing + line-height subset).
+ * Implemented as a `data-density` attribute that switches the
+ * `--editor-*` custom properties — no logic branches, fully overridable
+ * by redefining the vars in consumer CSS.
+ *
+ * - `comfortable` (default, Notion-like): generous whitespace
+ * - `compact` (Linear-like): tighter rhythm, same palette
+ */
+export type EditorDensity = "comfortable" | "compact";
+
 export interface EditorProps {
   chrome?: EditorChromeOptions;
   className?: string;
   contentClassName?: string;
+  density?: EditorDensity;
   editable?: boolean;
   extraFeatures?: ExtraEditorFeature[];
   extraNodes?: NonNullable<InitialConfigType["nodes"]>;

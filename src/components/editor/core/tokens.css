@@ -1,0 +1,426 @@
+/* ==========================================================================
+ * Editor design tokens (v1)
+ *
+ * Single source of truth for fast editor restyling. Consumers override
+ * `--editor-*` custom properties — no scattered Tailwind literal hunting.
+ *
+ * Token kinds (see AGENTS.md token table — aliases vs. owned):
+ * - `alias`: `var(--shadcn-token, <oklch fallback>)` — follows the shadcn
+ *   theme automatically (light/dark via `:root`/`.dark` in `src/index.css`).
+ *   Every alias carries an explicit fallback so a `shadcn update` that
+ *   renames base tokens degrades to a pinned value instead of `unset`.
+ * - `owned`: editor-specific value (spacing, type scale, radii, shadows).
+ *   Light default lives in `:root`; dark deltas (if any) live in `.dark`.
+ *
+ * Density presets: `:root` whims are `comfortable` (Notion-like). Setting
+ * `data-density="compact"` (via the `density` prop on `Editor`) overrides
+ * the spacing/line-height subset below — Linear-like density.
+ *
+ * v1 scope: canvas content + toolbar + chrome + floating surfaces + table +
+ * image. `code`, `math`, `youtube`, `collapsible`, `layout`, `link` keep
+ * hardcoded Tailwind literals (marked `legacy-literal` in theme.ts) and
+ * move to tokens in v1.1.
+ * ========================================================================== */
+
+:root {
+  /* --- Canvas content (owned, comfortable defaults = current visuals) --- */
+  --editor-content-max-w: none;
+  --editor-content-px: 2rem; /* px-8 */
+  --editor-content-py: 2.5rem; /* py-10 */
+  --editor-content-min-h: 26.25rem; /* min-h-105 */
+  --editor-content-font-size: 17px; /* text-content */
+  --editor-content-line-height: 2rem; /* leading-8 */
+  --editor-content-bg: var(--background, oklch(1 0 0)); /* alias */
+  --editor-block-gap: 0.25rem; /* paragraph mb-1 */
+  --editor-paragraph-line-height: 1.75rem; /* paragraph leading-7 */
+
+  /* --- Type scale (owned — mirrors current theme.ts) --- */
+  --editor-h1-size: 2.25rem;
+  --editor-h1-mt: 3rem;
+  --editor-h1-mb: 1.25rem;
+  --editor-h2-size: 1.875rem;
+  --editor-h2-mt: 2.5rem;
+  --editor-h2-mb: 1rem;
+  --editor-h3-size: 1.5rem;
+  --editor-h3-mt: 2rem;
+  --editor-h3-mb: 0.75rem;
+  --editor-h4-size: 1.25rem;
+  --editor-h4-mt: 1.5rem;
+  --editor-h4-mb: 0.5rem;
+  --editor-h5-size: 1.125rem;
+  --editor-h5-mt: 1.25rem;
+  --editor-h5-mb: 0.5rem;
+  --editor-h6-size: 1rem;
+  --editor-h6-mt: 1rem;
+  --editor-h6-mb: 0.5rem;
+  --editor-quote-border: color-mix(
+    in oklch,
+    var(--foreground, oklch(0.145 0 0)) 20%,
+    transparent
+  );
+  --editor-list-indent: 1.5rem; /* ml-6 */
+  --editor-list-gap: 0.5rem; /* mb-2 */
+  --editor-list-item-gap: 0.125rem; /* mb-0.5 */
+
+  /* --- Toolbar (owned) --- */
+  --editor-toolbar-px: 2rem; /* aligns with content px */
+  --editor-toolbar-py: 0.5rem; /* py-2 */
+
+  /* --- Chrome shell/header/footer/action-bar --- */
+  --editor-shell-bg: color-mix(
+    in oklch,
+    var(--background, oklch(1 0 0)) 95%,
+    transparent
+  ); /* alias-tinted */
+  --editor-shell-border: var(--border, oklch(0.922 0 0)); /* alias */
+  --editor-shell-radius: 1rem; /* rounded-2xl, owned */
+  --editor-header-bg: color-mix(
+    in oklch,
+    var(--muted, oklch(0.97 0 0)) 40%,
+    transparent
+  ); /* alias-tinted */
+  --editor-footer-bg: color-mix(
+    in oklch,
+    var(--muted, oklch(0.97 0 0)) 30%,
+    transparent
+  ); /* alias-tinted */
+  --editor-actionbar-bg: color-mix(
+    in oklch,
+    var(--muted, oklch(0.97 0 0)) 20%,
+    transparent
+  ); /* alias-tinted */
+  --editor-chrome-px: 1rem; /* px-4 */
+  --editor-chrome-py: 0.75rem; /* py-3 */
+  --editor-chrome-py-sm: 0.5rem; /* py-2 */
+
+  /* --- Floating surfaces (canonical: toolbar + excalidraw confirm) --- */
+  --editor-floating-bg: var(--popover, oklch(1 0 0)); /* alias */
+  --editor-floating-foreground: var(
+    --popover-foreground,
+    oklch(0.145 0 0)
+  ); /* alias */
+  --editor-floating-ring: var(--border, oklch(0.922 0 0)); /* alias */
+  --editor-floating-radius: 0.75rem; /* rounded-xl, owned */
+  --editor-floating-shadow:
+    0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); /* shadow-lg, owned */
+  --editor-floating-padding-sm: 0.375rem; /* p-1.5 */
+  --editor-floating-padding-md: 0.5rem; /* p-2 */
+  --editor-floating-padding-lg: 1rem; /* p-4 */
+
+  /* --- Tables (owned geometry + alias colors) --- */
+  --editor-table-radius: 0.5rem; /* rounded-lg */
+  --editor-table-border: var(--border, oklch(0.922 0 0)); /* alias */
+  --editor-table-cell-px: 0.75rem; /* px-3 */
+  --editor-table-cell-py: 0.5rem; /* py-2 */
+  --editor-table-cell-min-w: 8rem; /* min-w-32 */
+  --editor-table-header-bg: color-mix(
+    in oklch,
+    var(--muted, oklch(0.97 0 0)) 60%,
+    transparent
+  ); /* alias-tinted */
+  --editor-table-striped-bg: color-mix(
+    in oklch,
+    var(--muted, oklch(0.97 0 0)) 10%,
+    transparent
+  ); /* alias-tinted */
+  --editor-table-selected-border: var(--primary, oklch(0.205 0 0)); /* alias */
+  --editor-table-selected-bg: color-mix(
+    in oklch,
+    var(--primary, oklch(0.205 0 0)) 10%,
+    transparent
+  ); /* alias-tinted */
+  --editor-table-menu-w: 14rem; /* w-56 */
+
+  /* --- Images (owned geometry + alias colors) --- */
+  --editor-image-gap-y: 1rem; /* my-4 */
+  --editor-image-radius: 0.75rem; /* rounded-xl */
+  --editor-image-frame-radius: 1rem; /* rounded-2xl */
+  --editor-image-border: color-mix(
+    in oklch,
+    var(--border, oklch(0.922 0 0)) 60%,
+    transparent
+  ); /* alias-tinted */
+  --editor-image-bg: color-mix(
+    in oklch,
+    var(--muted, oklch(0.97 0 0)) 20%,
+    transparent
+  ); /* alias-tinted */
+  --editor-image-selected-ring: color-mix(
+    in oklch,
+    var(--primary, oklch(0.205 0 0)) 40%,
+    transparent
+  ); /* alias-tinted */
+  --editor-handle-size: 0.5rem; /* size-2 */
+  --editor-handle-bg: var(--foreground, oklch(0.145 0 0)); /* alias */
+  --editor-handle-border: color-mix(
+    in oklch,
+    var(--background, oklch(1 0 0)) 20%,
+    transparent
+  ); /* alias-tinted */
+}
+
+.dark {
+  /* Aliases follow automatically via var(--*) — only owned dark deltas here. */
+  --editor-image-bg: color-mix(
+    in oklch,
+    var(--muted, oklch(0.269 0 0)) 20%,
+    transparent
+  );
+  --editor-table-header-bg: color-mix(
+    in oklch,
+    var(--muted, oklch(0.269 0 0)) 60%,
+    transparent
+  );
+}
+
+/* Compact density (Linear-like): tighter rhythm, same palette.
+ * Scoped two ways: `[data-density]` covers in-tree surfaces; the `:root:has`
+ * rule mirrors the same vars to the root so body-portalled chrome (floating
+ * toolbar, slash popover) follows a single-density page. Mixed densities on
+ * one page fall back to per-tree values for in-tree nodes (v1 limitation). */
+[data-density="compact"],
+:root:has([data-density="compact"]) {
+  --editor-content-py: 1.5rem;
+  --editor-content-line-height: 1.75rem;
+  --editor-block-gap: 0.125rem;
+  --editor-h1-mt: 2rem;
+  --editor-h1-mb: 0.75rem;
+  --editor-h2-mt: 1.75rem;
+  --editor-h2-mb: 0.75rem;
+  --editor-h3-mt: 1.5rem;
+  --editor-h3-mb: 0.5rem;
+  --editor-table-cell-py: 0.375rem;
+  --editor-image-gap-y: 0.75rem;
+  --editor-floating-padding-sm: 0.25rem;
+  --editor-floating-padding-md: 0.375rem;
+}
+
+/* ==========================================================================
+ * Utilities — canonical surfaces built from the tokens above.
+ * Plain CSS classes (not Tailwind `@utility`) on purpose: they ship inside
+ * `editor.css` through the shadcn registry and must render in consumer
+ * builds without any Tailwind compilation step — same reason `editor.css`
+ * duplicates `.scrollbar-hidden` instead of relying on the `@utility` in
+ * the app's `index.css`. Components use these + layout utilities;
+ * consumers override the vars. See `shadcn/no-unknown-classes` allowlist
+ * in `oxlint.config.ts`.
+ * ========================================================================== */
+
+.editor-floating {
+  background-color: var(--editor-floating-bg);
+  color: var(--editor-floating-foreground);
+  border-radius: var(--editor-floating-radius);
+  box-shadow:
+    0 0 0 1px var(--editor-floating-ring),
+    var(--editor-floating-shadow);
+}
+
+.editor-content {
+  position: relative;
+  margin-inline: auto;
+  max-width: var(--editor-content-max-w);
+  min-height: var(--editor-content-min-h);
+  padding-inline: var(--editor-content-px);
+  padding-block: var(--editor-content-py);
+  background-color: var(--editor-content-bg);
+  font-size: var(--editor-content-font-size);
+  line-height: var(--editor-content-line-height);
+}
+
+.editor-content-placeholder {
+  position: absolute;
+  top: var(--editor-content-py);
+  left: var(--editor-content-px);
+}
+
+.editor-toolbar {
+  padding-inline: var(--editor-toolbar-px);
+  padding-block: var(--editor-toolbar-py);
+}
+
+.editor-shell {
+  overflow: hidden;
+  border: 1px solid var(--editor-shell-border);
+  border-radius: var(--editor-shell-radius);
+  background-color: var(--editor-shell-bg);
+}
+
+.editor-header {
+  border-bottom: 1px solid var(--editor-shell-border);
+  background-color: var(--editor-header-bg);
+  padding-inline: var(--editor-chrome-px);
+  padding-block: var(--editor-chrome-py);
+}
+
+.editor-footer {
+  border-top: 1px solid var(--editor-shell-border);
+  background-color: var(--editor-footer-bg);
+  padding-inline: var(--editor-chrome-px);
+  padding-block: var(--editor-chrome-py-sm);
+}
+
+.editor-actionbar {
+  border-bottom: 1px solid var(--editor-shell-border);
+  background-color: var(--editor-actionbar-bg);
+  padding-inline: var(--editor-chrome-px);
+  padding-block: var(--editor-chrome-py);
+}
+
+.editor-paragraph {
+  margin-bottom: var(--editor-block-gap);
+  line-height: var(--editor-paragraph-line-height);
+}
+
+.editor-h1 {
+  margin-top: var(--editor-h1-mt);
+  margin-bottom: var(--editor-h1-mb);
+  font-size: var(--editor-h1-size);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  scroll-margin-top: 6rem;
+}
+
+.editor-h2 {
+  margin-top: var(--editor-h2-mt);
+  margin-bottom: var(--editor-h2-mb);
+  font-size: var(--editor-h2-size);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  scroll-margin-top: 6rem;
+}
+
+.editor-h3 {
+  margin-top: var(--editor-h3-mt);
+  margin-bottom: var(--editor-h3-mb);
+  font-size: var(--editor-h3-size);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  scroll-margin-top: 6rem;
+}
+
+.editor-h4 {
+  margin-top: var(--editor-h4-mt);
+  margin-bottom: var(--editor-h4-mb);
+  font-size: var(--editor-h4-size);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  scroll-margin-top: 6rem;
+}
+
+.editor-h5 {
+  margin-top: var(--editor-h5-mt);
+  margin-bottom: var(--editor-h5-mb);
+  font-size: var(--editor-h5-size);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  scroll-margin-top: 6rem;
+}
+
+.editor-h6 {
+  margin-top: var(--editor-h6-mt);
+  margin-bottom: var(--editor-h6-mb);
+  font-size: var(--editor-h6-size);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  scroll-margin-top: 6rem;
+}
+
+.editor-quote {
+  margin-block: 0.75rem;
+  padding-left: 1rem;
+  border-left: 2px solid var(--editor-quote-border);
+  font-style: italic;
+  color: var(--muted-foreground, oklch(0.556 0 0));
+}
+
+.editor-list-ul {
+  margin-left: var(--editor-list-indent);
+  margin-bottom: var(--editor-list-gap);
+  list-style-type: disc;
+}
+
+.editor-list-ol {
+  margin-left: var(--editor-list-indent);
+  margin-bottom: var(--editor-list-gap);
+  list-style-type: decimal;
+}
+
+.editor-listitem {
+  margin-bottom: var(--editor-list-item-gap);
+}
+
+.editor-table {
+  margin-block: var(--editor-image-gap-y);
+  width: 100%;
+  border-collapse: collapse;
+  overflow: hidden;
+  border: 1px solid var(--editor-table-border);
+  border-radius: var(--editor-table-radius);
+  font-size: 0.875rem;
+}
+
+.editor-table-cell {
+  position: relative;
+  min-width: var(--editor-table-cell-min-w);
+  border: 1px solid var(--editor-table-border);
+  padding-inline: var(--editor-table-cell-px);
+  padding-block: var(--editor-table-cell-py);
+  vertical-align: top;
+  outline: none;
+}
+
+.editor-table-header {
+  position: relative;
+  min-width: var(--editor-table-cell-min-w);
+  border: 1px solid var(--editor-table-border);
+  background-color: var(--editor-table-header-bg);
+  padding-inline: var(--editor-table-cell-px);
+  padding-block: var(--editor-table-cell-py);
+  text-align: left;
+  font-weight: 600;
+  vertical-align: top;
+  outline: none;
+}
+
+.editor-table-row-striped-even:nth-child(even) {
+  background-color: var(--editor-table-striped-bg);
+}
+
+.editor-table-selected {
+  border-color: var(--editor-table-selected-border);
+  background-color: var(--editor-table-selected-bg);
+}
+
+.editor-image-figure {
+  margin-block: var(--editor-image-gap-y);
+  max-width: 100%;
+}
+
+.editor-image-img {
+  display: block;
+  height: auto;
+  max-width: 100%;
+  border: 1px solid var(--editor-image-border);
+  border-radius: var(--editor-image-radius);
+  background-color: var(--editor-image-bg);
+}
+
+.editor-image-frame {
+  border-radius: var(--editor-image-frame-radius);
+}
+
+.editor-image-frame-selected {
+  border-radius: var(--editor-image-frame-radius);
+  box-shadow:
+    0 0 0 2px var(--editor-content-bg),
+    0 0 0 3px var(--editor-image-selected-ring);
+}
+
+.editor-resize-handle {
+  position: absolute;
+  width: var(--editor-handle-size);
+  height: var(--editor-handle-size);
+  border-radius: 9999px;
+  border: 1px solid var(--editor-handle-border);
+  background-color: var(--editor-handle-bg);
+}
