@@ -17,10 +17,13 @@ interface CodeGutter {
   lines: number;
   paddingTop: number;
   top: number;
+  width: string;
 }
 
-const GUTTER_WIDTH = 40;
 const GUTTER_GAP = 8;
+// Breathing room between the code block edge and the first digit: with a
+// content-fitted column the numbers would otherwise sit flush against it.
+const GUTTER_LEFT_INSET = 16;
 
 const sameGutters = (left: CodeGutter[], right: CodeGutter[]): boolean => {
   if (left.length !== right.length) {
@@ -35,7 +38,8 @@ const sameGutters = (left: CodeGutter[], right: CodeGutter[]): boolean => {
       gutter.lineHeight === other.lineHeight &&
       gutter.lines === other.lines &&
       gutter.paddingTop === other.paddingTop &&
-      gutter.top === other.top
+      gutter.top === other.top &&
+      gutter.width === other.width
     );
   });
 };
@@ -91,16 +95,22 @@ export function CodeLineNumbersPlugin({ className }: { className?: string }) {
               element.dataset.codeGutterBase = value;
               return value;
             })();
-          element.style.paddingLeft = `calc(${basePaddingLeft} + ${GUTTER_WIDTH + GUTTER_GAP}px)`;
+          const lines = child.getTextContent().split("\n").length;
+          // Gutter column fits the widest number: code and gutter share
+          // the mono 14px context, so 1ch per digit keeps short blocks
+          // close to the container edge while longer blocks stay aligned.
+          const width = `${String(lines).length}ch`;
+          element.style.paddingLeft = `calc(${basePaddingLeft} + ${width} + ${GUTTER_LEFT_INSET + GUTTER_GAP}px)`;
           touchedElements.current.add(element);
           const rect = element.getBoundingClientRect();
           next.push({
             key: child.getKey(),
-            left: rect.left - hostRect.left,
+            left: rect.left - hostRect.left + GUTTER_LEFT_INSET,
             lineHeight: Number.parseFloat(computed.lineHeight) || 32,
-            lines: child.getTextContent().split("\n").length,
+            lines,
             paddingTop: Number.parseFloat(computed.paddingTop) || 0,
             top: rect.top - hostRect.top,
+            width,
           });
         }
       });
@@ -139,7 +149,7 @@ export function CodeLineNumbersPlugin({ className }: { className?: string }) {
           style={{
             left: gutter.left,
             top: gutter.top + gutter.paddingTop,
-            width: GUTTER_WIDTH,
+            width: gutter.width,
           }}
         >
           {Array.from({ length: gutter.lines }, (_, index) => (

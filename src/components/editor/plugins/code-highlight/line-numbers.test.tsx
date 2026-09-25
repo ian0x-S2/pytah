@@ -97,6 +97,13 @@ describe("CodeLineNumbersPlugin", () => {
       (span) => span.textContent
     );
     deepStrictEqual(numbers, ["1", "2", "3"]);
+    if (!(gutter instanceof HTMLElement)) {
+      throw new Error("gutter overlay missing");
+    }
+    // Three single-digit lines fit a 1ch column instead of the old
+    // fixed 40px reservation.
+    strictEqual(gutter.style.width, "1ch");
+    strictEqual(gutter.style.left, "16px");
     const codeElement = container.querySelector("code");
     if (!(codeElement instanceof HTMLElement)) {
       throw new Error("code element missing");
