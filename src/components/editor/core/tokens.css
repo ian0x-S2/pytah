@@ -592,7 +592,11 @@
   overflow-x: auto;
   border-radius: var(--editor-code-radius);
   /* `!important` preserves the old `!bg-muted`: Shiki's pre background
-     would otherwise win over the theme class. */
+     would otherwise win over the theme class. The value itself follows the
+     active code theme — `EditorContent` sets `--editor-code-bg` from the
+     palette's `background_color`, so switching families repaints the block.
+     Consumers keep full control: redefine the var (or trump it with your
+     own `!important`) to pin a custom block background. */
   background-color: var(--editor-code-bg) !important;
   font-family: var(--font-mono, ui-monospace, SFMono-Regular, monospace);
   font-size: var(--editor-code-font-size);

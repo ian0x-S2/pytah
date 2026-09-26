@@ -129,6 +129,7 @@ const getEditorOutputs = (
 export function Editor({
   className,
   chrome,
+  codeBlockTheme,
   contentClassName,
   density = "comfortable",
   editable = true,
@@ -351,6 +352,7 @@ export function Editor({
 
   const defaultContent = (
     <EditorContent
+      codeBlockTheme={codeBlockTheme}
       commands={commands}
       contentClassName={contentClassName}
       density={density}

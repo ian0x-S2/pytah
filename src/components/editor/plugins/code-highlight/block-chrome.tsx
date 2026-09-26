@@ -10,10 +10,13 @@ import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 
 import { CodeLanguageSelect } from "./code-language-select";
+import { CodeThemeSelect } from "./code-theme-select";
 import { CodeGutterHostContext } from "./gutter-host";
 import { normalizeCodeLanguageId } from "./languages";
+import { useCodeBlockTheme } from "./theme-context";
+import { DEFAULT_CODE_BLOCK_THEME_FAMILY } from "./themes/registry";
 
-interface CodeLanguageAnchor {
+interface CodeBlockChromeAnchor {
   key: string;
   language: string;
   nodeKey: string;
@@ -21,12 +24,12 @@ interface CodeLanguageAnchor {
   top: number;
 }
 
-const LANGUAGE_TOP_INSET = 8;
-const LANGUAGE_RIGHT_INSET = 8;
+const CHROME_TOP_INSET = 8;
+const CHROME_RIGHT_INSET = 8;
 
 const sameAnchors = (
-  left: CodeLanguageAnchor[],
-  right: CodeLanguageAnchor[]
+  left: CodeBlockChromeAnchor[],
+  right: CodeBlockChromeAnchor[]
 ): boolean => {
   if (left.length !== right.length) {
     return false;
@@ -45,23 +48,23 @@ const sameAnchors = (
 };
 
 /**
- * Language picker overlay for editor code blocks.
+ * Per-block chrome overlay for editor code blocks: theme picker + language
+ * picker over the top-right corner of each block.
  *
  * Lexical renders a `CodeNode` as a single `<pre>` with no chrome, so the
- * picker lives outside the editable root (portal'd into the positioned
- * wrapper host, like the line-number gutter) and is absolutely positioned
- * over the top-right corner of each code block. Picking a language calls
+ * pickers live outside the editable root (portal'd into the positioned
+ * wrapper host, like the line-number gutter) and are absolutely positioned
+ * over each code block. Picking a theme re-tokenizes every block through
+ * the shared theme context; picking a language calls
  * `CodeNode.setLanguage`, which re-runs the Twinkleplop tokenizer through
  * the existing highlight transform.
  */
-export function CodeLanguageSelectPlugin({
-  className,
-}: {
-  className?: string;
-}) {
+export function CodeBlockChromePlugin({ className }: { className?: string }) {
   const [editor] = useLexicalComposerContext();
   const host = useContext(CodeGutterHostContext);
-  const [anchors, setAnchors] = useState<CodeLanguageAnchor[]>([]);
+  const themeContext = useCodeBlockTheme();
+  const family = themeContext?.family ?? DEFAULT_CODE_BLOCK_THEME_FAMILY;
+  const [anchors, setAnchors] = useState<CodeBlockChromeAnchor[]>([]);
   const [isEditable, setIsEditable] = useState(() => editor.isEditable());
 
   useEffect(
@@ -76,7 +79,7 @@ export function CodeLanguageSelectPlugin({
         return;
       }
       const hostRect = host.getBoundingClientRect();
-      const next: CodeLanguageAnchor[] = [];
+      const next: CodeBlockChromeAnchor[] = [];
       editor.getEditorState().read(() => {
         for (const child of $getRoot().getChildren()) {
           if (!$isCodeNode(child)) {
@@ -91,10 +94,8 @@ export function CodeLanguageSelectPlugin({
             key: child.getKey(),
             language: normalizeCodeLanguageId(child.getLanguage()),
             nodeKey: child.getKey(),
-            right: Math.round(
-              hostRect.right - rect.right + LANGUAGE_RIGHT_INSET
-            ),
-            top: Math.round(rect.top - hostRect.top + LANGUAGE_TOP_INSET),
+            right: Math.round(hostRect.right - rect.right + CHROME_RIGHT_INSET),
+            top: Math.round(rect.top - hostRect.top + CHROME_TOP_INSET),
           });
         }
       });
@@ -126,16 +127,20 @@ export function CodeLanguageSelectPlugin({
     >
       {anchors.map((anchor) => (
         <div
-          className="pointer-events-auto absolute top-[var(--code-lang-top)] right-[var(--code-lang-right)]"
-          data-code-language={anchor.key}
+          className="pointer-events-auto absolute top-[var(--code-chrome-top)] right-[var(--code-chrome-right)] flex gap-1"
+          data-code-chrome={anchor.key}
           key={anchor.key}
           style={
             {
-              "--code-lang-right": `${anchor.right}px`,
-              "--code-lang-top": `${anchor.top}px`,
+              "--code-chrome-right": `${anchor.right}px`,
+              "--code-chrome-top": `${anchor.top}px`,
             } as CSSProperties
           }
         >
+          <CodeThemeSelect
+            onValueChange={(next) => themeContext?.setFamily(next)}
+            value={family}
+          />
           <CodeLanguageSelect
             onValueChange={(value) => {
               editor.update(() => {

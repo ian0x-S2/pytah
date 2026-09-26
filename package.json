@@ -66,6 +66,7 @@
     "@twinkleplop/shellsession": "^0.1.5",
     "@twinkleplop/sql": "^0.1.5",
     "@twinkleplop/svelte": "^0.1.5",
+    "@twinkleplop/theme-catppuccin": "^0.1.2",
     "@twinkleplop/theme-github": "^0.2.1",
     "@twinkleplop/toml": "^0.1.5",
     "@twinkleplop/tsx": "^0.1.4",

@@ -20,7 +20,6 @@ import { tokenize as tokenizeRust } from "@twinkleplop/rust";
 import { tokenize as tokenizeShellsession } from "@twinkleplop/shellsession";
 import { tokenize as tokenizeSql } from "@twinkleplop/sql";
 import { tokenize as tokenizeSvelte } from "@twinkleplop/svelte";
-import { dark, light } from "@twinkleplop/theme-github/tokens";
 import { tokenize as tokenizeToml } from "@twinkleplop/toml";
 import { tokenize as tokenizeTsx } from "@twinkleplop/tsx";
 import { tokenize as tokenizeTypescript } from "@twinkleplop/typescript";
@@ -29,6 +28,7 @@ import { $createLineBreakNode, $createTabNode } from "lexical";
 import type { LexicalNode } from "lexical";
 
 import { CODE_LANGUAGE_ALIASES, DEFAULT_CODE_LANGUAGE } from "./languages";
+import { getCodeBlockPalette, getCodeBlockTokenStyle } from "./themes/registry";
 
 type TokenizeFn = ReturnType<typeof tokenizeTypescript>;
 
@@ -60,15 +60,7 @@ const LANGUAGE_ALIASES = CODE_LANGUAGE_ALIASES;
 
 const DEFAULT_LANGUAGE = DEFAULT_CODE_LANGUAGE;
 
-const PALETTES = { dark, light } as const;
-
-type Palette = Record<string, string | undefined>;
-
-const isDarkTheme = (theme: string | null | undefined): boolean =>
-  theme?.toLowerCase().includes("dark") ?? false;
-
-const paletteForTheme = (theme: string | null | undefined): Palette =>
-  (isDarkTheme(theme) ? PALETTES.dark : PALETTES.light) as Palette;
+/** Active palette/style helpers live in the theme registry. */
 
 /**
  * Twinkleplop only emits meaningful tokens — whitespace, indentation and
@@ -98,7 +90,7 @@ const pushTokenNodes = (
   nodes: LexicalNode[],
   text: string,
   highlightType: string,
-  color: string | undefined
+  style: string
 ): void => {
   const lines = text.split("\n");
   for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
@@ -115,8 +107,8 @@ const pushTokenNodes = (
         continue;
       }
       const node = $createCodeHighlightNode(part, highlightType);
-      if (color) {
-        node.setStyle(`color: ${color};`);
+      if (style !== "") {
+        node.setStyle(style);
       }
       nodes.push(node);
     }
@@ -142,7 +134,7 @@ export const TwinkleplopTokenizer: Tokenizer = {
     }
 
     const theme = codeNode.getTheme() ?? this.defaultTheme;
-    const palette = paletteForTheme(theme);
+    const palette = getCodeBlockPalette(theme);
     const background = palette["background_color"];
     const foreground = palette["identifier"];
     let nodeStyle = "";
@@ -191,7 +183,7 @@ export const TwinkleplopTokenizer: Tokenizer = {
         nodes,
         code.slice(start, end),
         tokenType,
-        palette[tokenType]
+        getCodeBlockTokenStyle(theme, tokenType)
       );
       cursor = end;
     }

@@ -10,12 +10,13 @@ import { useEffect, useState } from "react";
 
 import { useTheme } from "@/components/theme-context";
 
+import { useCodeBlockTheme } from "./theme-context";
+import {
+  DEFAULT_CODE_BLOCK_THEME_FAMILY,
+  resolveCodeBlockThemeId,
+} from "./themes/registry";
+import type { CodeBlockThemeFamily } from "./themes/registry";
 import { TwinkleplopTokenizer } from "./twinkleplop-tokenizer";
-
-const CODE_BLOCK_THEME_BY_MODE = {
-  dark: "github-dark",
-  light: "github-light",
-} as const;
 
 const $selectionIsInside = (node: LexicalNode): boolean => {
   const selection = $getSelection();
@@ -105,10 +106,23 @@ const $ensureTwinkleDiffIsNoOp = (
   }
 };
 
-export function CodeHighlightPlugin() {
+export function CodeHighlightPlugin({
+  themeFamily,
+}: {
+  /**
+   * Explicit family override. Defaults to the shared theme context (fed by
+   * the `codeBlockTheme` Editor prop and the per-block chrome picker), so
+   * standalone renders without a provider still highlight with GitHub.
+   */
+  themeFamily?: CodeBlockThemeFamily;
+}) {
   const [editor] = useLexicalComposerContext();
   const { resolvedTheme } = useTheme();
-  const codeBlockTheme = CODE_BLOCK_THEME_BY_MODE[resolvedTheme];
+  const themeContext = useCodeBlockTheme();
+  const codeBlockTheme = resolveCodeBlockThemeId(
+    themeFamily ?? themeContext?.family ?? DEFAULT_CODE_BLOCK_THEME_FAMILY,
+    resolvedTheme
+  );
 
   // Tokenization + per-node diff/re-splice is the most expensive
   // synchronous work an editor mount can do; with many code blocks the

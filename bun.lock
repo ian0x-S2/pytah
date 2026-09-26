@@ -45,6 +45,7 @@
         "@twinkleplop/shellsession": "^0.1.5",
         "@twinkleplop/sql": "^0.1.5",
         "@twinkleplop/svelte": "^0.1.5",
+        "@twinkleplop/theme-catppuccin": "^0.1.2",
         "@twinkleplop/theme-github": "^0.2.1",
         "@twinkleplop/toml": "^0.1.5",
         "@twinkleplop/tsx": "^0.1.4",
@@ -717,6 +718,8 @@
     "@twinkleplop/sql": ["@twinkleplop/sql@0.1.5", "", { "dependencies": { "@twinkleplop/core": "0.2.2" } }, "sha512-XQo0IquqBhO3KbnFfWYkup95Pc5m8qsJdX+80nJFrtf0iPajPqEEF9kVAsErT2ky6CbOb9LnKNzgkGhBpJ1C/A=="],
 
     "@twinkleplop/svelte": ["@twinkleplop/svelte@0.1.5", "", { "dependencies": { "@twinkleplop/core": "0.2.2", "@twinkleplop/css": "0.1.5", "@twinkleplop/javascript": "0.1.5" } }, "sha512-3iFVdusZBMeG8GRB5AjqcspFQRBCJdN7dt4P5P1l8DZwetSqqsTXHbOQfllHyEp7pr92FWmBtjL5oiZc2bBSEg=="],
+
+    "@twinkleplop/theme-catppuccin": ["@twinkleplop/theme-catppuccin@0.1.2", "", { "dependencies": { "@twinkleplop/core": "0.2.2" } }, "sha512-pT5Dchl06p4oyKsiFSMcz7QWG9MwEy2VK2i8MBvgr+vXZ8+r4odSSLJEYiwGwL+UXHsudgESMY1n6G8/eX6ejA=="],
 
     "@twinkleplop/theme-github": ["@twinkleplop/theme-github@0.2.2", "", { "dependencies": { "@twinkleplop/core": "0.2.2" } }, "sha512-dQdR+BdV2WjjoGjZNDg0pq5+DKhuEp0QbOKgvK/q25Qw0/14XIOHi7sHBiIGwqvYiWWgGTODc2lS4pIoP7Q7NQ=="],
 

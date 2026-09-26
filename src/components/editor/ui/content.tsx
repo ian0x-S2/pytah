@@ -10,9 +10,10 @@ import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPl
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { TabIndentationPlugin } from "@lexical/react/LexicalTabIndentationPlugin";
 import type { LexicalEditor } from "lexical";
-import { useEffect, useState } from "react";
-import type { ComponentType } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { ComponentType, CSSProperties } from "react";
 
+import { useTheme } from "@/components/theme-context";
 import { cn } from "@/lib/utils";
 
 import { renderEditorSlot } from "../core/composition";
@@ -28,10 +29,17 @@ import type {
   ExtraEditorFeature,
 } from "../core/types";
 import { BlockTypeToolbarPlugin } from "../plugins/block-type-toolbar/plugin";
+import { CodeBlockChromePlugin } from "../plugins/code-highlight/block-chrome";
 import { CodeGutterHostContext } from "../plugins/code-highlight/gutter-host";
-import { CodeLanguageSelectPlugin } from "../plugins/code-highlight/language-select";
 import { CodeLineNumbersPlugin } from "../plugins/code-highlight/line-numbers";
 import { CodeHighlightPlugin } from "../plugins/code-highlight/plugin";
+import { CodeBlockThemeContext } from "../plugins/code-highlight/theme-context";
+import {
+  DEFAULT_CODE_BLOCK_THEME_FAMILY,
+  getCodeBlockPalette,
+  resolveCodeBlockThemeId,
+} from "../plugins/code-highlight/themes/registry";
+import type { CodeBlockThemeFamily } from "../plugins/code-highlight/themes/registry";
 import { EditablePlugin } from "../plugins/core/editable";
 import { EditorStatePlugin } from "../plugins/core/editor-state";
 import { HorizontalRulePlugin } from "../plugins/core/horizontal-rule";
@@ -83,6 +91,7 @@ function EditorTopToolbar({
 }
 
 interface EditorContentProps {
+  codeBlockTheme?: CodeBlockThemeFamily;
   commands: readonly FeatureSlashCommand[];
   contentClassName?: string;
   density?: EditorDensity;
@@ -140,7 +149,7 @@ function DefaultEditorPlugins({
       {features.history ? <HistoryPlugin /> : null}
       <CodeHighlightPlugin />
       <CodeLineNumbersPlugin />
-      <CodeLanguageSelectPlugin />
+      <CodeBlockChromePlugin />
       <ListPlugin />
       <CheckListPlugin />
       <LinkBehaviorPlugin editable={editable} />
@@ -222,6 +231,7 @@ function EditableEditorPlugins({
 }
 
 export function EditorContent({
+  codeBlockTheme,
   commands,
   contentClassName,
   density = "comfortable",
@@ -271,70 +281,98 @@ export function EditorContent({
 
   const [gutterHost, setGutterHost] = useState<HTMLElement | null>(null);
 
+  // Theme family is owned here (initial-only prop, like the seed content):
+  // the highlight plugin and the per-block chrome picker share it through
+  // context, so picking a theme on any block re-tokenizes every block.
+  const [themeFamily, setThemeFamily] = useState<CodeBlockThemeFamily>(
+    codeBlockTheme ?? DEFAULT_CODE_BLOCK_THEME_FAMILY
+  );
+  const themeValue = useMemo(
+    () => ({ family: themeFamily, setFamily: setThemeFamily }),
+    [themeFamily]
+  );
+
+  // The block background follows the code theme too: the palette's
+  // `background_color` feeds `--editor-code-bg`, which the `editor-code-block`
+  // rule already consumes (its `!important` only beats the inline node
+  // style, not the token itself). Scoped to this wrapper so concurrent
+  // editors with different themes don't clash.
+  const { resolvedTheme } = useTheme();
+  const codeBlockBackground =
+    getCodeBlockPalette(resolveCodeBlockThemeId(themeFamily, resolvedTheme))[
+      "background_color"
+    ] ?? "transparent";
+
   return (
     <CodeGutterHostContext.Provider value={gutterHost}>
-      <EditorTopToolbar
-        commandIds={commands.map((entry) => entry.command.id)}
-        editable={editable}
-        toolbar={toolbar}
-        topToolbar={topToolbar}
-      />
-
-      <div className="group relative bg-background" data-density={density}>
-        <RichTextPlugin
-          contentEditable={
-            <ContentEditable
-              aria-placeholder={placeholder}
-              className={cn(
-                "ContentEditable__root editor-content focus:outline-none",
-                contentClassName
-              )}
-              placeholder={
-                <div className="editor-content-placeholder pointer-events-none text-muted-foreground">
-                  {placeholder}
-                </div>
-              }
-              // WebKitGTK lazily boots its enchant spell-checking broker on the
-              // first spellcheck-enabled editable region; with no enchant
-              // backend installed it dlopen-probes every provider serially on
-              // the web-process main thread (~2s freeze, zero JS long tasks,
-              // first mount per session).
-              spellCheck={false}
-            />
-          }
-          ErrorBoundary={LexicalErrorBoundary}
+      <CodeBlockThemeContext.Provider value={themeValue}>
+        <EditorTopToolbar
+          commandIds={commands.map((entry) => entry.command.id)}
+          editable={editable}
+          toolbar={toolbar}
+          topToolbar={topToolbar}
         />
-        {/* Host for the code gutter overlay (React-owned DOM the editor
-            reconciler never touches). */}
+
         <div
-          className="pointer-events-none absolute inset-0"
-          ref={setGutterHost}
-        />
-      </div>
+          className="group relative bg-background"
+          data-density={density}
+          style={{ "--editor-code-bg": codeBlockBackground } as CSSProperties}
+        >
+          <RichTextPlugin
+            contentEditable={
+              <ContentEditable
+                aria-placeholder={placeholder}
+                className={cn(
+                  "ContentEditable__root editor-content focus:outline-none",
+                  contentClassName
+                )}
+                placeholder={
+                  <div className="editor-content-placeholder pointer-events-none text-muted-foreground">
+                    {placeholder}
+                  </div>
+                }
+                // WebKitGTK lazily boots its enchant spell-checking broker on the
+                // first spellcheck-enabled editable region; with no enchant
+                // backend installed it dlopen-probes every provider serially on
+                // the web-process main thread (~2s freeze, zero JS long tasks,
+                // first mount per session).
+                spellCheck={false}
+              />
+            }
+            ErrorBoundary={LexicalErrorBoundary}
+          />
+          {/* Host for the code gutter overlay (React-owned DOM the editor
+            reconciler never touches). */}
+          <div
+            className="pointer-events-none absolute inset-0"
+            ref={setGutterHost}
+          />
+        </div>
 
-      {!minimal && showFooter ? footerContent : null}
+        {!minimal && showFooter ? footerContent : null}
 
-      {pluginSlots?.beforeDefault}
-      <DefaultEditorPlugins
-        editable={editable}
-        extraFeatures={extraFeatures}
-        features={features}
-        initialHtml={initialHtml}
-        initialMarkdown={initialMarkdown}
-        onSnapshotChange={onSnapshotChange}
-        onSnapshotReady={onSnapshotReady}
-        seededViaConfig={seededViaConfig}
-        transformers={transformers}
-      />
-      {editable ? (
-        <EditableEditorPlugins
-          commands={commands}
+        {pluginSlots?.beforeDefault}
+        <DefaultEditorPlugins
+          editable={editable}
           extraFeatures={extraFeatures}
           features={features}
-          pluginSlots={pluginSlots}
+          initialHtml={initialHtml}
+          initialMarkdown={initialMarkdown}
+          onSnapshotChange={onSnapshotChange}
+          onSnapshotReady={onSnapshotReady}
+          seededViaConfig={seededViaConfig}
+          transformers={transformers}
         />
-      ) : null}
-      {pluginSlots?.afterDefault}
+        {editable ? (
+          <EditableEditorPlugins
+            commands={commands}
+            extraFeatures={extraFeatures}
+            features={features}
+            pluginSlots={pluginSlots}
+          />
+        ) : null}
+        {pluginSlots?.afterDefault}
+      </CodeBlockThemeContext.Provider>
     </CodeGutterHostContext.Provider>
   );
 }

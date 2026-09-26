@@ -10,7 +10,7 @@ import type { LexicalEditor, LexicalNode } from "lexical";
 GlobalRegistrator.register();
 (globalThis as Record<string, unknown>).IS_REACT_ACT_ENVIRONMENT = true;
 
-const { act, createElement, useEffect } = await import("react");
+const { act, createElement, Fragment, useEffect } = await import("react");
 const { createRoot } = await import("react-dom/client");
 const { useLexicalComposerContext } =
   await import("@lexical/react/LexicalComposerContext");
@@ -27,8 +27,11 @@ const {
   $isTextNode,
 } = await import("lexical");
 const { createEditorConfig } = await import("../../core/config");
+const { resolveEditorFeatures } = await import("../../core/composition");
 const { ThemeContext } = await import("@/components/theme-context");
+const { EditorContent } = await import("../../ui/content");
 const { CodeHighlightPlugin } = await import("./plugin");
+const { useCodeBlockTheme } = await import("./theme-context");
 
 const CODE_SNIPPET = "const answer = 42;";
 
@@ -388,6 +391,173 @@ describe("CodeHighlightPlugin arming", () => {
 
       const anchorAfterToggle = readSelectionAnchor(editorRef);
       deepStrictEqual(anchorAfterToggle, anchorBefore);
+    } finally {
+      pendingFrames.clear();
+    }
+  });
+});
+
+type ChromeThemeFamily = "github" | "catppuccin" | "nord" | "everforest";
+
+let chromeControls: {
+  family: ChromeThemeFamily;
+  setFamily: (family: ChromeThemeFamily) => void;
+} | null = null;
+
+const ThemeProbe = () => {
+  const theme = useCodeBlockTheme();
+  useEffect(() => {
+    if (theme) {
+      chromeControls = theme;
+    }
+  }, [theme]);
+  return null;
+};
+
+// Mounts the real composition surface with every optional behavior off,
+// so the assertions below run against the production wiring (theme state,
+// wrapper token, chrome overlay, highlighter) instead of a lookalike.
+const renderChromeHarness = async () => {
+  // Unmount any earlier harness so editors from previous tests cannot
+  // interfere with anchor collection or theme reads.
+  await act(() => {
+    rootRef?.unmount();
+  });
+  rootRef = null;
+  containerRef?.remove();
+
+  containerRef = document.createElement("div");
+  document.body.append(containerRef);
+  rootRef = createRoot(containerRef);
+
+  const config = createEditorConfig({
+    editable: true,
+    editorState: () => {
+      const code = $createCodeNode("tsx");
+      code.append($createTextNode(CODE_SNIPPET));
+      $getRoot().append(code);
+    },
+    featureNodes: [],
+  });
+
+  const features = resolveEditorFeatures({
+    exportMarkdown: false,
+    floatingLinkEditor: false,
+    floatingToolbar: false,
+    focusOnMount: false,
+    history: false,
+    markdownShortcuts: false,
+    slashCommand: false,
+    snapshot: {
+      emitInitialSnapshot: false,
+      html: false,
+      markdown: false,
+      text: false,
+    },
+    tabIndentation: false,
+  });
+
+  await act(() => {
+    rootRef?.render(
+      createElement(
+        ThemeContext.Provider,
+        { value: themeContextValue("light") },
+        createElement(
+          LexicalComposer,
+          { initialConfig: config },
+          createElement(EditorContent, {
+            codeBlockTheme: "github",
+            commands: [],
+            editable: true,
+            extraFeatures: [],
+            features,
+            minimal: true,
+            onSnapshotChange: () => {},
+            placeholder: "Write something…",
+            pluginSlots: {
+              afterDefault: createElement(
+                Fragment,
+                null,
+                createElement(EditorProbe),
+                createElement(ThemeProbe)
+              ),
+            },
+            showFooter: false,
+            snapshot: { html: "", markdown: "", text: "" },
+            toolbar: false,
+            transformers: [],
+          })
+        )
+      )
+    );
+  });
+};
+
+const queryChromeTrigger = (label: string): Element | null =>
+  containerRef?.querySelector(`[aria-label="${label}"]`) ?? null;
+
+const readCodeBlockBackground = (): string =>
+  (containerRef?.querySelector(".group") as HTMLElement | null)?.style
+    .getPropertyValue("--editor-code-bg")
+    .trim() ?? "";
+
+const pollForChromeRow = (): Promise<boolean> =>
+  pollUntil(
+    () =>
+      (containerRef?.querySelectorAll("[data-code-chrome]").length ?? 0) === 1,
+    240,
+    10
+  );
+
+describe("CodeBlockChromePlugin", () => {
+  test("renders a theme switch next to the language picker on every block", async () => {
+    try {
+      await renderChromeHarness();
+
+      strictEqual(await pollForChromeRow(), true);
+      const themeTrigger = queryChromeTrigger("Code block theme");
+      const languageTrigger = queryChromeTrigger("Code block language");
+      strictEqual(themeTrigger !== null, true);
+      strictEqual(languageTrigger !== null, true);
+      strictEqual(themeTrigger?.textContent?.includes("GitHub"), true);
+      strictEqual(languageTrigger?.textContent?.includes("TSX"), true);
+    } finally {
+      pendingFrames.clear();
+    }
+  });
+
+  test("switching the family re-tokenizes every block with the new theme", async () => {
+    try {
+      await renderChromeHarness();
+
+      if (!editorRef) {
+        throw new Error("editor reference missing");
+      }
+
+      await act(() => {
+        fireFrames();
+        fireFrames();
+      });
+      strictEqual(await pollForHighlightNodes(), true);
+      strictEqual(readCodeNode(editorRef)?.theme, "github-light");
+      // The block background follows the palette, not the muted token.
+      strictEqual(readCodeBlockBackground(), "#ffffff");
+
+      await act(() => {
+        chromeControls?.setFamily("nord");
+      });
+
+      const retokenized = await pollUntil(
+        () => readCodeNode(editorRef as LexicalEditor)?.theme === "nord-light"
+      );
+      strictEqual(retokenized, true);
+      strictEqual(readCodeBlockBackground(), "#ECEFF4");
+      // The switch itself is covered by the visibility test above; its
+      // dropdown writes through the same context state flipped here.
+      strictEqual(
+        queryChromeTrigger("Code block theme") instanceof HTMLElement,
+        true
+      );
     } finally {
       pendingFrames.clear();
     }

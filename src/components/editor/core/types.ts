@@ -3,6 +3,7 @@ import type { InitialConfigType } from "@lexical/react/LexicalComposer";
 import type { LexicalEditor } from "lexical";
 import type { ComponentType, ReactNode } from "react";
 
+import type { CodeBlockThemeFamily } from "../plugins/code-highlight/themes/registry";
 import type { FeatureSlashCommand } from "../plugins/slash-command/types";
 
 /**
@@ -146,6 +147,16 @@ export type EditorDensity = "comfortable" | "compact";
 export interface EditorProps {
   chrome?: EditorChromeOptions;
   className?: string;
+  /**
+   * Initial code-block syntax theme family. The light/dark variant follows
+   * the app theme, so one value covers both modes. Initial-only by contract
+   * (consumers remount via `key`); at runtime the per-block chrome picker
+   * swaps the family for every block, and `useCodeBlockTheme` exposes the
+   * same state for custom switchers inside the editor tree. Token colors
+   * and the block background both follow the family.
+   * @default "github"
+   */
+  codeBlockTheme?: CodeBlockThemeFamily;
   contentClassName?: string;
   density?: EditorDensity;
   editable?: boolean;
