@@ -15,11 +15,16 @@ const { createRoot } = await import("react-dom/client");
 const { useLexicalComposerContext } =
   await import("@lexical/react/LexicalComposerContext");
 const { LexicalComposer } = await import("@lexical/react/LexicalComposer");
-const { $createCodeNode, $isCodeNode, CodeHighlightNode } =
-  await import("@lexical/code");
+const {
+  $createCodeNode,
+  $isCodeNode,
+  $isCodeHighlightNode,
+  CodeHighlightNode,
+} = await import("@lexical/code");
 const {
   $createParagraphNode,
   $createTextNode,
+  $getNodeByKey,
   $getRoot,
   $getSelection,
   $isParagraphNode,
@@ -28,6 +33,7 @@ const {
 } = await import("lexical");
 const { createEditorConfig } = await import("../../core/config");
 const { resolveEditorFeatures } = await import("../../core/composition");
+const { getCodeBlockTokenStyle } = await import("./themes/registry");
 const { ThemeContext } = await import("@/components/theme-context");
 const { EditorContent } = await import("../../ui/content");
 const { CodeHighlightPlugin } = await import("./plugin");
@@ -501,6 +507,44 @@ const readCodeBlockBackground = (): string =>
     .getPropertyValue("--editor-code-bg")
     .trim() ?? "";
 
+/**
+ * Verifies every token was built from the node's current theme: without the
+ * inline sync a family/mode switch flips `CodeNode.theme` while the token
+ * inline styles keep the previous palette.
+ */
+const readCodeTokenAudit = (
+  editor: LexicalEditor
+): { mismatches: string[]; theme: string } | null =>
+  editor.getEditorState().read(() => {
+    for (const child of $getRoot().getChildren()) {
+      if ($isCodeNode(child)) {
+        const theme = child.getTheme() ?? "";
+        const mismatches: string[] = [];
+        for (const token of child.getChildren()) {
+          if ($isCodeHighlightNode(token)) {
+            const expected = getCodeBlockTokenStyle(
+              theme,
+              token.getHighlightType() ?? ""
+            );
+            if ((token.getStyle() ?? "") !== expected) {
+              mismatches.push(
+                `${token.getTextContent()}:${token.getStyle()}!==${expected}`
+              );
+            }
+          }
+        }
+        return { mismatches, theme };
+      }
+    }
+    return null;
+  });
+
+const readSelectionCodeParent = (editor: LexicalEditor, key: string): boolean =>
+  editor.getEditorState().read(() => {
+    const parent = $getNodeByKey(key)?.getParent();
+    return parent !== null && parent !== undefined && $isCodeNode(parent);
+  });
+
 const pollForChromeRow = (): Promise<boolean> =>
   pollUntil(
     () =>
@@ -556,6 +600,132 @@ describe("CodeBlockChromePlugin", () => {
       // dropdown writes through the same context state flipped here.
       strictEqual(
         queryChromeTrigger("Code block theme") instanceof HTMLElement,
+        true
+      );
+    } finally {
+      pendingFrames.clear();
+    }
+  });
+
+  test("switching the family repaints tokens with the caret inside the block", async () => {
+    try {
+      await renderChromeHarness();
+
+      if (!editorRef) {
+        throw new Error("editor reference missing");
+      }
+      if (!chromeControls) {
+        throw new Error("theme controls missing");
+      }
+
+      await act(() => {
+        fireFrames();
+        fireFrames();
+      });
+      strictEqual(await pollForHighlightNodes(), true);
+
+      // The theme picker keeps the caret via mousedown-preventDefault, so
+      // family switches land with the selection inside the block. The
+      // caret itself is not asserted here: other editors mounted in the
+      // shared test document null out-of-owners selections through
+      // Lexical's cross-editor `selectionchange` reconciliation, which
+      // makes live-caret assertions across async polls flaky. Retention
+      // is covered deterministically by the typing test below (single
+      // synchronous update window).
+      await act(() => {
+        editorRef?.update(() => {
+          for (const child of $getRoot().getChildren()) {
+            if ($isCodeNode(child)) {
+              const first = child.getFirstChild();
+              if (first && $isTextNode(first)) {
+                first.select(2, 2);
+              }
+            }
+          }
+        });
+      });
+
+      await act(() => {
+        chromeControls?.setFamily("nord");
+      });
+
+      strictEqual(
+        await pollUntil(
+          () => readCodeNode(editorRef as LexicalEditor)?.theme === "nord-light"
+        ),
+        true
+      );
+      // `nord-*` matches no Shiki theme bundle, so upstream's transform can
+      // never re-tokenize it: without the inline sync the node theme flips
+      // while every token keeps the GitHub colors.
+      strictEqual(
+        await pollUntil(() => {
+          const audit = readCodeTokenAudit(editorRef as LexicalEditor);
+          return audit !== null && audit.mismatches.length === 0;
+        }),
+        true
+      );
+    } finally {
+      pendingFrames.clear();
+    }
+  });
+
+  test("typing inside the block re-highlights with the caret retained", async () => {
+    try {
+      await renderChromeHarness();
+
+      if (!editorRef) {
+        throw new Error("editor reference missing");
+      }
+
+      await act(() => {
+        fireFrames();
+        fireFrames();
+      });
+      strictEqual(await pollForHighlightNodes(), true);
+
+      await act(() => {
+        editorRef?.update(() => {
+          for (const child of $getRoot().getChildren()) {
+            if ($isCodeNode(child)) {
+              const first = child.getFirstChild();
+              if (first && $isTextNode(first)) {
+                first.select(4, 4);
+              }
+            }
+          }
+          const selection = $getSelection();
+          if ($isRangeSelection(selection)) {
+            selection.insertText("X");
+          }
+        });
+      });
+
+      strictEqual(
+        await pollUntil(() =>
+          (editorRef as LexicalEditor).getEditorState().read(() => {
+            for (const child of $getRoot().getChildren()) {
+              if ($isCodeNode(child)) {
+                return child.getTextContent() === "consXt answer = 42;";
+              }
+            }
+            return false;
+          })
+        ),
+        true
+      );
+      strictEqual(
+        await pollUntil(() => {
+          const audit = readCodeTokenAudit(editorRef as LexicalEditor);
+          return audit !== null && audit.mismatches.length === 0;
+        }),
+        true
+      );
+
+      const anchor = readSelectionAnchor(editorRef as LexicalEditor);
+      strictEqual(anchor?.offset, 5);
+      strictEqual(
+        readSelectionCodeParent(editorRef as LexicalEditor, anchor?.key ?? ""),
         true
       );
     } finally {
