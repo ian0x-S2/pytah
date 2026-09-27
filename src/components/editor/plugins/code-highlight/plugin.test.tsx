@@ -595,7 +595,7 @@ describe("CodeBlockChromePlugin", () => {
         () => readCodeNode(editorRef as LexicalEditor)?.theme === "nord-light"
       );
       strictEqual(retokenized, true);
-      strictEqual(readCodeBlockBackground(), "#ECEFF4");
+      strictEqual(readCodeBlockBackground(), "#eceff4");
       // The switch itself is covered by the visibility test above; its
       // dropdown writes through the same context state flipped here.
       strictEqual(

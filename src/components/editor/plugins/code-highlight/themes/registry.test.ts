@@ -22,29 +22,6 @@ const REQUIRED_TOKENS = [
   "punctuation",
 ] as const;
 
-const hexToRgbChannels = (hex: string): [number, number, number] => {
-  const value = Number.parseInt(hex.slice(1), 16);
-  return [
-    Math.floor(value / 65_536) % 256,
-    Math.floor(value / 256) % 256,
-    value % 256,
-  ];
-};
-
-const relativeLuminance = (hex: string): number => {
-  const [r, g, b] = hexToRgbChannels(hex).map((channel) => {
-    const c = channel / 255;
-    return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-  });
-  return 0.2126 * (r ?? 0) + 0.7152 * (g ?? 0) + 0.0722 * (b ?? 0);
-};
-
-const contrastRatio = (foreground: string, background: string): number => {
-  const light = relativeLuminance(foreground);
-  const dark = relativeLuminance(background);
-  return (Math.max(light, dark) + 0.05) / (Math.min(light, dark) + 0.05);
-};
-
 describe("code-block theme registry", () => {
   test("ships the builtin family plus the two local themes", () => {
     deepStrictEqual(
@@ -89,42 +66,54 @@ describe("code-block theme registry", () => {
 
   test("token styles carry the palette color", () => {
     const style = getCodeBlockTokenStyle("nord-dark", "keyword");
-    ok(style.includes("#9ACAD7"));
+    ok(style.includes("#81a1c1"));
   });
 
-  test("nord primaries meet AAA in both modes", () => {
-    // TSX sample tokens: these must pop at AAA so keywords/strings/
-    // functions stay readable in small mono. Everforest is exempt: it
-    // copies the official VS Code reference verbatim (which sits below
-    // AA on purpose) and is pinned by the test below instead.
-    const primaries = [
-      "keyword",
-      "string",
-      "function",
-      "tag_name",
-      "attr_name",
-      "tag",
-    ] as const;
-    for (const mode of ["light", "dark"] as const) {
-      const id = resolveCodeBlockThemeId("nord", mode);
+  test("nord copies the official VS Code reference", () => {
+    // Spot-checks against arcticicestudio/nord tokenColors; the full map
+    // lives in nord.ts. CASE: official hexes are lowercase. Dark is the
+    // verbatim reference; light reuses the same hues on Snow Storm.
+    const expected: Record<string, Record<string, string>> = {
+      "nord-dark": {
+        attr_name: "#8fbcbb",
+        background_color: "#2e3440",
+        boolean: "#81a1c1",
+        changed: "#ebcb8b",
+        comment: "#616e88",
+        decorator: "#d08770",
+        deleted: "#bf616a",
+        directive: "#5e81ac",
+        function: "#88c0d0",
+        identifier: "#d8dee9",
+        inserted: "#a3be8c",
+        keyword: "#81a1c1",
+        number: "#b48ead",
+        operator: "#81a1c1",
+        punctuation: "#eceff4",
+        string: "#a3be8c",
+        tag: "#81a1c1",
+        tag_name: "#8fbcbb",
+        type: "#8fbcbb",
+      },
+      "nord-light": {
+        background_color: "#eceff4",
+        comment: "#4c566a",
+        function: "#88c0d0",
+        identifier: "#3b4252",
+        keyword: "#81a1c1",
+        number: "#b48ead",
+        punctuation: "#2e3440",
+        string: "#a3be8c",
+        type: "#8fbcbb",
+      },
+    };
+    for (const [id, tokens] of Object.entries(expected)) {
       const palette = getCodeBlockPalette(id);
-      const background = palette["background_color"] ?? "";
-      for (const token of primaries) {
-        const color = palette[token] ?? "";
-        ok(
-          contrastRatio(color, background) >= 7,
-          `${id} ${token} ${color} on ${background} is below AAA`
-        );
-      }
-      // Every text token stays at least AA; muted/comments are allowed
-      // to sit below AAA (de-emphasized by design).
-      for (const [token, color] of Object.entries(palette)) {
-        if (token === "background_color" || color === "inherit") {
-          continue;
-        }
-        ok(
-          contrastRatio(color, background) >= 4.5,
-          `${id} ${token} ${color} on ${background} is below AA`
+      for (const [token, color] of Object.entries(tokens)) {
+        strictEqual(
+          (palette[token] ?? "").toLowerCase(),
+          color.toLowerCase(),
+          `${id} ${token} drifted from the official reference`
         );
       }
     }
@@ -176,11 +165,9 @@ describe("code-block theme registry", () => {
   });
 
   test("italic themes mark comments italic", () => {
-    for (const theme of [
-      "catppuccin-dark",
-      "nord-dark",
-      "everforest-dark",
-    ] as const) {
+    // Nord is excluded: the official reference specifies no fontStyle
+    // for comments, so they render upright.
+    for (const theme of ["catppuccin-dark", "everforest-dark"] as const) {
       const styles = getCodeBlockStyles(theme);
       deepStrictEqual(styles["comment"], ["italic"]);
     }
