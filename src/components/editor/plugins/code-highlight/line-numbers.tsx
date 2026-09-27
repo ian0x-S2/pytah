@@ -6,9 +6,16 @@ import { $getRoot } from "lexical";
 import { useContext, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
+import { useTheme } from "@/components/theme-context";
 import { cn } from "@/lib/utils";
 
 import { CodeGutterHostContext } from "./gutter-host";
+import { useCodeBlockTheme } from "./theme-context";
+import {
+  DEFAULT_CODE_BLOCK_THEME_FAMILY,
+  getCodeBlockPalette,
+  resolveCodeBlockThemeId,
+} from "./themes/registry";
 
 interface CodeGutter {
   key: string;
@@ -66,6 +73,17 @@ const restoreCodePadding = (elements: ReadonlySet<HTMLElement>): void => {
 export function CodeLineNumbersPlugin({ className }: { className?: string }) {
   const [editor] = useLexicalComposerContext();
   const host = useContext(CodeGutterHostContext);
+  const themeContext = useCodeBlockTheme();
+  const { resolvedTheme } = useTheme();
+  // Block chrome follows the code theme too: Nord ships a `gutter` entry
+  // (`editorLineNumber.foreground` `#4C566A`); families without one keep
+  // the muted fallback class below.
+  const gutterColor = getCodeBlockPalette(
+    resolveCodeBlockThemeId(
+      themeContext?.family ?? DEFAULT_CODE_BLOCK_THEME_FAMILY,
+      resolvedTheme
+    )
+  )["gutter"];
   const [gutters, setGutters] = useState<CodeGutter[]>([]);
   const touchedElements = useRef(new Set<HTMLElement>());
 
@@ -159,6 +177,7 @@ export function CodeLineNumbersPlugin({ className }: { className?: string }) {
               style={{
                 height: gutter.lineHeight,
                 lineHeight: `${gutter.lineHeight}px`,
+                ...(gutterColor === undefined ? null : { color: gutterColor }),
               }}
             >
               {index + 1}

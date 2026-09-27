@@ -205,5 +205,5 @@ export const TwinkleplopTokenizer: Tokenizer = {
     return nodes;
   },
   defaultLanguage: DEFAULT_LANGUAGE,
-  defaultTheme: "github-light",
+  defaultTheme: "nord-dark",
 };

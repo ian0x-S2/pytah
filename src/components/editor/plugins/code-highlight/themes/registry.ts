@@ -28,9 +28,11 @@ import {
 } from "./nord";
 
 /**
- * Code-block theme families. Each family ships a light and a dark palette;
- * the active variant follows the app theme (`resolvedTheme`), so one
- * picker value covers both modes.
+ * Code-block theme families. Most families ship a light and a dark
+ * palette and the active variant follows the app theme (`resolvedTheme`),
+ * so one picker value covers both modes. Nord is the exception: the
+ * reference ships dark-only, so the family is pinned to its dark variant
+ * in both modes (see `resolveCodeBlockThemeId`).
  *
  * `github` and `catppuccin` are upstream Twinkleplop packages;
  * `nord` and `everforest` are local themes authored in this folder
@@ -51,7 +53,16 @@ export type CodeBlockThemeMode = "light" | "dark";
 /** Fully-resolved per-node theme id persisted on the Lexical `CodeNode`. */
 export type CodeBlockThemeId = `${CodeBlockThemeFamily}-${CodeBlockThemeMode}`;
 
-export const DEFAULT_CODE_BLOCK_THEME_FAMILY: CodeBlockThemeFamily = "github";
+export const DEFAULT_CODE_BLOCK_THEME_FAMILY: CodeBlockThemeFamily = "nord";
+
+/** Families pinned to a single variant in every app mode. */
+const SINGLE_VARIANT_FAMILIES: Partial<
+  Record<CodeBlockThemeFamily, CodeBlockThemeMode>
+> = {
+  // The Nord reference ships dark-only: keep the dark Polar Night block
+  // (bg + verbatim token hues) even when the app runs in light mode.
+  nord: "dark",
+};
 
 const PALETTES: Record<CodeBlockThemeId, theme_palette> = {
   "catppuccin-dark": catppuccinDark,
@@ -85,7 +96,8 @@ export function resolveCodeBlockThemeId(
   family: CodeBlockThemeFamily,
   mode: CodeBlockThemeMode
 ): CodeBlockThemeId {
-  return `${family}-${mode}`;
+  const pinned = SINGLE_VARIANT_FAMILIES[family];
+  return `${family}-${pinned ?? mode}`;
 }
 
 const FALLBACK_THEME_ID: CodeBlockThemeId = "github-light";

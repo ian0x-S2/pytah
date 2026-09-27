@@ -99,7 +99,8 @@ const EditorProbe = () => {
 
 const renderCodeHighlightPlugin = async (
   resolvedTheme: "light" | "dark",
-  seed?: () => void
+  seed?: () => void,
+  themeFamily?: ChromeThemeFamily
 ) => {
   containerRef = document.createElement("div");
   document.body.append(containerRef);
@@ -126,7 +127,7 @@ const renderCodeHighlightPlugin = async (
           LexicalComposer,
           { initialConfig: config },
           createElement(EditorProbe),
-          createElement(CodeHighlightPlugin)
+          createElement(CodeHighlightPlugin, { themeFamily })
         )
       )
     );
@@ -134,7 +135,10 @@ const renderCodeHighlightPlugin = async (
 };
 
 // Re-renders with a different resolved theme, as the theme toggle does.
-const rerenderWithTheme = async (resolvedTheme: "light" | "dark") => {
+const rerenderWithTheme = async (
+  resolvedTheme: "light" | "dark",
+  themeFamily?: ChromeThemeFamily
+) => {
   const config = createEditorConfig({
     editable: true,
     featureNodes: [],
@@ -148,7 +152,7 @@ const rerenderWithTheme = async (resolvedTheme: "light" | "dark") => {
           LexicalComposer,
           { initialConfig: config },
           createElement(EditorProbe),
-          createElement(CodeHighlightPlugin)
+          createElement(CodeHighlightPlugin, { themeFamily })
         )
       )
     );
@@ -229,7 +233,7 @@ describe("CodeHighlightPlugin arming", () => {
       // CodeHighlightNodes and the themed retheme update has not run.
       const beforeArm = readCodeNode(editorRef);
       deepStrictEqual(beforeArm?.childTypes, ["text"]);
-      strictEqual(beforeArm?.theme !== "github-light", true);
+      strictEqual(beforeArm?.theme !== "nord-dark", true);
 
       // Fire the double-rAF arm; the arming effect then preloads the
       // highlighter assets and, once loaded, registers Shiki highlighting
@@ -244,7 +248,7 @@ describe("CodeHighlightPlugin arming", () => {
       strictEqual(highlighted, true);
 
       const afterArm = readCodeNode(editorRef);
-      strictEqual(afterArm?.theme, "github-light");
+      strictEqual(afterArm?.theme, "nord-dark");
     } finally {
       pendingFrames.clear();
     }
@@ -273,7 +277,7 @@ describe("CodeHighlightPlugin arming", () => {
 
       const beforeArm = readCodeNode(editorRef);
       deepStrictEqual(beforeArm?.childTypes, ["text"]);
-      strictEqual(beforeArm?.theme !== "github-light", true);
+      strictEqual(beforeArm?.theme !== "nord-dark", true);
     } finally {
       pendingFrames.clear();
     }
@@ -340,14 +344,20 @@ describe("CodeHighlightPlugin arming", () => {
 
   test("theme toggle re-tokenizes without relocating an out-of-node selection", async () => {
     try {
-      await renderCodeHighlightPlugin("light", () => {
-        const paragraph = $createParagraphNode();
-        paragraph.append($createTextNode("Intro paragraph"));
-        $getRoot().append(paragraph);
-        const code = $createCodeNode("ts");
-        code.append($createTextNode(CODE_SNIPPET));
-        $getRoot().append(code);
-      });
+      // Explicit GitHub family so the mode toggle flips the resolved id
+      // (the nord default is pinned dark in both modes).
+      await renderCodeHighlightPlugin(
+        "light",
+        () => {
+          const paragraph = $createParagraphNode();
+          paragraph.append($createTextNode("Intro paragraph"));
+          $getRoot().append(paragraph);
+          const code = $createCodeNode("ts");
+          code.append($createTextNode(CODE_SNIPPET));
+          $getRoot().append(code);
+        },
+        "github"
+      );
       await new Promise<void>((resolve) => {
         queueMicrotask(() => {
           resolve();
@@ -385,7 +395,7 @@ describe("CodeHighlightPlugin arming", () => {
 
       // Toggle to dark: the theme transform re-registers, marks the code
       // nodes dirty and re-tokenizes. The out-of-node caret must survive.
-      await rerenderWithTheme("dark");
+      await rerenderWithTheme("dark", "github");
 
       const toggled = await pollUntil(
         () =>
@@ -592,10 +602,10 @@ describe("CodeBlockChromePlugin", () => {
       });
 
       const retokenized = await pollUntil(
-        () => readCodeNode(editorRef as LexicalEditor)?.theme === "nord-light"
+        () => readCodeNode(editorRef as LexicalEditor)?.theme === "nord-dark"
       );
       strictEqual(retokenized, true);
-      strictEqual(readCodeBlockBackground(), "#eceff4");
+      strictEqual(readCodeBlockBackground(), "#2e3440");
       // The switch itself is covered by the visibility test above; its
       // dropdown writes through the same context state flipped here.
       strictEqual(
@@ -651,7 +661,7 @@ describe("CodeBlockChromePlugin", () => {
 
       strictEqual(
         await pollUntil(
-          () => readCodeNode(editorRef as LexicalEditor)?.theme === "nord-light"
+          () => readCodeNode(editorRef as LexicalEditor)?.theme === "nord-dark"
         ),
         true
       );

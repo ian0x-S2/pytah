@@ -149,14 +149,17 @@ describe("nord token roles", () => {
       ";": "operator",
       "<": "operator",
       Editor_tag: "tag",
+      editable: "identifier",
+      export: "identifier",
+      function: "identifier",
     };
     for (const [text, raw] of tokenStream()) {
       const resolved = resolveThemedTokenType("nord-dark", "tsx", raw, text);
       if (text === "Editor" && raw === "tag_name") {
         strictEqual(resolved, expected["Editor_tag"]);
       } else if (expected[text] === undefined) {
-        // Keywords, values, strings, and structural punctuation keep
-        // their raw grammar roles.
+        // Control-flow/module keywords, values, strings, and structural
+        // punctuation keep their raw grammar roles.
         strictEqual(resolved, raw, `nord tsx ${text}`);
       } else {
         strictEqual(resolved, expected[text], `nord tsx ${text}`);
@@ -180,28 +183,63 @@ describe("nord token roles", () => {
       "keyword"
     );
     strictEqual(
+      resolveThemedTokenType("nord-dark", "tsx", "keyword", "from"),
+      "keyword"
+    );
+    strictEqual(
+      resolveThemedTokenType("nord-dark", "tsx", "keyword", "return"),
+      "keyword"
+    );
+    strictEqual(
+      resolveThemedTokenType("nord-dark", "tsx", "keyword", "export"),
+      "identifier"
+    );
+    strictEqual(
+      resolveThemedTokenType("nord-dark", "tsx", "keyword", "function"),
+      "identifier"
+    );
+    strictEqual(
+      resolveThemedTokenType("nord-dark", "tsx", "keyword", "const"),
+      "identifier"
+    );
+    strictEqual(
+      resolveThemedTokenType("nord-dark", "tsx", "keyword", "let"),
+      "identifier"
+    );
+    strictEqual(
+      resolveThemedTokenType("nord-dark", "tsx", "keyword", "var"),
+      "identifier"
+    );
+    strictEqual(
+      resolveThemedTokenType("nord-dark", "tsx", "constant", "first"),
+      "identifier"
+    );
+    strictEqual(
       resolveThemedTokenType("nord-dark", "tsx", "function", "App"),
       "function"
     );
     strictEqual(
       resolveThemedTokenType("nord-dark", "tsx", "attr_name", "editable"),
-      "attr_name"
+      "identifier"
     );
   });
 
   test("resolved sample carries frost blue brackets in both modes", () => {
-    for (const theme of ["nord-dark", "nord-light"] as const) {
+    // Dark uses the verbatim reference blue; light uses the 6.0-shaded
+    // descendant of the same hue.
+    const expected: Record<string, Record<string, string>> = {
+      "nord-dark": { operator: "#81a1c1", tag: "#81a1c1" },
+      "nord-light": { operator: "#495b6f", tag: "#495b6f" },
+    };
+    for (const [theme, colors] of Object.entries(expected)) {
       const palette = getCodeBlockPalette(theme);
-      strictEqual(
-        (palette["operator"] ?? "").toLowerCase(),
-        "#81a1c1",
-        `${theme} operator drifted from frost blue`
-      );
-      strictEqual(
-        (palette["tag"] ?? "").toLowerCase(),
-        "#81a1c1",
-        `${theme} tag drifted from frost blue`
-      );
+      for (const [token, color] of Object.entries(colors)) {
+        strictEqual(
+          (palette[token] ?? "").toLowerCase(),
+          color.toLowerCase(),
+          `${theme} ${token} drifted from frost blue`
+        );
+      }
     }
   });
 
@@ -213,6 +251,18 @@ describe("nord token roles", () => {
     strictEqual(
       resolveThemedTokenType("nord-dark", "html", "tag_name", "div"),
       "tag_name"
+    );
+    strictEqual(
+      resolveThemedTokenType("nord-dark", "html", "attr_name", "class"),
+      "attr_name"
+    );
+    strictEqual(
+      resolveThemedTokenType("nord-dark", "python", "keyword", "export"),
+      "keyword"
+    );
+    strictEqual(
+      resolveThemedTokenType("nord-dark", "python", "constant", "first"),
+      "constant"
     );
   });
 });

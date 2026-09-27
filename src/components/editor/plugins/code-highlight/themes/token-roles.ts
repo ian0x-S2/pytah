@@ -15,9 +15,15 @@
  * The Nord palette in `nord.ts` is likewise verbatim, and its reference
  * (VS Code Nord) colors JSX tag brackets, statement terminators, and tag
  * names frost blue (`punctuation.definition.tag`,
- * `punctuation.terminator`, `entity.name.tag` → `#81A1C1`) — again
- * coarser in Twinkleplop (`punctuation`/`tag_name`), so Nord gets its own
- * small rule set below.
+ * `punctuation.terminator`, `entity.name.tag` → `#81A1C1`) while
+ * declaration keywords (`export`, `function`) and JSX props render plain
+ * — all coarser in Twinkleplop (`punctuation`/`tag_name`/`keyword`/
+ * `attr_name`), so Nord gets its own small rule set below. Declared
+ * bindings surface as `constant` from the grammar but are plain
+ * `variable.other` in the reference, so they resolve to base text too. (`tag_name`
+ * already carries the blue tag rule in the palette; the explicit
+ * `tag_name` → `tag` mapping below keeps the resolution stable even if
+ * the two entries ever diverge.)
  *
  * `resolveThemedTokenType` is a text-aware, theme-gated role resolver:
  * given the persisted node theme, the normalized grammar key, and the raw
@@ -52,6 +58,20 @@ const PASCAL_CASE_PATTERN = /^[A-Z]/u;
 /** Standalone statement terminators (`punctuation.terminator` in Nord). */
 const SEMICOLON_PATTERN = /^;$/u;
 
+/**
+ * Declaration-structure keywords the Nord reference renders plain (base
+ * text) instead of frost blue: `export`/`function`/`const`/`let`/`var`
+ * stay Snow Storm while control-flow/module keywords (`import`, `from`,
+ * `return`, `if`, …) keep the blue `keyword` entry.
+ */
+const NORD_PLAIN_KEYWORDS = new Set([
+  "export",
+  "function",
+  "const",
+  "let",
+  "var",
+]);
+
 function resolveEverforestTokenType(tokenType: string, text: string): string {
   if (tokenType === "keyword" && PLAIN_KEYWORDS.has(text)) {
     return "identifier";
@@ -74,8 +94,27 @@ function resolveEverforestTokenType(tokenType: string, text: string): string {
 }
 
 function resolveNordTokenType(tokenType: string, text: string): string {
-  // Component tag names follow `entity.name.tag` (frost blue), not the
-  // teal type rule.
+  // Declaration keywords render plain (base text), not frost blue.
+  if (tokenType === "keyword" && NORD_PLAIN_KEYWORDS.has(text)) {
+    return "identifier";
+  }
+  // JSX props render plain (base text), not teal. Object-literal keys are
+  // a separate `property` role and are unaffected.
+  if (tokenType === "attr_name") {
+    return "identifier";
+  }
+  // Declared bindings (`const x`, destructured names, `useState` pairs)
+  // come out as `constant` from the grammar but are plain variables
+  // (`variable.other`) in the reference — render them base text, not
+  // frost blue. Genuine language constants keep their own roles
+  // (`boolean`, `null`/`undefined` via `keyword`) and stay blue.
+  if (tokenType === "constant") {
+    return "identifier";
+  }
+  // Brackets/terminators follow `entity.name.tag`-adjacent frost blue, not
+  // the Snow Storm punctuation entry. Tag names already carry the blue
+  // `tag` rule in the palette; the explicit branch below keeps the
+  // resolution pinned to it.
   if (tokenType === "tag_name") {
     return "tag";
   }
