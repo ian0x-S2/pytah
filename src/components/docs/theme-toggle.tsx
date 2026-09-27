@@ -16,6 +16,7 @@ export function ThemeToggle() {
   return (
     <Button
       aria-label={`Current theme: ${theme}. Click to change.`}
+      className="rounded-sm transition-colors"
       onClick={cycleTheme}
       size="icon-sm"
       variant="ghost"

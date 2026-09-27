@@ -39,7 +39,7 @@ export function extractExportedInterface(source: string, name: string) {
   return matchSource(
     source,
     new RegExp(
-      `export interface ${escapeRegex(name)}\\s*\\{[\\s\\S]*?^\\}`,
+      `export interface ${escapeRegex(name)}(?:\\s+extends\\s+[^{]+)?\\s*\\{[\\s\\S]*?^\\}`,
       "mu"
     ),
     `Interface source was not found for: ${name}`

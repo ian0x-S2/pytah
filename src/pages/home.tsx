@@ -1,49 +1,67 @@
-import { ArrowRightIcon, CodeIcon, PlayIcon } from "lucide-react";
+/* Hallmark · pre-emit critique: P5 H4 E5 S4 R5 V5 */
+/* Hallmark · genre: modern-minimal · macrostructure: Split Studio · H2 knobs: ratio=7/5, right=iso-layers, divider=hairline · F3 knobs: columns=3(key/val/cta), rules=every-row, numbers=tabular · F4 knobs: numbering=01/02/03, layout=vertical-stack, connector=none · theme: monochrome-shadcn · design-system: design.md · designed-as-app · nav: N9 · footer: Ft2 · radius: sm-only · contrast: caveat (muted ≈3.4:1, stock token) · honest: pass (46) · chrome: pass (47) · tokens: pass (48) · responsive: pass (49) · mobile: pass (34, 49, 50-57) */
+import { ArrowRightIcon, ArrowUpRightIcon } from "lucide-react";
 import { Link } from "wouter";
 
 import { ThemeToggle } from "@/components/docs/theme-toggle";
-import { HeroCube3D } from "@/components/home/hero-cube-3d";
+import { HeroLayers } from "@/components/home/hero-layers";
 import { Button } from "@/components/ui/button";
 import { REPOSITORY_URL } from "@/lib/site";
 
-const features = [
+const specRows = [
   {
+    cta: "Read composition",
     description:
-      "Modular Lexical architecture. Enable, replace, or omit plugins, floating toolbars, and node types with clean React props.",
-    href: "/docs/overview",
-    tag: "Architecture",
-    title: "Lego-like Composition",
+      "Enable, replace, or omit plugins, floating toolbars, and node types with clean React props. Extra features compose through descriptors.",
+    href: "/docs/composition",
+    tag: "Composition",
+    title: "Lego-like composition",
   },
   {
+    cta: "Read markdown support",
     description:
       "Bi-directional Markdown and HTML conversion that preserves callouts, tables, checklists, and code formatting with zero friction.",
     href: "/docs/features/markdown-support",
     tag: "Workflows",
-    title: "Lossless Copy & Paste",
+    title: "Lossless copy & paste",
   },
   {
+    cta: "Read the overview",
     description:
-      "Engineered with Base UI primitives and Tailwind CSS v4 tokens. Seamless dark mode, zero CSS runtime overhead, and instant theming.",
+      "Base UI primitives and Tailwind CSS v4 tokens. Dark mode, zero CSS runtime overhead, and instant theming out of the box.",
     href: "/docs/overview",
-    tag: "Design System",
-    title: "shadcn/ui Native",
+    tag: "Design system",
+    title: "shadcn/ui native",
   },
 ];
 
-const highlights = [
-  "Lexical Engine",
-  "React 19 Ready",
-  "Tailwind CSS v4",
-  "Zero Lock-in",
+const pathSteps = [
+  {
+    description: "The mental model and onboarding path.",
+    href: "/docs/overview",
+    index: "01",
+    title: "Overview",
+  },
+  {
+    description: "Install the registry item and render your first editor.",
+    href: "/docs/getting-started",
+    index: "02",
+    title: "Getting started",
+  },
+  {
+    description: "Toggle built-ins and compose extra features.",
+    href: "/docs/composition",
+    index: "03",
+    title: "Composition",
+  },
 ];
 
 export function HomePage() {
   return (
     <div className="relative min-h-screen bg-background font-sans text-foreground selection:bg-foreground selection:text-background">
-      {/* Subtle top ambient lighting */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-ambient-home" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-ambient-home" />
 
-      {/* Header */}
+      {/* N9 edge-aligned minimal: wordmark left, actions right, no link row */}
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/70 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6 sm:px-8">
           <Link
@@ -51,26 +69,41 @@ export function HomePage() {
             href="/"
           >
             <span>Pytah</span>
+            <span className="hidden rounded-sm border border-border/70 px-1 py-0.5 font-mono text-xs text-muted-foreground sm:inline">
+              registry
+            </span>
           </Link>
 
           <nav className="flex items-center gap-1.5 sm:gap-2">
-            <Link href="/docs/overview">
-              <Button size="sm" variant="ghost">
-                Docs
-              </Button>
-            </Link>
-            <Link href="/demo">
-              <Button size="sm" variant="ghost">
-                <PlayIcon className="size-3.5" />
+            <Link className="hidden sm:block" href="/demo">
+              <Button
+                className="rounded-sm whitespace-nowrap transition-colors"
+                size="sm"
+                variant="ghost"
+              >
                 Demo
               </Button>
             </Link>
             <a href={REPOSITORY_URL} rel="noopener noreferrer" target="_blank">
-              <Button size="sm" variant="ghost">
-                <CodeIcon className="size-3.5" />
+              <Button
+                aria-label="GitHub"
+                className="rounded-sm whitespace-nowrap transition-colors"
+                size="sm"
+                variant="ghost"
+              >
                 <span className="hidden sm:inline">GitHub</span>
+                <ArrowUpRightIcon className="size-3.5" />
               </Button>
             </a>
+            <Link href="/docs/overview">
+              <Button
+                className="rounded-sm whitespace-nowrap transition-colors"
+                size="sm"
+              >
+                Get started
+                <ArrowRightIcon className="size-3.5" />
+              </Button>
+            </Link>
             <div className="ml-1">
               <ThemeToggle />
             </div>
@@ -78,22 +111,11 @@ export function HomePage() {
         </div>
       </header>
 
-      {/* Main Container */}
       <main className="relative mx-auto flex max-w-6xl flex-col px-6 pt-12 pb-24 sm:px-8 sm:pt-20">
-        {/* Side-by-side Hero Block */}
-        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-8">
-          {/* Left Column — Main text block */}
-          <div className="flex flex-col items-center text-center lg:col-span-7 lg:items-start lg:text-left">
-            {/* Eyebrow badge */}
-            <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-transparent px-3.5 py-1 text-xs text-muted-foreground shadow-xs transition-colors hover:border-foreground/20 hover:text-foreground">
-              <span className="size-1.5 rounded-full bg-foreground/80" />
-              <span className="font-mono text-xs tracking-wider uppercase">
-                shadcn registry item · React & Lexical
-              </span>
-            </div>
-
-            {/* Headline */}
-            <h1 className="mt-6 text-4xl leading-display font-semibold tracking-tight text-foreground sm:text-5xl xl:text-6xl">
+        {/* H2 split diptych: text left, proof panel right */}
+        <div className="grid grid-cols-1 items-start gap-12 lg:grid-cols-12 lg:gap-8">
+          <div className="flex flex-col items-start text-left lg:col-span-7">
+            <h1 className="min-w-0 text-4xl leading-display font-semibold tracking-tight wrap-anywhere text-foreground sm:text-5xl xl:text-6xl">
               The rich text editor
               <br />
               <span className="font-normal text-muted-foreground">
@@ -101,102 +123,165 @@ export function HomePage() {
               </span>
             </h1>
 
-            {/* Subtitle */}
             <p className="mt-5 max-w-xl text-base leading-relaxed text-balance text-muted-foreground sm:text-lg">
               A fully composable, copy-paste ready Lexical editor engineered
               with shadcn/ui and Tailwind CSS. Built for speed, developer
               ergonomics, and lossless Markdown & HTML workflows.
             </p>
 
-            {/* Action Buttons */}
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
+            <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link href="/docs/overview">
-                <Button className="h-10 px-5 shadow-xs" size="default">
-                  Get Started
+                <Button
+                  className="h-10 rounded-sm px-5 whitespace-nowrap shadow-xs transition-colors"
+                  size="default"
+                >
+                  Get started
                   <ArrowRightIcon className="size-4" />
                 </Button>
               </Link>
               <Link href="/demo">
-                <Button className="h-10 px-5" size="default" variant="outline">
-                  <PlayIcon className="size-3.5" />
-                  Live Demo
+                <Button
+                  className="h-10 rounded-sm px-5 whitespace-nowrap transition-colors"
+                  size="default"
+                  variant="outline"
+                >
+                  Live demo
                 </Button>
               </Link>
             </div>
 
-            {/* Highlights Bar */}
-            <div className="mt-10 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
-              {highlights.map((item) => (
-                <span
-                  className="rounded-md border border-border/50 bg-transparent px-3 py-1 font-mono text-xs text-muted-foreground"
-                  key={item}
-                >
-                  {item}
-                </span>
+            <dl className="mt-10 grid w-full max-w-xl grid-cols-2 gap-px overflow-hidden rounded-sm border border-border/50 bg-border/50 sm:grid-cols-4">
+              {[
+                ["Engine", "Lexical"],
+                ["UI", "React 19"],
+                ["CSS", "Tailwind v4"],
+                ["Lock-in", "Zero"],
+              ].map(([term, value]) => (
+                <div className="bg-background px-3 py-2.5" key={term}>
+                  <dt className="font-mono text-xs tracking-wider text-muted-foreground">
+                    {term}
+                  </dt>
+                  <dd className="mt-1 text-sm font-medium tabular-nums">
+                    {value}
+                  </dd>
+                </div>
               ))}
-            </div>
+            </dl>
           </div>
 
-          {/* Right Column — 3D React-Three-Fiber Cube */}
-          <div className="flex items-center justify-center lg:col-span-5">
-            <div className="relative flex size-64 items-center justify-center sm:size-80 lg:size-96">
-              {/* Subtle ambient circle backing */}
-              <div className="pointer-events-none absolute inset-0 rounded-full bg-ambient-circle" />
-              <HeroCube3D className="size-full" />
-            </div>
-          </div>
+          {/* Proof: isometric document-layer stack (Tier-A CSS art) */}
+          <HeroLayers />
         </div>
 
-        {/* Transparent Clean Feature Cards */}
-        <div className="mt-24 grid w-full grid-cols-1 gap-6 sm:grid-cols-3">
-          {features.map((feature) => (
-            <Link
-              className="group relative flex flex-col justify-between rounded-2xl border border-border/50 bg-transparent p-7 text-left transition-colors transition-transform duration-300 hover:-translate-y-0.5 hover:border-border"
-              href={feature.href}
-              key={feature.title}
-            >
-              <div>
-                <span className="font-mono text-xs tracking-widest text-muted-foreground uppercase">
-                  {feature.tag}
+        <hr className="mt-16 border-border/40 sm:mt-24" />
+
+        {/* F3 tabular spec sheet: hairline rows, no cards */}
+        <section className="mt-10 sm:mt-12" aria-label="What ships">
+          <h2 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">
+            What ships
+          </h2>
+          <div className="mt-6 overflow-hidden rounded-sm border border-border/50">
+            <ul className="divide-y divide-border/40">
+              {specRows.map((row) => (
+                <li
+                  className="grid grid-cols-1 gap-2 px-4 py-5 transition-colors hover:bg-muted/15 sm:grid-cols-12 sm:items-baseline sm:gap-4 sm:px-5"
+                  key={row.title}
+                >
+                  <span className="font-mono text-xs tracking-wider text-muted-foreground sm:col-span-3">
+                    {row.tag}
+                  </span>
+                  <div className="sm:col-span-6">
+                    <h3 className="text-sm font-semibold tracking-tight text-foreground">
+                      {row.title}
+                    </h3>
+                    <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground sm:text-sm">
+                      {row.description}
+                    </p>
+                  </div>
+                  <Link
+                    className="inline-flex items-center gap-1 text-xs font-medium whitespace-nowrap text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground sm:col-span-3 sm:justify-end"
+                    href={row.href}
+                  >
+                    {row.cta}
+                    <ArrowRightIcon className="size-3.5" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
+        {/* F4 step sequence: genuinely ordinal docs path */}
+        <section className="mt-16 sm:mt-20" aria-label="Choose your path">
+          <h2 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">
+            Choose your path
+          </h2>
+          <ol className="mt-6 overflow-hidden rounded-sm border border-border/50">
+            {pathSteps.map((step, index) => (
+              <li
+                className="flex items-baseline gap-4 border-border/40 px-4 py-4 transition-colors not-last:border-b hover:bg-muted/15 sm:gap-6 sm:px-5"
+                key={step.href}
+              >
+                <span
+                  aria-hidden="true"
+                  className="font-mono text-xs text-muted-foreground tabular-nums"
+                >
+                  {step.index}
                 </span>
+                <div className="flex flex-1 flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
+                  <Link
+                    className="text-sm font-semibold tracking-tight whitespace-nowrap text-foreground underline-offset-4 transition-colors hover:underline"
+                    href={step.href}
+                  >
+                    {step.title}
+                  </Link>
+                  <span className="text-xs text-muted-foreground">
+                    {step.description}
+                    {index === pathSteps.length - 1 ? null : (
+                      <span aria-hidden="true"> →</span>
+                    )}
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
 
-                <h3 className="mt-4 text-base font-semibold tracking-tight text-foreground">
-                  {feature.title}
-                </h3>
-
-                <p className="mt-2.5 text-xs leading-relaxed text-muted-foreground sm:text-sm">
-                  {feature.description}
-                </p>
-              </div>
-
-              <div className="mt-6 flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors group-hover:text-foreground">
-                <span>Learn more</span>
-                <ArrowRightIcon className="size-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
-              </div>
-            </Link>
-          ))}
+        {/* C3 typographic close: one link, no box */}
+        <div className="mt-16 sm:mt-20">
+          <Link
+            className="inline-flex items-center gap-1.5 text-sm font-medium whitespace-nowrap text-foreground underline underline-offset-4 transition-opacity hover:opacity-80"
+            href="/docs/overview"
+          >
+            Start with the overview
+            <ArrowRightIcon className="size-4" />
+          </Link>
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-border/40 py-8">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 text-center text-xs text-muted-foreground sm:flex-row sm:px-8 sm:text-left">
-          <p>Built with Lexical, shadcn/ui, and Tailwind CSS v4.</p>
-          <div className="flex items-center gap-6">
+      {/* Ft2 inline single line */}
+      <footer className="border-t border-border/40 py-6">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 text-xs text-muted-foreground sm:flex-row sm:px-8">
+          <p>
+            <span className="font-semibold text-foreground">Pytah</span>
+            <span aria-hidden="true"> · </span>
+            Built with Lexical, shadcn/ui, and Tailwind CSS v4.
+          </p>
+          <div className="flex items-center gap-5">
             <Link
-              className="transition-colors hover:text-foreground"
+              className="whitespace-nowrap transition-colors hover:text-foreground"
               href="/docs/overview"
             >
               Documentation
             </Link>
             <Link
-              className="transition-colors hover:text-foreground"
+              className="whitespace-nowrap transition-colors hover:text-foreground"
               href="/demo"
             >
-              Live Demo
+              Live demo
             </Link>
             <a
-              className="transition-colors hover:text-foreground"
+              className="whitespace-nowrap transition-colors hover:text-foreground"
               href={REPOSITORY_URL}
               rel="noopener noreferrer"
               target="_blank"

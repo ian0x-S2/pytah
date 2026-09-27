@@ -1,3 +1,4 @@
+/* Hallmark · genre: modern-minimal · macrostructure: Long Document · design-system: design.md · designed-as-app · radius: sm-only */
 import { useLayoutEffect } from "react";
 import { Redirect, useRoute } from "wouter";
 

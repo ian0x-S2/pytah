@@ -280,14 +280,12 @@ export function PageHeader({
   return (
     <div className={cn("mb-9 space-y-2.5", className)}>
       {badge ? (
-        <div className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-transparent px-2.5 py-0.5 text-xs text-muted-foreground shadow-xs transition-colors hover:border-foreground/20 hover:text-foreground">
-          <span className="size-1.5 rounded-full bg-foreground/80" />
-          <span className="font-mono text-xs tracking-wider uppercase">
-            {badge}
-          </span>
+        <div className="inline-flex items-center gap-1.5 rounded-sm border border-border/70 bg-transparent px-2.5 py-0.5 text-xs text-muted-foreground shadow-xs transition-colors hover:border-foreground/20 hover:text-foreground">
+          <span className="size-1.5 rounded-sm bg-foreground/80" />
+          <span className="font-mono text-xs tracking-wider">{badge}</span>
         </div>
       ) : null}
-      <h1 className="text-2xl leading-tight font-semibold tracking-tight text-foreground sm:text-3xl">
+      <h1 className="min-w-0 text-2xl leading-tight font-semibold tracking-tight wrap-anywhere text-foreground sm:text-3xl">
         {title}
       </h1>
       <p className="max-w-2xl text-xs leading-relaxed text-balance text-muted-foreground sm:text-sm">
@@ -334,10 +332,22 @@ export function SubHeading({
 
 export function Paragraph({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mb-3.5 text-xs leading-relaxed text-foreground/80 sm:text-sm [&_code]:rounded [&_code]:border [&_code]:border-border/60 [&_code]:bg-muted/40 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-sm [&_code]:text-foreground [&_strong]:font-semibold [&_strong]:text-foreground">
+    <p className="mb-3.5 text-xs leading-relaxed text-foreground/80 sm:text-sm [&_code]:rounded-sm [&_code]:border [&_code]:border-border/60 [&_code]:bg-muted/40 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-sm [&_code]:text-foreground [&_strong]:font-semibold [&_strong]:text-foreground">
       {children}
     </p>
   );
+}
+
+// When the fence carries no filename the label IS the language
+// ("bash" + "BASH"): the header renders it once, in its original case.
+function isRedundantCodeLabel(
+  label: string | undefined,
+  language: CodeLanguage | null
+): boolean {
+  if (label === undefined || language === null) {
+    return false;
+  }
+  return label.toLowerCase() === language.toLowerCase();
 }
 
 export function CodeBlock({
@@ -380,15 +390,17 @@ export function CodeBlock({
   // instead of floating right-aligned in a fixed wide column.
   const lineNumberWidth = `${String(Math.max(lastLineNumber, 1)).length}ch`;
 
+  const isRedundantLabel = isRedundantCodeLabel(resolvedLabel, syntaxLanguage);
+
   return (
-    <div className="group relative my-4 overflow-hidden rounded-xl border border-border/50 bg-muted/15 shadow-xs transition-colors hover:border-border/80">
+    <div className="group relative my-4 overflow-hidden rounded-sm border border-border/50 bg-muted/15 shadow-xs transition-colors hover:border-border/80">
       {resolvedLabel ? (
         <div className="flex items-center justify-between border-b border-border/40 bg-muted/30 px-3.5 py-2">
           <span className="truncate font-mono text-xs text-muted-foreground">
             {resolvedLabel}
           </span>
-          {syntaxLanguage ? (
-            <span className="font-mono text-xs text-muted-foreground/60 uppercase">
+          {!isRedundantLabel && syntaxLanguage ? (
+            <span className="font-mono text-xs text-muted-foreground/60">
               {syntaxLanguage}
             </span>
           ) : null}
@@ -448,10 +460,10 @@ export function Table({
   headers: string[];
 }) {
   return (
-    <div className="my-4 overflow-x-auto rounded-xl border border-border/50 bg-transparent shadow-xs">
+    <div className="my-4 overflow-x-auto rounded-sm border border-border/50 bg-transparent shadow-xs">
       <table className="w-full text-left text-xs sm:text-xs">
         <thead>
-          <tr className="border-b border-border/50 bg-muted/25 font-mono text-xs tracking-wider text-muted-foreground uppercase">
+          <tr className="border-b border-border/50 bg-muted/25 font-mono text-xs tracking-wider text-muted-foreground">
             {headers.map((header) => (
               <th className="px-3.5 py-2.5 font-medium sm:px-4" key={header}>
                 {header}
@@ -477,13 +489,13 @@ export function TableCell({ children }: { children: React.ReactNode }) {
   );
 }
 
-const styles = {
-  info: "border-border/60 bg-muted/10",
-  tip: "border-foreground/20 bg-muted/15",
-  warning: "border-destructive/30 bg-destructive/5",
+const ruleStyles = {
+  info: "border-border/70",
+  tip: "border-foreground/30",
+  warning: "border-destructive/40",
 };
 
-const tagStyles = {
+const titleStyles = {
   info: "text-muted-foreground",
   tip: "text-foreground",
   warning: "text-destructive",
@@ -499,26 +511,18 @@ export function Callout({
   variant?: "info" | "warning" | "tip";
 }) {
   return (
-    <div
-      className={cn(
-        "my-4 rounded-xl border p-4 text-left transition-all duration-200 sm:p-5",
-        styles[variant]
-      )}
-    >
+    <div className={cn("my-4 border-l-2 pl-4 text-left", ruleStyles[variant])}>
       {title ? (
-        <div className="mb-1.5 flex items-center gap-1.5">
-          <span className="size-1 rounded-full bg-foreground/60" />
-          <p
-            className={cn(
-              "text-xs font-semibold tracking-tight",
-              tagStyles[variant]
-            )}
-          >
-            {title}
-          </p>
-        </div>
+        <p
+          className={cn(
+            "mb-1 text-xs font-semibold tracking-tight",
+            titleStyles[variant]
+          )}
+        >
+          {title}
+        </p>
       ) : null}
-      <div className="text-xs leading-relaxed text-foreground/80 sm:text-xs">
+      <div className="text-xs leading-relaxed text-foreground/80 sm:text-sm">
         {children}
       </div>
     </div>
@@ -527,7 +531,7 @@ export function Callout({
 
 export function FileTree({ items }: { items: string[] }) {
   return (
-    <div className="my-4 overflow-x-auto rounded-xl border border-border/50 bg-muted/15 p-4 font-mono text-xs leading-relaxed sm:text-xs">
+    <div className="my-4 overflow-x-auto rounded-sm border border-border/50 bg-muted/15 p-4 font-mono text-xs leading-relaxed sm:text-xs">
       {items.map((item) => (
         <div className="py-0.5 text-foreground/85" key={item}>
           {item}

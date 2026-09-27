@@ -1,5 +1,5 @@
+/* Hallmark · genre: modern-minimal · macrostructure: Long Document · design-system: design.md · designed-as-app · radius: sm-only */
 import { CodeIcon, PlayIcon } from "lucide-react";
-import { useEffect, useState } from "react";
 import { Link, useLocation, useRoute } from "wouter";
 
 import { Button } from "@/components/ui/button";
@@ -25,28 +25,13 @@ import type { DocsPageDefinition } from "@/pages/docs/manifest";
 
 import { ThemeToggle } from "./theme-toggle";
 
-function LocalClock() {
-  const [time, setTime] = useState(() => new Date());
-
-  useEffect(() => {
-    const id = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  return (
-    <span className="hidden items-center font-mono text-xs text-muted-foreground tabular-nums sm:inline-flex">
-      {time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-    </span>
-  );
-}
-
 function NavLink({ href, icon: Icon, label }: DocsPageDefinition) {
   const [isActive] = useRoute(href);
 
   return (
     <SidebarMenuItem className="my-0.5">
       <SidebarMenuButton
-        className="h-7 rounded-md px-2 text-xs tracking-tight transition-colors hover:text-foreground"
+        className="h-7 rounded-sm px-2 text-xs tracking-tight transition-colors hover:text-foreground"
         isActive={isActive}
         render={<Link href={href} />}
       >
@@ -67,7 +52,7 @@ function DocsSidebar() {
             href="/"
           >
             <span>Pytah</span>
-            <span className="rounded border border-border/70 px-1 py-0.5 font-mono text-xs text-muted-foreground">
+            <span className="rounded-sm border border-border/70 px-1 py-0.5 font-mono text-xs text-muted-foreground">
               docs
             </span>
           </Link>
@@ -79,7 +64,7 @@ function DocsSidebar() {
           <div className="space-y-3 py-2">
             {DOCS_PAGE_GROUPS.map((group) => (
               <SidebarGroup className="p-0" key={group.id}>
-                <SidebarGroupLabel className="h-5 font-mono text-xs tracking-wider text-muted-foreground/75 uppercase">
+                <SidebarGroupLabel className="h-5 font-mono text-xs tracking-wider text-muted-foreground/75">
                   {group.label}
                 </SidebarGroupLabel>
                 <SidebarGroupContent>
@@ -99,7 +84,7 @@ function DocsSidebar() {
         <SidebarMenu className="gap-0.5">
           <SidebarMenuItem>
             <SidebarMenuButton
-              className="h-7 rounded-md px-2 text-xs"
+              className="h-7 rounded-sm px-2 text-xs"
               render={<Link href="/demo" />}
             >
               <PlayIcon className="size-3" />
@@ -108,7 +93,7 @@ function DocsSidebar() {
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton
-              className="h-7 rounded-md px-2 text-xs"
+              className="h-7 rounded-sm px-2 text-xs"
               render={
                 // biome-ignore lint/a11y/useAnchorContent: content is injected by useRender at runtime
                 <a
@@ -146,7 +131,7 @@ export function DocsLayout({ children }: { children: React.ReactNode }) {
         {/* Sticky Header matching Home Page styling */}
         <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center justify-between gap-3 border-b border-border/40 bg-background/70 px-4 backdrop-blur-xl sm:px-6">
           <div className="flex items-center gap-3">
-            <SidebarTrigger className="-ml-1 text-muted-foreground transition-colors" />
+            <SidebarTrigger className="-ml-1 rounded-sm text-muted-foreground transition-colors" />
             <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground sm:text-sm">
               <Link
                 className="transition-colors hover:text-foreground"
@@ -168,9 +153,12 @@ export function DocsLayout({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="flex items-center gap-2">
-            <LocalClock />
             <Link href="/demo">
-              <Button size="sm" variant="ghost">
+              <Button
+                className="rounded-sm whitespace-nowrap transition-colors"
+                size="sm"
+                variant="ghost"
+              >
                 <PlayIcon className="size-3.5" />
                 <span className="hidden sm:inline">Demo</span>
               </Button>

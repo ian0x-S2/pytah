@@ -269,6 +269,7 @@ export default defineConfig({
       // stripping classes and changing the rendered output.
       files: [
         "src/components/docs/layout.tsx",
+        "src/components/docs/theme-toggle.tsx",
         "src/pages/demo.tsx",
         "src/pages/home.tsx",
       ],
