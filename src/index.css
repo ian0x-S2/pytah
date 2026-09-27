@@ -55,35 +55,6 @@
   line-height: 1.08;
 }
 
-/* Hero layer stack: one slow float + caret blink, exposed as theme tokens
-   (`animate-hero-float`, `animate-caret-blink`). Applied only through
-   `motion-safe:` variants, so `prefers-reduced-motion` gets the static
-   composed stack with no fallback needed. */
-@theme {
-  --animate-hero-float: hero-float 8s ease-in-out infinite;
-  --animate-caret-blink: caret-blink 1.2s ease-in-out infinite;
-
-  @keyframes hero-float {
-    0%,
-    100% {
-      transform: translateY(-5px);
-    }
-    50% {
-      transform: translateY(5px);
-    }
-  }
-
-  @keyframes caret-blink {
-    0%,
-    100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0;
-    }
-  }
-}
-
 @utility text-display-40 {
   font-size: 40px;
 }

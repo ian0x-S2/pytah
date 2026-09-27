@@ -169,7 +169,7 @@ export function HomePage() {
             </dl>
           </div>
 
-          {/* Proof: isometric document-layer stack (Tier-A CSS art) */}
+          {/* Proof: isometric document-layer stack (Tier-A WebGL) */}
           <HeroLayers />
         </div>
 
