@@ -113,7 +113,10 @@ describe("everforest token roles", () => {
   test("other families keep the raw grammar roles", () => {
     for (const [text, raw] of tokenStream()) {
       strictEqual(resolveThemedTokenType("github-dark", "tsx", raw, text), raw);
-      strictEqual(resolveThemedTokenType("nord-light", "tsx", raw, text), raw);
+      strictEqual(
+        resolveThemedTokenType("catppuccin-light", "tsx", raw, text),
+        raw
+      );
     }
   });
 
@@ -134,6 +137,82 @@ describe("everforest token roles", () => {
     strictEqual(
       resolveThemedTokenType("everforest-dark", "tsx", "function", "render"),
       "function"
+    );
+  });
+});
+
+describe("nord token roles", () => {
+  test("tsx sample resolves brackets, terminators, and tags to frost blue", () => {
+    const expected: Record<string, string> = {
+      "/>": "operator",
+      "/>;": "operator",
+      ";": "operator",
+      "<": "operator",
+      Editor_tag: "tag",
+    };
+    for (const [text, raw] of tokenStream()) {
+      const resolved = resolveThemedTokenType("nord-dark", "tsx", raw, text);
+      if (text === "Editor" && raw === "tag_name") {
+        strictEqual(resolved, expected["Editor_tag"]);
+      } else if (expected[text] === undefined) {
+        // Keywords, values, strings, and structural punctuation keep
+        // their raw grammar roles.
+        strictEqual(resolved, raw, `nord tsx ${text}`);
+      } else {
+        strictEqual(resolved, expected[text], `nord tsx ${text}`);
+      }
+    }
+    // Spot-check the headline resolutions explicitly.
+    strictEqual(
+      resolveThemedTokenType("nord-dark", "tsx", "tag_name", "Editor"),
+      "tag"
+    );
+    strictEqual(
+      resolveThemedTokenType("nord-dark", "tsx", "punctuation", "<"),
+      "operator"
+    );
+    strictEqual(
+      resolveThemedTokenType("nord-dark", "tsx", "punctuation", ";"),
+      "operator"
+    );
+    strictEqual(
+      resolveThemedTokenType("nord-dark", "tsx", "keyword", "import"),
+      "keyword"
+    );
+    strictEqual(
+      resolveThemedTokenType("nord-dark", "tsx", "function", "App"),
+      "function"
+    );
+    strictEqual(
+      resolveThemedTokenType("nord-dark", "tsx", "attr_name", "editable"),
+      "attr_name"
+    );
+  });
+
+  test("resolved sample carries frost blue brackets in both modes", () => {
+    for (const theme of ["nord-dark", "nord-light"] as const) {
+      const palette = getCodeBlockPalette(theme);
+      strictEqual(
+        (palette["operator"] ?? "").toLowerCase(),
+        "#81a1c1",
+        `${theme} operator drifted from frost blue`
+      );
+      strictEqual(
+        (palette["tag"] ?? "").toLowerCase(),
+        "#81a1c1",
+        `${theme} tag drifted from frost blue`
+      );
+    }
+  });
+
+  test("nord overrides stay out of other languages", () => {
+    strictEqual(
+      resolveThemedTokenType("nord-dark", "css", "punctuation", ";"),
+      "punctuation"
+    );
+    strictEqual(
+      resolveThemedTokenType("nord-dark", "html", "tag_name", "div"),
+      "tag_name"
     );
   });
 });

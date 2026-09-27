@@ -32,8 +32,10 @@ import type { theme_palette, theme_styles } from "@twinkleplop/core";
  * Fidelity is intentional: several official tokens sit below WCAG AA
  * (dark comments, frost blues on snow), so this family is exempt from
  * contrast tests and pinned by reference instead — see
- * `registry.test.ts`. Nord keeps the raw grammar roles (no
- * `token-roles.ts` overrides; those are Everforest-only).
+ * `registry.test.ts`. Tag names resolve to the blue `tag` entry and JSX
+ * brackets/terminators to the blue `operator` entry via `token-roles.ts`
+ * (matching `entity.name.tag`, `punctuation.definition.tag`, and
+ * `punctuation.terminator`); everything else keeps its raw grammar role.
  */
 
 export const light: theme_palette = {
