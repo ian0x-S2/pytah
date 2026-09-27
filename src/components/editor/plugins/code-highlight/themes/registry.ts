@@ -102,6 +102,47 @@ export function resolveCodeBlockThemeId(
 
 const FALLBACK_THEME_ID: CodeBlockThemeId = "github-light";
 
+/** Block background overrides per resolved theme id.
+ *
+ * GitHub renders on the shadcn card surface instead of its upstream
+ * `#ffffff` / `#0d1117` so code blocks sit on `--card` like the rest of
+ * the chrome. Every other family keeps its palette `background_color`.
+ * Fallbacks mirror `src/index.css` (`:root` / `.dark` `--card`).
+ */
+const CODE_BLOCK_BACKGROUND_OVERRIDES: Partial<
+  Record<CodeBlockThemeId, string>
+> = {
+  "github-dark": "var(--card, oklch(0.205 0 0))",
+  "github-light": "var(--card, oklch(1 0 0))",
+};
+
+/** Block background for a persisted node theme: override first, palette
+ * `background_color` otherwise. Used both for `--editor-code-bg` and the
+ * CodeNode inline style so the two never diverge. */
+export function getCodeBlockBackground(
+  theme: string | null | undefined
+): string {
+  if (theme !== null && theme !== undefined) {
+    const override = (
+      CODE_BLOCK_BACKGROUND_OVERRIDES as Record<string, string | undefined>
+    )[theme];
+    if (override) {
+      return override;
+    }
+    const palette = (PALETTES as Record<string, theme_palette | undefined>)[
+      theme
+    ];
+    if (palette?.["background_color"]) {
+      return palette["background_color"] as string;
+    }
+  }
+  return (
+    CODE_BLOCK_BACKGROUND_OVERRIDES[FALLBACK_THEME_ID] ??
+    (PALETTES[FALLBACK_THEME_ID]?.["background_color"] as string) ??
+    "#ffffff"
+  );
+}
+
 /** Palette for a persisted node theme; unknown ids fall back to GitHub light. */
 export function getCodeBlockPalette(
   theme: string | null | undefined

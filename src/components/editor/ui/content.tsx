@@ -36,7 +36,7 @@ import { CodeHighlightPlugin } from "../plugins/code-highlight/plugin";
 import { CodeBlockThemeContext } from "../plugins/code-highlight/theme-context";
 import {
   DEFAULT_CODE_BLOCK_THEME_FAMILY,
-  getCodeBlockPalette,
+  getCodeBlockBackground,
   resolveCodeBlockThemeId,
 } from "../plugins/code-highlight/themes/registry";
 import type { CodeBlockThemeFamily } from "../plugins/code-highlight/themes/registry";
@@ -292,16 +292,16 @@ export function EditorContent({
     [themeFamily]
   );
 
-  // The block background follows the code theme too: the palette's
-  // `background_color` feeds `--editor-code-bg`, which the `editor-code-block`
+  // The block background follows the code theme too: `getCodeBlockBackground`
+  // feeds `--editor-code-bg`, which the `editor-code-block`
   // rule already consumes (its `!important` only beats the inline node
-  // style, not the token itself). Scoped to this wrapper so concurrent
-  // editors with different themes don't clash.
+  // style, not the token itself). GitHub resolves to shadcn `--card`;
+  // every other family uses its palette `background_color`. Scoped to
+  // this wrapper so concurrent editors with different themes don't clash.
   const { resolvedTheme } = useTheme();
-  const codeBlockBackground =
-    getCodeBlockPalette(resolveCodeBlockThemeId(themeFamily, resolvedTheme))[
-      "background_color"
-    ] ?? "transparent";
+  const codeBlockBackground = getCodeBlockBackground(
+    resolveCodeBlockThemeId(themeFamily, resolvedTheme)
+  );
 
   return (
     <CodeGutterHostContext.Provider value={gutterHost}>

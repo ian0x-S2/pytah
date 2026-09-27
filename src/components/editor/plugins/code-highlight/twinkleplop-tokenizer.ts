@@ -28,7 +28,11 @@ import { $createLineBreakNode, $createTabNode } from "lexical";
 import type { LexicalNode } from "lexical";
 
 import { CODE_LANGUAGE_ALIASES, DEFAULT_CODE_LANGUAGE } from "./languages";
-import { getCodeBlockPalette, getCodeBlockTokenStyle } from "./themes/registry";
+import {
+  getCodeBlockBackground,
+  getCodeBlockPalette,
+  getCodeBlockTokenStyle,
+} from "./themes/registry";
 import { resolveThemedTokenType } from "./themes/token-roles";
 
 type TokenizeFn = ReturnType<typeof tokenizeTypescript>;
@@ -136,7 +140,7 @@ export const TwinkleplopTokenizer: Tokenizer = {
 
     const theme = codeNode.getTheme() ?? this.defaultTheme;
     const palette = getCodeBlockPalette(theme);
-    const background = palette["background_color"];
+    const background = getCodeBlockBackground(theme);
     const foreground = palette["identifier"];
     let nodeStyle = "";
     if (background) {

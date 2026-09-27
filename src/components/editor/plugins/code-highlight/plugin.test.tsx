@@ -594,8 +594,8 @@ describe("CodeBlockChromePlugin", () => {
       });
       strictEqual(await pollForHighlightNodes(), true);
       strictEqual(readCodeNode(editorRef)?.theme, "github-light");
-      // The block background follows the palette, not the muted token.
-      strictEqual(readCodeBlockBackground(), "#ffffff");
+      // GitHub blocks sit on the shadcn card surface, not the upstream white.
+      strictEqual(readCodeBlockBackground(), "var(--card, oklch(1 0 0))");
 
       await act(() => {
         chromeControls?.setFamily("nord");
