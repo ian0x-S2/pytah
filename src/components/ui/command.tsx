@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { InputGroup, InputGroupAddon } from "@/components/ui/input-group";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
 function Command({
@@ -88,16 +89,19 @@ function CommandInput({
 
 function CommandList({
   className,
+  ref,
   ...props
 }: React.ComponentProps<typeof CommandPrimitive.List>) {
   return (
-    <CommandPrimitive.List
-      className={cn(
-        "no-scrollbar max-h-72 scroll-py-1 overflow-x-hidden overflow-y-auto outline-none",
-        className
-      )}
-      data-slot="command-list"
-      {...props}
+    // The cmdk list renders as the scroll-area viewport so it keeps owning
+    // filtering, keyboard navigation and scroll-into-view while long lists
+    // use the shared custom scrollbar instead of the native one.
+    <ScrollArea
+      className="max-h-72"
+      viewportClassName={cn("max-h-72 scroll-py-1", className)}
+      viewportRender={
+        <CommandPrimitive.List data-slot="command-list" ref={ref} {...props} />
+      }
     />
   );
 }

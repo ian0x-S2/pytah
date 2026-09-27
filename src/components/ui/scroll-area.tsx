@@ -1,4 +1,5 @@
 import { ScrollArea as ScrollAreaPrimitive } from "@base-ui/react/scroll-area";
+import type * as React from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -10,10 +11,9 @@ function ScrollBar({
   return (
     <ScrollAreaPrimitive.Scrollbar
       className={cn(
-        "flex touch-none p-px transition-colors select-none data-horizontal:h-2.5 data-horizontal:flex-col data-horizontal:border-t data-horizontal:border-t-transparent data-vertical:h-full data-vertical:w-2.5 data-vertical:border-l data-vertical:border-l-transparent",
+        "pointer-events-none flex touch-none p-px opacity-0 transition-opacity select-none data-hovering:pointer-events-auto data-hovering:opacity-100 data-scrolling:pointer-events-auto data-scrolling:opacity-100 data-scrolling:duration-0 data-[orientation=horizontal]:h-2.5 data-[orientation=horizontal]:flex-col data-[orientation=horizontal]:border-t data-[orientation=horizontal]:border-t-transparent data-[orientation=vertical]:h-full data-[orientation=vertical]:w-2.5 data-[orientation=vertical]:border-l data-[orientation=vertical]:border-l-transparent",
         className
       )}
-      data-orientation={orientation}
       data-slot="scroll-area-scrollbar"
       orientation={orientation}
       {...props}
@@ -28,22 +28,59 @@ function ScrollBar({
 
 function ScrollArea({
   className,
+  viewportClassName,
+  viewportProps,
+  viewportRender,
   children,
   ...props
-}: ScrollAreaPrimitive.Root.Props) {
+}: ScrollAreaPrimitive.Root.Props & {
+  viewportClassName?: string;
+  /**
+   * Extra props merged onto the viewport, winning over ScrollArea defaults.
+   * Useful in `viewportRender` mode to restore semantics the merge would
+   * otherwise clobber (e.g. a listbox role).
+   */
+  viewportProps?: Omit<
+    React.ComponentProps<"div">,
+    "children" | "className" | "ref"
+  >;
+  /**
+   * Renders the viewport as another scrollable primitive (e.g. a select list
+   * or a cmdk list) so that primitive keeps owning keyboard navigation and
+   * scroll-into-view while the shared custom scrollbar is used. The element
+   * already carries its children; `children` is ignored in this mode.
+   */
+  viewportRender?: React.ReactElement;
+}) {
   return (
     <ScrollAreaPrimitive.Root
-      className={cn("relative", className)}
+      className={cn("relative overflow-hidden", className)}
       data-slot="scroll-area"
       {...props}
     >
-      <ScrollAreaPrimitive.Viewport
-        className="size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1"
-        data-slot="scroll-area-viewport"
-      >
-        {children}
-      </ScrollAreaPrimitive.Viewport>
+      {viewportRender ? (
+        <ScrollAreaPrimitive.Viewport
+          className={cn(
+            "size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1",
+            viewportClassName
+          )}
+          data-slot="scroll-area-viewport"
+          {...viewportProps}
+          render={viewportRender}
+        />
+      ) : (
+        <ScrollAreaPrimitive.Viewport
+          className={cn(
+            "size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1",
+            viewportClassName
+          )}
+          data-slot="scroll-area-viewport"
+        >
+          {children}
+        </ScrollAreaPrimitive.Viewport>
+      )}
       <ScrollBar />
+      <ScrollBar orientation="horizontal" />
       <ScrollAreaPrimitive.Corner />
     </ScrollAreaPrimitive.Root>
   );

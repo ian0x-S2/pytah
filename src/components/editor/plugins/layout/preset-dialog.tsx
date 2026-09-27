@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { LAYOUT_PRESETS } from "./constants";
 
@@ -67,7 +68,10 @@ export function LayoutPresetDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="max-h-[min(70vh,34rem)] overflow-y-auto px-4 pt-2 pb-4 sm:px-6 sm:pb-6">
+        <ScrollArea
+          className="max-h-[min(70vh,34rem)]"
+          viewportClassName="max-h-[min(70vh,34rem)] px-4 pt-2 pb-4 sm:px-6 sm:pb-6"
+        >
           <div className="grid gap-3 sm:grid-cols-2">
             {LAYOUT_PRESETS.map((preset) => (
               <Button
@@ -94,7 +98,7 @@ export function LayoutPresetDialog({
               </Button>
             ))}
           </div>
-        </div>
+        </ScrollArea>
 
         <DialogFooter
           className="mt-0 px-4 py-3 sm:px-6"

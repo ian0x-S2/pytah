@@ -240,6 +240,14 @@ When a floating element is anchored to a DOM rectangle (e.g. table cell, selecti
 
 Use `<Separator orientation="vertical" className="mx-0.5 h-4" />` to divide logical groups within a single floating row (e.g. between a URL display and its action buttons). Avoid using it as decoration — only when grouping semantically distinct controls.
 
+#### Scrollbar convention
+
+- Every scrollable surface uses the shared `ScrollArea` (`components/ui/scroll-area.tsx`, Base UI): it renders vertical + horizontal thumbs (each auto-hidden without overflow, and fading out unless hovering/scrolling) and exposes `viewportClassName`, `viewportProps`, and `viewportRender`. A persistent thumb needs an explicit `className` override on `ScrollBar`.
+- When another primitive owns scrolling (select list, cmdk list), render that element as the viewport via `viewportRender` so keyboard navigation and scroll-into-view keep working; restate semantics the merge clobbers (e.g. `role="listbox"`) through `viewportProps`.
+- `pre` blocks and the TOC rail/popover keep `scrollbar-hidden` by design — hidden thumb, still scrollable via wheel/touch/keyboard.
+- Lexical-owned DOM (table wrapper, code block) cannot mount React: `core/tokens.css` restyles the native bar there to match the shared thumb instead.
+- `shadcn/no-restyle` treats `ScrollArea` as owning shape/color/effects/spacing/typography: put frames (border/rounded/bg/shadow) on a wrapper div and padding/typography on an inner div, never on `ScrollArea` itself or `viewportClassName`.
+
 #### Editor design tokens (`core/tokens.css`)
 
 Single source of truth for editor restyling. Consumers override `--editor-*` vars; never hunt scattered Tailwind literals. Tokens ship with the registry via `editor.css` -> `core/tokens.css`.

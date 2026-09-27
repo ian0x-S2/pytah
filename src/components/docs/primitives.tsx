@@ -22,6 +22,7 @@ import { tokenize as tokenizeTypescript } from "@twinkleplop/typescript";
 import { tokenize as tokenizeYaml } from "@twinkleplop/yaml";
 import { useMemo } from "react";
 
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
 type TokenizeFactory = typeof tokenizeTypescript;
@@ -408,11 +409,11 @@ export function CodeBlock({
       ) : null}
 
       {shouldRenderPlainText || !tokenLines ? (
-        <pre className="overflow-x-auto p-3.5 font-mono text-xs leading-relaxed sm:p-4 sm:text-xs">
+        <pre className="scrollbar-hidden overflow-x-auto p-3.5 font-mono text-xs leading-relaxed sm:p-4 sm:text-xs">
           <code>{children}</code>
         </pre>
       ) : (
-        <pre className="twinkleplop m-0 overflow-x-auto bg-transparent p-3.5 font-mono text-xs leading-relaxed sm:p-4 sm:text-xs">
+        <pre className="twinkleplop m-0 scrollbar-hidden overflow-x-auto bg-transparent p-3.5 font-mono text-xs leading-relaxed sm:p-4 sm:text-xs">
           <code>
             {tokenLines.map((line, lineIndex) => {
               const lineText = line.map((token) => token.text).join("");
@@ -460,19 +461,21 @@ export function Table({
   headers: string[];
 }) {
   return (
-    <div className="my-4 overflow-x-auto rounded-sm border border-border/50 bg-transparent shadow-xs">
-      <table className="w-full text-left text-xs sm:text-xs">
-        <thead>
-          <tr className="border-b border-border/50 bg-muted/25 font-mono text-xs tracking-wider text-muted-foreground">
-            {headers.map((header) => (
-              <th className="px-3.5 py-2.5 font-medium sm:px-4" key={header}>
-                {header}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border/40">{children}</tbody>
-      </table>
+    <div className="my-4 overflow-hidden rounded-sm border border-border/50 bg-transparent shadow-xs">
+      <ScrollArea>
+        <table className="w-full text-left text-xs sm:text-xs">
+          <thead>
+            <tr className="border-b border-border/50 bg-muted/25 font-mono text-xs tracking-wider text-muted-foreground">
+              {headers.map((header) => (
+                <th className="px-3.5 py-2.5 font-medium sm:px-4" key={header}>
+                  {header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border/40">{children}</tbody>
+        </table>
+      </ScrollArea>
     </div>
   );
 }
@@ -531,12 +534,16 @@ export function Callout({
 
 export function FileTree({ items }: { items: string[] }) {
   return (
-    <div className="my-4 overflow-x-auto rounded-sm border border-border/50 bg-muted/15 p-4 font-mono text-xs leading-relaxed sm:text-xs">
-      {items.map((item) => (
-        <div className="py-0.5 text-foreground/85" key={item}>
-          {item}
+    <div className="my-4 overflow-hidden rounded-sm border border-border/50 bg-muted/15">
+      <ScrollArea>
+        <div className="p-4 font-mono text-xs leading-relaxed sm:text-xs">
+          {items.map((item) => (
+            <div className="py-0.5 text-foreground/85" key={item}>
+              {item}
+            </div>
+          ))}
         </div>
-      ))}
+      </ScrollArea>
     </div>
   );
 }

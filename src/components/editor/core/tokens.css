@@ -348,6 +348,38 @@
  * in `oxlint.config.ts`.
  * ========================================================================== */
 
+/* Native scrollbar styling for Lexical-owned scrollers (table wrapper,
+   code block): React can't mount a ScrollArea inside Lexical-managed DOM,
+   so the native bar is restyled to match the shared ScrollArea thumb
+   (10px, fully rounded, border token with pinned fallback). */
+
+.editor-table-scroll-wrapper,
+.editor-code-block {
+  scrollbar-width: thin;
+  scrollbar-color: var(--editor-floating-ring) transparent;
+}
+
+.editor-table-scroll-wrapper::-webkit-scrollbar,
+.editor-code-block::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.editor-table-scroll-wrapper::-webkit-scrollbar-thumb,
+.editor-code-block::-webkit-scrollbar-thumb {
+  background-color: var(--editor-floating-ring);
+  border-radius: 9999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+.editor-table-scroll-wrapper::-webkit-scrollbar-track,
+.editor-code-block::-webkit-scrollbar-track,
+.editor-table-scroll-wrapper::-webkit-scrollbar-corner,
+.editor-code-block::-webkit-scrollbar-corner {
+  background-color: transparent;
+}
+
 .editor-floating {
   background-color: var(--editor-floating-bg);
   color: var(--editor-floating-foreground);

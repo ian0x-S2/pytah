@@ -3,6 +3,7 @@
 import { Select as SelectPrimitive } from "@base-ui/react/select";
 import { CheckIcon, ChevronDownIcon } from "lucide-react";
 
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
 function Select({ ...props }: SelectPrimitive.Root.Props<string, false>) {
@@ -63,7 +64,7 @@ function SelectContent({
       >
         <SelectPrimitive.Popup
           className={cn(
-            "z-50 max-h-(--available-height) min-w-36 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-xl bg-popover p-1 text-popover-foreground shadow-lg ring-1 ring-border duration-100 outline-none data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+            "z-50 max-h-(--available-height) min-w-36 origin-(--transform-origin) overflow-hidden rounded-xl bg-popover p-1 text-popover-foreground shadow-lg ring-1 ring-border duration-100 outline-none data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
             className
           )}
           data-slot="select-content"
@@ -71,10 +72,21 @@ function SelectContent({
         >
           {/* Capped so long option lists scroll internally instead of
               stretching the popup; `--available-height` still guards the
-              viewport on short screens. */}
-          <SelectPrimitive.List className="max-h-32 overflow-y-auto">
-            {children}
-          </SelectPrimitive.List>
+              viewport on short screens. The list renders as the scroll-area
+              viewport so it keeps owning keyboard navigation while using
+              the shared custom scrollbar. `role` is restated via
+              viewport props because the viewport merge would otherwise
+              leave its presentational role on the listbox. */}
+          <ScrollArea
+            className="max-h-32"
+            viewportClassName="max-h-32"
+            viewportProps={{ role: "listbox" }}
+            viewportRender={
+              <SelectPrimitive.List className="max-h-32">
+                {children}
+              </SelectPrimitive.List>
+            }
+          />
         </SelectPrimitive.Popup>
       </SelectPrimitive.Positioner>
     </SelectPrimitive.Portal>

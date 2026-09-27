@@ -27,6 +27,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
 import { $isMathNode } from "../../core/nodes/math/node";
@@ -289,10 +290,13 @@ export function MathComponent({
                 value={draftEquation}
               />
 
-              <div className="editor-math-preview flex items-center justify-center overflow-x-auto">
+              <ScrollArea
+                className="editor-math-preview"
+                viewportClassName="flex items-center justify-center"
+              >
                 {/* biome-ignore lint/security/noDangerouslySetInnerHtml: KaTeX output HTML is sanitized equation preview */}
                 <span dangerouslySetInnerHTML={{ __html: previewHtml }} />
-              </div>
+              </ScrollArea>
 
               <div className="flex items-center justify-between pt-1">
                 <button

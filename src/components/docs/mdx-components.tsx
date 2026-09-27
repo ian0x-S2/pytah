@@ -5,6 +5,7 @@ import {
   extractExportedInterface,
   extractMarkedSource,
 } from "@/components/docs/source-utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { FeatureTable, TransformersTable } from "./data-tables";
 import {
@@ -111,10 +112,12 @@ function MDXList({
 
 function MDXTable({ children }: { children?: ReactNode }) {
   return (
-    <div className="my-4 overflow-x-auto rounded-sm border border-border/50 bg-transparent shadow-xs">
-      <table className="w-full text-left text-xs sm:text-xs [&_tbody]:divide-y [&_tbody]:divide-border/40 [&_tbody_tr:hover]:bg-muted/15 [&_td]:px-3.5 [&_td]:py-2.5 [&_td]:leading-relaxed [&_td]:text-foreground/80 sm:[&_td]:px-4 sm:[&_td]:py-3 [&_th]:px-3.5 [&_th]:py-2.5 [&_th]:font-medium sm:[&_th]:px-4 [&_thead_tr]:border-b [&_thead_tr]:border-border/50 [&_thead_tr]:bg-muted/25 [&_thead_tr]:font-mono [&_thead_tr]:text-xs [&_thead_tr]:tracking-wider [&_thead_tr]:text-muted-foreground [&_tr]:transition-colors">
-        {children}
-      </table>
+    <div className="my-4 overflow-hidden rounded-sm border border-border/50 bg-transparent shadow-xs">
+      <ScrollArea>
+        <table className="w-full text-left text-xs sm:text-xs [&_tbody]:divide-y [&_tbody]:divide-border/40 [&_tbody_tr:hover]:bg-muted/15 [&_td]:px-3.5 [&_td]:py-2.5 [&_td]:leading-relaxed [&_td]:text-foreground/80 sm:[&_td]:px-4 sm:[&_td]:py-3 [&_th]:px-3.5 [&_th]:py-2.5 [&_th]:font-medium sm:[&_th]:px-4 [&_thead_tr]:border-b [&_thead_tr]:border-border/50 [&_thead_tr]:bg-muted/25 [&_thead_tr]:font-mono [&_thead_tr]:text-xs [&_thead_tr]:tracking-wider [&_thead_tr]:text-muted-foreground [&_tr]:transition-colors">
+          {children}
+        </table>
+      </ScrollArea>
     </div>
   );
 }

@@ -14,6 +14,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { ComponentType, CSSProperties } from "react";
 
 import { useTheme } from "@/components/theme-context";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
 import { renderEditorSlot } from "../core/composition";
@@ -79,13 +80,13 @@ function EditorTopToolbar({
 
   return (
     <div className="editor-toolbar">
-      <div className="overflow-x-auto">
+      <ScrollArea>
         {toolbar === "full" ? (
           <FullToolbarPlugin commandIds={commandIds} />
         ) : (
           <BlockTypeToolbarPlugin commandIds={commandIds} />
         )}
-      </div>
+      </ScrollArea>
     </div>
   );
 }
