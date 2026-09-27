@@ -29,6 +29,7 @@ import type { LexicalNode } from "lexical";
 
 import { CODE_LANGUAGE_ALIASES, DEFAULT_CODE_LANGUAGE } from "./languages";
 import { getCodeBlockPalette, getCodeBlockTokenStyle } from "./themes/registry";
+import { resolveThemedTokenType } from "./themes/token-roles";
 
 type TokenizeFn = ReturnType<typeof tokenizeTypescript>;
 
@@ -179,11 +180,22 @@ export const TwinkleplopTokenizer: Tokenizer = {
         pushGapNodes(nodes, code.slice(cursor, start));
       }
       const tokenType = token_types[typeIndex] ?? "identifier";
+      const tokenText = code.slice(start, end);
+      // Everforest re-assigns a few JS/TS roles toward the reference
+      // rendering (plain `import`, PascalCase values as types, orange JSX
+      // brackets, plain props). The resolved type doubles as highlight
+      // type so the token audit stays self-consistent.
+      const displayType = resolveThemedTokenType(
+        theme,
+        grammarKey,
+        tokenType,
+        tokenText
+      );
       pushTokenNodes(
         nodes,
-        code.slice(start, end),
-        tokenType,
-        getCodeBlockTokenStyle(theme, tokenType)
+        tokenText,
+        displayType,
+        getCodeBlockTokenStyle(theme, displayType)
       );
       cursor = end;
     }
