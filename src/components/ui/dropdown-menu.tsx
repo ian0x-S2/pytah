@@ -23,13 +23,16 @@ function DropdownMenuContent({
   side = "bottom",
   sideOffset = 4,
   className,
+  viewportClassName,
   children,
   ...props
 }: MenuPrimitive.Popup.Props &
   Pick<
     MenuPrimitive.Positioner.Props,
     "align" | "alignOffset" | "side" | "sideOffset"
-  >) {
+  > & {
+    viewportClassName?: string;
+  }) {
   return (
     <MenuPrimitive.Portal>
       <MenuPrimitive.Positioner
@@ -49,8 +52,15 @@ function DropdownMenuContent({
         >
           {/* Inner scroll container capped by `--available-height` so long
               menus scroll with the shared custom scrollbar instead of the
-              native one. */}
-          <ScrollArea viewportClassName="max-h-(--available-height)">
+              native one. Horizontal scrolling is disabled outright: menu
+              items wrap instead of triggering a horizontal scrollbar. */}
+          <ScrollArea
+            hideHorizontalScrollbar
+            viewportClassName={cn(
+              "max-h-(--available-height)",
+              viewportClassName
+            )}
+          >
             {children}
           </ScrollArea>
         </MenuPrimitive.Popup>

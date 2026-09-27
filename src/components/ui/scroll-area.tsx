@@ -31,6 +31,7 @@ function ScrollArea({
   viewportClassName,
   viewportProps,
   viewportRender,
+  hideHorizontalScrollbar = false,
   children,
   ...props
 }: ScrollAreaPrimitive.Root.Props & {
@@ -51,7 +52,19 @@ function ScrollArea({
    * already carries its children; `children` is ignored in this mode.
    */
   viewportRender?: React.ReactElement;
+  /**
+   * Clips horizontal overflow on the viewport and skips rendering the
+   * horizontal scrollbar. The `!important` class wins over the Base UI
+   * default inline `overflow: scroll`, which a plain utility cannot
+   * override. Use for menus and lists that must only ever scroll
+   * vertically.
+   */
+  hideHorizontalScrollbar?: boolean;
 }) {
+  const viewportOverflowClassName = hideHorizontalScrollbar
+    ? "overflow-x-hidden!"
+    : undefined;
+
   return (
     <ScrollAreaPrimitive.Root
       className={cn("relative overflow-hidden", className)}
@@ -62,6 +75,7 @@ function ScrollArea({
         <ScrollAreaPrimitive.Viewport
           className={cn(
             "size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1",
+            viewportOverflowClassName,
             viewportClassName
           )}
           data-slot="scroll-area-viewport"
@@ -72,15 +86,17 @@ function ScrollArea({
         <ScrollAreaPrimitive.Viewport
           className={cn(
             "size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1",
+            viewportOverflowClassName,
             viewportClassName
           )}
           data-slot="scroll-area-viewport"
+          {...viewportProps}
         >
           {children}
         </ScrollAreaPrimitive.Viewport>
       )}
       <ScrollBar />
-      <ScrollBar orientation="horizontal" />
+      {!hideHorizontalScrollbar && <ScrollBar orientation="horizontal" />}
       <ScrollAreaPrimitive.Corner />
     </ScrollAreaPrimitive.Root>
   );

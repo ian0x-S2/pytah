@@ -78,14 +78,14 @@ export const BlockTypeDrop = memo(
 
       return (
         <DropdownMenuItem
-          className="items-start gap-3 px-3 py-2"
+          className="items-start gap-3 overflow-hidden px-3 py-2"
           key={option.value}
           onClick={() => handleChange(option.value)}
         >
-          <span className="mt-0.5 rounded-sm bg-muted p-1 text-muted-foreground">
+          <span className="mt-0.5 shrink-0 rounded-sm bg-muted p-1 text-muted-foreground">
             <Icon className="size-4" />
           </span>
-          <span className="flex flex-col">
+          <span className="flex min-w-0 flex-1 flex-col">
             <span className="text-sm font-medium text-foreground">
               {option.label}
             </span>
@@ -108,7 +108,10 @@ export const BlockTypeDrop = memo(
           <ChevronDownIcon className="size-4 text-muted-foreground" />
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent className={cn("w-72", className)}>
+        <DropdownMenuContent
+          className={cn("max-h-80 w-72", className)}
+          viewportClassName="max-h-80"
+        >
           <DropdownMenuGroup>
             <DropdownMenuLabel>Turn into</DropdownMenuLabel>
             {conversionOptions.map(renderOption)}
