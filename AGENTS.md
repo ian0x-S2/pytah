@@ -91,23 +91,12 @@ Write code that is **accessible, performant, type-safe, and maintainable**. Focu
 - Use top-level regex literals instead of creating them in loops
 - Prefer specific imports over namespace imports
 - Avoid barrel files (index files that re-export everything)
-- Use proper image components (e.g., Next.js `<Image>`) over `<img>` tags
 
 ### Framework-Specific Guidance
-
-**Next.js:**
-
-- Use Next.js `<Image>` component for images
-- Use `next/head` or App Router metadata API for head elements
-- Use Server Components for async data fetching instead of async Client Components
 
 **React 19+:**
 
 - Use ref as a prop instead of `React.forwardRef`
-
-**Solid/Svelte/Vue/Qwik:**
-
-- Use `class` and `for` attributes (not `className` or `htmlFor`)
 
 ---
 
@@ -117,6 +106,12 @@ Write code that is **accessible, performant, type-safe, and maintainable**. Focu
 - Avoid done callbacks in async tests - use async/await instead
 - Don't use `.only` or `.skip` in committed code
 - Keep test suites reasonably flat - avoid excessive `describe` nesting
+
+## Changelog
+
+- Every user-facing change (behavior, props, defaults, fixes) gets an entry in `CHANGELOG.md` under `## Unreleased`, grouped as `Added` / `Changed` / `Fixed` / `Removed` — follow the existing entries' style.
+- Internal-only changes (refactors, lint, tests, docs) need no entry.
+- On release: rename `Unreleased` to the new version and bump `version` in `package.json` to match.
 
 ## When Oxlint + Oxfmt Can't Help
 
