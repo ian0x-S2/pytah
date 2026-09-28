@@ -192,6 +192,7 @@ export function DemoPage() {
           {/* Editor flows as the page body — no card, no border */}
           <div className={cn(zen && "pt-20")}>
             <EditorWithToc
+              codeBlockTheme="github"
               density={compact ? "compact" : "comfortable"}
               editable={editable}
               extraFeatures={demoEditorFeatures}
