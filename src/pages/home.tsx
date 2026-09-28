@@ -227,7 +227,7 @@ export function HomePage() {
             Choose your path
           </h2>
           <ol className="mt-6 overflow-hidden rounded-sm border border-border/50">
-            {pathSteps.map((step, index) => (
+            {pathSteps.map((step) => (
               <li
                 className="flex items-baseline gap-4 border-border/40 px-4 py-4 transition-colors not-last:border-b hover:bg-muted/15 sm:gap-6 sm:px-5"
                 key={step.href}
@@ -247,9 +247,6 @@ export function HomePage() {
                   </Link>
                   <span className="text-xs text-muted-foreground">
                     {step.description}
-                    {index === pathSteps.length - 1 ? null : (
-                      <span aria-hidden="true"> →</span>
-                    )}
                   </span>
                 </div>
               </li>

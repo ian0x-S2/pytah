@@ -5,6 +5,7 @@
 ### Changed
 
 - The static toolbar's "Turn into" dropdown is a little narrower (`w-64` → `w-56`, 256px → 224px).
+- The home page "Choose your path" list no longer appends a `→` separator after each step description.
 
 ### Fixed
 
