@@ -91,12 +91,12 @@ export const BlockTypeDrop = memo(
 
       return (
         <DropdownMenuItem
-          className="items-start gap-3 overflow-hidden px-3 py-2"
+          className="items-start gap-2 overflow-hidden px-2.5 py-1.5"
           key={option.value}
           onClick={() => handleChange(option.value)}
         >
-          <span className="mt-0.5 shrink-0 rounded-sm bg-muted p-1 text-muted-foreground">
-            <Icon className="size-4" />
+          <span className="mt-0.5 shrink-0 rounded-sm bg-muted p-0.5 text-muted-foreground">
+            <Icon className="size-3" />
           </span>
           <span className="flex min-w-0 flex-1 flex-col">
             <span className="text-sm font-medium text-foreground">
@@ -166,7 +166,7 @@ export const BlockTypeDrop = memo(
            * Floating-toolbar layout: conversion options only, one line per
            * item (no descriptions), and the menu matches the trigger's own
            * width through the Base UI `--anchor-width` variable (min-w and
-           * the fixed w-72 of the full variant are reset).
+           * the fixed w-56 of the full variant are reset).
            */
           <DropdownMenuContent
             className={cn("max-h-80 min-w-0", className)}
@@ -179,8 +179,11 @@ export const BlockTypeDrop = memo(
           </DropdownMenuContent>
         ) : (
           <DropdownMenuContent
-            className={cn("max-h-80 w-72", className)}
-            viewportClassName="max-h-80"
+            className={cn("max-h-80 w-56 pb-1.5", className)}
+            /* The popup's `max-h-80` already includes its own p-1 + pb-1.5,
+               so the inner viewport must cap 10px lower or the popup's
+               overflow-hidden clips the last item. */
+            viewportClassName="max-h-[19.375rem]"
           >
             <DropdownMenuGroup>
               <DropdownMenuLabel>Turn into</DropdownMenuLabel>

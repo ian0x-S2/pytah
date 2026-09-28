@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changed
+
+- The static toolbar's "Turn into" dropdown is a little narrower (`w-64` → `w-56`, 256px → 224px).
+
 ### Fixed
 
 - The vertical `<Separator>` primitive no longer ships `data-vertical:self-stretch`. With a definite height (every toolbar separator sets `h-4`/`h-5`), `stretch` makes flexbox fall back to `flex-start`, so separators sat at the top of the row instead of centering — they now center via the parent's `items-center` on every toolbar (floating, static and block-type).
