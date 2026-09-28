@@ -253,17 +253,6 @@ export function HomePage() {
             ))}
           </ol>
         </section>
-
-        {/* C3 typographic close: one link, no box */}
-        <div className="mt-16 sm:mt-20">
-          <Link
-            className="inline-flex items-center gap-1.5 text-sm font-medium whitespace-nowrap text-foreground underline underline-offset-4 transition-opacity hover:opacity-80"
-            href="/docs/overview"
-          >
-            Start with the overview
-            <ArrowRightIcon className="size-4" />
-          </Link>
-        </div>
       </main>
 
       {/* Ft2 inline single line */}
