@@ -64,7 +64,7 @@ Site + docs use **only** `rounded-sm`. `rounded-full` is banned everywhere on th
 
 ## Per-page allowances
 
-- Marketing pages MAY use one Tier-A CSS-art proof (isometric document-layer stack with real format labels from the snapshot feature). No 3D, no Lottie, no photo placeholders.
+- Marketing pages MAY use one Tier-A proof panel (home only): the isometric layer stack — a real Three.js scene whose faces are shared SVG artwork, with a static SVG twin for loading, reduced-motion and no-WebGL. The three planes carry product content (composed pieces, the shadcn/Base UI kit, the `pytah` editor surface), never decoration. No Lottie, no photo placeholders.
 - App pages MUST NOT use enrichment — function carries the page.
 - Content pages: typography only.
 
