@@ -74,6 +74,7 @@ export default defineConfig({
         "src/components/editor/plugins/link-behavior/floating-link-editor.tsx",
         "src/components/editor/plugins/table-behavior/plugin.tsx",
         "src/components/editor/ui/color-swatches.tsx",
+        "src/components/pixel-perfect/hover-layer-stack.tsx",
       ],
       rules: {
         "shadcn/no-inline-styles": "off",
@@ -207,13 +208,6 @@ export default defineConfig({
       },
     },
     {
-      // three.js material props, not CSS: theme tokens do not apply.
-      files: ["src/components/home/hero-cube-3d.tsx"],
-      rules: {
-        "shadcn/no-raw-colors": "off",
-      },
-    },
-    {
       // Full-screen canvas editor with custom Escape semantics (the canvas
       // keeps its own); native dialog would change focus/backdrop behavior.
       files: ["src/components/editor/plugins/excalidraw/modal.tsx"],
@@ -282,6 +276,14 @@ export default defineConfig({
       files: ["src/components/editor/plugins/image/utils.ts"],
       rules: {
         "promise/avoid-new": "off",
+      },
+    },
+    {
+      // Vendor registry component (pixel-perfect) ships `motion` by design;
+      // migrating to LazyMotion would fork upstream behavior.
+      files: ["src/components/pixel-perfect/hover-layer-stack.tsx"],
+      rules: {
+        "react-doctor/use-lazy-motion": "off",
       },
     },
   ],

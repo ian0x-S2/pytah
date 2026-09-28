@@ -4,7 +4,7 @@ import { ArrowRightIcon, ArrowUpRightIcon } from "lucide-react";
 import { Link } from "wouter";
 
 import { ThemeToggle } from "@/components/docs/theme-toggle";
-import { HeroLayers } from "@/components/home/hero-layers";
+import { HoverLayerStack } from "@/components/pixel-perfect/hover-layer-stack";
 import { Button } from "@/components/ui/button";
 import { REPOSITORY_URL } from "@/lib/site";
 
@@ -169,8 +169,18 @@ export function HomePage() {
             </dl>
           </div>
 
-          {/* Proof: isometric document-layer stack (Tier-A WebGL) */}
-          <HeroLayers />
+          {/* Proof: isometric editor stack (hover to explode) */}
+          <figure
+            aria-label="Isometric stack of editor layers: compose canvas, node blocks, document surface and floating toolbar"
+            className="flex min-h-[320px] flex-col items-center justify-end gap-8 pt-10 pb-4 lg:col-span-5 lg:mt-8 lg:pt-12"
+          >
+            <div className="mb-1 scale-110">
+              <HoverLayerStack />
+            </div>
+            <figcaption className="font-mono text-xs whitespace-nowrap text-muted-foreground">
+              compose · type · format · ship
+            </figcaption>
+          </figure>
         </div>
 
         <hr className="mt-16 border-border/40 sm:mt-24" />
