@@ -44,6 +44,7 @@ export default defineConfig({
         "src/components/editor/editor.tsx",
         "src/components/editor/plugins/block-type-toolbar/plugin.tsx",
         "src/components/editor/plugins/block-type-toolbar/utils.ts",
+        "src/components/editor/plugins/floating-toolbar/overflow-menu.tsx",
         "src/components/editor/plugins/floating-toolbar/plugin.tsx",
         "src/components/editor/plugins/markdown/transformers.test.ts",
         "src/pages/demo.tsx",

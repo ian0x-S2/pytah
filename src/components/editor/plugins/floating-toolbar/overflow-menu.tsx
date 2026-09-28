@@ -121,13 +121,17 @@ export const FloatingToolbarOverflowMenu = memo(
           <DropdownMenuSeparator />
 
           <DropdownMenuItem
-            onClick={() => editor.dispatchCommand(OUTDENT_CONTENT_COMMAND)}
+            onClick={() =>
+              editor.dispatchCommand(OUTDENT_CONTENT_COMMAND, undefined)
+            }
           >
             <IndentDecreaseIcon aria-hidden />
             <span>Outdent</span>
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={() => editor.dispatchCommand(INDENT_CONTENT_COMMAND)}
+            onClick={() =>
+              editor.dispatchCommand(INDENT_CONTENT_COMMAND, undefined)
+            }
           >
             <IndentIncreaseIcon aria-hidden />
             <span>Indent</span>
