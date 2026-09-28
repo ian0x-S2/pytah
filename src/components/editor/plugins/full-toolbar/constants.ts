@@ -1,8 +1,4 @@
 import {
-  AlignCenterIcon,
-  AlignJustifyIcon,
-  AlignLeftIcon,
-  AlignRightIcon,
   BoldIcon,
   CodeIcon,
   HighlighterIcon,
@@ -10,6 +6,10 @@ import {
   StrikethroughIcon,
   UnderlineIcon,
 } from "lucide-react";
+
+// Align actions are shared with the floating toolbar's secondary row; the
+// floating folder owns the list, the full toolbar only re-exports it.
+export { TOOLBAR_ALIGN_ACTIONS as ALIGN_ACTIONS } from "../floating-toolbar/constants";
 
 export const INLINE_FORMAT_ACTIONS = [
   { format: "bold", icon: BoldIcon, key: "isBold", label: "Bold" },
@@ -34,10 +34,3 @@ export const INLINE_FORMAT_ACTIONS = [
     label: "Highlight",
   },
 ] as const;
-
-export const ALIGN_ACTIONS = [
-  { align: "left" as const, icon: AlignLeftIcon, label: "Align left" },
-  { align: "center" as const, icon: AlignCenterIcon, label: "Align center" },
-  { align: "right" as const, icon: AlignRightIcon, label: "Align right" },
-  { align: "justify" as const, icon: AlignJustifyIcon, label: "Justify" },
-];

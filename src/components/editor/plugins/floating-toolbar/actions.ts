@@ -4,7 +4,12 @@ import {
   TOGGLE_LINK_COMMAND,
 } from "@lexical/link";
 import { $patchStyleText } from "@lexical/selection";
-import { $getSelection, $isRangeSelection, FORMAT_TEXT_COMMAND } from "lexical";
+import {
+  $getSelection,
+  $isRangeSelection,
+  FORMAT_ELEMENT_COMMAND,
+  FORMAT_TEXT_COMMAND,
+} from "lexical";
 import type { LexicalEditor } from "lexical";
 
 import {
@@ -55,17 +60,32 @@ export const clearToolbarLink = (editor: LexicalEditor) => {
   editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
 };
 
+export type ToggleableTextFormat =
+  | "bold"
+  | "italic"
+  | "underline"
+  | "strikethrough"
+  | "code"
+  | "highlight"
+  | "subscript"
+  | "superscript";
+
 export const toggleToolbarFormat = (
   editor: LexicalEditor,
-  format:
-    | "bold"
-    | "italic"
-    | "underline"
-    | "strikethrough"
-    | "code"
-    | "highlight"
+  format: ToggleableTextFormat
 ) => {
   editor.dispatchCommand(FORMAT_TEXT_COMMAND, format);
+};
+
+/**
+ * Applies a horizontal alignment to the current block-level selection.
+ * Passing `""` resets it (left in LTR documents).
+ */
+export const alignToolbarSelection = (
+  editor: LexicalEditor,
+  align: "left" | "center" | "right" | "justify" | ""
+) => {
+  editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, align);
 };
 
 /**

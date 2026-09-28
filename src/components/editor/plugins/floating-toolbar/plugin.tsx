@@ -29,12 +29,17 @@ import { Toggle } from "@/components/ui/toggle";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
+import { useEditorResolvedCommands } from "../../core/editor-commands-context";
 import { ColorSwatches } from "../../ui/color-swatches";
 import { ToolbarTooltip } from "../../ui/toolbar-tooltip";
+import { BlockTypeDrop } from "../block-type-toolbar/block-type-drop";
+import type { BlockTypeValue } from "../block-type-toolbar/types";
+import { getBlockTypeFromSelection } from "../block-type-toolbar/utils";
 import { LINK_PLACEHOLDER_URL } from "../link-behavior/utils";
 import { applyBgColor, applyTextColor, toggleToolbarFormat } from "./actions";
 import { DEFAULT_FORMAT_STATE, EMPTY_TOOLBAR_POSITION } from "./constants";
 import { OPEN_FLOATING_LINK_EDITOR_COMMAND } from "./link-command";
+import { FloatingToolbarOverflowMenu } from "./overflow-menu";
 import { clampFloatingToolbarPosition } from "./position";
 import {
   areFloatingToolbarFormatsEqual,
@@ -73,6 +78,7 @@ const TOOLBAR_FORMAT_ACTIONS = [
 export function FloatingToolbarPlugin() {
   const [editor] = useLexicalComposerContext();
   const toolbarRef = useRef<HTMLDivElement>(null);
+  const commandIds = useEditorResolvedCommands();
 
   const [isVisible, setIsVisible] = useState(false);
   const [position, setPosition] = useState<FloatingToolbarPosition>(
@@ -80,6 +86,7 @@ export function FloatingToolbarPlugin() {
   );
   const [formats, setFormats] =
     useState<FloatingToolbarFormatState>(DEFAULT_FORMAT_STATE);
+  const [blockType, setBlockType] = useState<BlockTypeValue>("paragraph");
 
   // The raw position anchors the toolbar at the selection midpoint; the
   // rendered box is clamped against the measured toolbar size so it never
@@ -108,12 +115,12 @@ export function FloatingToolbarPlugin() {
     );
   }, [isVisible, position]);
   /*
-   * When a color picker popover is open we skip visibility/position updates so
-   * the floating toolbar stays alive while the user browses swatches.  A ref
-   * (rather than state) is used to avoid re-registering the update listener on
-   * every open/close cycle.
+   * When a color picker popover or the "Turn into" dropdown is open we skip
+   * visibility/position updates so the floating toolbar stays alive while the
+   * user interacts with floating surfaces. A ref (rather than state) is used
+   * to avoid re-registering the update listener on every open/close cycle.
    */
-  const isColorPickerOpenRef = useRef(false);
+  const openSurfaceCountRef = useRef(0);
 
   const updateToolbar = useEffectEvent(() => {
     editor.getEditorState().read(() => {
@@ -125,7 +132,15 @@ export function FloatingToolbarPlugin() {
           : toolbarState.formats
       );
 
-      if (!isColorPickerOpenRef.current) {
+      // Read inside the Lexical read() scope; the updater only compares.
+      const nextBlockType = getBlockTypeFromSelection();
+      if (nextBlockType) {
+        setBlockType((currentBlockType) =>
+          currentBlockType === nextBlockType ? currentBlockType : nextBlockType
+        );
+      }
+
+      if (openSurfaceCountRef.current === 0) {
         setIsVisible((currentIsVisible) =>
           currentIsVisible === toolbarState.isVisible
             ? currentIsVisible
@@ -171,8 +186,8 @@ export function FloatingToolbarPlugin() {
     editor.dispatchCommand(OPEN_FLOATING_LINK_EDITOR_COMMAND, undefined);
   };
 
-  const handleColorPickerOpenChange = (open: boolean) => {
-    isColorPickerOpenRef.current = open;
+  const handleSurfaceOpenChange = (open: boolean) => {
+    openSurfaceCountRef.current += open ? 1 : -1;
   };
 
   if (!isVisible) {
@@ -197,6 +212,16 @@ export function FloatingToolbarPlugin() {
         role="toolbar"
       >
         <TooltipProvider>
+          <BlockTypeDrop
+            blockType={blockType}
+            commandIds={commandIds}
+            editor={editor}
+            onOpenChange={handleSurfaceOpenChange}
+            variant="compact"
+          />
+
+          <Separator className="mr-0.5 ml-1.5 h-5" orientation="vertical" />
+
           {TOOLBAR_FORMAT_ACTIONS.map((action) => {
             const Icon = action.icon;
 
@@ -224,7 +249,7 @@ export function FloatingToolbarPlugin() {
             icon={BaselineIcon}
             label="Text color"
             onColorChange={(color) => applyTextColor(editor, color)}
-            onOpenChange={handleColorPickerOpenChange}
+            onOpenChange={handleSurfaceOpenChange}
           />
 
           {/* Background color — uses `background-color` CSS property */}
@@ -233,7 +258,7 @@ export function FloatingToolbarPlugin() {
             icon={PaintBucketIcon}
             label="Background color"
             onColorChange={(color) => applyBgColor(editor, color)}
-            onOpenChange={handleColorPickerOpenChange}
+            onOpenChange={handleSurfaceOpenChange}
           />
 
           <Separator className="mx-0.5 h-5" orientation="vertical" />
@@ -248,6 +273,12 @@ export function FloatingToolbarPlugin() {
               <LinkIcon />
             </Toggle>
           </ToolbarTooltip>
+
+          <FloatingToolbarOverflowMenu
+            editor={editor}
+            formats={formats}
+            onOpenChange={handleSurfaceOpenChange}
+          />
         </TooltipProvider>
       </div>
     </div>,

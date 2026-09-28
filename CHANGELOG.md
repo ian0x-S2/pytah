@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- The vertical `<Separator>` primitive no longer ships `data-vertical:self-stretch`. With a definite height (every toolbar separator sets `h-4`/`h-5`), `stretch` makes flexbox fall back to `flex-start`, so separators sat at the top of the row instead of centering — they now center via the parent's `items-center` on every toolbar (floating, static and block-type).
+
+### Added
+
+- The floating selection toolbar gained a "⋮" overflow menu at the end of the row, grouping super/subscript (with an active-state check), text alignment (left/center/right/justify) and indent/outdent into a dropdown so the toolbar itself stays a single row. The row is now ordered like the reference: "Turn into" block dropdown (reusing the static toolbar's `BlockTypeDrop`, feature-gated through the resolved slash command ids so options follow the enabled feature set), inline format toggles, colors, link, overflow menu. The toolbar stays alive while any of its popovers (color pickers, Turn Into menu, overflow menu) is open.
+- `BlockTypeDrop` accepts a `variant` prop: `"full"` (default, unchanged static-toolbar layout with descriptions and the Insert section) or `"compact"` — used by the floating toolbar — which renders only the conversion options (Text, Heading 1–3, Bulleted list, Numbered list, To-do list, Blockquote, Code block) as single-line items, gives the trigger a `min-w-32` floor width with the label left-aligned (chevron pushed to the right edge), and sizes the menu to its trigger's width.
+- The floating toolbar's vertical separators are vertically centered again: the Base UI `Separator` primitive ships `data-vertical:self-stretch`, which combined with a fixed `h-5` pushed the separators to the top of the row instead of centering them.
+
 ## 0.1.2
 
 ### Fixed

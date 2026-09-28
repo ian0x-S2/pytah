@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 
 import { renderEditorSlot } from "../core/composition";
 import type { ResolvedEditorFeatureFlags } from "../core/composition";
+import { EditorResolvedCommandsContext } from "../core/editor-commands-context";
 import { EditorTransformersContext } from "../core/editor-transformers-context";
 import { EDITOR_FEATURES, renderSlashCommandPlugin } from "../core/features";
 import type {
@@ -304,75 +305,82 @@ export function EditorContent({
     resolveCodeBlockThemeId(themeFamily, resolvedTheme)
   );
 
+  const commandIds = useMemo(
+    () => commands.map((entry) => entry.command.id),
+    [commands]
+  );
+
   return (
     <CodeGutterHostContext.Provider value={gutterHost}>
       <CodeBlockThemeContext.Provider value={themeValue}>
-        <EditorTopToolbar
-          commandIds={commands.map((entry) => entry.command.id)}
-          editable={editable}
-          toolbar={toolbar}
-          topToolbar={topToolbar}
-        />
-
-        <div
-          className="group relative bg-background"
-          data-density={density}
-          style={{ "--editor-code-bg": codeBlockBackground } as CSSProperties}
-        >
-          <RichTextPlugin
-            contentEditable={
-              <ContentEditable
-                aria-placeholder={placeholder}
-                className={cn(
-                  "ContentEditable__root editor-content focus:outline-none",
-                  contentClassName
-                )}
-                placeholder={
-                  <div className="editor-content-placeholder pointer-events-none text-muted-foreground">
-                    {placeholder}
-                  </div>
-                }
-                // WebKitGTK lazily boots its enchant spell-checking broker on the
-                // first spellcheck-enabled editable region; with no enchant
-                // backend installed it dlopen-probes every provider serially on
-                // the web-process main thread (~2s freeze, zero JS long tasks,
-                // first mount per session).
-                spellCheck={false}
-              />
-            }
-            ErrorBoundary={LexicalErrorBoundary}
+        <EditorResolvedCommandsContext.Provider value={commandIds}>
+          <EditorTopToolbar
+            commandIds={commandIds}
+            editable={editable}
+            toolbar={toolbar}
+            topToolbar={topToolbar}
           />
-          {/* Host for the code gutter overlay (React-owned DOM the editor
-            reconciler never touches). */}
+
           <div
-            className="pointer-events-none absolute inset-0"
-            ref={setGutterHost}
-          />
-        </div>
+            className="group relative bg-background"
+            data-density={density}
+            style={{ "--editor-code-bg": codeBlockBackground } as CSSProperties}
+          >
+            <RichTextPlugin
+              contentEditable={
+                <ContentEditable
+                  aria-placeholder={placeholder}
+                  className={cn(
+                    "ContentEditable__root editor-content focus:outline-none",
+                    contentClassName
+                  )}
+                  placeholder={
+                    <div className="editor-content-placeholder pointer-events-none text-muted-foreground">
+                      {placeholder}
+                    </div>
+                  }
+                  // WebKitGTK lazily boots its enchant spell-checking broker on the
+                  // first spellcheck-enabled editable region; with no enchant
+                  // backend installed it dlopen-probes every provider serially on
+                  // the web-process main thread (~2s freeze, zero JS long tasks,
+                  // first mount per session).
+                  spellCheck={false}
+                />
+              }
+              ErrorBoundary={LexicalErrorBoundary}
+            />
+            {/* Host for the code gutter overlay (React-owned DOM the editor
+            reconciler never touches). */}
+            <div
+              className="pointer-events-none absolute inset-0"
+              ref={setGutterHost}
+            />
+          </div>
 
-        {!minimal && showFooter ? footerContent : null}
+          {!minimal && showFooter ? footerContent : null}
 
-        {pluginSlots?.beforeDefault}
-        <DefaultEditorPlugins
-          editable={editable}
-          extraFeatures={extraFeatures}
-          features={features}
-          initialHtml={initialHtml}
-          initialMarkdown={initialMarkdown}
-          onSnapshotChange={onSnapshotChange}
-          onSnapshotReady={onSnapshotReady}
-          seededViaConfig={seededViaConfig}
-          transformers={transformers}
-        />
-        {editable ? (
-          <EditableEditorPlugins
-            commands={commands}
+          {pluginSlots?.beforeDefault}
+          <DefaultEditorPlugins
+            editable={editable}
             extraFeatures={extraFeatures}
             features={features}
-            pluginSlots={pluginSlots}
+            initialHtml={initialHtml}
+            initialMarkdown={initialMarkdown}
+            onSnapshotChange={onSnapshotChange}
+            onSnapshotReady={onSnapshotReady}
+            seededViaConfig={seededViaConfig}
+            transformers={transformers}
           />
-        ) : null}
-        {pluginSlots?.afterDefault}
+          {editable ? (
+            <EditableEditorPlugins
+              commands={commands}
+              extraFeatures={extraFeatures}
+              features={features}
+              pluginSlots={pluginSlots}
+            />
+          ) : null}
+          {pluginSlots?.afterDefault}
+        </EditorResolvedCommandsContext.Provider>
       </CodeBlockThemeContext.Provider>
     </CodeGutterHostContext.Provider>
   );

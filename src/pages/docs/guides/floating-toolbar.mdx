@@ -11,6 +11,7 @@ badge: "Feature Guide"
 import floatingToolbarActionsSource from "@/components/editor/plugins/floating-toolbar/actions.ts?raw";
 import floatingToolbarConstantsSource from "@/components/editor/plugins/floating-toolbar/constants.ts?raw";
 import floatingToolbarLinkCommandSource from "@/components/editor/plugins/floating-toolbar/link-command.ts?raw";
+import floatingToolbarOverflowMenuSource from "@/components/editor/plugins/floating-toolbar/overflow-menu.tsx?raw";
 import floatingToolbarPluginSource from "@/components/editor/plugins/floating-toolbar/plugin.tsx?raw";
 import floatingToolbarSelectionSource from "@/components/editor/plugins/floating-toolbar/selection.ts?raw";
 import floatingToolbarTypesSource from "@/components/editor/plugins/floating-toolbar/types.ts?raw";
@@ -26,10 +27,11 @@ import floatingToolbarTypesSource from "@/components/editor/plugins/floating-too
   items={[
     "src/components/editor/plugins/floating-toolbar/",
     "  types.ts          ← FloatingToolbarState + sub-types",
-    "  constants.ts      ← default/empty state values",
+    "  constants.ts      ← default/empty state values + shared align actions",
     "  selection.ts      ← read selection, compute position + formats",
-    "  actions.ts        ← format toggle, link submit/clear, color apply",
+    "  actions.ts        ← format toggle, align, link submit/clear, color apply",
     "  link-command.ts   ← OPEN_FLOATING_LINK_EDITOR_COMMAND",
+    "  overflow-menu.tsx ← ⋮ menu (Turn Into options, sub/sup, align, indent)",
     "  plugin.tsx        ← FloatingToolbarPlugin (portal + event wiring)",
   ]}
 />
@@ -76,7 +78,7 @@ Pure read-only helpers that compute the toolbar's state from the current Lexical
 
 ## actions.ts
 
-Imperative helpers that dispatch Lexical commands or call `editor.update()`. Imported by the plugin and by the floating link editor.
+Imperative helpers that dispatch Lexical commands or call `editor.update()`. Imported by the plugin, the secondary row and by the floating link editor.
 
 <CodeBlock
   label="src/components/editor/plugins/floating-toolbar/actions.ts"
@@ -85,9 +87,20 @@ Imperative helpers that dispatch Lexical commands or call `editor.update()`. Imp
   {floatingToolbarActionsSource}
 </CodeBlock>
 
+## overflow-menu.tsx
+
+The "⋮" overflow menu: super/subscript (with an active check), alignment and indent controls grouped in a dropdown so the toolbar itself stays a single row. Reuses the static toolbar's command wiring; kept in its own file so `plugin.tsx` stays the orchestration entrypoint.
+
+<CodeBlock
+  label="src/components/editor/plugins/floating-toolbar/overflow-menu.tsx"
+  language="tsx"
+>
+  {floatingToolbarOverflowMenuSource}
+</CodeBlock>
+
 ## plugin.tsx
 
-The plugin subscribes to `SELECTION_CHANGE_COMMAND` and the update listener, then renders the toolbar as a fixed portal over the selection. A `isColorPickerOpenRef` prevents the toolbar from disappearing while a color popover is open.
+The plugin subscribes to `SELECTION_CHANGE_COMMAND` and the update listener, then renders the toolbar as a fixed portal over the selection. The single row is ordered: the "Turn into" block dropdown (reusing `BlockTypeDrop` in its `compact` variant — conversion options only, single-line items, menu as wide as its trigger, feature-gated through the resolved command ids), inline format toggles, color pickers, link, and the "⋮" overflow menu. An open-surface ref prevents the toolbar from disappearing while a color popover or the overflow menu is open.
 
 <CodeBlock
   label="src/components/editor/plugins/floating-toolbar/plugin.tsx"
@@ -111,9 +124,10 @@ The floating toolbar ships behind the `floatingToolbar` feature flag. To add it 
 />
 ```
 
-<Callout title="Color picker stability" variant="tip">
-  The plugin uses a `ref` (not state) to track whether a color picker is open.
-  This avoids re-registering the `SELECTION_CHANGE_COMMAND` listener on every
-  open/close cycle while still preventing the toolbar from being hidden while
-  the user browses swatches.
+<Callout title="Floating surface stability" variant="tip">
+  The plugin uses a ref counter (not state) to track whether a color picker or
+  the overflow menu is open. This avoids re-registering the
+  `SELECTION_CHANGE_COMMAND` listener on every open/close cycle while still
+  preventing the toolbar from being hidden while the user browses swatches or
+  menu options.
 </Callout>

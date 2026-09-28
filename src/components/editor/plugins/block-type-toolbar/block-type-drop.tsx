@@ -41,6 +41,17 @@ interface BlockTypeDropProps {
   commandIds?: readonly string[];
   editor: LexicalEditor;
   onBlockTypeChange?: (value: BlockTypeValue) => void;
+  /** Notified when the dropdown opens/closes — used by the floating toolbar
+   *  to avoid being hidden while the menu is in use. */
+  onOpenChange?: (open: boolean) => void;
+  /**
+   * `full` (default) renders the static toolbar layout: icon chip, label and
+   * description per item, plus the "Insert" section. `compact` renders the
+   * floating-toolbar layout: conversion options only, single-line items and
+   * a menu as wide as its trigger (with a floor width so short labels like
+   * "Text" still yield a comfortable menu).
+   */
+  variant?: "full" | "compact";
 }
 
 export const BlockTypeDrop = memo(
@@ -50,6 +61,8 @@ export const BlockTypeDrop = memo(
     commandIds,
     editor,
     onBlockTypeChange,
+    onOpenChange,
+    variant = "full",
   }: BlockTypeDropProps) => {
     const availableOptions = getAvailableBlockOptions(
       commandIds ?? BLOCK_OPTIONS.map((option) => option.value)
@@ -100,31 +113,89 @@ export const BlockTypeDrop = memo(
       );
     };
 
-    return (
-      <DropdownMenu>
-        <DropdownMenuTrigger render={<Button size="sm" variant="outline" />}>
-          <CurrentIcon className="size-4" />
-          <span>{currentOption?.label ?? BLOCK_LABELS.paragraph}</span>
-          <ChevronDownIcon className="size-4 text-muted-foreground" />
-        </DropdownMenuTrigger>
+    const renderCompactOption = (option: BlockOption) => {
+      const Icon = BLOCK_ICONS[option.value];
+      const isSelected = option.value === blockType;
 
-        <DropdownMenuContent
-          className={cn("max-h-80 w-72", className)}
-          viewportClassName="max-h-80"
+      return (
+        <DropdownMenuItem
+          className="gap-2.5 px-2.5 py-1.5"
+          key={option.value}
+          onClick={() => handleChange(option.value)}
         >
-          <DropdownMenuGroup>
-            <DropdownMenuLabel>Turn into</DropdownMenuLabel>
-            {conversionOptions.map(renderOption)}
-          </DropdownMenuGroup>
-
-          {insertOptions.length > 0 && (
-            <DropdownMenuGroup>
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel>Insert</DropdownMenuLabel>
-              {insertOptions.map(renderOption)}
-            </DropdownMenuGroup>
+          <Icon className="size-3.5 shrink-0 text-muted-foreground" />
+          <span className="truncate text-sm text-foreground">
+            {option.label}
+          </span>
+          {isSelected && (
+            <CheckIcon className="ml-auto size-3.5 shrink-0 self-center text-muted-foreground" />
           )}
-        </DropdownMenuContent>
+        </DropdownMenuItem>
+      );
+    };
+
+    return (
+      <DropdownMenu onOpenChange={onOpenChange}>
+        {/*
+         * The compact (floating) trigger keeps a floor width so the menu —
+         * which follows the trigger's width — is comfortable even for short
+         * labels like "Text". Classes stay static to satisfy the shadcn
+         * lint rules; per-placement tuning goes through `variant`.
+         */}
+        {variant === "compact" ? (
+          <DropdownMenuTrigger
+            className="min-w-32 justify-start"
+            render={<Button size="sm" variant="outline" />}
+          >
+            <CurrentIcon className="size-3.5" />
+            <span className="truncate">
+              {currentOption?.label ?? BLOCK_LABELS.paragraph}
+            </span>
+            <ChevronDownIcon className="ml-auto size-3.5 text-muted-foreground" />
+          </DropdownMenuTrigger>
+        ) : (
+          <DropdownMenuTrigger render={<Button size="sm" variant="outline" />}>
+            <CurrentIcon className="size-4" />
+            <span>{currentOption?.label ?? BLOCK_LABELS.paragraph}</span>
+            <ChevronDownIcon className="size-4 text-muted-foreground" />
+          </DropdownMenuTrigger>
+        )}
+
+        {variant === "compact" ? (
+          /*
+           * Floating-toolbar layout: conversion options only, one line per
+           * item (no descriptions), and the menu matches the trigger's own
+           * width through the Base UI `--anchor-width` variable (min-w and
+           * the fixed w-72 of the full variant are reset).
+           */
+          <DropdownMenuContent
+            className={cn("max-h-80 min-w-0", className)}
+            viewportClassName="max-h-80"
+          >
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>Turn into</DropdownMenuLabel>
+              {conversionOptions.map(renderCompactOption)}
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        ) : (
+          <DropdownMenuContent
+            className={cn("max-h-80 w-72", className)}
+            viewportClassName="max-h-80"
+          >
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>Turn into</DropdownMenuLabel>
+              {conversionOptions.map(renderOption)}
+            </DropdownMenuGroup>
+
+            {insertOptions.length > 0 && (
+              <DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>Insert</DropdownMenuLabel>
+                {insertOptions.map(renderOption)}
+              </DropdownMenuGroup>
+            )}
+          </DropdownMenuContent>
+        )}
       </DropdownMenu>
     );
   }
