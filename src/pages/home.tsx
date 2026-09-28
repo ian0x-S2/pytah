@@ -59,7 +59,7 @@ const pathSteps = [
 export function HomePage() {
   return (
     <div className="relative min-h-screen bg-background font-sans text-foreground selection:bg-foreground selection:text-background">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-ambient-home" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-105 bg-ambient-home" />
 
       {/* N9 edge-aligned minimal: wordmark left, actions right, no link row */}
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/70 backdrop-blur-xl">
@@ -172,7 +172,7 @@ export function HomePage() {
           {/* Proof: isometric editor stack (hover to explode) */}
           <figure
             aria-label="Isometric stack of editor layers: compose canvas, node blocks, document surface and floating toolbar"
-            className="flex min-h-[320px] flex-col items-center justify-end gap-8 pt-10 pb-4 lg:col-span-5 lg:mt-8 lg:pt-12"
+            className="flex min-h-80 flex-col items-center justify-end gap-8 pt-10 pb-4 lg:col-span-5 lg:mt-8 lg:pt-12"
           >
             <div className="mb-1 scale-110">
               <HoverLayerStack />
