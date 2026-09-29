@@ -109,7 +109,8 @@ Write code that is **accessible, performant, type-safe, and maintainable**. Focu
 
 ## Changelog
 
-- Every user-facing change (behavior, props, defaults, fixes) gets an entry in `CHANGELOG.md` under `## Unreleased`, grouped as `Added` / `Changed` / `Fixed` / `Removed` — follow the existing entries' style.
+- Every user-facing **editor** change (behavior, props, defaults, fixes) gets an entry in `CHANGELOG.md` under `## Unreleased`, grouped as `Added` / `Changed` / `Fixed` / `Removed` — follow the existing entries' style.
+- Visual/aesthetic-only changes (home page styling, responsive tweaks, marketing surfaces) need no entry.
 - Internal-only changes (refactors, lint, tests, docs) need no entry.
 - On release: rename `Unreleased` to the new version and bump `version` in `package.json` to match.
 

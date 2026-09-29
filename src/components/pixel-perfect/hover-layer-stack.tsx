@@ -40,10 +40,11 @@ export function HoverLayerStack({ className }: { className?: string }) {
   return (
     <motion.div
       animate="rest"
-      className={cn("relative cursor-pointer", className)}
+      className={cn("relative max-w-full cursor-pointer", className)}
       initial="rest"
       style={{ perspective: 1200 }}
       whileHover="lift"
+      whileTap="lift"
     >
       <div
         aria-hidden="true"
@@ -56,7 +57,7 @@ export function HoverLayerStack({ className }: { className?: string }) {
         }}
       >
         <div
-          className="relative size-36"
+          className="relative size-32 sm:size-36"
           style={{ transformStyle: "preserve-3d" }}
         >
           {LAYERS.map((layer, i) => (
