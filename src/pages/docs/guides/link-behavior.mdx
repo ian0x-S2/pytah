@@ -74,7 +74,7 @@ Three URL helpers used by the floating editor and `LinkPlugin`'s `validateUrl` p
 
 ## floating-link-editor.tsx
 
-`FloatingLinkEditorPlugin` renders the link card as a shadcn `Popover` anchored to a virtual element over the live selection rectangle (6px below the text). It shows a **link-text field**, a **URL field** (`Add a link` placeholder) and **open-in-tab / remove / close** actions. Both fields are always editable; edit mode (toolbar link button, `OPEN_FLOATING_LINK_EDITOR_COMMAND`, Cmd/Ctrl+K) only controls which input receives initial focus (the URL one). `Enter` in either field applies the URL and the display text together; `Escape` or an outside press closes the card without applying.
+`FloatingLinkEditorPlugin` renders the link card as a shadcn `Popover` anchored to a virtual element over the live selection rectangle (6px below the text). It shows a **link-text field**, a **URL field** (`Add a link` placeholder) and **open-in-tab / remove / close** actions. Both fields are always editable; edit mode (toolbar link button, `OPEN_FLOATING_LINK_EDITOR_COMMAND`, Cmd/Ctrl+K) only controls which input receives initial focus (the URL one). `Enter` in either field applies the URL and the display text, moves the caret just after the link and closes the card; `Escape` or an outside press closes without applying. When the card opens from the floating toolbar, the toolbar hides itself — while the selection lives inside the link the card is the active surface, and the toolbar returns on the next selection.
 
 ### Commands handled
 

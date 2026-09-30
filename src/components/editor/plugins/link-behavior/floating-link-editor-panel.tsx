@@ -14,9 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import {
+  applyToolbarLink,
   clearToolbarLink,
-  submitToolbarLink,
-  submitToolbarLinkText,
 } from "../floating-toolbar/actions";
 import { sanitizeEditorLinkUrl } from "./utils";
 
@@ -51,8 +50,7 @@ export function FloatingLinkEditorPanel({
   onRequestClose,
 }: FloatingLinkEditorPanelProps) {
   const applyLink = () => {
-    submitToolbarLink(editor, editedLinkUrl);
-    submitToolbarLinkText(editor, editedLinkText);
+    applyToolbarLink(editor, editedLinkUrl, editedLinkText);
     onRequestClose();
   };
 

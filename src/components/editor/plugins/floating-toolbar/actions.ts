@@ -94,6 +94,31 @@ export const submitToolbarLinkText = (
   });
 };
 
+/**
+ * Applies the card's URL + text drafts and moves the caret just after the
+ * link. Collapsing outside the link is what lets the card close on Enter:
+ * a selection still inside a single link would otherwise re-open it on the
+ * next sync.
+ */
+export const applyToolbarLink = (
+  editor: LexicalEditor,
+  linkUrl: string,
+  linkText: string
+) => {
+  submitToolbarLink(editor, linkUrl);
+  submitToolbarLinkText(editor, linkText);
+  editor.update(() => {
+    const selection = $getSelection();
+    if (!$isRangeSelection(selection)) {
+      return;
+    }
+
+    const selectedNode = getFloatingToolbarSelectedNode(selection);
+    const linkNode = getSelectedLinkNode(selectedNode);
+    linkNode?.selectNext();
+  });
+};
+
 export type ToggleableTextFormat =
   | "bold"
   | "italic"

@@ -122,6 +122,12 @@ export function FloatingToolbarPlugin() {
    */
   const openSurfaceCountRef = useRef(0);
 
+  // Set when the user opens the link card from this toolbar. While it is
+  // set and the selection still lives inside a single link, the toolbar
+  // stays closed: the card is the active editing surface. The flag clears
+  // once the selection leaves the link.
+  const linkEditorOpenRef = useRef(false);
+
   const updateToolbar = useEffectEvent(() => {
     editor.getEditorState().read(() => {
       const toolbarState = readFloatingToolbarState();
@@ -138,6 +144,16 @@ export function FloatingToolbarPlugin() {
         setBlockType((currentBlockType) =>
           currentBlockType === nextBlockType ? currentBlockType : nextBlockType
         );
+      }
+
+      if (linkEditorOpenRef.current) {
+        if (toolbarState.linkUrl !== "") {
+          setIsVisible((currentIsVisible) =>
+            currentIsVisible ? false : currentIsVisible
+          );
+          return;
+        }
+        linkEditorOpenRef.current = false;
       }
 
       if (openSurfaceCountRef.current === 0) {
@@ -184,6 +200,8 @@ export function FloatingToolbarPlugin() {
 
     editor.dispatchCommand(TOGGLE_LINK_COMMAND, LINK_PLACEHOLDER_URL);
     editor.dispatchCommand(OPEN_FLOATING_LINK_EDITOR_COMMAND, undefined);
+    linkEditorOpenRef.current = true;
+    setIsVisible(false);
   };
 
   const handleSurfaceOpenChange = (open: boolean) => {
