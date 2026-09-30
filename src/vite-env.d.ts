@@ -1,7 +1,6 @@
 /// <reference types="vite/client" />
 
 interface DocsFrontmatter {
-  badge?: string;
   description: string;
   group: "core" | "feature-guides" | "extension-guides";
   icon: string;

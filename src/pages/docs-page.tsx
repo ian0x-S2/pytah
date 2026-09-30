@@ -41,11 +41,7 @@ export function DocsPage() {
   return (
     <DocsLayout>
       <article>
-        <PageHeader
-          badge={page.frontmatter.badge}
-          description={page.description}
-          title={page.title}
-        />
+        <PageHeader description={page.description} title={page.title} />
         <Page components={docsMdxComponents} />
       </article>
     </DocsLayout>

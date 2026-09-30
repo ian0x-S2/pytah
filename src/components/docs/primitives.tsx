@@ -266,13 +266,11 @@ function resolveCodeBlockMeta(language?: string, label?: string) {
 }
 
 export function PageHeader({
-  badge,
   children,
   className,
   description,
   title,
 }: {
-  badge?: React.ReactNode;
   children?: React.ReactNode;
   className?: string;
   description: string;
@@ -280,12 +278,6 @@ export function PageHeader({
 }) {
   return (
     <div className={cn("mb-9 space-y-2.5", className)}>
-      {badge ? (
-        <div className="inline-flex items-center gap-1.5 rounded-sm border border-border/70 bg-transparent px-2.5 py-0.5 text-xs text-muted-foreground shadow-xs transition-colors hover:border-foreground/20 hover:text-foreground">
-          <span className="size-1.5 rounded-sm bg-foreground/80" />
-          <span className="font-mono text-xs tracking-wider">{badge}</span>
-        </div>
-      ) : null}
       <h1 className="min-w-0 text-2xl leading-tight font-semibold tracking-tight wrap-anywhere text-foreground sm:text-3xl">
         {title}
       </h1>
