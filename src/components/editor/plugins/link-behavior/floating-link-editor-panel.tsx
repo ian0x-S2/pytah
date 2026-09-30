@@ -12,7 +12,6 @@ import type { KeyboardEvent } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 
 import {
   clearToolbarLink,
@@ -26,12 +25,13 @@ interface FloatingLinkEditorPanelProps {
   editedLinkUrl: string;
   editor: LexicalEditor;
   inputRef: (element: HTMLInputElement | null) => void;
-  /** When true the URL input is focused (explicit open via toolbar/Cmd+K). */
+  /** When true the URL input receives focus (explicit open via toolbar/Cmd+K). */
   isLinkEditMode: boolean;
   linkUrl: string;
   onEditedLinkTextChange: (value: string) => void;
   onEditedLinkUrlChange: (value: string) => void;
-  onRequestCloseEditMode: () => void;
+  /** Applies and closes the card. Escape/outside-press are owned by the Popover. */
+  onRequestClose: () => void;
 }
 
 /**
@@ -48,34 +48,23 @@ export function FloatingLinkEditorPanel({
   linkUrl,
   onEditedLinkTextChange,
   onEditedLinkUrlChange,
-  onRequestCloseEditMode,
+  onRequestClose,
 }: FloatingLinkEditorPanelProps) {
   const applyLink = () => {
     submitToolbarLink(editor, editedLinkUrl);
     submitToolbarLinkText(editor, editedLinkText);
-    onRequestCloseEditMode();
+    onRequestClose();
   };
 
   const handleFieldKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter") {
       event.preventDefault();
       applyLink();
-      return;
-    }
-
-    if (event.key === "Escape") {
-      event.preventDefault();
-      onRequestCloseEditMode();
     }
   };
 
   return (
-    <div
-      className={cn(
-        "editor-floating editor-floating-padding-md flex min-w-72 flex-col gap-2",
-        "animate-in duration-100 fade-in-0 zoom-in-95"
-      )}
-    >
+    <div className="flex min-w-72 flex-col gap-2">
       <div className="flex items-center gap-2">
         <TypeIcon
           aria-hidden
@@ -125,7 +114,7 @@ export function FloatingLinkEditorPanel({
           aria-label="Remove link"
           onClick={() => {
             clearToolbarLink(editor);
-            onRequestCloseEditMode();
+            onRequestClose();
           }}
           size="icon-xs"
           type="button"
@@ -135,7 +124,7 @@ export function FloatingLinkEditorPanel({
         </Button>
         <Button
           aria-label="Close link editor"
-          onClick={onRequestCloseEditMode}
+          onClick={onRequestClose}
           size="icon-xs"
           type="button"
           variant="ghost"

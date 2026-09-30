@@ -13,15 +13,15 @@ import {
   KEY_ESCAPE_COMMAND,
   SELECTION_CHANGE_COMMAND,
 } from "lexical";
-import { useEffect, useEffectEvent, useReducer, useRef } from "react";
-import { createPortal } from "react-dom";
+import { useEffect, useEffectEvent, useMemo, useReducer, useRef } from "react";
+
+import { Popover, PopoverContent } from "@/components/ui/popover";
 
 import { OPEN_FLOATING_LINK_EDITOR_COMMAND } from "../floating-toolbar/link-command";
 import { getFloatingToolbarSelectedNode } from "../floating-toolbar/selection";
 import { FloatingLinkEditorPanel } from "./floating-link-editor-panel";
 import {
-  EMPTY_POSITION,
-  getLinkEditorPosition,
+  getLinkEditorAnchor,
   readSelectedLinkText,
   readSelectedLinkUrl,
   selectionContainsLink,
@@ -34,33 +34,32 @@ import { LINK_PLACEHOLDER_URL } from "./utils";
 
 export function FloatingLinkEditorPlugin() {
   const [editor] = useLexicalComposerContext();
-  const editorRef = useRef<HTMLDivElement | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const [state, dispatch] = useReducer(
     floatingLinkEditorReducer,
     FLOATING_LINK_EDITOR_INITIAL_STATE
   );
   const {
+    anchor,
     editedLinkText,
     editedLinkUrl,
     isLink,
     isLinkEditMode,
     linkUrl,
-    position,
   } = state;
 
   const updateLinkEditor = () => {
     const nextIsLink = selectionContainsLink();
     const nextLinkText = nextIsLink ? readSelectedLinkText() : "";
     const nextLinkUrl = nextIsLink ? readSelectedLinkUrl() : "";
-    const nextPosition = getLinkEditorPosition(editor) ?? EMPTY_POSITION;
+    const nextAnchor = getLinkEditorAnchor(editor);
 
     dispatch({
       payload: {
+        anchor: nextAnchor,
         isLink: nextIsLink,
         linkText: nextLinkText,
         linkUrl: nextLinkUrl,
-        position: nextPosition,
       },
       type: "sync",
     });
@@ -119,7 +118,7 @@ export function FloatingLinkEditorPlugin() {
             event.preventDefault();
 
             if (selectionContainsLink()) {
-              dispatch({ type: "close-edit-mode" });
+              dispatch({ type: "close-link-editor" });
               editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
               return true;
             }
@@ -197,27 +196,6 @@ export function FloatingLinkEditorPlugin() {
     };
   }, []);
 
-  useEffect(() => {
-    const floatingElement = editorRef.current;
-    if (!floatingElement) {
-      return;
-    }
-
-    const handleFocusOut = (event: FocusEvent) => {
-      if (
-        !floatingElement.contains(event.relatedTarget as Node | null) &&
-        isLink
-      ) {
-        dispatch({ type: "close-link-editor" });
-      }
-    };
-
-    floatingElement.addEventListener("focusout", handleFocusOut);
-    return () => {
-      floatingElement.removeEventListener("focusout", handleFocusOut);
-    };
-  }, [isLink]);
-
   const handleInputRef = (element: HTMLInputElement | null) => {
     if (!(element && isLinkEditMode)) {
       return;
@@ -227,35 +205,56 @@ export function FloatingLinkEditorPlugin() {
     element.select();
   };
 
-  if (!isLink) {
+  // Virtual anchor (floating-ui) around the live selection rect. Base UI
+  // re-measures it on scroll/resize; the plugin also re-syncs on those
+  // events so the snapshot follows the text.
+  const anchorElement = useMemo(
+    () =>
+      anchor === null
+        ? null
+        : {
+            getBoundingClientRect: () => anchor,
+          },
+    [anchor]
+  );
+
+  if (!isLink || anchorElement === null) {
     return null;
   }
 
-  return createPortal(
-    <div
-      className="fixed z-50"
-      ref={editorRef}
-      style={{
-        left: `${position.left}px`,
-        top: `${position.top}px`,
+  return (
+    <Popover
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) {
+          dispatch({ type: "close-link-editor" });
+        }
       }}
+      open
     >
-      <FloatingLinkEditorPanel
-        editedLinkText={editedLinkText}
-        editedLinkUrl={editedLinkUrl}
-        editor={editor}
-        inputRef={handleInputRef}
-        isLinkEditMode={isLinkEditMode}
-        linkUrl={linkUrl}
-        onEditedLinkTextChange={(value) =>
-          dispatch({ payload: value, type: "set-edited-link-text" })
-        }
-        onEditedLinkUrlChange={(value) =>
-          dispatch({ payload: value, type: "set-edited-link-url" })
-        }
-        onRequestCloseEditMode={() => dispatch({ type: "close-edit-mode" })}
-      />
-    </div>,
-    document.body
+      <PopoverContent
+        align="start"
+        anchor={anchorElement}
+        className="editor-floating editor-floating-padding-md"
+        initialFocus={false}
+        side="bottom"
+        sideOffset={6}
+      >
+        <FloatingLinkEditorPanel
+          editedLinkText={editedLinkText}
+          editedLinkUrl={editedLinkUrl}
+          editor={editor}
+          inputRef={handleInputRef}
+          isLinkEditMode={isLinkEditMode}
+          linkUrl={linkUrl}
+          onEditedLinkTextChange={(value) =>
+            dispatch({ payload: value, type: "set-edited-link-text" })
+          }
+          onEditedLinkUrlChange={(value) =>
+            dispatch({ payload: value, type: "set-edited-link-url" })
+          }
+          onRequestClose={() => dispatch({ type: "close-link-editor" })}
+        />
+      </PopoverContent>
+    </Popover>
   );
 }

@@ -7,18 +7,42 @@ import {
   isSelectionWithinSingleLink,
 } from "../floating-toolbar/selection";
 
-export interface FloatingLinkEditorPosition {
+/**
+ * A plain selection rectangle (floating-ui `ClientRectObject` shape) used as
+ * the virtual anchor of the link popover. Snapshotting the fields keeps the
+ * reducer state serializable and the popover re-derives it on scroll/resize.
+ */
+export interface FloatingLinkEditorAnchor {
+  bottom: number;
+  height: number;
   left: number;
+  right: number;
   top: number;
+  width: number;
+  x: number;
+  y: number;
 }
 
-const LINK_EDITOR_OFFSET = 12;
+const toAnchor = (rect: DOMRect): FloatingLinkEditorAnchor => ({
+  bottom: rect.bottom,
+  height: rect.height,
+  left: rect.left,
+  right: rect.right,
+  top: rect.top,
+  width: rect.width,
+  x: rect.x,
+  y: rect.y,
+});
 
-export const EMPTY_POSITION: FloatingLinkEditorPosition = { left: 0, top: 0 };
-
-export const getLinkEditorPosition = (
+/**
+ * Resolves the rectangle the link popover anchors to: the exact range rect
+ * when text is selected, the caret line's text span when collapsed, and the
+ * node element for node selections. Returns `null` when the native selection
+ * is unavailable (e.g. a focus transition outside the editor).
+ */
+export const getLinkEditorAnchor = (
   editor: LexicalEditor
-): FloatingLinkEditorPosition | null => {
+): FloatingLinkEditorAnchor | null => {
   const selection = $getSelection();
   const nativeSelection = window.getSelection();
   const rootElement = editor.getRootElement();
@@ -35,21 +59,16 @@ export const getLinkEditorPosition = (
     rectangle = element?.getBoundingClientRect() ?? null;
   } else if (
     nativeSelection &&
+    nativeSelection.rangeCount > 0 &&
     rootElement.contains(nativeSelection.anchorNode)
   ) {
-    rectangle =
-      nativeSelection.focusNode?.parentElement?.getBoundingClientRect() ??
-      nativeSelection.getRangeAt(0).getBoundingClientRect();
+    rectangle = nativeSelection.isCollapsed
+      ? (nativeSelection.focusNode?.parentElement?.getBoundingClientRect() ??
+        nativeSelection.getRangeAt(0).getBoundingClientRect())
+      : nativeSelection.getRangeAt(0).getBoundingClientRect();
   }
 
-  if (!rectangle) {
-    return null;
-  }
-
-  return {
-    left: rectangle.left,
-    top: rectangle.bottom + LINK_EDITOR_OFFSET,
-  };
+  return rectangle ? toAnchor(rectangle) : null;
 };
 
 export const readSelectedLinkUrl = () => {
@@ -112,3 +131,13 @@ export const selectionContainsLink = () => {
 
   return false;
 };
+
+export const isSameLinkEditorAnchor = (
+  current: FloatingLinkEditorAnchor | null,
+  next: FloatingLinkEditorAnchor
+): boolean =>
+  current !== null &&
+  current.left === next.left &&
+  current.top === next.top &&
+  current.width === next.width &&
+  current.height === next.height;

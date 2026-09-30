@@ -4,7 +4,7 @@
 
 ### Changed
 
-- The floating link editor is now a single Notion-style card instead of separate preview/edit modes: a link-text field, a URL field (`Add a link` placeholder) and open-in-tab / remove / close actions. Both fields are always editable — edit mode (toolbar link button or Cmd/Ctrl+K) only moves initial focus to the URL input. `Enter` in either field applies the URL and the display text together; `Escape` closes without applying. Clearing the text field keeps the existing label (never wipes it by accident).
+- The floating link editor is now a single Notion-style card instead of separate preview/edit modes: a link-text field, a URL field (`Add a link` placeholder) and open-in-tab / remove / close actions, rendered as a shadcn `Popover` (its `PopoverContent` now accepts a Base UI virtual `anchor`) anchored to the live selection rectangle 6px below the text — previously the card floated far from the selection. Both fields are always editable — edit mode (toolbar link button or Cmd/Ctrl+K) only moves initial focus to the URL input. `Enter` in either field applies the URL and the display text together; `Escape` or an outside press closes. Clearing the text field keeps the existing label (never wipes it by accident).
 - The static toolbar's "Turn into" dropdown is a little narrower (`w-64` → `w-56`, 256px → 224px).
 - The home page "Choose your path" list no longer appends a `→` separator after each step description.
 

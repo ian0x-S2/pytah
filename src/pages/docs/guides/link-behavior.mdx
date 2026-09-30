@@ -22,10 +22,13 @@ import linkBehaviorUtilsSource from "@/components/editor/plugins/link-behavior/u
 <FileTree
   items={[
     "src/components/editor/plugins/link-behavior/",
-    "  constants.ts              ← AUTO_LINK_MATCHERS",
-    "  utils.ts                  ← URL normalize / validate / sanitize",
-    "  plugin.tsx                ← LinkBehaviorPlugin composition",
-    "  floating-link-editor.tsx  ← FloatingLinkEditorPlugin",
+    "  constants.ts                    ← AUTO_LINK_MATCHERS",
+    "  utils.ts                        ← URL normalize / validate / sanitize",
+    "  plugin.tsx                      ← LinkBehaviorPlugin composition",
+    "  floating-link-editor.tsx        ← FloatingLinkEditorPlugin (Popover host)",
+    "  floating-link-editor-reducer.ts ← card state machine",
+    "  floating-link-editor-position.ts ← selection anchor + link readers",
+    "  floating-link-editor-panel.tsx  ← text/URL fields + actions",
   ]}
 />
 
@@ -71,7 +74,7 @@ Three URL helpers used by the floating editor and `LinkPlugin`'s `validateUrl` p
 
 ## floating-link-editor.tsx
 
-`FloatingLinkEditorPlugin` is a portal-based floating panel that appears below the selection whenever a link node is selected. It renders a single Notion-style card with a **link-text field**, a **URL field** (`Add a link` placeholder) and **open-in-tab / remove / close** actions. Both fields are always editable; edit mode (toolbar link button, `OPEN_FLOATING_LINK_EDITOR_COMMAND`, Cmd/Ctrl+K) only controls which input receives initial focus (the URL one). `Enter` in either field applies the URL and the display text together; `Escape` closes without applying.
+`FloatingLinkEditorPlugin` renders the link card as a shadcn `Popover` anchored to a virtual element over the live selection rectangle (6px below the text). It shows a **link-text field**, a **URL field** (`Add a link` placeholder) and **open-in-tab / remove / close** actions. Both fields are always editable; edit mode (toolbar link button, `OPEN_FLOATING_LINK_EDITOR_COMMAND`, Cmd/Ctrl+K) only controls which input receives initial focus (the URL one). `Enter` in either field applies the URL and the display text together; `Escape` or an outside press closes the card without applying.
 
 ### Commands handled
 

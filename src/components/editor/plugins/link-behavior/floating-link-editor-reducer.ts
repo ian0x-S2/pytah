@@ -1,26 +1,25 @@
-import { areFloatingToolbarPositionsEqual } from "../floating-toolbar/selection";
-import { EMPTY_POSITION } from "./floating-link-editor-position";
-import type { FloatingLinkEditorPosition } from "./floating-link-editor-position";
+import type { FloatingLinkEditorAnchor } from "./floating-link-editor-position";
+import { isSameLinkEditorAnchor } from "./floating-link-editor-position";
 import { LINK_PLACEHOLDER_URL } from "./utils";
 
 export interface FloatingLinkEditorState {
+  anchor: FloatingLinkEditorAnchor | null;
   editedLinkText: string;
   editedLinkUrl: string;
   isLink: boolean;
   isLinkEditMode: boolean;
   linkText: string;
   linkUrl: string;
-  position: FloatingLinkEditorPosition;
 }
 
 export type FloatingLinkEditorAction =
   | {
       type: "sync";
       payload: {
+        anchor: FloatingLinkEditorAnchor | null;
         isLink: boolean;
         linkText: string;
         linkUrl: string;
-        position: FloatingLinkEditorPosition;
       };
     }
   | {
@@ -30,54 +29,45 @@ export type FloatingLinkEditorAction =
         editedLinkUrl?: string;
       };
     }
-  | { type: "close-edit-mode" }
   | { type: "close-link-editor" }
   | { type: "set-edited-link-text"; payload: string }
   | { type: "set-edited-link-url"; payload: string };
 
 export const FLOATING_LINK_EDITOR_INITIAL_STATE: FloatingLinkEditorState = {
+  anchor: null,
   editedLinkText: "",
   editedLinkUrl: LINK_PLACEHOLDER_URL,
   isLink: false,
   isLinkEditMode: false,
   linkText: "",
   linkUrl: "",
-  position: EMPTY_POSITION,
 };
-
-type SyncPayload = Extract<
-  FloatingLinkEditorAction,
-  { type: "sync" }
->["payload"];
 
 const applySyncAction = (
   state: FloatingLinkEditorState,
-  payload: SyncPayload
+  payload: Extract<FloatingLinkEditorAction, { type: "sync" }>["payload"]
 ): FloatingLinkEditorState => {
-  const { isLink, linkText, linkUrl, position } = payload;
-  // The position reads the native selection, which is momentarily empty
+  const { anchor, isLink, linkText, linkUrl } = payload;
+  // The anchor reads the native selection, which is momentarily unavailable
   // during focus transitions (e.g. a toolbar mousedown) right after an
-  // explicit open. Keep the last known anchor while the selection is
-  // still on the link so edit mode is not dropped before the user types.
-  let nextPosition = state.position;
-  if (position !== EMPTY_POSITION) {
-    nextPosition = areFloatingToolbarPositionsEqual(state.position, position)
-      ? state.position
-      : position;
+  // explicit open. Keep the last known anchor so the popover is not dropped
+  // before the user types.
+  let nextAnchor = state.anchor;
+  if (anchor !== null && !isSameLinkEditorAnchor(state.anchor, anchor)) {
+    nextAnchor = anchor;
   }
 
   return {
     ...state,
+    anchor: nextAnchor,
     editedLinkText: state.isLinkEditMode ? state.editedLinkText : linkText,
     editedLinkUrl: state.isLinkEditMode
       ? state.editedLinkUrl
       : linkUrl || LINK_PLACEHOLDER_URL,
     isLink,
-    isLinkEditMode:
-      nextPosition === EMPTY_POSITION ? false : state.isLinkEditMode,
+    isLinkEditMode: nextAnchor === null ? false : state.isLinkEditMode,
     linkText,
     linkUrl,
-    position: nextPosition,
   };
 };
 
@@ -104,7 +94,12 @@ export const floatingLinkEditorReducer = (
     }
     case "close-link-editor": {
       return state.isLink || state.isLinkEditMode
-        ? { ...state, isLink: false, isLinkEditMode: false }
+        ? {
+            ...state,
+            anchor: null,
+            isLink: false,
+            isLinkEditMode: false,
+          }
         : state;
     }
     case "set-edited-link-text": {
