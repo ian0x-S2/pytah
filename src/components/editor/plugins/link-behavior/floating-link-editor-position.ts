@@ -75,6 +75,29 @@ export const readSelectedLinkUrl = () => {
   return "";
 };
 
+export const readSelectedLinkText = () => {
+  const selection = $getSelection();
+
+  if ($isRangeSelection(selection)) {
+    if (!isSelectionWithinSingleLink(selection)) {
+      return "";
+    }
+
+    return (
+      getSelectedLinkNode(
+        getFloatingToolbarSelectedNode(selection)
+      )?.getTextContent() ?? ""
+    );
+  }
+
+  if ($isNodeSelection(selection)) {
+    const [node] = selection.getNodes();
+    return node ? (getSelectedLinkNode(node)?.getTextContent() ?? "") : "";
+  }
+
+  return "";
+};
+
 export const selectionContainsLink = () => {
   const selection = $getSelection();
 

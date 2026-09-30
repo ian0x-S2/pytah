@@ -4,11 +4,13 @@
 
 ### Changed
 
+- The floating link editor is now a single Notion-style card instead of separate preview/edit modes: a link-text field, a URL field (`Add a link` placeholder) and open-in-tab / remove / close actions. Both fields are always editable — edit mode (toolbar link button or Cmd/Ctrl+K) only moves initial focus to the URL input. `Enter` in either field applies the URL and the display text together; `Escape` closes without applying. Clearing the text field keeps the existing label (never wipes it by accident).
 - The static toolbar's "Turn into" dropdown is a little narrower (`w-64` → `w-56`, 256px → 224px).
 - The home page "Choose your path" list no longer appends a `→` separator after each step description.
 
 ### Fixed
 
+- The floating link editor now opens when the toolbar Link button or Cmd/Ctrl+K creates a link. The plugin's unmount cleanup cancelled the scheduled `requestAnimationFrame` without clearing its ref; under React StrictMode (dev) the double-mount then left the ref pointing at a dead frame forever, so `scheduleLinkEditorUpdate` early-returned on every call, the selection sync never ran, and the card never rendered. The schedule/cancel is now one symmetric effect that clears the ref on cleanup.
 - The vertical `<Separator>` primitive no longer ships `data-vertical:self-stretch`. With a definite height (every toolbar separator sets `h-4`/`h-5`), `stretch` makes flexbox fall back to `flex-start`, so separators sat at the top of the row instead of centering — they now center via the parent's `items-center` on every toolbar (floating, static and block-type).
 
 ### Added

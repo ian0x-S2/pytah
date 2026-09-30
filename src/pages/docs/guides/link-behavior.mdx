@@ -71,7 +71,7 @@ Three URL helpers used by the floating editor and `LinkPlugin`'s `validateUrl` p
 
 ## floating-link-editor.tsx
 
-`FloatingLinkEditorPlugin` is a portal-based floating panel that appears below the selection whenever a link node is selected. It has two modes: a **preview mode** (URL + edit / delete / open-in-tab buttons) and an **edit mode** (URL input + confirm / cancel buttons).
+`FloatingLinkEditorPlugin` is a portal-based floating panel that appears below the selection whenever a link node is selected. It renders a single Notion-style card with a **link-text field**, a **URL field** (`Add a link` placeholder) and **open-in-tab / remove / close** actions. Both fields are always editable; edit mode (toolbar link button, `OPEN_FLOATING_LINK_EDITOR_COMMAND`, Cmd/Ctrl+K) only controls which input receives initial focus (the URL one). `Enter` in either field applies the URL and the display text together; `Escape` closes without applying.
 
 ### Commands handled
 

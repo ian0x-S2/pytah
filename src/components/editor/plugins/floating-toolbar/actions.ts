@@ -1,10 +1,12 @@
 import {
   $createLinkNode,
   $isAutoLinkNode,
+  $isLinkNode,
   TOGGLE_LINK_COMMAND,
 } from "@lexical/link";
 import { $patchStyleText } from "@lexical/selection";
 import {
+  $createTextNode,
   $getSelection,
   $isRangeSelection,
   FORMAT_ELEMENT_COMMAND,
@@ -58,6 +60,38 @@ export const submitToolbarLink = (
 
 export const clearToolbarLink = (editor: LexicalEditor) => {
   editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
+};
+
+/**
+ * Replaces the selected link's display text, keeping the caret inside the
+ * link. An empty value is a no-op (the existing text is kept) so clearing
+ * the field by accident never wipes the label.
+ */
+export const submitToolbarLinkText = (
+  editor: LexicalEditor,
+  linkText: string
+) => {
+  editor.update(() => {
+    const selection = $getSelection();
+    if (!$isRangeSelection(selection)) {
+      return;
+    }
+
+    const selectedNode = getFloatingToolbarSelectedNode(selection);
+    const linkNode = getSelectedLinkNode(selectedNode);
+    if (!($isLinkNode(linkNode) || $isAutoLinkNode(linkNode))) {
+      return;
+    }
+
+    if (!linkText || linkText === linkNode.getTextContent()) {
+      return;
+    }
+
+    const textNode = $createTextNode(linkText);
+    linkNode.clear();
+    linkNode.append(textNode);
+    textNode.select();
+  });
 };
 
 export type ToggleableTextFormat =

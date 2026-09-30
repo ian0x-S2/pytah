@@ -153,6 +153,7 @@ export const FullToolbarPlugin = memo(
           <ToolbarTooltip label="Link">
             <Toggle
               aria-label="Link"
+              onMouseDown={(event) => event.preventDefault()}
               onPressedChange={handleLinkToggle}
               pressed={formats.isLink}
               size="sm"
