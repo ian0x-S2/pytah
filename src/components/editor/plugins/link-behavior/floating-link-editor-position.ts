@@ -35,6 +35,12 @@ const toAnchor = (rect: DOMRect): FloatingLinkEditorAnchor => ({
 });
 
 /**
+ * Snapshots a DOM rect into the serializable anchor shape. Used both by the
+ * selection anchor reader and by the hover-driven preview chip.
+ */
+export const toFloatingLinkEditorAnchor = toAnchor;
+
+/**
  * Resolves the rectangle the link popover anchors to: the exact range rect
  * when text is selected, the caret line's text span when collapsed, and the
  * node element for node selections. Returns `null` when the native selection

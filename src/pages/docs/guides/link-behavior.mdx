@@ -25,8 +25,11 @@ import linkBehaviorUtilsSource from "@/components/editor/plugins/link-behavior/u
     "  constants.ts                    ← AUTO_LINK_MATCHERS",
     "  utils.ts                        ← URL normalize / validate / sanitize",
     "  plugin.tsx                      ← LinkBehaviorPlugin composition",
-    "  floating-link-editor.tsx        ← FloatingLinkEditorPlugin (Popover host)",
-    "  floating-link-editor-reducer.ts ← card state machine",
+    "  floating-link-editor.tsx        ← FloatingLinkEditorPlugin (state machine + effects host)",
+    "  floating-link-editor-surfaces.tsx ← chip + card rendering (Popover surfaces)",
+    "  floating-link-hover.ts           ← document pointerover link detection",
+    "  floating-link-preview-chip.tsx   ← hover preview chip (label + Edit)",
+    "  floating-link-editor-reducer.ts ← closed/preview/edit state machine",
     "  floating-link-editor-position.ts ← selection anchor + link readers",
     "  floating-link-editor-panel.tsx  ← text/URL fields + actions",
   ]}
@@ -74,16 +77,21 @@ Three URL helpers used by the floating editor and `LinkPlugin`'s `validateUrl` p
 
 ## floating-link-editor.tsx
 
-`FloatingLinkEditorPlugin` renders the link card as a shadcn `Popover` anchored to a virtual element over the live selection rectangle (6px below the text). It shows a **link-text field**, a **URL field** (`Add a link` placeholder) and **open-in-tab / remove / close** actions. Both fields are always editable; edit mode (toolbar link button, `OPEN_FLOATING_LINK_EDITOR_COMMAND`, Cmd/Ctrl+K) only controls which input receives initial focus (the URL one). `Enter` in either field applies the URL and the display text, moves the caret just after the link and closes the card. `Escape` closes immediately without applying. An outside press is deferred to the selection sync: the popover mounts mid-gesture (the selection-anchored card appears on the frame after `pointerdown`), so the very click that placed the caret inside a link also completes as an outside press — that press must not close the card it opened, and the `isLink` gate closes it whenever the selection actually moves off the link. When the card opens from the floating toolbar, the toolbar hides itself — while the selection lives inside the link the card is the active surface, and the toolbar returns on the next selection.
+The link surfaces follow the Google-Docs interaction model, and a click that merely places the caret inside a link never opens anything:
+
+1. **Hover chip (`preview`)** — hovering a link shows a compact preview (`FloatingLinkPreviewChip`) anchored to the hovered link's rect (6px below). It is pointer-driven and caret-independent: detection runs on document-level `pointerover`, and leaving every link arms a 120ms grace-period dismissal so the pointer can travel from the text into the chip. Hovering the chip or the edit card keeps the current surface alive.
+2. **Edit card (`edit`)** — the chip's **Edit** button, the floating toolbar's link button or Cmd/Ctrl+K open the full card (shadcn `Popover` over the surface rect): a **link-text field**, a **URL field** (`Add a link` placeholder) and **open-in-tab / remove / close** actions. Edit mode only controls initial focus (the URL input). `Enter` applies the URL and display text, moves the caret just after the link and closes the card; `Escape`/outside press close it. Clicking Edit also selects the link's text so the selection sync can carry the card.
+
+Both surfaces render through `FloatingLinkEditorSurfaces` from the same virtual anchor produced by the state machine in `floating-link-editor-reducer.ts` (`closed` / `preview` / `edit`). A closed surface stays closed — a bare selection sync never re-opens anything (the old Escape/click reopen loop is structurally impossible).
 
 ### Commands handled
 
 | Command | Priority | Behaviour |
 | --- | --- | --- |
-| `SELECTION_CHANGE_COMMAND` | LOW | Syncs link URL and panel position on every selection change. |
-| `OPEN_FLOATING_LINK_EDITOR_COMMAND` | HIGH | Enters edit mode immediately (dispatched by the floating toolbar's link button). |
-| `KEY_DOWN_COMMAND` | HIGH | Cmd/Ctrl+K toggles the link: removes it if the selection is already a link, otherwise creates a new one and enters edit mode. |
-| `KEY_ESCAPE_COMMAND` | HIGH | Dismisses the panel when a link is focused. |
+| `SELECTION_CHANGE_COMMAND` | LOW | Syncs link state and surface anchoring on every selection change. |
+| `OPEN_FLOATING_LINK_EDITOR_COMMAND` | HIGH | Opens the edit card (dispatched by the floating toolbar's link button and the chip's Edit). |
+| `KEY_DOWN_COMMAND` | HIGH | Cmd/Ctrl+K toggles the link: removes it if the selection is already a link, otherwise creates a new one and opens the card. |
+| `KEY_ESCAPE_COMMAND` | HIGH | Closes the card/chip when the selection lives in a link. |
 | `CLICK_COMMAND` | LOW | Cmd/Ctrl+click opens the link URL in a new tab while editing. |
 
 <CodeBlock

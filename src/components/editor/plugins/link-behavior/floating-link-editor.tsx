@@ -15,11 +15,8 @@ import {
 } from "lexical";
 import { useEffect, useEffectEvent, useMemo, useReducer, useRef } from "react";
 
-import { Popover, PopoverContent } from "@/components/ui/popover";
-
 import { OPEN_FLOATING_LINK_EDITOR_COMMAND } from "../floating-toolbar/link-command";
 import { getFloatingToolbarSelectedNode } from "../floating-toolbar/selection";
-import { FloatingLinkEditorPanel } from "./floating-link-editor-panel";
 import {
   getLinkEditorAnchor,
   readSelectedLinkText,
@@ -30,23 +27,27 @@ import {
   FLOATING_LINK_EDITOR_INITIAL_STATE,
   floatingLinkEditorReducer,
 } from "./floating-link-editor-reducer";
+import { FloatingLinkEditorSurfaces } from "./floating-link-editor-surfaces";
+import {
+  getHoveredEditorLink,
+  isInsideLinkSurface,
+  readLinkElementAnchor,
+} from "./floating-link-hover";
 import { LINK_PLACEHOLDER_URL } from "./utils";
+
+/** Grace period (ms) the pointer has to travel from link text into the chip. */
+const HOVER_BRIDGE_DELAY_MS = 120;
 
 export function FloatingLinkEditorPlugin() {
   const [editor] = useLexicalComposerContext();
   const animationFrameRef = useRef<number | null>(null);
+  const hoverTimeoutRef = useRef<number | null>(null);
+  const isPointerOverChipRef = useRef(false);
   const [state, dispatch] = useReducer(
     floatingLinkEditorReducer,
     FLOATING_LINK_EDITOR_INITIAL_STATE
   );
-  const {
-    anchor,
-    editedLinkText,
-    editedLinkUrl,
-    isLink,
-    isLinkEditMode,
-    linkUrl,
-  } = state;
+  const { anchor, hoverTarget, isLink, surface } = state;
 
   const updateLinkEditor = () => {
     const nextIsLink = selectionContainsLink();
@@ -196,8 +197,88 @@ export function FloatingLinkEditorPlugin() {
     };
   }, []);
 
+  // Hover wiring for the preview chip. The pointer's link is tracked on the
+  // document — hover is independent of the selection, so a click that merely
+  // places the caret inside a link never opens anything. `pointerover`
+  // fires for every element the pointer crosses; links refresh the chip,
+  // and leaving every link arms the grace-period dismissal.
+  useEffect(() => {
+    const handlePointerOver = (event: PointerEvent) => {
+      if (isInsideLinkSurface(event.target)) {
+        return;
+      }
+
+      const hovered = getHoveredEditorLink(editor, event.target);
+      if (hovered === null) {
+        if (hoverTimeoutRef.current === null) {
+          const timeoutId = window.setTimeout(() => {
+            hoverTimeoutRef.current = null;
+            dispatch({ type: "unhover-link" });
+          }, HOVER_BRIDGE_DELAY_MS);
+          hoverTimeoutRef.current = timeoutId;
+        }
+        return;
+      }
+
+      const anchorRect = readLinkElementAnchor(hovered.linkElement);
+      if (anchorRect === null) {
+        dispatch({ type: "unhover-link" });
+        return;
+      }
+
+      dispatch({
+        payload: {
+          anchor: anchorRect,
+          linkKey: hovered.linkKey,
+          linkText: hovered.linkText,
+          linkUrl: hovered.linkUrl,
+        },
+        type: "hover-link",
+      });
+    };
+
+    document.addEventListener("pointerover", handlePointerOver, true);
+    return () => {
+      document.removeEventListener("pointerover", handlePointerOver, true);
+      if (hoverTimeoutRef.current !== null) {
+        window.clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, [editor]);
+
+  // Keep the chip's anchor glued to the hovered link: re-read the rect
+  // whenever the hover target changes. The element map lookup dies with
+  // late mutations, and a zero-size rect dispatches unhover.
+  useEffect(() => {
+    if (hoverTarget === null) {
+      return;
+    }
+
+    const linkElement = editor.getElementByKey(hoverTarget.linkKey);
+    if (!(linkElement instanceof HTMLAnchorElement)) {
+      dispatch({ type: "unhover-link" });
+      return;
+    }
+
+    const anchorRect = readLinkElementAnchor(linkElement);
+    if (anchorRect === null) {
+      dispatch({ type: "unhover-link" });
+      return;
+    }
+
+    dispatch({
+      payload: {
+        anchor: anchorRect,
+        linkKey: hoverTarget.linkKey,
+        linkText: hoverTarget.linkText,
+        linkUrl: hoverTarget.linkUrl,
+      },
+      type: "hover-link",
+    });
+  }, [editor, hoverTarget]);
+
   const handleInputRef = (element: HTMLInputElement | null) => {
-    if (!(element && isLinkEditMode)) {
+    if (!(element && state.isLinkEditMode)) {
       return;
     }
 
@@ -205,9 +286,22 @@ export function FloatingLinkEditorPlugin() {
     element.select();
   };
 
-  // Virtual anchor (floating-ui) around the live selection rect. Base UI
-  // re-measures it on scroll/resize; the plugin also re-syncs on those
-  // events so the snapshot follows the text.
+  const handlePointerOverChipChange = (isOver: boolean) => {
+    isPointerOverChipRef.current = isOver;
+    if (isOver && hoverTimeoutRef.current !== null) {
+      window.clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+      return;
+    }
+
+    if (!isOver) {
+      dispatch({ type: "unhover-link" });
+    }
+  };
+
+  // Virtual anchor (floating-ui) around the live surface rect: the chip
+  // anchors to the hovered link, the card to the edit surface. Base UI
+  // re-measures it on scroll/resize; refresh effects above keep it fresh.
   const anchorElement = useMemo(
     () =>
       anchor === null
@@ -218,54 +312,18 @@ export function FloatingLinkEditorPlugin() {
     [anchor]
   );
 
-  if (!isLink || anchorElement === null) {
+  if (surface === "closed" || anchorElement === null) {
     return null;
   }
 
   return (
-    <Popover
-      onOpenChange={(nextOpen, details) => {
-        if (nextOpen) {
-          return;
-        }
-        if (details.reason === "outside-press") {
-          // Clicking the link itself to place the caret is also an outside
-          // press: the popover mounts mid-gesture (selection sync runs on
-          // the next frame) and the pending pointerup would dismiss it.
-          // The selection updateListener already re-evaluated isLink when
-          // pointerdown moved the caret — a press that kept the selection
-          // inside the link must NOT close the card, so ignore the request.
-          // A real move off the link closes via the isLink gate instead.
-          return;
-        }
-        dispatch({ type: "close-link-editor" });
-      }}
-      open
-    >
-      <PopoverContent
-        align="start"
-        anchor={anchorElement}
-        className="editor-floating editor-floating-padding-md"
-        initialFocus={false}
-        side="bottom"
-        sideOffset={6}
-      >
-        <FloatingLinkEditorPanel
-          editedLinkText={editedLinkText}
-          editedLinkUrl={editedLinkUrl}
-          editor={editor}
-          inputRef={handleInputRef}
-          isLinkEditMode={isLinkEditMode}
-          linkUrl={linkUrl}
-          onEditedLinkTextChange={(value) =>
-            dispatch({ payload: value, type: "set-edited-link-text" })
-          }
-          onEditedLinkUrlChange={(value) =>
-            dispatch({ payload: value, type: "set-edited-link-url" })
-          }
-          onRequestClose={() => dispatch({ type: "close-link-editor" })}
-        />
-      </PopoverContent>
-    </Popover>
+    <FloatingLinkEditorSurfaces
+      anchorElement={anchorElement}
+      dispatch={dispatch}
+      editor={editor}
+      onInputRef={handleInputRef}
+      onPointerOverChipChange={handlePointerOverChipChange}
+      state={state}
+    />
   );
 }
