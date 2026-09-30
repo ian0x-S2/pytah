@@ -224,10 +224,21 @@ export function FloatingLinkEditorPlugin() {
 
   return (
     <Popover
-      onOpenChange={(nextOpen) => {
-        if (!nextOpen) {
-          dispatch({ type: "close-link-editor" });
+      onOpenChange={(nextOpen, details) => {
+        if (nextOpen) {
+          return;
         }
+        if (details.reason === "outside-press") {
+          // Clicking the link itself to place the caret is also an outside
+          // press: the popover mounts mid-gesture (selection sync runs on
+          // the next frame) and the pending pointerup would dismiss it.
+          // The selection updateListener already re-evaluated isLink when
+          // pointerdown moved the caret — a press that kept the selection
+          // inside the link must NOT close the card, so ignore the request.
+          // A real move off the link closes via the isLink gate instead.
+          return;
+        }
+        dispatch({ type: "close-link-editor" });
       }}
       open
     >

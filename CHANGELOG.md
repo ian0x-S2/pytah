@@ -11,6 +11,7 @@
 
 ### Fixed
 
+- Clicking a link placed the caret inside it and rendered the card, but the same click's `pointerup` closed it right away: the popover mounts mid-gesture (the selection-anchored card appears on the frame after `pointerdown`), and Base UI completed the very gesture that placed the caret as an outside press. The card now ignores `outside-press` dismissals and defers to the selection sync instead — a press that keeps the caret inside the link leaves the card open; moving the selection off the link closes it through the `isLink` gate. `Escape` still closes immediately.
 - The floating link editor now opens when the toolbar Link button or Cmd/Ctrl+K creates a link. The plugin's unmount cleanup cancelled the scheduled `requestAnimationFrame` without clearing its ref; under React StrictMode (dev) the double-mount then left the ref pointing at a dead frame forever, so `scheduleLinkEditorUpdate` early-returned on every call, the selection sync never ran, and the card never rendered. The schedule/cancel is now one symmetric effect that clears the ref on cleanup.
 - The vertical `<Separator>` primitive no longer ships `data-vertical:self-stretch`. With a definite height (every toolbar separator sets `h-4`/`h-5`), `stretch` makes flexbox fall back to `flex-start`, so separators sat at the top of the row instead of centering — they now center via the parent's `items-center` on every toolbar (floating, static and block-type).
 
