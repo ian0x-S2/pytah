@@ -203,6 +203,14 @@ export function MathComponent({
         open={isEditing && editable}
       >
         <PopoverTrigger
+          nativeButton={
+            // The trigger renders a <span>, not a native <button>: a real
+            // button element inside the Lexical contenteditable's inline DOM
+            // breaks editor semantics, so we drop native button behavior
+            // explicitly and re-provide the semantics manually (role/tabIndex/
+            // keyboard handlers below).
+            false
+          }
           render={
             // biome-ignore lint/a11y/useSemanticElements: span is used as container for inline rendered equation button
             <span
