@@ -33,6 +33,7 @@ import {
   isInsideLinkSurface,
   readLinkElementAnchor,
 } from "./floating-link-hover";
+import { createHoverBridge } from "./floating-link-hover-bridge";
 import { LINK_PLACEHOLDER_URL } from "./utils";
 
 /** Grace period (ms) the pointer has to travel from link text into the chip. */
@@ -41,11 +42,20 @@ const HOVER_BRIDGE_DELAY_MS = 120;
 export function FloatingLinkEditorPlugin() {
   const [editor] = useLexicalComposerContext();
   const animationFrameRef = useRef<number | null>(null);
-  const hoverTimeoutRef = useRef<number | null>(null);
-  const isPointerOverChipRef = useRef(false);
   const [state, dispatch] = useReducer(
     floatingLinkEditorReducer,
     FLOATING_LINK_EDITOR_INITIAL_STATE
+  );
+  // Owns the hover grace timer. `dispatch` is stable across renders, so the
+  // bridge is created once; the StrictMode double-mount reuses it after
+  // cleanup disposed any pending timer.
+  const hoverBridge = useMemo(
+    () =>
+      createHoverBridge({
+        graceMs: HOVER_BRIDGE_DELAY_MS,
+        onGraceExpired: () => dispatch({ type: "unhover-link" }),
+      }),
+    [dispatch]
   );
   const { anchor, hoverTarget, isLink, surface } = state;
 
@@ -201,22 +211,19 @@ export function FloatingLinkEditorPlugin() {
   // document — hover is independent of the selection, so a click that merely
   // places the caret inside a link never opens anything. `pointerover`
   // fires for every element the pointer crosses; links refresh the chip,
-  // and leaving every link arms the grace-period dismissal.
+  // and leaving every link arms the grace-period dismissal. Re-entering a
+  // link or the chip cancels that dismissal — the grace period is a bridge
+  // for pointer travel, not an idle timeout over the link itself.
   useEffect(() => {
     const handlePointerOver = (event: PointerEvent) => {
       if (isInsideLinkSurface(event.target)) {
+        hoverBridge.onSurface();
         return;
       }
 
       const hovered = getHoveredEditorLink(editor, event.target);
       if (hovered === null) {
-        if (hoverTimeoutRef.current === null) {
-          const timeoutId = window.setTimeout(() => {
-            hoverTimeoutRef.current = null;
-            dispatch({ type: "unhover-link" });
-          }, HOVER_BRIDGE_DELAY_MS);
-          hoverTimeoutRef.current = timeoutId;
-        }
+        hoverBridge.onPlainContent();
         return;
       }
 
@@ -226,6 +233,7 @@ export function FloatingLinkEditorPlugin() {
         return;
       }
 
+      hoverBridge.onLink();
       dispatch({
         payload: {
           anchor: anchorRect,
@@ -240,11 +248,9 @@ export function FloatingLinkEditorPlugin() {
     document.addEventListener("pointerover", handlePointerOver, true);
     return () => {
       document.removeEventListener("pointerover", handlePointerOver, true);
-      if (hoverTimeoutRef.current !== null) {
-        window.clearTimeout(hoverTimeoutRef.current);
-      }
+      hoverBridge.dispose();
     };
-  }, [editor]);
+  }, [editor, hoverBridge]);
 
   // Keep the chip's anchor glued to the hovered link: re-read the rect
   // whenever the hover target changes. The element map lookup dies with
@@ -287,16 +293,12 @@ export function FloatingLinkEditorPlugin() {
   };
 
   const handlePointerOverChipChange = (isOver: boolean) => {
-    isPointerOverChipRef.current = isOver;
-    if (isOver && hoverTimeoutRef.current !== null) {
-      window.clearTimeout(hoverTimeoutRef.current);
-      hoverTimeoutRef.current = null;
+    if (isOver) {
+      hoverBridge.onSurface();
       return;
     }
 
-    if (!isOver) {
-      dispatch({ type: "unhover-link" });
-    }
+    dispatch({ type: "unhover-link" });
   };
 
   // Virtual anchor (floating-ui) around the live surface rect: the chip

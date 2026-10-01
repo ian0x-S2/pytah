@@ -1,11 +1,13 @@
 // State-machine coverage for the floating link editor. Plugin-level DOM
-// coverage (popover mounting, virtual anchoring, hover bridging) does not
-// live in this suite: any test file that pulls the editor's React/popover
-// graph into the happy-dom runner shifts top-level await timing enough to
-// break sibling DOM files (register collisions and `describe() inside
-// another test`, see oven-sh/bun#5090). It is verified end-to-end against a
-// real browser via a throwaway CDP script instead — hover a link, assert
-// the chip appears under it, click Edit, type, press Enter.
+// coverage (popover mounting, virtual anchoring) does not live in this suite:
+// any test file that pulls the editor's React/popover graph into the happy-dom
+// runner shifts top-level await timing enough to break sibling DOM files
+// (register collisions and `describe() inside another test`, see
+// oven-sh/bun#5090). Timer lifecycle for hover bridging is unit-tested in
+// `floating-link-hover-bridge.test.ts` via an injectable scheduler; the
+// remaining React wiring is verified end-to-end against a real browser via a
+// throwaway CDP script — hover a link, assert the chip appears under it,
+// click Edit, type, press Enter.
 import { deepStrictEqual, strictEqual } from "node:assert/strict";
 import { describe, test } from "node:test";
 
