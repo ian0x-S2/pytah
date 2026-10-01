@@ -60,7 +60,7 @@ Preserves the existing shadcn monochrome tokens (`src/index.css` `:root` / `.dar
 
 ## Radius (sm-only contract)
 
-Site + docs use **only** `rounded-sm`. `rounded-full` is banned everywhere on these surfaces — including badge pills, status dots (2 px squares instead), ambient wrappers, buttons, panels, code blocks, tables, and callouts. `rounded-2xl / rounded-xl / rounded-lg / rounded-md` must not appear in `src/pages/home.tsx`, `src/components/docs/*`, or `src/pages/docs-page.tsx`. The global `--radius` token and the editor's `--editor-*` radius tokens are untouched (zero visual diff in the editor).
+Site + docs use **only** `rounded-sm`. `rounded-full` is banned everywhere on these surfaces — including badge pills, status dots (2 px squares instead), ambient wrappers, buttons, panels, code blocks, tables, and callouts. `rounded-2xl / rounded-xl / rounded-lg / rounded-md` must not appear in `src/pages/home.tsx`, `src/components/docs/*`, or `src/pages/docs-page.tsx`. The global `--radius` token is untouched here; the editor separately caps its own `--editor-*` radius tokens at `rounded-md` (see the radius cap rule in `AGENTS.md`), so the two contracts don't collide.
 
 ## Per-page allowances
 

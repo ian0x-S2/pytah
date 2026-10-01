@@ -8,6 +8,7 @@
 - The floating selection toolbar now hides itself when the Link button opens the link card, and returns on the next selection change — the card is the active editing surface while the selection lives inside the link.
 - The static toolbar's "Turn into" dropdown is a little narrower (`w-64` → `w-56`, 256px → 224px).
 - The home page "Choose your path" list no longer appends a `→` separator after each step description.
+- Editor radii are capped at `rounded-md`. Every `--editor-*-radius` token that resolved to `lg` or larger (shell, floating, table, image + image frame, code, collapsible, layout, layout item/option, youtube) now resolves through `var(--radius-md, 0.5rem)`, and the editor's plugin surfaces plus the shared primitives it renders (button, input, select, popover, dialog, dropdown menu, command, sidebar, textarea, toggle, excalidraw, TOC, slash menu) drop `rounded-lg`/`xl`/`2xl` for `rounded-md`. Corners now follow the consumer theme (override `--radius`) and nothing in the editor renders larger than the cap.
 
 ### Fixed
 

@@ -245,13 +245,13 @@ function ExcalidrawPreview({
           <div
             className={
               isSelected && editable
-                ? "rounded-xl ring-1 ring-primary/40 ring-offset-2 ring-offset-background"
-                : "rounded-xl"
+                ? "rounded-md ring-1 ring-primary/40 ring-offset-2 ring-offset-background"
+                : "rounded-md"
             }
           >
             <button
               aria-label="Drawing preview, double-click to edit"
-              className="block cursor-default overflow-hidden rounded-lg border border-border/60 bg-muted/20 shadow-xs"
+              className="block cursor-default overflow-hidden rounded-md border border-border/60 bg-muted/20 shadow-xs"
               ref={buttonRef}
               type="button"
             >
