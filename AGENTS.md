@@ -1,292 +1,87 @@
-# Ultracite Code Standards
+# AGENTS.md
 
-This project uses **Ultracite**, a zero-config preset that enforces strict code quality standards through automated formatting and linting.
+## Workflow
 
-## Quick Reference
-
-- **Format code**: `bun x ultracite fix`
-- **Check for issues**: `bun x ultracite check`
-- **Diagnose setup**: `bun x ultracite doctor`
-
-## Package Manager
-
-- Always use `bun` for this repository.
-- Use `bun install` for dependencies.
-- Use `bun run <script>` for package scripts.
-- Use `bun x <cli>` for one-off CLIs.
-- Do not default to `npm`, `npx`, `pnpm`, or `yarn` unless the user explicitly asks for them or a tool only works with them.
-
-Oxlint + Oxfmt (the underlying engine) provides robust linting and formatting. Most issues are automatically fixable.
-
----
-
-## Core Principles
-
-Write code that is **accessible, performant, type-safe, and maintainable**. Focus on clarity and explicit intent over brevity.
-
-### Type Safety & Explicitness
-
-- Use explicit types for function parameters and return values when they enhance clarity
-- Prefer `unknown` over `any` when the type is genuinely unknown
-- Use const assertions (`as const`) for immutable values and literal types
-- Leverage TypeScript's type narrowing instead of type assertions
-- Use meaningful variable names instead of magic numbers - extract constants with descriptive names
-
-### Modern JavaScript/TypeScript
-
-- Use arrow functions for callbacks and short functions
-- Prefer `for...of` loops over `.forEach()` and indexed `for` loops
-- Use optional chaining (`?.`) and nullish coalescing (`??`) for safer property access
-- Prefer template literals over string concatenation
-- Use destructuring for object and array assignments
-- Use `const` by default, `let` only when reassignment is needed, never `var`
-
-### Async & Promises
-
-- Always `await` promises in async functions - don't forget to use the return value
-- Use `async/await` syntax instead of promise chains for better readability
-- Handle errors appropriately in async code with try-catch blocks
-- Don't use async functions as Promise executors
-
-### React & JSX
-
-- Use function components over class components
-- Call hooks at the top level only, never conditionally
-- Specify all dependencies in hook dependency arrays correctly
-- Use the `key` prop for elements in iterables (prefer unique IDs over array indices)
-- Nest children between opening and closing tags instead of passing as props
-- Don't define components inside other components
-- Use semantic HTML and ARIA attributes for accessibility:
-  - Provide meaningful alt text for images
-  - Use proper heading hierarchy
-  - Add labels for form inputs
-  - Include keyboard event handlers alongside mouse events
-  - Use semantic elements (`<button>`, `<nav>`, etc.) instead of divs with roles
-
-### Error Handling & Debugging
-
-- Remove `console.log`, `debugger`, and `alert` statements from production code
-- Throw `Error` objects with descriptive messages, not strings or other values
-- Use `try-catch` blocks meaningfully - don't catch errors just to rethrow them
-- Prefer early returns over nested conditionals for error cases
-
-### Code Organization
-
-- Keep functions focused and under reasonable cognitive complexity limits
-- Extract complex conditions into well-named boolean variables
-- Use early returns to reduce nesting
-- Prefer simple conditionals over nested ternary operators
-- Group related code together and separate concerns
-
-### Security
-
-- Add `rel="noopener"` when using `target="_blank"` on links
-- Avoid `dangerouslySetInnerHTML` unless absolutely necessary
-- Don't use `eval()` or assign directly to `document.cookie`
-- Validate and sanitize user input
-
-### Performance
-
-- Avoid spread syntax in accumulators within loops
-- Use top-level regex literals instead of creating them in loops
-- Prefer specific imports over namespace imports
-- Avoid barrel files (index files that re-export everything)
-
-### Framework-Specific Guidance
-
-**React 19+:**
-
-- Use ref as a prop instead of `React.forwardRef`
-
----
-
-## Testing
-
-- Write assertions inside `it()` or `test()` blocks
-- Avoid done callbacks in async tests - use async/await instead
-- Don't use `.only` or `.skip` in committed code
-- Keep test suites reasonably flat - avoid excessive `describe` nesting
+- Use **bun only**: `bun install`, `bun run <script>`, `bun x <cli>`. Never `npm`, `npx`, `pnpm` or `yarn` unless the user asks.
+- Format/lint with `bun x ultracite fix` (check: `bun x ultracite check`, setup: `bun x ultracite doctor`). Oxlint + Oxfmt auto-fix most issues, so spend your attention on logic, naming, architecture, edge cases and UX/accessibility.
+- Write accessible, type-safe code: explicit types where they help, `unknown` over `any`, no magic numbers, no `console.log`/`debugger`/`alert`, throw `Error` objects, avoid barrel files, ref as a prop (React 19, no `forwardRef`).
+- Tests: assertions inside `it()`/`test()`, async/await (no `done`), no `.only`/`.skip`, flat suites.
+- The `lexical/` submodule must be in `.gitignore` before committing.
 
 ## Changelog
 
-- Every user-facing **editor** change (behavior, props, defaults, fixes) gets an entry in `CHANGELOG.md` under `## Unreleased`, grouped as `Added` / `Changed` / `Fixed` / `Removed` — follow the existing entries' style.
-- Visual/aesthetic-only changes (home page styling, responsive tweaks, marketing surfaces) need no entry.
-- Internal-only changes (refactors, lint, tests, docs) need no entry.
-- On release: rename `Unreleased` to the new version and bump `version` in `package.json` to match.
+- Every user-facing **editor** change (behavior, props, defaults, fixes) gets an entry in `CHANGELOG.md` under `## Unreleased`, grouped `Added` / `Changed` / `Fixed` / `Removed`, matching existing style.
+- No entry for visual-only changes (home page, responsive tweaks, marketing) or internal ones (refactors, lint, tests, docs).
+- On release: rename `Unreleased` to the new version and bump `package.json` `version` to match.
 
-## When Oxlint + Oxfmt Can't Help
+## Project
 
-Oxlint + Oxfmt's linter will catch most issues automatically. Focus your attention on:
+Vite + React + TypeScript app whose main product is a rich **Lexical** editor built on shadcn/Base UI primitives. Goal: editor quality and copy/paste ergonomics (HTML and Markdown), not cloning Notion. The long-term DX goal is a **lego-like editor**: prefer small composable building blocks and explicit extension points over hardcoding behavior into one monolith.
 
-1. **Business logic correctness** - Oxlint + Oxfmt can't validate your algorithms
-2. **Meaningful naming** - Use descriptive names for functions, variables, and types
-3. **Architecture decisions** - Component structure, data flow, and API design
-4. **Edge cases** - Handle boundary conditions and error states
-5. **User experience** - Accessibility, performance, and usability considerations
-6. **Documentation** - Add comments for complex logic, but prefer self-documenting code
+- `src/app.tsx`: app shell and editor mounting
+- `src/components/editor/`: the main product surface
+- `src/components/ui/`: shared shadcn/Base UI primitives
+- `src/lib/`: low-level utilities
 
----
+## Editor architecture
 
-Most formatting and common issues are automatically fixed by Oxlint + Oxfmt. Run `bun x ultracite fix` before committing to ensure compliance.
+- `editor/editor.tsx` is the composition root. Keep the split between the ready-made `Editor` and the lower-level surfaces it wires together.
+- Prefer additive extension points (feature flags, slots, extra plugin mounts, extra node registration) over one-off booleans or forking the editor tree. For each new capability ask: default behavior, or optional piece consumers can enable/replace/omit? Overrides must work through public props, never by editing `ui/content.tsx` or `core/config.ts`.
+- Layout: foundations in `core/`, React composition in `ui/`, Lexical behaviors in `plugins/`.
+  - Complex plugins live in `plugins/<feature>/`; `plugin.tsx` is the orchestration entrypoint. When it grows, move floating UI, selection math, menus, dialogs and action helpers into sibling files.
+  - Nodes are feature-first: `core/nodes/<feature>/` (simple names: `container-node.ts`, `item-node.ts`, `node.tsx`), with node-only DOM/serialization helpers inside. Align `plugins/<feature>/` with `core/nodes/<feature>/`.
+  - Keep declarative config separate from Lexical mutation logic and React wiring.
+- Avoid deprecated Lexical React helpers when core Lexical or `@lexical/extension` equivalents exist.
 
----
+### Feature registry
 
-## Project Context
+- Built-in capabilities are `EditorFeature` descriptors in `core/features.tsx` (flag name, owned nodes, behavior plugin, markdown transformers, slash-command ids). This is the single source of truth for what the default editor ships.
+- `core/config.ts` and `ui/content.tsx` both derive from it. A toggled flag toggles nodes, plugin, transformers and slash commands **together**, never piecemeal.
+- **Add a built-in feature**: add an `EditorFeature` to `EDITOR_FEATURES`, a flag in `EditorFeatureFlags` and a default in `DEFAULT_EDITOR_FEATURES`. Never hardcode plugin mounts, node registrations, transformers or slash commands in scattered files.
+- **Add a consumer feature without touching internals**: `extraFeatures` prop with `ExtraEditorFeature` descriptors (id, plugin, nodes, transformers, slashCommandIds).
+- Always-on plugins (history/list/code/link/horizontal-rule/editable/editor-state) and flag-only toggles (markdownShortcuts, tabIndentation) stay mounted in `ui/content.tsx`. Only features owning nodes, transformers or slash commands belong in the registry.
 
-This repository is a Vite + React + TypeScript application centered on a rich editor experience built with Lexical plus shadcn/Base UI primitives. Inspiration from Notion is acceptable, but the goal is editor quality and copy/paste ergonomics rather than cloning Notion.
+### Feature contract workflow (humans and agents)
 
-The long-term DX goal is a lego-like editor: contributors should prefer exposing small, composable editor building blocks and explicit extension points over hardcoding more behavior into a single monolithic editor surface.
+- Before a new feature that adds built-in behavior, custom nodes or changes public composition, start from `docs/process/feature-rfc-template.md`.
+- Fill the architecture contract in `.github/pull_request_template.md`; review against `docs/process/architecture-review-rubric.md`.
+- A feature is not complete until these are checked explicitly: ownership layer, public extension point, optional/default behavior, slash-command impact, tests, docs impact, `AGENTS.md` impact.
 
-### Project Architecture
+## Editor invariants
 
-- `src/app.tsx`
-  - app-level shell and editor mounting
-- `src/components/editor/`
-  - main feature area of the project
-  - the editor is the primary product surface right now
-- `src/components/ui/`
-  - shared shadcn/Base UI primitives used by the editor and app shell
-- `src/lib/`
-  - shared low-level utilities
+- Copy/paste for HTML and Markdown must keep working; editable and read-only modes must both work.
+- Slash commands are a core UX surface: keep highlight, initial focus and scroll in sync. Ids come from `resolveSlashCommandIds` (enabled features only); no manual list sync.
+- Markdown transformers are feature-scoped and passed via the resolved `transformers` set. Never hardcode the full list in `core/utils.ts` or `ui/content.tsx`.
+- Snapshot serialization is gated by `features.snapshot` (html/markdown/text, default all on); disabled outputs are never computed and surface as `""`.
+- The mount seed (`initialMarkdown`/`initialHtml`) is captured **once per mount** and applied synchronously via the composer's `initialConfig.editorState` (tagged `pytah-seed`, suppressed from `onChange` when `emitInitialSnapshot: false`). Never re-seed on prop identity changes; consumers remount via `key`.
+- Never read layout (`getBoundingClientRect`, `getElementByKey` for positioning) or call `scrollIntoView` synchronously after `editor.update` inside a Lexical command listener. The update is nested and the DOM commits only after the listener returns; do post-commit DOM work in the update's `onUpdate` callback.
+- After drag-and-drop, scroll only if the dropped block is outside the viewport.
 
-### Editor Architecture Rules
+## UI conventions
 
-- `src/components/editor/editor.tsx` is the composition root for the editor experience
-- preserve a clear split between the ready-made `Editor` experience and the lower-level composition surfaces it wires together
-- prefer additive extension points such as feature flags, slots, extra plugin mounts, and extra node registration before introducing new one-off booleans or forks of the editor tree
-- when adding a new editor capability, ask first whether it should be a default product behavior or an optional lego piece that consumers can enable, replace, or omit
-- keep the default editor opinionated, but make that opinion easy to override through public props instead of requiring edits inside `ui/content.tsx` or `core/config.ts`
-- keep editor foundations in `src/components/editor/core/`, React composition in `src/components/editor/ui/`, and Lexical behaviors in `src/components/editor/plugins/`
-- complex plugins should live in `src/components/editor/plugins/<feature>/`
-- keep `plugin.tsx` as the orchestration entrypoint for a feature; when a plugin grows, move floating UI, selection math, menus, dialogs, and action helpers into neighboring files inside the same feature folder instead of letting one plugin file absorb everything
-- keep `src/components/editor/core/nodes/` feature-first: prefer `core/nodes/<feature>/...` over a flat list of unrelated node files
-- if a feature owns two or more related Lexical nodes, group them under the same `core/nodes/<feature>/` folder and use simple filenames such as `container-node.ts`, `content-node.ts`, `item-node.ts`, or `node.tsx`
-- keep node-only DOM helpers and serialization helpers inside the same node feature folder
-- align `plugins/<feature>/` with `core/nodes/<feature>/` whenever the feature owns custom nodes
-- keep declarative config separate from Lexical mutation logic and React wiring
+- **className contract**: every public editor component accepts `className?: string` merged via `cn(defaults, className)`. `Editor` also exposes `contentClassName` (threaded to `ContentEditable`).
+- **Toolbar**: `EditorTopToolbar` uses `editor-toolbar` (aligns with the content column), action bar uses `editor-actionbar`. Single-icon actions use `size="icon-sm"`, never text labels for format/alignment/indent. Always `aria-label` on icon-only buttons. Active item in dropdown lists is marked with a right-aligned `<CheckIcon className="ml-auto size-3.5 shrink-0 self-center text-muted-foreground" />`.
+- **Floating surfaces** (toolbars, popovers, link editors) use the `editor-floating` class (plain CSS in `core/tokens.css`, not a Tailwind `@utility`). Its radius comes from `--editor-floating-radius`, capped at `rounded-md`. Animate in with `fade-in-0 zoom-in-95 animate-in duration-100`. Padding stays Tailwind (`p-1.5` toolbar, `p-2` panels, `p-4` dialogs).
+- **Radius cap**: no editor surface renders larger than `rounded-md`. Use `rounded-md`/`rounded-sm` (or `rounded-[min(var(--radius-md),Npx)]` when a size must cap below it); never `rounded-lg`/`xl`/`2xl`/`3xl` in classes, and never an `--editor-*-radius` token that resolves to `lg` or larger. Cap tokens as `var(--radius-md, 0.5rem)` so corners follow the consumer theme.
+- **Anchored floating UI**: derive vertical centering from `Math.round((anchorRect.height - elementSize) / 2)`, never a hard offset. Keep 4-6px between element and anchor edge. Icon is ~50-55% of button size (`size-2.5` in `size-5`).
+- **Separator**: `<Separator orientation="vertical" className="mx-0.5 h-4" />` only to group semantically distinct controls in one row, not as decoration.
+- **Scrolling**: every scrollable surface uses `components/ui/scroll-area.tsx`.
+  - If another primitive owns scrolling (select, cmdk), render it as the viewport via `viewportRender` and restate clobbered semantics (e.g. `role="listbox"`) via `viewportProps`.
+  - `pre` blocks and the TOC keep `scrollbar-hidden` by design. Lexical-owned DOM (table wrapper, code block) is styled natively in `core/tokens.css`.
+  - `shadcn/no-restyle`: put frames (border/rounded/bg/shadow) on a wrapper div and padding/typography on an inner div, never on `ScrollArea` or `viewportClassName`.
 
-#### Feature registry (the default is a list of lego pieces)
+## Design tokens (`core/tokens.css`)
 
-- built-in capabilities live in `core/features.tsx` as `EditorFeature` descriptors; one feature bundles its flag name, owned nodes, behavior plugin, markdown transformers, and the slash-command ids it contributes — that is the single source of truth for what the default editor ships
-- the editor config (`core/config.ts`) and the mounted plugin stack (`ui/content.tsx`) both derive from `core/features.tsx`: a toggled flag toggles that feature's nodes, plugin, transformers, and slash commands together, never piecemeal
-- to add a built-in feature: add an `EditorFeature` to `EDITOR_FEATURES` and give it a flag in `EditorFeatureFlags` (and a default in `DEFAULT_EDITOR_FEATURES`); do not hardcode new plugin mounts, node registrations, transformers, or slash commands in scattered files
-- to add a consumer feature without editing internals: use the `extraFeatures` prop on `Editor`, which accepts `ExtraEditorFeature` descriptors (id, plugin, nodes, transformers, slashCommandIds)
-- keep always-on plugins (history/list/code/link/horizontal-rule/editable/editor-state) and flag-only toggles (markdownShortcuts, tabIndentation) mounted in `ui/content.tsx` — only features that own nodes, transformers, or slash commands belong in the `EditorFeature` registry
-- avoid barrel files
-- avoid deprecated Lexical React helpers when core Lexical or `@lexical/extension` equivalents exist
+`--editor-*` variables are the single source of truth for editor styling; consumers override them. Never scatter Tailwind literals for things a token covers. Families: content, toolbar/chrome/shell, floating, table, image/handles, code, collapsible, layout, math, youtube/embed, type scale. Read the file for exact names.
 
-### Feature Contract Workflow
+- Aliases must keep an explicit oklch fallback so a `shadcn update` degrades to a pinned value instead of `unset`.
+- Density: `:root` = comfortable; `<Editor density="compact">` sets `data-density="compact"` (single density per page).
+- Token migrations must have **zero visual diff** and close with the checklist: light/dark x comfortable/compact x editable/read-only, across canvas, toolbar (basic/full), floating toolbar, slash, link editor, table menu + selection, image + resizer + dialogs. The **radius cap is the one intentional exception**: collapsing `lg`+ radii to `var(--radius-md, 0.5rem)` deliberately shrinks corners, so run the same checklist to confirm the smaller corners land cleanly rather than to prove a no-op.
+- Slash/TOC popovers and the Excalidraw preview intentionally keep custom/translucent variants.
 
-- this workflow applies to human contributors and AI agents
-- before implementing a new editor feature, start from `docs/process/feature-rfc-template.md` when the change adds built-in behavior, custom nodes, or changes public composition
-- when opening or preparing a PR, fill the architecture contract in `.github/pull_request_template.md`
-- during review, validate the change with `docs/process/architecture-review-rubric.md`
-- a feature is not considered complete unless its ownership layer, public extension point, optional/default behavior, slash-command impact, tests, docs impact, and `AGENTS.md` impact were checked explicitly
+## Docs (`src/pages/docs/`)
 
-### Editor UI/UX Conventions
-
-These patterns are established and must be kept consistent across all editor components.
-
-#### className override contract
-
-Every public editor component must accept `className?: string` and merge it via `cn(defaults, className)`. This lets callers override specific utilities without losing defaults.
-
-The `Editor` component additionally exposes `contentClassName?: string`, which is threaded down to the `ContentEditable` surface via the same `cn()` pattern so consumers can override padding, min-height, font size, etc.
-
-```tsx
-// correct
-function EditorFoo({ className }: { className?: string }) {
-  return <div className={cn("default-classes", className)} />;
-}
-```
-
-#### Toolbar layout
-
-- The top toolbar (`EditorTopToolbar`) uses the `editor-toolbar` class (`--editor-toolbar-px: 2rem`, `--editor-toolbar-py: 0.5rem`) so its content aligns with the editor text column (`--editor-content-px: 2rem`)
-- The action bar uses `editor-actionbar` (`--editor-actionbar-bg`, a `color-mix` tint of `--muted`) — a subtle tint that visually separates it from the content area without hard contrast
-- Toolbar action buttons that represent a single icon use `size="icon-sm"` (28px) — never text labels for format/alignment/indent actions
-- Always provide `aria-label` on icon-only buttons
-- Active state in dropdown lists is indicated by a `<CheckIcon className="ml-auto size-3.5 shrink-0 self-center text-muted-foreground" />` on the right, not by background color alone
-
-#### Floating surfaces (toolbars, popovers, link editors)
-
-Use the `editor-floating` class (plain CSS in `core/tokens.css`, shipped via the registry — not a Tailwind `@utility`, so it renders in consumer builds with zero compilation) for any floating panel that appears over editor content. It expands to the canonical set:
-
-```
-background: var(--editor-floating-bg);      /* alias -> --popover */
-border-radius: var(--editor-floating-radius); /* owned: 0.75rem = rounded-xl */
-box-shadow: 0 0 0 1px var(--editor-floating-ring), var(--editor-floating-shadow);
-```
-
-- `radius` — softer than `rounded-lg`, feels more premium
-- `shadow` — enough elevation to read clearly over content
-- `ring` — uses the semantic border token (`--editor-floating-ring` -> `--border`), not `ring-foreground/10`
-- Animate in with `fade-in-0 zoom-in-95 animate-in duration-100`
-- Padding stays as Tailwind (`p-1.5` toolbar, `p-2` panels, `p-4` dialogs) via `--editor-floating-padding-*`
-
-#### Positional anchoring for floating UI
-
-When a floating element is anchored to a DOM rectangle (e.g. table cell, selection):
-
-- **Vertical centering**: always derive `top` from `Math.round((anchorRect.height - elementSize) / 2)` rather than a hard pixel offset — hard offsets break when cells/rows resize
-- **Edge inset**: leave at minimum 4–6px between the floating element and the nearest edge of its anchor; never let the element butt against the cell boundary
-- **Icon-to-button ratio**: keep icon size at roughly 50–55% of the button size (e.g. `size-2.5` icon in a `size-5` button) so there is visible padding inside the hit target
-
-#### Separator usage
-
-Use `<Separator orientation="vertical" className="mx-0.5 h-4" />` to divide logical groups within a single floating row (e.g. between a URL display and its action buttons). Avoid using it as decoration — only when grouping semantically distinct controls.
-
-#### Scrollbar convention
-
-- Every scrollable surface uses the shared `ScrollArea` (`components/ui/scroll-area.tsx`, Base UI): it renders vertical + horizontal thumbs (each auto-hidden without overflow, and fading out unless hovering/scrolling) and exposes `viewportClassName`, `viewportProps`, and `viewportRender`. A persistent thumb needs an explicit `className` override on `ScrollBar`.
-- When another primitive owns scrolling (select list, cmdk list), render that element as the viewport via `viewportRender` so keyboard navigation and scroll-into-view keep working; restate semantics the merge clobbers (e.g. `role="listbox"`) through `viewportProps`.
-- `pre` blocks and the TOC rail/popover keep `scrollbar-hidden` by design — hidden thumb, still scrollable via wheel/touch/keyboard.
-- Lexical-owned DOM (table wrapper, code block) cannot mount React: `core/tokens.css` restyles the native bar there to match the shared thumb instead.
-- `shadcn/no-restyle` treats `ScrollArea` as owning shape/color/effects/spacing/typography: put frames (border/rounded/bg/shadow) on a wrapper div and padding/typography on an inner div, never on `ScrollArea` itself or `viewportClassName`.
-
-#### Editor design tokens (`core/tokens.css`)
-
-Single source of truth for editor restyling. Consumers override `--editor-*` vars; never hunt scattered Tailwind literals. Tokens ship with the registry via `editor.css` -> `core/tokens.css`.
-
-| Token family | Kind | Examples | Notes |
-| --- | --- | --- | --- |
-| `content` | owned + alias | `--editor-content-px/py/max-w/min-h/font-size/line-height/bg` | `max-w: none` preserves current full-width; set `44rem` + `margin-inline: auto` (already in `editor-content`) for a Notion-like column |
-| `toolbar/chrome/shell` | owned + alias-tinted | `--editor-toolbar-px/py`, `--editor-shell-bg/border/radius`, `--editor-header/footer/actionbar-bg` | alias-tinted = `color-mix(in oklch, var(--muted/background) x%, transparent)`; follows shadcn automatically |
-| `floating` | alias + owned | `--editor-floating-bg/foreground/ring` (alias -> `--popover/--border`), `--editor-floating-radius/shadow/padding-*` (owned) | every alias has an explicit oklch fallback so a `shadcn update` degrades to a pinned value instead of `unset` |
-| `table` | owned + alias | `--editor-table-cell-px/py/min-w/radius`, `--editor-table-header-bg/striped-bg/selected-*` | header/striped/selected are `color-mix` tints of `--muted/--primary` |
-| `image/handles` | owned + alias | `--editor-image-gap-y/radius/frame-radius/border/bg/selected-ring`, `--editor-handle-size/bg/border` |  |
-| `code` | owned + alias | `--editor-code-bg/radius/padding/gap-y/font-size`, `--editor-inline-code-*` | dark code bg is a 50% muted mix; the `codeHighlight` Prism palette stays fixed by design (swap the whole map for another syntax theme) |
-| `collapsible` | owned + alias | `--editor-collapsible-gap-y/radius/border/bg/indent/header-px/py` |  |
-| `layout` | owned + alias | `--editor-layout-gap-y/gap/gap-md/radius/border/bg/padding`, item/preview/option vars | `gap-md` applies from `48rem` up; the preset picker reuses the same vars |
-| `math` | owned + alias | `--editor-math-radius/px/py/hover-bg/selected-bg/ring`, block/segment/preview vars |  |
-| `youtube/embed` | owned + alias | `--editor-youtube-radius/border/bg/width-md`, `--editor-embed-gap-y` | `width-md` (70%) applies from `48rem` up |
-| `type scale` | owned | `--editor-h1..h6-size/mt/mb`, `--editor-block-gap`, `--editor-paragraph-line-height`, `--editor-quote-border`, `--editor-list-indent/gap` | comfortable defaults mirror the old `theme.ts` literals exactly |
-
-- Density: `:root` = `comfortable` (Notion-like). `<Editor density="compact">` sets `data-density="compact"`, switching the spacing/line-height subset (Linear-like). Portalled chrome follows via `:root:has([data-density="compact"])` — single-density-per-page is the v1 contract.
-- v1.1: all built-in surfaces tokenized — code container, collapsible, layout (+ preset picker), math, youtube, link panel (canonicalized to `editor-floating`), table menu width. Slash/TOC popovers and the Excalidraw preview keep their translucent/custom variants (future work).
-- Token migrations must close with the visual checklist (light/dark x comfortable/compact x editable/read-only) across canvas, toolbar basic/full, floating toolbar, slash, link editor, table menu + selection, image + resizer + dialogs — day-1 rule is zero visual diff.
-
----
-
-### Working Memory For This Project
-
-When changing this codebase, keep these facts in mind:
-
-- the editor must stay copy/paste ready for HTML and Markdown workflows
-- editor DX is a first-class product concern: changes should move the codebase toward reusable, lego-like composition rather than tighter coupling
-- slash command behavior is a core UX surface and must keep highlight, initial focus and scroll synchronization correct
-- editable and read-only modes must both remain functional
-- default composition should remain easy to use, but advanced consumers should be able to opt out of chrome, swap surfaces, and add plugins or nodes without patching internals — the `extraFeatures` prop is the documented extension surface for whole-feature contribution
-- slash-command entries are gated through the feature registry: `resolveSlashCommandIds` computes the ids from enabled features, and the slash menu renders only those commands, so no manual list sync is needed
-- markdown transformers are feature-scoped and threaded to the editor via the resolved `transformers` set; do not hardcode the full transformer list in `core/utils.ts` or `ui/content.tsx`
-- snapshot serialization is feature-gated through `features.snapshot` (html/markdown/text, default all-on): disabled outputs are never computed and surface as `""` on `EditorSnapshot`; the mount seed (`initialMarkdown`/`initialHtml`) is captured once per mount and applied synchronously through the composer's `initialConfig.editorState` (first paint already contains the document; standalone `EditorStatePlugin` falls back to a post-mount seed), tagged `pytah-seed` via `$addUpdateTag`, suppressed from `onChange` when `emitInitialSnapshot: false` — never re-seed on prop identity changes (consumers remount via `key`)
-- `src/pages/docs/` is authored in Markdown/MDX, not TSX. Each page is a `.mdx` file whose frontmatter declares `title`, `description`, `group` (`core` | `feature-guides` | `extension-guides`), `icon` (name from the `ICON_BY_NAME` map in `docs/manifest.tsx`), `label`, `order`; the `slug` and sidebar entry are derived from the file path, so adding a page means adding a file — never edit the manifest manually
-- docs MDX renders through `src/components/docs/mdx-components.tsx`: Markdown elements map to the docs primitives, and `Callout`, `CodeBlock`, `FileTree`, `FeatureTable`, `TransformersTable`, `InterfaceSource`, and `MarkedSource` are available inline; anchors on headings are auto-generated, so never hand-write `<SectionHeading id>` wrappers
-- docs treat the application source as the canonical reference: import real code with `?raw` and render it via `<CodeBlock>`/`<InterfaceSource>`/`<MarkedSource>` instead of duplicating snippets manually
-- do not hardcode feature, transformer, node, or slash-command lists in docs prose — render them with `<FeatureTable/>` and `<TransformersTable/>`, which derive from `core/features.tsx` and `plugins/markdown/transformers.ts` (via `src/data/docs-metadata.ts`), so a registry change updates the docs automatically
-- keep prose and editorial explanation in docs manual, but avoid copying implementation code, prop shapes, command registries, or token definitions when they already exist elsewhere in `src/`
-- architecture changes should update the nearest relevant `AGENTS.md` so future work keeps the same mental model
-- if a feature-specific README duplicates agent context, prefer `AGENTS.md` as the durable source of truth
-- the `lexical/` submodule must be ignored by git (ensure it's in `.gitignore` before committing)
-- never read layout (`getBoundingClientRect`, `getElementByKey` for positioning) or call `scrollIntoView` synchronously after `editor.update` inside a Lexical command listener: `triggerCommandListeners` wraps listeners in its own outer `updateEditorSync`, so the update is nested and the DOM only commits after the listener returns — do post-commit DOM work in the update's `onUpdate` callback instead
-- after drag-and-drop, only scroll when the dropped block is actually outside the viewport: the drop point is visible by definition, so an unconditional `scrollIntoView` yanks the viewport away from where the user dropped the block
+- Pages are `.mdx` with frontmatter `title`, `description`, `group` (`core` | `feature-guides` | `extension-guides`), `icon` (name from `ICON_BY_NAME` in `docs/manifest.tsx`), `label`, `order`. Slug and sidebar derive from the file path: adding a page = adding a file, never edit the manifest.
+- MDX renders through `src/components/docs/mdx-components.tsx` (`Callout`, `CodeBlock`, `FileTree`, `FeatureTable`, `TransformersTable`, `InterfaceSource`, `MarkedSource`). Heading anchors are automatic; never hand-write `<SectionHeading id>`.
+- Source code is the canonical reference: import real code with `?raw` instead of duplicating snippets. Never hardcode feature/transformer/node/slash-command lists; use `<FeatureTable/>` and `<TransformersTable/>`. Keep prose manual, but don't copy implementation code, prop shapes, command registries or token definitions that already exist in `src/`.
+- Architecture changes must update the nearest relevant `AGENTS.md`. If a feature README duplicates agent context, `AGENTS.md` is the source of truth.
