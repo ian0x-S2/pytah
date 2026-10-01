@@ -9,6 +9,7 @@ import {
   $createTextNode,
   $getSelection,
   $isRangeSelection,
+  $isTextNode,
   FORMAT_ELEMENT_COMMAND,
   FORMAT_TEXT_COMMAND,
 } from "lexical";
@@ -87,9 +88,18 @@ export const submitToolbarLinkText = (
       return;
     }
 
+    // Splice-replace the children in one step: inserting the replacement
+    // before removing the old ones keeps the selection anchored to a live
+    // node. `clear()` + `append()` removes the selected child first, which
+    // trips Lexical's lost-selection repair and silently rolls the whole
+    // update back — the edited title never reaches the editor.
+    const firstChild = linkNode.getFirstChild();
     const textNode = $createTextNode(linkText);
-    linkNode.clear();
-    linkNode.append(textNode);
+    if ($isTextNode(firstChild)) {
+      textNode.setFormat(firstChild.getFormat());
+      textNode.setStyle(firstChild.getStyle());
+    }
+    linkNode.splice(0, linkNode.getChildrenSize(), [textNode]);
     textNode.select();
   });
 };
