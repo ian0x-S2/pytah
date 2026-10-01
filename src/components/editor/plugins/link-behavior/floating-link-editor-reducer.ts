@@ -151,9 +151,10 @@ const applySyncAction = (
       : keepOpenSurface(state, state.anchor, payload);
   }
 
-  const nextAnchor = isSameLinkEditorAnchor(state.anchor, anchor)
-    ? state.anchor
-    : anchor;
+  const nextAnchor =
+    state.anchor !== null && isSameLinkEditorAnchor(state.anchor, anchor)
+      ? state.anchor
+      : anchor;
 
   return keepOpenSurface(state, nextAnchor, payload);
 };

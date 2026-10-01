@@ -50,6 +50,9 @@ const readLinkNodeMeta = (
   // this editor registered as the active editor for the duration of the call.
   editor.read(() => {
     const node = $getNearestNodeFromDOMNode(linkElement);
+    if (node === null) {
+      return;
+    }
     const linkNode = $findMatchingParent(node, $isLinkNode);
     if (!$isLinkNode(linkNode)) {
       return;

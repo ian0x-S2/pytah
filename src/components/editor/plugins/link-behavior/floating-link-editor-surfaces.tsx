@@ -86,6 +86,9 @@ export function FloatingLinkEditorSurfaces({
               // selection lives elsewhere dies on the next sync.
               editor.update(() => {
                 const node = $getNodeByKey(hoverTarget.linkKey);
+                if (node === null) {
+                  return;
+                }
                 const linkNode = $findMatchingParent(node, $isLinkNode);
                 linkNode?.select();
               });

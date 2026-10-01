@@ -304,12 +304,15 @@ export function FloatingLinkEditorPlugin() {
   // Virtual anchor (floating-ui) around the live surface rect: the chip
   // anchors to the hovered link, the card to the edit surface. Base UI
   // re-measures it on scroll/resize; refresh effects above keep it fresh.
+  // A real DOMRect (not a plain lookalike) satisfies the popover's anchor
+  // contract, `toJSON` included.
   const anchorElement = useMemo(
     () =>
       anchor === null
         ? null
         : {
-            getBoundingClientRect: () => anchor,
+            getBoundingClientRect: () =>
+              new DOMRect(anchor.left, anchor.top, anchor.width, anchor.height),
           },
     [anchor]
   );
