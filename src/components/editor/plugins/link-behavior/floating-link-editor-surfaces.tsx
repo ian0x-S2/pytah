@@ -6,6 +6,7 @@ import { $getNodeByKey } from "lexical";
 import type { LexicalEditor } from "lexical";
 import type { Dispatch } from "react";
 
+import { HoverCard, HoverCardContent } from "@/components/ui/hover-card";
 import { Popover, PopoverContent } from "@/components/ui/popover";
 
 import { FloatingLinkEditorPanel } from "./floating-link-editor-panel";
@@ -54,8 +55,12 @@ export function FloatingLinkEditorSurfaces({
   }
 
   if (surface === "preview" && hoverTarget !== null) {
+    // HoverCard (Base UI preview card) is the purpose-built surface for
+    // pointer previews: it keeps hover intent, Escape and outside press
+    // dismissal native. Open state stays controlled — the link lives inside
+    // Lexical-owned DOM, so hover detection stays with the plugin.
     return (
-      <Popover
+      <HoverCard
         onOpenChange={(nextOpen) => {
           if (!nextOpen) {
             dispatch({ type: "unhover-link" });
@@ -63,11 +68,10 @@ export function FloatingLinkEditorSurfaces({
         }}
         open
       >
-        <PopoverContent
+        <HoverCardContent
           align="start"
           anchor={anchorElement}
-          className="editor-floating editor-floating-padding-sm"
-          initialFocus={false}
+          className="editor-floating editor-floating-padding-sm w-72"
           onPointerEnter={() => onPointerOverChipChange(true)}
           onPointerLeave={() => onPointerOverChipChange(false)}
           side="bottom"
@@ -94,8 +98,8 @@ export function FloatingLinkEditorSurfaces({
               });
             }}
           />
-        </PopoverContent>
-      </Popover>
+        </HoverCardContent>
+      </HoverCard>
     );
   }
 
