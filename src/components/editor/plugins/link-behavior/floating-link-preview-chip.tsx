@@ -23,12 +23,11 @@ export function FloatingLinkPreviewChip({
 }: FloatingLinkPreviewChipProps) {
   return (
     <div
-      className="editor-floating editor-floating-padding-sm flex max-w-96 items-center gap-1.5"
+      className="editor-floating editor-floating-padding-sm flex max-w-[min(24rem,calc(100vw-2rem))] items-center gap-1"
       data-slot="floating-link-preview"
     >
       <Button
         aria-label="Open link in new tab"
-        className="size-5 shrink-0 gap-0 rounded-md p-0 [&_svg]:size-3"
         onClick={() => window.open(href, "_blank", "noopener,noreferrer")}
         size="icon-xs"
         type="button"
@@ -37,16 +36,16 @@ export function FloatingLinkPreviewChip({
         <ExternalLinkIcon />
       </Button>
       <span
-        className="min-w-0 truncate text-xs text-muted-foreground"
+        className="min-w-0 flex-1 truncate text-xs text-muted-foreground"
         title={href}
       >
         {label}
       </span>
       <Button
         aria-label="Edit link"
-        className="ml-auto shrink-0 gap-1 rounded-md px-1.5 text-xs [&_svg]:size-3"
+        className="gap-1 text-xs"
         onClick={onEdit}
-        size="icon-xs"
+        size="xs"
         type="button"
         variant="secondary"
       >

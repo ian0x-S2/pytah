@@ -62,7 +62,7 @@ export function FloatingLinkEditorPanel({
   };
 
   return (
-    <div className="flex min-w-72 flex-col gap-2">
+    <div className="flex w-full min-w-0 flex-col gap-2">
       <div className="flex items-center gap-2">
         <TypeIcon
           aria-hidden
