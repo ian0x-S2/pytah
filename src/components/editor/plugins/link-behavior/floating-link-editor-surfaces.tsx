@@ -108,6 +108,7 @@ export function FloatingLinkEditorSurfaces({
 
   return (
     <Popover
+      modal
       onOpenChange={(nextOpen) => {
         if (!nextOpen) {
           // The card is always opened explicitly (chip Edit, toolbar
