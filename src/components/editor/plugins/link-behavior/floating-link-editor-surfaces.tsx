@@ -71,7 +71,7 @@ export function FloatingLinkEditorSurfaces({
         <HoverCardContent
           align="start"
           anchor={anchorElement}
-          className="editor-floating editor-floating-padding-sm w-72 max-w-[calc(100vw-2rem)]"
+          className="editor-floating editor-floating-no-ring editor-floating-padding-sm w-72 max-w-[calc(100vw-2rem)] border border-border"
           onPointerEnter={() => onPointerOverChipChange(true)}
           onPointerLeave={() => onPointerOverChipChange(false)}
           side="bottom"

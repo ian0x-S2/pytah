@@ -330,6 +330,7 @@ export default defineConfig({
           "editor-content-placeholder",
           "editor-embed",
           "editor-floating",
+          "editor-floating-no-ring",
           "editor-floating-padding-lg",
           "editor-floating-padding-md",
           "editor-floating-padding-sm",

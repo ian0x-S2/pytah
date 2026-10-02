@@ -398,6 +398,11 @@
     var(--editor-floating-shadow);
 }
 
+/* Same floating surface without the 1px outline ring (shadow only). */
+.editor-floating-no-ring {
+  box-shadow: var(--editor-floating-shadow);
+}
+
 .editor-content {
   position: relative;
   margin-inline: auto;

@@ -23,7 +23,7 @@ export function FloatingLinkPreviewChip({
 }: FloatingLinkPreviewChipProps) {
   return (
     <div
-      className="editor-floating editor-floating-padding-sm flex max-w-[min(24rem,calc(100vw-2rem))] items-center gap-1"
+      className="editor-floating editor-floating-no-ring editor-floating-padding-sm flex max-w-[min(24rem,calc(100vw-2rem))] items-center gap-1"
       data-slot="floating-link-preview"
     >
       <Button
