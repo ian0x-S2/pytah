@@ -131,7 +131,7 @@ describe("floatingLinkEditorReducer", () => {
     strictEqual(closed.anchor, null);
   });
 
-  test("edit mode survives unhover-link (card is not hover-driven)", () => {
+  test("edit mode survives unhover-link without losing its anchor", () => {
     const preview = floatingLinkEditorReducer(
       FLOATING_LINK_EDITOR_INITIAL_STATE,
       { payload: HOVER_TARGET, type: "hover-link" }
@@ -147,6 +147,40 @@ describe("floatingLinkEditorReducer", () => {
     strictEqual(unhovered.surface, "edit");
     strictEqual(unhovered.hoverTarget, null);
     strictEqual(unhovered.isLinkEditMode, true);
+    // The card's anchor must survive a stray hover dismissal (chip unmount
+    // pointerleave, grace timer): nulling it renders nothing while edit mode
+    // stays on, and every later hover is then swallowed — a dead editor.
+    deepStrictEqual(unhovered.anchor, ANCHOR);
+  });
+
+  test("edit card open -> stray unhover -> outside close -> hover reopens", () => {
+    // The stuck-state cycle: chip Edit click, pointer wanders out of the
+    // card (grace timer fires unhover-link), outside press closes the card,
+    // then the pointer returns to a link. The chip must come back.
+    const preview = floatingLinkEditorReducer(
+      FLOATING_LINK_EDITOR_INITIAL_STATE,
+      { payload: HOVER_TARGET, type: "hover-link" }
+    );
+    const editing = floatingLinkEditorReducer(preview, {
+      payload: { editedLinkUrl: "https://github.com" },
+      type: "open-edit-mode",
+    });
+    const strayUnhover = floatingLinkEditorReducer(editing, {
+      type: "unhover-link",
+    });
+    strictEqual(strayUnhover.surface, "edit");
+
+    const closed = floatingLinkEditorReducer(strayUnhover, {
+      type: "close-link-editor",
+    });
+    strictEqual(closed.surface, "closed");
+
+    const rehovered = floatingLinkEditorReducer(closed, {
+      payload: HOVER_TARGET,
+      type: "hover-link",
+    });
+    strictEqual(rehovered.surface, "preview");
+    deepStrictEqual(rehovered.hoverTarget, HOVER_TARGET);
   });
 
   test("the chip's Edit click promotes preview to edit mode", () => {

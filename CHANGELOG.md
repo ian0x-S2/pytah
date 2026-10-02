@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Fixed
+
+- The floating link editor got stuck after its first edit-card interaction: a hover dismissal (`unhover-link`) that arrived while the edit card was open — the stray `pointerleave` the browser fires when the chip unmounts under the pointer after clicking **Edit**, or the 120ms grace timer expiring while the pointer rested on plain content outside the card — cleared the card's anchor, so the card unmounted while `isLinkEditMode` stayed on and `hover-link` was then swallowed by edit mode forever: every link in the document stopped opening its hover chip. In edit mode the card is not hover-driven; `unhover-link` now only drops the hover target and leaves the card's anchor (and the card itself) untouched, keeping the hover interaction repeatable indefinitely. Verified in a real browser (CDP) across hover → chip → Edit → card → Escape/outside-press → re-hover cycles, rapid link↔chip oscillation, and independent re-targeting between two links.
+
 ### Changed
 
 - The link hover preview chip renders through a shadcn `HoverCard` (Base UI preview card, new `components/ui/hover-card.tsx` primitive) instead of a `Popover`: hover previews get Base UI's purpose-built dismissal for free — Escape and outside press close the chip, and pointer movement between the link and the chip is bridged natively. Open state stays controlled by the plugin because the link element lives inside Lexical-owned DOM. The edit card keeps its `Popover`.

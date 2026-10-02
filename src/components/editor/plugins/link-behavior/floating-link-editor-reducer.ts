@@ -192,11 +192,20 @@ const applyUnhoverLink = (
     return state;
   }
 
+  // In edit mode the card is not hover-driven: a stray pointer leave (the
+  // chip unmounting after the Edit click, the grace timer expiring while the
+  // pointer rests outside the card) must not touch the card — clearing the
+  // anchor here unmounted the card while `isLinkEditMode` stayed true, and
+  // `applyHoverLink` then swallowed every later hover forever.
+  if (state.isLinkEditMode) {
+    return { ...state, hoverTarget: null };
+  }
+
   return {
     ...state,
     anchor: null,
     hoverTarget: null,
-    surface: state.isLinkEditMode ? "edit" : "closed",
+    surface: "closed",
   };
 };
 
