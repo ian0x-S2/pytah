@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- The `EditorWithToc` TOC rail no longer floats at a hardcoded `top-24` viewport offset while the editor body starts lower on the page. The rail's fixed `top` is now measured from the editor content column's top (re-measured on resize and when the TOC toggles, which also covers zen-mode layouts), so it starts at the same vertical level as the editor regardless of what the consumer renders above it.
+
 - The floating link editor got stuck after its first edit-card interaction: a hover dismissal (`unhover-link`) that arrived while the edit card was open — the stray `pointerleave` the browser fires when the chip unmounts under the pointer after clicking **Edit**, or the 120ms grace timer expiring while the pointer rested on plain content outside the card — cleared the card's anchor, so the card unmounted while `isLinkEditMode` stayed on and `hover-link` was then swallowed by edit mode forever: every link in the document stopped opening its hover chip. In edit mode the card is not hover-driven; `unhover-link` now only drops the hover target and leaves the card's anchor (and the card itself) untouched, keeping the hover interaction repeatable indefinitely. Verified in a real browser (CDP) across hover → chip → Edit → card → Escape/outside-press → re-hover cycles, rapid link↔chip oscillation, and independent re-targeting between two links.
 
 ### Changed

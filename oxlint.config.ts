@@ -91,6 +91,16 @@ export default defineConfig({
       },
     },
     {
+      // The TOC rail re-measures its aligned viewport offset when the toc
+      // slot toggles (the demo hides it in zen mode, which also removes the
+      // page title above the editor): `toc` is a trigger, not a value used
+      // inside the effect.
+      files: ["src/components/editor/plugins/toc/editor-with-toc.tsx"],
+      rules: {
+        "react/exhaustive-effect-dependencies": "off",
+      },
+    },
+    {
       // Computed CSS values arrive with units ("32px"): Number() yields
       // NaN while parseFloat extracts the magnitude.
       files: ["src/components/editor/plugins/code-highlight/line-numbers.tsx"],
