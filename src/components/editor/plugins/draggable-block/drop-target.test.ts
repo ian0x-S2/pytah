@@ -23,8 +23,10 @@ const {
 const {
   decideInsertAfter,
   isOnBlockDragHandleTarget,
+  positionDragHandle,
   readBlockDragKey,
   resolveDropTarget,
+  syncDraggableBlockElement,
   DRAG_DATA_FORMAT,
 } = await import("./drop-target");
 const { focusDroppedBlock, moveDraggedBlock } =
@@ -289,5 +291,71 @@ describe("moveDraggedBlock", () => {
     strictEqual(moveDraggedBlock(editor, "nope", target, 10, onMoved), false);
     strictEqual(movedElements.length, 2);
     deepStrictEqual(readOrder(), ["charlie", "alpha", "bravo"]);
+  });
+});
+
+describe("positionDragHandle", () => {
+  test("positions the drag handle at the dropped block with vertical centering", () => {
+    const anchor = document.createElement("div");
+    const menu = document.createElement("div");
+    const targetBlock = document.createElement("p");
+    anchor.append(menu, targetBlock);
+    document.body.append(anchor);
+
+    stubRect(anchor, { bottom: 500, left: 0, right: 800, top: 0 });
+    stubRect(targetBlock, { bottom: 150, left: 100, right: 700, top: 100 });
+    stubRect(menu, { bottom: 20, left: 0, right: 20, top: 0 });
+    targetBlock.style.lineHeight = "28px";
+
+    positionDragHandle(menu, targetBlock, anchor);
+
+    strictEqual(menu.style.display, "flex");
+    strictEqual(menu.style.opacity, "1");
+    // targetTop (100) + Math.round((28 - 20) / 2) (4) - anchorTop (0) = 104
+    strictEqual(menu.style.transform, "translate(4px, 104px)");
+  });
+
+  test("accounts for anchor scrollTop", () => {
+    const anchor = document.createElement("div");
+    const menu = document.createElement("div");
+    const targetBlock = document.createElement("p");
+    anchor.append(menu, targetBlock);
+    document.body.append(anchor);
+
+    anchor.scrollTop = 50;
+    stubRect(anchor, { bottom: 500, left: 0, right: 800, top: 0 });
+    stubRect(targetBlock, { bottom: 150, left: 100, right: 700, top: 100 });
+    stubRect(menu, { bottom: 20, left: 0, right: 20, top: 0 });
+    targetBlock.style.lineHeight = "28px";
+
+    positionDragHandle(menu, targetBlock, anchor);
+
+    // 100 + 4 - 0 + 50 = 154
+    strictEqual(menu.style.transform, "translate(4px, 154px)");
+  });
+
+  test("safely ignores null menu element", () => {
+    const anchor = document.createElement("div");
+    const targetBlock = document.createElement("p");
+    positionDragHandle(null, targetBlock, anchor);
+  });
+});
+
+describe("syncDraggableBlockElement", () => {
+  test("dispatches a synthetic mousemove event over the target block", () => {
+    const targetBlock = document.createElement("div");
+    document.body.append(targetBlock);
+    stubRect(targetBlock, { bottom: 200, left: 100, right: 500, top: 100 });
+
+    let receivedEvent: MouseEvent | null = null;
+    targetBlock.addEventListener("mousemove", (event) => {
+      receivedEvent = event as MouseEvent;
+    });
+
+    syncDraggableBlockElement(targetBlock);
+
+    ok(receivedEvent !== null);
+    strictEqual((receivedEvent as MouseEvent).clientX, 300);
+    strictEqual((receivedEvent as MouseEvent).clientY, 150);
   });
 });

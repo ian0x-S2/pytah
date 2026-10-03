@@ -16,6 +16,7 @@ import { focusDroppedBlock, moveDraggedBlock } from "./drop-placement";
 import {
   hideTargetLine,
   isOnBlockDragHandleTarget,
+  positionDragHandle,
   positionTargetLine,
   readBlockDragKey,
   resolveDropTarget,
@@ -157,6 +158,7 @@ export function BlockDragStabilizer({
               event.clientY,
               (movedElement) => {
                 focusDroppedBlock(editor, movedElement);
+                positionDragHandle(menuRef.current, movedElement, anchorElem);
               }
             );
             hideTargetLine(targetLineRef.current);
@@ -177,7 +179,7 @@ export function BlockDragStabilizer({
           COMMAND_PRIORITY_CRITICAL
         )
       ),
-    [anchorElem, editor, targetLineRef]
+    [anchorElem, editor, menuRef, targetLineRef]
   );
 
   return null;

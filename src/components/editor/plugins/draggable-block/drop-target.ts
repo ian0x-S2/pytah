@@ -48,6 +48,11 @@ function safeMargin(value: string | undefined): number {
   return Number.isNaN(parsed) ? 0 : parsed;
 }
 
+function parsePixelLength(value: string | undefined): number {
+  const parsed = Number((value ?? "").replace("px", ""));
+  return Number.isNaN(parsed) ? Number.NaN : parsed;
+}
+
 function effectiveZoom(element: HTMLElement): number {
   // calculateZoomLevel can report 0/NaN where CSS zoom is unsupported
   // (e.g. synthetic DOMs); viewport math needs a sane divisor.
@@ -274,4 +279,71 @@ export function hideTargetLine(
     targetLineElem.style.opacity = "0";
     targetLineElem.style.transform = "translate(-10000px, -10000px)";
   }
+}
+
+/**
+ * Dispatches a synthetic mousemove event over the dropped block element to
+ * synchronize upstream Lexical's internal `draggableBlockElem` React state
+ * without waiting for user mouse movement.
+ */
+export function syncDraggableBlockElement(targetBlockElem: HTMLElement): void {
+  try {
+    const rect = targetBlockElem.getBoundingClientRect();
+    const clientX = Math.round((rect.left + rect.right) / 2);
+    const clientY = Math.round((rect.top + rect.bottom) / 2);
+    const event = new MouseEvent("mousemove", {
+      bubbles: true,
+      cancelable: true,
+      clientX,
+      clientY,
+    });
+    if (event.x === undefined) {
+      Object.defineProperty(event, "x", { value: clientX });
+      Object.defineProperty(event, "y", { value: clientY });
+    }
+    targetBlockElem.dispatchEvent(event);
+  } catch {
+    // Ignore in environments where synthetic MouseEvent dispatch fails.
+  }
+}
+
+/**
+ * Positions the floating drag handle next to the dropped block element
+ * immediately following a drop, keeping it aligned to the dropped block's
+ * first line (or full block height) instead of remaining at the pre-drag position.
+ */
+export function positionDragHandle(
+  menuElem: HTMLElement | null,
+  targetBlockElem: HTMLElement,
+  anchorElem: HTMLElement
+): void {
+  if (!menuElem) {
+    return;
+  }
+
+  menuElem.style.display = "flex";
+
+  const targetRect = targetBlockElem.getBoundingClientRect();
+  const view = targetBlockElem.ownerDocument.defaultView ?? window;
+  const targetStyle = view.getComputedStyle(targetBlockElem);
+  const menuRect = menuElem.getBoundingClientRect();
+  const anchorRect = anchorElem.getBoundingClientRect();
+  const zoom = effectiveZoom(targetBlockElem);
+
+  let targetCalculateHeight = parsePixelLength(targetStyle.lineHeight);
+  if (Number.isNaN(targetCalculateHeight)) {
+    targetCalculateHeight = targetRect.bottom - targetRect.top;
+  }
+
+  const menuHeight = menuRect.height || targetCalculateHeight;
+  const verticalOffset = Math.round((targetCalculateHeight - menuHeight) / 2);
+  const top =
+    (targetRect.top + verticalOffset - anchorRect.top + anchorElem.scrollTop) /
+    zoom;
+  const left = MENU_SPACE;
+
+  menuElem.style.opacity = "1";
+  menuElem.style.transform = `translate(${left}px, ${top}px)`;
+
+  syncDraggableBlockElement(targetBlockElem);
 }
