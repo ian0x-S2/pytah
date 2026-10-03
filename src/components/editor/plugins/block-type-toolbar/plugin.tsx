@@ -68,7 +68,11 @@ export const BlockTypeToolbarPlugin = memo(
     }, [editor]);
 
     return (
-      <div className="flex items-center gap-1">
+      <div
+        aria-label="Formatting toolbar"
+        className="flex items-center gap-1"
+        role="toolbar"
+      >
         <TooltipProvider>
           <BlockTypeDrop
             blockType={currentBlockType}

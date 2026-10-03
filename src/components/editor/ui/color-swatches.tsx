@@ -1,5 +1,6 @@
 "use client";
 
+import { CheckIcon } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useState } from "react";
 
@@ -115,27 +116,34 @@ export function ColorSwatches({
         sideOffset={6}
       >
         <div className="grid grid-cols-4 gap-1">
-          {palette.map((swatch) => (
-            <button
-              aria-label={swatch.label}
-              className={cn(
-                "size-6 rounded-md border border-border/40 transition-transform hover:scale-110",
-                "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:outline-none",
-                activeColor === swatch.value &&
-                  "ring-2 ring-primary ring-offset-1"
-              )}
-              key={swatch.value}
-              onClick={() => handleSelect(swatch.value)}
-              style={{ backgroundColor: swatch.value }}
-              title={swatch.label}
-              type="button"
-            />
-          ))}
+          {palette.map((swatch) => {
+            const isSelected = activeColor === swatch.value;
+            return (
+              <button
+                aria-label={swatch.label}
+                aria-pressed={isSelected}
+                className={cn(
+                  "flex size-6 items-center justify-center rounded-md border border-border/40 transition-transform hover:scale-110",
+                  "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:outline-none",
+                  isSelected && "ring-2 ring-primary ring-offset-1"
+                )}
+                key={swatch.value}
+                onClick={() => handleSelect(swatch.value)}
+                style={{ backgroundColor: swatch.value }}
+                title={swatch.label}
+                type="button"
+              >
+                {isSelected ? (
+                  <CheckIcon className="size-3 text-white mix-blend-difference" />
+                ) : null}
+              </button>
+            );
+          })}
         </div>
 
         <div className="mt-1.5 border-t border-border pt-1.5">
           <button
-            className="w-full rounded-md px-2 py-1 text-center text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="w-full rounded-md px-2 py-1 text-center text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:outline-none"
             onClick={() => handleSelect("")}
             type="button"
           >

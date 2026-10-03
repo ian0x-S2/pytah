@@ -125,7 +125,7 @@ export function TableActionMenu({
         <span>Delete column</span>
       </Button>
       <Button
-        className="justify-start text-destructive hover:text-destructive"
+        className="justify-start text-destructive hover:bg-destructive/10 hover:text-destructive"
         onClick={() => {
           deleteSelectedTable(editor);
           onClose();

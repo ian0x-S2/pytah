@@ -28,9 +28,15 @@ export function FloatingLinkPreviewChip({
     >
       <Button
         aria-label="Open link in new tab"
-        onClick={() => window.open(href, "_blank", "noopener,noreferrer")}
+        render={
+          <a
+            aria-label="Open link in new tab"
+            href={href}
+            rel="noopener noreferrer"
+            target="_blank"
+          />
+        }
         size="icon-xs"
-        type="button"
         variant="ghost"
       >
         <ExternalLinkIcon />

@@ -58,8 +58,12 @@ export function EditorFooter({
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-3">
-          <span>{wordCount} words</span>
-          <span>{characterCount} chars</span>
+          <span className="tabular-nums">
+            {wordCount === 1 ? "1 word" : `${wordCount} words`}
+          </span>
+          <span className="tabular-nums">
+            {characterCount === 1 ? "1 char" : `${characterCount} chars`}
+          </span>
           <span>Copy/paste ready HTML + Markdown</span>
         </div>
         <span>Use / to insert blocks</span>
@@ -91,6 +95,7 @@ export function OutputPanel({
         </Button>
       </div>
       <Textarea
+        aria-label={label}
         className="min-h-55 rounded-none border-0 bg-transparent font-mono text-xs shadow-none focus-visible:ring-0"
         readOnly
         value={value}

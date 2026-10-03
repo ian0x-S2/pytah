@@ -4,6 +4,7 @@ import type { TableOfContentsEntry } from "@lexical/react/LexicalTableOfContents
 import type { LexicalEditor, NodeKey } from "lexical";
 import { AlignLeftIcon } from "lucide-react";
 import { useRef, useState } from "react";
+import type { FocusEvent } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -59,7 +60,7 @@ function EditorTocMiniBars({
         return (
           <button
             aria-label={`Jump to ${text.trim() || "heading"}`}
-            className="group relative flex cursor-pointer items-center justify-end py-px outline-none"
+            className="group relative flex cursor-pointer items-center justify-end rounded-xs py-px outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
             key={key}
             onClick={() => onHeadingClick(key)}
             type="button"
@@ -118,7 +119,7 @@ function EditorTocPopoverCard({
               <button
                 aria-current={isActive ? "location" : undefined}
                 className={cn(
-                  "relative flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1 text-left text-xs transition-colors duration-100 ease-linear outline-none select-none",
+                  "relative flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1 text-left text-xs transition-colors duration-100 ease-linear outline-none select-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
                   indentClass,
                   isActive
                     ? "bg-primary/10 font-medium text-primary"
@@ -163,6 +164,19 @@ function EditorTableOfContentsInner({
     }, 150);
   };
 
+  const handleFocusCapture = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    setIsHovered(true);
+  };
+
+  const handleBlurCapture = (event: FocusEvent<HTMLElement>) => {
+    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+      setIsHovered(false);
+    }
+  };
+
   return (
     // biome-ignore lint/a11y/noNoninteractiveElementInteractions: hover popover container
     <aside
@@ -171,6 +185,8 @@ function EditorTableOfContentsInner({
         "group relative flex flex-col items-end select-none",
         className
       )}
+      onBlurCapture={handleBlurCapture}
+      onFocusCapture={handleFocusCapture}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >

@@ -62,10 +62,8 @@ export function LayoutPresetDialog({
         showCloseButton
       >
         <DialogHeader className="px-5 pt-5 pb-0 sm:px-6 sm:pt-6">
-          <DialogTitle>Choose columns layout</DialogTitle>
-          <DialogDescription>
-            Pick one of the official Lexical-style column presets.
-          </DialogDescription>
+          <DialogTitle>Choose column layout</DialogTitle>
+          <DialogDescription>Select a column layout preset.</DialogDescription>
         </DialogHeader>
 
         <ScrollArea

@@ -95,15 +95,15 @@ export function FloatingLinkEditorPanel({
       <div className="flex items-center justify-end gap-0.5">
         <Button
           aria-label="Open link in new tab"
-          onClick={() => {
-            window.open(
-              sanitizeEditorLinkUrl(linkUrl),
-              "_blank",
-              "noopener,noreferrer"
-            );
-          }}
+          render={
+            <a
+              aria-label="Open link in new tab"
+              href={sanitizeEditorLinkUrl(linkUrl)}
+              rel="noopener noreferrer"
+              target="_blank"
+            />
+          }
           size="icon-xs"
-          type="button"
           variant="ghost"
         >
           <ExternalLinkIcon />

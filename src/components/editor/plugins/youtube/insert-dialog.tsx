@@ -60,6 +60,7 @@ export function InsertYouTubeDialog({
               YouTube URL
             </label>
             <Input
+              aria-describedby={`${idPrefix}-youtube-url-hint`}
               id={`${idPrefix}-youtube-url`}
               onChange={(event) => onUrlChange(event.target.value)}
               placeholder="https://www.youtube.com/watch?v=jNQXAC9IVRw"
@@ -71,8 +72,11 @@ export function InsertYouTubeDialog({
               type="url"
               value={youTubeUrl}
             />
-            <p className="text-xs text-muted-foreground">
-              Supports `youtube.com`, `youtu.be`, and embed links.
+            <p
+              className="text-xs text-muted-foreground"
+              id={`${idPrefix}-youtube-url-hint`}
+            >
+              Supports youtube.com, youtu.be, and embed links.
             </p>
           </div>
 

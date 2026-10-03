@@ -159,8 +159,9 @@ export const InsertPopover = memo(
           <PlusIcon className="size-3.5" />
           <span>Insert</span>
         </PopoverTrigger>
-        <PopoverContent align="start" className="w-44 p-1">
+        <PopoverContent align="start" className="editor-floating w-44 p-1">
           <div
+            aria-label="Insert blocks"
             className="space-y-1"
             onKeyDown={handleInsertListKeyDown}
             role="listbox"
@@ -174,7 +175,7 @@ export const InsertPopover = memo(
                   aria-selected={isActive}
                   className={cn(
                     "flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors outline-none select-none focus-visible:outline-none",
-                    isActive && "bg-accent"
+                    isActive && "bg-accent text-accent-foreground"
                   )}
                   key={option.value}
                   onClick={() => handleSelect(option.value)}

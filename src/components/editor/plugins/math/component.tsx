@@ -216,7 +216,7 @@ export function MathComponent({
             <span
               aria-label="Math formula"
               className={cn(
-                "editor-math-trigger transition-all duration-150",
+                "editor-math-trigger transition-colors duration-150",
                 isSelected && editable && "editor-math-trigger-selected",
                 editable && "cursor-pointer hover:bg-muted/40"
               )}
@@ -242,7 +242,7 @@ export function MathComponent({
         {editable ? (
           <PopoverContent
             align="center"
-            className="w-72 p-3"
+            className="editor-floating w-72 p-3"
             finalFocus={false}
             initialFocus={false}
             side="bottom"
@@ -250,11 +250,12 @@ export function MathComponent({
           >
             <div className="flex flex-col gap-2.5">
               <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
-                <span>Edit TeX Equation</span>
+                <span>Edit TeX equation</span>
                 <div className="editor-math-segment flex items-center gap-1">
                   <button
+                    aria-pressed={draftInline}
                     className={cn(
-                      "rounded px-2 py-0.5 text-xs font-medium transition-colors",
+                      "rounded px-2 py-0.5 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
                       draftInline
                         ? "bg-background text-foreground shadow-xs"
                         : "text-muted-foreground hover:text-foreground"
@@ -265,8 +266,9 @@ export function MathComponent({
                     Inline
                   </button>
                   <button
+                    aria-pressed={!draftInline}
                     className={cn(
-                      "rounded px-2 py-0.5 text-xs font-medium transition-colors",
+                      "rounded px-2 py-0.5 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
                       draftInline
                         ? "text-muted-foreground hover:text-foreground"
                         : "bg-background text-foreground shadow-xs"
@@ -308,7 +310,7 @@ export function MathComponent({
 
               <div className="flex items-center justify-between pt-1">
                 <button
-                  className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-destructive transition-colors hover:bg-destructive/10 hover:text-destructive/80"
+                  className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-destructive transition-colors hover:bg-destructive/10 hover:text-destructive/80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                   onClick={handleDelete}
                   type="button"
                 >
@@ -318,14 +320,14 @@ export function MathComponent({
 
                 <div className="flex items-center gap-1.5">
                   <button
-                    className="rounded px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    className="rounded px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                     onClick={() => setIsEditing(false)}
                     type="button"
                   >
                     Cancel
                   </button>
                   <button
-                    className="inline-flex items-center gap-1 rounded bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground shadow-xs transition-colors hover:bg-primary/90"
+                    className="inline-flex items-center gap-1 rounded bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground shadow-xs transition-colors hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                     onClick={handleSave}
                     type="button"
                   >
