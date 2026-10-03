@@ -9,6 +9,7 @@ import {
   XIcon,
 } from "lucide-react";
 import type { KeyboardEvent } from "react";
+import { useId } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,38 +62,49 @@ export function FloatingLinkEditorPanel({
     }
   };
 
+  const textInputId = useId();
+  const urlInputId = useId();
+
   return (
     <div className="flex w-full min-w-0 flex-col gap-2">
-      <div className="flex items-center gap-2">
-        <TypeIcon
-          aria-hidden
-          className="size-3.5 shrink-0 text-muted-foreground"
-        />
+      <div className="grid gap-1">
+        <label
+          className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground"
+          htmlFor={textInputId}
+        >
+          <TypeIcon aria-hidden className="size-3 shrink-0" />
+          Text
+        </label>
         <Input
-          aria-label="Link text"
           className="h-8 min-w-0 flex-1 text-xs"
+          id={textInputId}
           onChange={(event) => onEditedLinkTextChange(event.target.value)}
           onKeyDown={handleFieldKeyDown}
           placeholder="Link text"
           value={editedLinkText}
         />
       </div>
-      <div className="flex items-center gap-2">
-        <Link2Icon
-          aria-hidden
-          className="size-3.5 shrink-0 text-muted-foreground"
-        />
+      <div className="grid gap-1">
+        <label
+          className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground"
+          htmlFor={urlInputId}
+        >
+          <Link2Icon aria-hidden className="size-3 shrink-0" />
+          Link
+        </label>
         <Input
-          aria-label="Link URL"
           className="h-8 min-w-0 flex-1 text-xs"
+          id={urlInputId}
+          inputMode="url"
           onChange={(event) => onEditedLinkUrlChange(event.target.value)}
           onKeyDown={handleFieldKeyDown}
           placeholder="Add a link"
           ref={isLinkEditMode ? inputRef : undefined}
+          type="url"
           value={editedLinkUrl}
         />
       </div>
-      <div className="flex items-center justify-end gap-0.5">
+      <div className="flex items-center justify-end gap-0.5 pt-2">
         <Button
           aria-label="Open link in new tab"
           render={
