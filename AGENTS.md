@@ -11,7 +11,7 @@
 ## Changelog
 
 - Every user-facing **editor** change (behavior, props, defaults, fixes) gets an entry in `CHANGELOG.md` under `## Unreleased`, grouped `Added` / `Changed` / `Fixed` / `Removed`, matching existing style.
-- No entry for visual-only changes (home page, responsive tweaks, marketing) or internal ones (refactors, lint, tests, docs).
+- No entry for UI-only changes: visual restyles, layout/spacing/geometry tweaks, visible-label additions or any other polish with zero behavioral diff. No entry either for home page, responsive tweaks, marketing or internal ones (refactors, lint, tests, docs).
 - On release: rename `Unreleased` to the new version and bump `package.json` `version` to match.
 
 ## Project
