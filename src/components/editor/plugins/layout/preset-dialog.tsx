@@ -58,17 +58,17 @@ export function LayoutPresetDialog({
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent
-        className="flex max-h-[calc(100vh-2rem)] flex-col overflow-hidden p-0 sm:max-w-2xl"
+        className="flex max-h-[calc(100vh-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl"
         showCloseButton
       >
-        <DialogHeader className="px-5 pt-5 pb-0 sm:px-6 sm:pt-6">
+        <DialogHeader className="px-4 pt-4 pb-0 sm:px-6 sm:pt-6">
           <DialogTitle>Choose column layout</DialogTitle>
           <DialogDescription>Select a column layout preset.</DialogDescription>
         </DialogHeader>
 
         <ScrollArea
           className="max-h-[min(70vh,34rem)] min-h-0 flex-1"
-          viewportClassName="max-h-[min(70vh,34rem)] px-4 pt-2 pb-4 sm:px-6 sm:pb-6"
+          viewportClassName="max-h-[min(70vh,34rem)] px-4 py-4 sm:px-6"
         >
           <div className="grid gap-3 sm:grid-cols-2">
             {LAYOUT_PRESETS.map((preset) => (
