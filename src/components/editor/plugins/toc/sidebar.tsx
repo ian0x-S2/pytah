@@ -148,34 +148,44 @@ function EditorTableOfContentsInner({
   entries: readonly TableOfContentsEntry[];
 }) {
   const { activeKey, handleHeadingClick } = useActiveHeading(entries, editor);
+  // Hover and focus are independent open sources: clicking an item moves focus
+  // to the editor, which must not close the popover while the pointer (or
+  // keyboard focus) is still inside. Close only happens on hover-out/unfocus.
   const [isHovered, setIsHovered] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleMouseEnter = () => {
+  const clearPendingClose = () => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
     }
+  };
+
+  const handleMouseEnter = () => {
+    clearPendingClose();
     setIsHovered(true);
   };
 
   const handleMouseLeave = () => {
+    clearPendingClose();
     timeoutRef.current = setTimeout(() => {
       setIsHovered(false);
     }, 150);
   };
 
   const handleFocusCapture = () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    setIsHovered(true);
+    clearPendingClose();
+    setIsFocused(true);
   };
 
   const handleBlurCapture = (event: FocusEvent<HTMLElement>) => {
     if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-      setIsHovered(false);
+      setIsFocused(false);
     }
   };
+
+  const isOpen = isHovered || isFocused;
 
   return (
     // biome-ignore lint/a11y/noNoninteractiveElementInteractions: hover popover container
@@ -190,7 +200,7 @@ function EditorTableOfContentsInner({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {isHovered ? (
+      {isOpen ? (
         <EditorTocPopoverCard
           activeKey={activeKey}
           entries={entries}
