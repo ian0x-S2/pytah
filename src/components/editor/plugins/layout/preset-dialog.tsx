@@ -79,7 +79,7 @@ export function LayoutPresetDialog({
                 type="button"
                 variant="ghost"
               >
-                <span className="flex w-full flex-col items-start gap-3">
+                <span className="flex w-full flex-col items-start gap-2">
                   <LayoutPresetPreview templateColumns={preset.value} />
                   <span className="flex flex-col items-start gap-1">
                     <span className="text-sm font-medium text-foreground">

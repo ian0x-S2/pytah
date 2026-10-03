@@ -139,9 +139,20 @@ export function CodeLineNumbersPlugin({ className }: { className?: string }) {
     const unregister = editor.registerUpdateListener(() => {
       collect();
     });
+    // Layout can shift without any Lexical update: the density toggle only
+    // flips `data-density` (line-height, paddings and gaps are CSS vars), and
+    // zen mode or container resizes move blocks the same way. The host box
+    // tracks the wrapper in all these cases, so re-collect on its resize.
+    const observer = new ResizeObserver(() => {
+      collect();
+    });
+    if (host) {
+      observer.observe(host);
+    }
     const touched = touchedElements.current;
     return () => {
       unregister();
+      observer.disconnect();
       restoreCodePadding(touched);
       touched.clear();
     };

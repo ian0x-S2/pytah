@@ -57,7 +57,7 @@ export function EditorFooter({
       className={cn("editor-footer text-xs text-muted-foreground", className)}
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <span className="tabular-nums">
             {wordCount === 1 ? "1 word" : `${wordCount} words`}
           </span>

@@ -98,7 +98,7 @@ export const BlockTypeDrop = memo(
           <span className="mt-0.5 shrink-0 rounded-sm bg-muted p-0.5 text-muted-foreground">
             <Icon className="size-3" />
           </span>
-          <span className="flex min-w-0 flex-1 flex-col">
+          <span className="flex min-w-0 flex-1 flex-col gap-0.5">
             <span className="text-sm font-medium text-foreground">
               {option.label}
             </span>

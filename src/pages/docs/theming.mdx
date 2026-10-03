@@ -116,6 +116,15 @@ To restyle, override the vars — no component edits needed:
 
 This sets `data-density="compact"` on the editor root, switching the spacing subset. Body-portalled chrome (floating toolbar, slash popover) follows through `:root:has([data-density="compact"])`, so one density per page is the v1 contract.
 
+#### What each mode governs
+
+The contract is rhythm, not type or chrome: both modes share the type scale (body 17px, `h1`–`h6` descending to `h6` = body size with semibold weight keeping the lowest level distinct) and the toolbar/menu control sizes (`sm` 28px / `xs` 24px). Chrome stays tool-density in both modes — a professional editor operated with mouse and keyboard keeps compact, distinct hit areas instead of 40px+ touch rows. What switches per mode is canvas rhythm and surface padding:
+
+- **Comfortable** — airy canvas (`content-py`, block gaps, heading margins, table/image/layout separation) and roomier floating padding.
+- **Compact** — the same canvas compressed (tighter `content-py`, line-height, block gaps, heading margins, cell padding, floating padding). Type sizes do not shrink: readability stays at body 17px.
+
+Deliberate exceptions (consistent patterns, not errors): heading top margins use midpoint gradations (`h1` → `h2` → `h3` in 8px steps); the TOC indent ladder advances in fixed 8px steps per level; pill badges stay `rounded-full` against `rounded-md` surfaces; the TOC mini-rail stays a quiet few-pixel affordance because the hover popover offers the same jumps on larger rows. Toolbar separators keep per-surface heights (`h-4` static, `h-5` floating), and menu rows keep purpose density (TOC ~24px, table 28px, dropdown 32px, insert ~36px) — each menu's height is its established pattern, not a drift to normalize.
+
 ## Dark Mode
 
 Dark mode is controlled by a `.dark` class on the `<html>` element. The included `ThemeProvider` manages this automatically with three modes: light, dark, and system (follows OS preference).

@@ -248,7 +248,7 @@ export function MathComponent({
             side="bottom"
             sideOffset={4}
           >
-            <div className="flex flex-col gap-2.5">
+            <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
                 <span>Edit TeX equation</span>
                 <div className="editor-math-segment flex items-center gap-1">
@@ -308,7 +308,7 @@ export function MathComponent({
                 <span dangerouslySetInnerHTML={{ __html: previewHtml }} />
               </ScrollArea>
 
-              <div className="flex items-center justify-between pt-1">
+              <div className="flex items-center justify-between pt-2">
                 <button
                   className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-destructive transition-colors hover:bg-destructive/10 hover:text-destructive/80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                   onClick={handleDelete}

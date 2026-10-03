@@ -106,9 +106,20 @@ export function CodeBlockChromePlugin({ className }: { className?: string }) {
     const unregister = editor.registerUpdateListener(() => {
       collect();
     });
+    // Same layout-without-update case as the gutter: the density toggle only
+    // flips `data-density` (all rhythm is CSS vars), so anchors go stale
+    // until the next edit. The host box tracks the wrapper on density, zen
+    // and container changes — re-collect on its resize.
+    const observer = new ResizeObserver(() => {
+      collect();
+    });
+    if (host) {
+      observer.observe(host);
+    }
     window.addEventListener("resize", collect);
     return () => {
       unregister();
+      observer.disconnect();
       window.removeEventListener("resize", collect);
     };
   }, [editor, host]);
