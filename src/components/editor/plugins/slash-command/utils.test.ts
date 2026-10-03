@@ -38,6 +38,17 @@ describe("slash command utils", () => {
     strictEqual(hasSelectedCommand(commands, ""), false);
   });
 
+  test("moves off a stale selection on the first key press", () => {
+    const commands = filterSlashCommands([...CORE_SLASH_COMMANDS], "hea");
+
+    const staleId = "paragraph";
+    strictEqual(hasSelectedCommand(commands, staleId), false);
+    // Effective highlight is the first filtered item ("h1"); the first
+    // arrow-down must land on the *second* item, not re-sync to "h1".
+    strictEqual(getNeighborCommandId(commands, staleId, "down"), "h2");
+    strictEqual(getNeighborCommandId(commands, staleId, "up"), "h3");
+  });
+
   test("matches only valid slash queries", () => {
     strictEqual(SLASH_QUERY_PATTERN.test("/table"), true);
     strictEqual(getSlashQueryMatch("/table"), "table");

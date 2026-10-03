@@ -25,7 +25,11 @@ import {
 import { cn } from "@/lib/utils";
 
 import { createSlashMenuAnchor, getSelectionRectangle } from "./anchor";
-import type { FeatureSlashCommand, SlashCommandSelection } from "./types";
+import type {
+  FeatureSlashCommand,
+  SlashCommand,
+  SlashCommandSelection,
+} from "./types";
 import {
   filterSlashCommands,
   getFirstCommandId,
@@ -61,7 +65,7 @@ type SlashCommandAction =
   | {
       type: "move-selected-command";
       payload: {
-        commands: readonly FeatureSlashCommand[];
+        commands: readonly SlashCommand[];
         direction: "down" | "up";
       };
     };
@@ -98,7 +102,7 @@ const slashCommandReducer = (
     case "move-selected-command": {
       return applySlashCommandPatch(state, {
         rawSelectedCommandId: getNeighborCommandId(
-          action.payload.commands.map((entry) => entry.command),
+          action.payload.commands,
           state.rawSelectedCommandId,
           action.payload.direction
         ),
@@ -144,6 +148,10 @@ export function SlashCommandPlugin({ commands }: SlashCommandPluginProps) {
     filteredCommands,
     selectedCommandId
   );
+
+  // The menu is only actually visible when the popover renders content;
+  // key handling and scroll-into-view must match this exactly.
+  const isMenuVisible = isOpen && filteredCommands.length > 0;
 
   const anchor = createSlashMenuAnchor(editor);
 
@@ -203,7 +211,7 @@ export function SlashCommandPlugin({ commands }: SlashCommandPluginProps) {
   });
 
   useEffect(() => {
-    if (!(isOpen && selectedCommandId)) {
+    if (!isMenuVisible) {
       return;
     }
 
@@ -220,7 +228,7 @@ export function SlashCommandPlugin({ commands }: SlashCommandPluginProps) {
     return () => {
       window.cancelAnimationFrame(animationFrameId);
     };
-  }, [isOpen, selectedCommandId]);
+  }, [isMenuVisible, selectedCommandId]);
 
   useEffect(
     () =>
@@ -229,7 +237,6 @@ export function SlashCommandPlugin({ commands }: SlashCommandPluginProps) {
       }),
     [editor]
   );
-
   useEffect(
     () => () => {
       if (animationFrameRef.current !== null) {
@@ -245,14 +252,18 @@ export function SlashCommandPlugin({ commands }: SlashCommandPluginProps) {
       switch (command) {
         case "arrow-down": {
           dispatch({
-            payload: { commands, direction: "down" },
+            // Navigate within the filtered list: moving through the full
+            // list walks into entries the query hid, and the derived
+            // highlight then falls back to the first filtered item —
+            // freezing keyboard navigation while searching.
+            payload: { commands: filteredCommands, direction: "down" },
             type: "move-selected-command",
           });
           return;
         }
         case "arrow-up": {
           dispatch({
-            payload: { commands, direction: "up" },
+            payload: { commands: filteredCommands, direction: "up" },
             type: "move-selected-command",
           });
           return;
@@ -276,7 +287,9 @@ export function SlashCommandPlugin({ commands }: SlashCommandPluginProps) {
   );
 
   useEffect(() => {
-    if (!isOpen) {
+    // Key handling must match menu visibility exactly: with zero results the
+    // popover is hidden, so arrows and enter must reach the editor.
+    if (!isMenuVisible) {
       return;
     }
 
@@ -317,13 +330,10 @@ export function SlashCommandPlugin({ commands }: SlashCommandPluginProps) {
         COMMAND_PRIORITY_HIGH
       )
     );
-  }, [editor, isOpen]);
+  }, [editor, isMenuVisible]);
 
   return (
-    <PopoverPrimitive.Root
-      modal={false}
-      open={isOpen && filteredCommands.length > 0}
-    >
+    <PopoverPrimitive.Root modal={false} open={isMenuVisible}>
       <PopoverPrimitive.Portal>
         <PopoverPrimitive.Positioner
           align="start"

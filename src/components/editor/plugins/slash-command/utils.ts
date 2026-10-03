@@ -38,8 +38,13 @@ export const getNeighborCommandId = (
 ): SlashCommandSelection => {
   const currentIndex = getSelectedCommandIndex(commands, selectedCommandId);
 
+  // A stale selection (the query filtered it out) acts as if it sat at the
+  // effective highlight edge, so the very first arrow key press moves off it
+  // instead of re-syncing to the first item.
   if (currentIndex < 0) {
-    return getFirstCommandId(commands);
+    return direction === "down"
+      ? (commands.at(1)?.id ?? getFirstCommandId(commands))
+      : (commands.at(-1)?.id ?? getFirstCommandId(commands));
   }
 
   const nextIndex =
