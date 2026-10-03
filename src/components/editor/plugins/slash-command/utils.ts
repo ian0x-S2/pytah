@@ -6,7 +6,7 @@ import type { SlashCommand, SlashCommandSelection } from "./types";
 export const SLASH_QUERY_PATTERN = /^\/(?<query>\w*)$/u;
 
 export const filterSlashCommands = (
-  commands: SlashCommand[],
+  commands: readonly SlashCommand[],
   query: string
 ): SlashCommand[] => {
   if (!query) {
@@ -23,16 +23,16 @@ export const filterSlashCommands = (
 };
 
 export const getFirstCommandId = (
-  commands: SlashCommand[]
+  commands: readonly SlashCommand[]
 ): SlashCommandSelection => commands[0]?.id ?? "";
 
 export const getSelectedCommandIndex = (
-  commands: SlashCommand[],
+  commands: readonly SlashCommand[],
   selectedCommandId: SlashCommandSelection
 ): number => commands.findIndex((command) => command.id === selectedCommandId);
 
 export const getNeighborCommandId = (
-  commands: SlashCommand[],
+  commands: readonly SlashCommand[],
   selectedCommandId: SlashCommandSelection,
   direction: "down" | "up"
 ): SlashCommandSelection => {
@@ -56,7 +56,7 @@ export const getNeighborCommandId = (
 };
 
 export const hasSelectedCommand = (
-  commands: SlashCommand[],
+  commands: readonly SlashCommand[],
   selectedCommandId: SlashCommandSelection
 ): boolean => commands.some((command) => command.id === selectedCommandId);
 
