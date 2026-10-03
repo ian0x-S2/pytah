@@ -28,6 +28,7 @@ export function FloatingLinkPreviewChip({
     >
       <Button
         aria-label="Open link in new tab"
+        nativeButton={false}
         render={
           <a
             aria-label="Open link in new tab"
