@@ -8,7 +8,7 @@ export const SLASH_QUERY_PATTERN = /^\/(?<query>\w*)$/u;
 export const filterSlashCommands = (
   commands: readonly SlashCommand[],
   query: string
-): SlashCommand[] => {
+): readonly SlashCommand[] => {
   if (!query) {
     return commands;
   }
