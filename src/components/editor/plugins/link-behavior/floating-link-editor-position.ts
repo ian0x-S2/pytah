@@ -41,6 +41,24 @@ const toAnchor = (rect: DOMRect): FloatingLinkEditorAnchor => ({
 export const toFloatingLinkEditorAnchor = toAnchor;
 
 /**
+ * True when the native selection still lives inside the editor root. The
+ * edit card's inputs own the native selection while open, so unmounting them
+ * (X button, Escape, outside press, Apply) kills it — a `false` here means
+ * the Lexical selection still pointing at the link is stale and nothing
+ * should resurrect it (e.g. checklist ticks re-sync the DOM selection with
+ * the editor's selection, which would yank the caret back into the link).
+ */
+export const isNativeSelectionWithinEditor = (
+  rootElement: HTMLElement | null,
+  nativeSelection: Selection | null
+): boolean =>
+  rootElement !== null &&
+  nativeSelection !== null &&
+  nativeSelection.rangeCount > 0 &&
+  nativeSelection.anchorNode !== null &&
+  rootElement.contains(nativeSelection.anchorNode);
+
+/**
  * Resolves the rectangle the link popover anchors to: the exact range rect
  * when text is selected, the caret line's text span when collapsed, and the
  * node element for node selections. Returns `null` when the native selection

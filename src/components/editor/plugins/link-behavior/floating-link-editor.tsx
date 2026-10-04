@@ -17,6 +17,7 @@ import { useEffect, useEffectEvent, useMemo, useReducer, useRef } from "react";
 
 import { OPEN_FLOATING_LINK_EDITOR_COMMAND } from "../floating-toolbar/link-command";
 import { getFloatingToolbarSelectedNode } from "../floating-toolbar/selection";
+import { useEditCardCloseSelectionReconcile } from "./floating-link-editor-close-reconcile";
 import {
   getLinkEditorAnchor,
   readSelectedLinkText,
@@ -282,6 +283,8 @@ export function FloatingLinkEditorPlugin() {
       type: "hover-link",
     });
   }, [editor, hoverTarget]);
+
+  useEditCardCloseSelectionReconcile(editor, surface);
 
   const handleInputRef = (element: HTMLInputElement | null) => {
     if (!(element && state.isLinkEditMode)) {
