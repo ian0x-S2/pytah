@@ -35,6 +35,7 @@ import { CodeBlockChromePlugin } from "../plugins/code-highlight/block-chrome";
 import { CodeGutterHostContext } from "../plugins/code-highlight/gutter-host";
 import { CodeLineNumbersPlugin } from "../plugins/code-highlight/line-numbers";
 import { CodeHighlightPlugin } from "../plugins/code-highlight/plugin";
+import { CodeSelectAllPlugin } from "../plugins/code-highlight/select-all-plugin";
 import { CodeBlockThemeContext } from "../plugins/code-highlight/theme-context";
 import {
   DEFAULT_CODE_BLOCK_THEME_FAMILY,
@@ -150,6 +151,7 @@ function DefaultEditorPlugins({
     <EditorTransformersContext.Provider value={transformers}>
       {features.history ? <HistoryPlugin /> : null}
       <CodeHighlightPlugin />
+      <CodeSelectAllPlugin />
       <CodeLineNumbersPlugin />
       <CodeBlockChromePlugin />
       <ListPlugin />
