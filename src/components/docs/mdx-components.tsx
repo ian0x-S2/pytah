@@ -1,4 +1,3 @@
-import type { MDXComponents } from "mdx/types.js";
 import type { ReactElement, ReactNode } from "react";
 
 import {
@@ -7,11 +6,9 @@ import {
 } from "@/components/docs/source-utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-import { FeatureTable, TransformersTable } from "./data-tables";
 import {
   Callout,
   CodeBlock,
-  FileTree,
   Paragraph,
   SectionHeading,
   SubHeading,
@@ -81,12 +78,12 @@ const extractCodeBlock = (children: ReactNode): CodeBlockInfo => {
   };
 };
 
-function MDXCodeBlock({ children }: { children?: ReactNode }) {
+export function MDXCodeBlock({ children }: { children?: ReactNode }) {
   const { code, language } = extractCodeBlock(children);
   return <CodeBlock language={language}>{code}</CodeBlock>;
 }
 
-function InlineCode({ children }: { children?: ReactNode }) {
+export function InlineCode({ children }: { children?: ReactNode }) {
   return (
     <code className="rounded-sm border border-border/60 bg-muted/40 px-1.5 py-0.5 font-mono text-sm text-foreground">
       {children}
@@ -94,7 +91,7 @@ function InlineCode({ children }: { children?: ReactNode }) {
   );
 }
 
-function MDXList({
+export function MDXList({
   children,
   ordered = false,
 }: {
@@ -110,7 +107,7 @@ function MDXList({
   );
 }
 
-function MDXTable({ children }: { children?: ReactNode }) {
+export function MDXTable({ children }: { children?: ReactNode }) {
   return (
     <div className="my-4 overflow-hidden rounded-sm border border-border/50 bg-transparent shadow-xs">
       <ScrollArea>
@@ -127,7 +124,7 @@ interface MarkedSourceProps {
   source: string;
 }
 
-function MarkedSource({ marker, source }: MarkedSourceProps) {
+export function MarkedSource({ marker, source }: MarkedSourceProps) {
   const extracted = source ? extractMarkedSource(source, marker) : "";
   return <CodeBlock language="text">{extracted}</CodeBlock>;
 }
@@ -137,7 +134,7 @@ interface InterfaceSourceProps {
   source: string;
 }
 
-function InterfaceSource({ name, source }: InterfaceSourceProps) {
+export function InterfaceSource({ name, source }: InterfaceSourceProps) {
   const extracted = source ? extractExportedInterface(source, name) : "";
   return <CodeBlock language="typescript">{extracted}</CodeBlock>;
 }
@@ -154,41 +151,49 @@ interface HeadingProps extends ChildrenProps {
   id?: string;
 }
 
-export const docsMdxComponents: MDXComponents = {
-  Callout,
-  CodeBlock,
-  FeatureTable,
-  FileTree,
-  InterfaceSource,
-  MarkedSource,
-  TransformersTable,
-  a: ({ children, href }: AnchorProps) => (
+export function MDXAnchor({ children, href }: AnchorProps) {
+  return (
     <a
       className="font-medium text-foreground underline underline-offset-4 transition-opacity hover:opacity-80"
       href={href}
     >
       {children}
     </a>
-  ),
-  blockquote: ({ children }: ChildrenProps) => <Callout>{children}</Callout>,
-  code: InlineCode,
-  h1: ({ children }: ChildrenProps) => (
+  );
+}
+
+export function MDXBlockquote({ children }: ChildrenProps) {
+  return <Callout>{children}</Callout>;
+}
+
+export function MDXH1({ children }: ChildrenProps) {
+  return (
     <h1 className="mt-8 mb-3 text-lg font-semibold tracking-tight text-foreground first:mt-0 sm:mt-10 sm:text-xl">
       {children}
     </h1>
-  ),
-  h2: ({ children, id }: HeadingProps) => (
-    <SectionHeading id={id}>{children}</SectionHeading>
-  ),
-  h3: ({ children, id }: HeadingProps) => (
-    <SubHeading id={id}>{children}</SubHeading>
-  ),
-  li: ({ children }: ChildrenProps) => (
-    <li className="[&>ol]:mt-1 [&>ul]:mt-1">{children}</li>
-  ),
-  ol: ({ children }: ChildrenProps) => <MDXList ordered>{children}</MDXList>,
-  p: ({ children }: ChildrenProps) => <Paragraph>{children}</Paragraph>,
-  pre: MDXCodeBlock,
-  table: MDXTable,
-  ul: ({ children }: ChildrenProps) => <MDXList>{children}</MDXList>,
-};
+  );
+}
+
+export function MDXH2({ children, id }: HeadingProps) {
+  return <SectionHeading id={id}>{children}</SectionHeading>;
+}
+
+export function MDXH3({ children, id }: HeadingProps) {
+  return <SubHeading id={id}>{children}</SubHeading>;
+}
+
+export function MDXListItem({ children }: ChildrenProps) {
+  return <li className="[&>ol]:mt-1 [&>ul]:mt-1">{children}</li>;
+}
+
+export function MDXOrderedList({ children }: ChildrenProps) {
+  return <MDXList ordered>{children}</MDXList>;
+}
+
+export function MDXParagraph({ children }: ChildrenProps) {
+  return <Paragraph>{children}</Paragraph>;
+}
+
+export function MDXUnorderedList({ children }: ChildrenProps) {
+  return <MDXList>{children}</MDXList>;
+}

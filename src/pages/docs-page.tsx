@@ -3,7 +3,7 @@ import { useLayoutEffect } from "react";
 import { Redirect, useRoute } from "wouter";
 
 import { DocsLayout } from "@/components/docs/layout";
-import { docsMdxComponents } from "@/components/docs/mdx-components";
+import { docsMdxComponents } from "@/components/docs/mdx-mapping";
 import { PageHeader } from "@/components/docs/primitives";
 
 import { DOCS_PAGE_BY_SLUG } from "./docs/manifest";
