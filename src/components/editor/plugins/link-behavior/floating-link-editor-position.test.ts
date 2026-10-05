@@ -33,7 +33,7 @@ const selectionLike = (
     focusNode: text,
     rangeCount: 1,
     ...overrides,
-  }) as Selection;
+  }) as unknown as Selection;
 
 describe("isNativeSelectionWithinEditor", () => {
   test("true when the anchor node is inside the root", () => {
