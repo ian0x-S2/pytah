@@ -168,13 +168,6 @@ export default defineConfig({
       },
     },
     {
-      // Element-mapping table is data, not components.
-      files: ["src/components/docs/mdx-components.tsx"],
-      rules: {
-        "react-doctor/only-export-components": "off",
-      },
-    },
-    {
       // Deliberate setter-less mount-capture cells; a dummy setter would
       // only trade this lint for an unused variable.
       files: [
@@ -219,22 +212,6 @@ export default defineConfig({
       },
     },
     {
-      // Full-screen canvas editor with custom Escape semantics (the canvas
-      // keeps its own); native dialog would change focus/backdrop behavior.
-      files: ["src/components/editor/plugins/excalidraw/modal.tsx"],
-      rules: {
-        "react-doctor/prefer-html-dialog": "off",
-      },
-    },
-    {
-      // Single cohesive cmdk overlay; splitting risks item identity and
-      // scroll behavior of this core UX surface.
-      files: ["src/components/editor/plugins/slash-command/plugin.tsx"],
-      rules: {
-        "react-doctor/no-giant-component": "off",
-      },
-    },
-    {
       // Correct ARIA listbox pattern (roving tabindex, aria-selected,
       // container key handler); native select cannot render the options.
       files: ["src/components/editor/plugins/full-toolbar/insert-popover.tsx"],
@@ -244,20 +221,11 @@ export default defineConfig({
       },
     },
     {
-      // KaTeX-rendered element acts as button with Enter/Space handling;
-      // it cannot be a native button (KaTeX owns the inner HTML).
-      files: ["src/components/editor/plugins/math/component.tsx"],
-      rules: {
-        "jsx-a11y/prefer-tag-over-role": "off",
-      },
-    },
-    {
-      // Escape-capturing wrapper and dialog semantics are intentional
-      // (canvas keeps its own Escape); see biome-ignore justifications.
+      // Escape-capturing dialog (canvas keeps its own Escape); see
+      // biome-ignore justification.
       files: ["src/components/editor/plugins/excalidraw/modal.tsx"],
       rules: {
         "jsx-a11y/no-noninteractive-element-interactions": "off",
-        "jsx-a11y/prefer-tag-over-role": "off",
       },
     },
     {
