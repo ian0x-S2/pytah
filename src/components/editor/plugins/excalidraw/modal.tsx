@@ -8,6 +8,7 @@ import type {
 } from "@excalidraw/excalidraw/types";
 import { XIcon } from "lucide-react";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
 
@@ -69,7 +70,7 @@ export function ExcalidrawEditorDialog({
 }: ExcalidrawEditorDialogProps) {
   const [api, setApi] = useState<ExcalidrawImperativeAPI | null>(null);
   const [isDiscardConfirmOpen, setIsDiscardConfirmOpen] = useState(false);
-  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const dialogRef = useRef<HTMLDialogElement | null>(null);
   const latestSceneRef = useRef<SaveableExcalidrawScene>({
     elements: initialScene.elements,
     files: initialScene.files ?? {},
@@ -101,12 +102,11 @@ export function ExcalidrawEditorDialog({
     });
   };
 
-  return (
-    // biome-ignore lint/a11y/noNoninteractiveElementInteractions: full-screen dialog wrapper captures Escape before page handlers
-    <div
+  return createPortal(
+    // biome-ignore lint/a11y/noNoninteractiveElementInteractions: full-screen dialog captures Escape before page handlers
+    <dialog
       aria-label="Excalidraw drawing editor"
-      aria-modal="true"
-      className="fixed inset-0 z-50 flex flex-col bg-background outline-none"
+      className="fixed inset-0 z-50 m-0 flex h-full max-h-none w-full max-w-none flex-col border-0 bg-background p-0 outline-none"
       onKeyDown={(event) => {
         // Only capture Escape before it reaches the page; the canvas keeps
         // its own Escape semantics (e.g. exiting zen mode).
@@ -118,8 +118,8 @@ export function ExcalidrawEditorDialog({
           requestClose();
         }
       }}
+      open
       ref={dialogRef}
-      role="dialog"
       tabIndex={-1}
     >
       <header className="flex items-center justify-between border-b px-4 py-2">
@@ -165,9 +165,10 @@ export function ExcalidrawEditorDialog({
 
         {isDiscardConfirmOpen ? (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/80 backdrop-blur-xs">
-            <div
+            <dialog
               aria-label="Discard changes"
-              className="editor-floating editor-floating-padding-lg w-80"
+              className="editor-floating editor-floating-padding-lg m-0 max-h-none w-80 max-w-none border-0"
+              open
               role="alertdialog"
             >
               <p className="font-medium">Discard changes?</p>
@@ -195,10 +196,15 @@ export function ExcalidrawEditorDialog({
                   Discard
                 </Button>
               </div>
-            </div>
+            </dialog>
           </div>
         ) : null}
       </div>
-    </div>
+    </dialog>,
+    // Portaled to `document.body`: rendered inline it would live inside the
+    // editor's contenteditable, so every canvas paste/keydown would bubble
+    // into Lexical's root listeners and land in the document instead of the
+    // drawing board.
+    document.body
   );
 }
