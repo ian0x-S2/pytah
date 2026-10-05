@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- The Excalidraw drawing surface now returns the caret to the editor when it closes (save, discard or X). The dialog is portaled outside the contenteditable, so on unmount the browser dropped focus on `body` instead of falling back to the editor — typing a fresh slash query right after closing did nothing, and no second drawing could be inserted until the user clicked back in.
 - Pasting inside the Excalidraw editing surface landed in the document instead of the drawing board: the full-screen editor dialog rendered inside the contenteditable, so every canvas `paste`/`keydown` bubbled into Lexical's root listeners before excalidraw saw it. The dialog now portals to `document.body`, keeping the editing surface's clipboard and keyboard events out of the editor.
 - Pasting a drawing copied from an Excalidraw canvas (`{"type":"excalidraw/clipboard",…}` in the clipboard's `text/plain`) dumped the raw JSON into the document as a long plain-text paragraph. The Excalidraw plugin now intercepts such pastes and inserts a proper drawing block with the copied scene (regular text/JSON pastes fall through untouched).
 
