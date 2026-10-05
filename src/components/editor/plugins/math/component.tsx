@@ -203,20 +203,11 @@ export function MathComponent({
         open={isEditing && editable}
       >
         <PopoverTrigger
-          nativeButton={
-            // The trigger renders a <span>, not a native <button>: a real
-            // button element inside the Lexical contenteditable's inline DOM
-            // breaks editor semantics, so we drop native button behavior
-            // explicitly and re-provide the semantics manually (role/tabIndex/
-            // keyboard handlers below).
-            false
-          }
           render={
-            // biome-ignore lint/a11y/useSemanticElements: span is used as container for inline rendered equation button
-            <span
+            <button
               aria-label="Math formula"
               className={cn(
-                "editor-math-trigger transition-colors duration-150",
+                "editor-math-trigger appearance-none border-0 bg-transparent p-0 text-inherit transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
                 isSelected && editable && "editor-math-trigger-selected",
                 editable && "cursor-pointer hover:bg-muted/40"
               )}
@@ -227,14 +218,8 @@ export function MathComponent({
                   openEditor();
                 }
               }}
-              onKeyDown={(e) => {
-                if (editable && (e.key === "Enter" || e.key === " ")) {
-                  e.preventDefault();
-                  openEditor();
-                }
-              }}
-              role="button"
               tabIndex={editable ? 0 : -1}
+              type="button"
             />
           }
         />
