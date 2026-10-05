@@ -43,22 +43,39 @@ export function ImageComponent({
 }: ImageComponentProps) {
   const [editor] = useLexicalComposerContext();
   const editable = useLexicalEditable();
-  const [isSelected, setSelected, clearSelection] =
-    useLexicalNodeSelection(nodeKey);
+  const [, setSelected, clearSelection] = useLexicalNodeSelection(nodeKey);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const [isResizing, setIsResizing] = useState(false);
-  const effectiveWidth = width === "inherit" ? DEFAULT_IMAGE_WIDTH : width;
-  const isInNodeSelection = (() => {
-    if (!isSelected) {
-      return false;
-    }
-
-    return editor.getEditorState().read(() => {
+  const [isNodeSelected, setIsNodeSelected] = useState(() =>
+    editor.getEditorState().read(() => {
       const selection = $getSelection();
       return $isNodeSelection(selection) && selection.has(nodeKey);
-    });
-  })();
-  const isFocused = (isSelected || isResizing) && editable;
+    })
+  );
+  const effectiveWidth = width === "inherit" ? DEFAULT_IMAGE_WIDTH : width;
+
+  // `useLexicalNodeSelection` reports `node.isSelected()`, which is also true
+  // when a range selection merely spans the image (e.g. a document-wide
+  // select-all). The resize chrome must follow the image's own NodeSelection
+  // instead: after a select-all that hook state is already `true`, so clicking
+  // the image (which creates the NodeSelection) would not re-render and the
+  // handles would never mount. Track membership explicitly so every
+  // range → NodeSelection transition commits.
+  useEffect(() => {
+    const syncNodeSelection = () => {
+      editor.getEditorState().read(() => {
+        const selection = $getSelection();
+        setIsNodeSelected(
+          $isNodeSelection(selection) && selection.has(nodeKey)
+        );
+      });
+    };
+
+    syncNodeSelection();
+    return editor.registerUpdateListener(syncNodeSelection);
+  }, [editor, nodeKey]);
+
+  const isFocused = (isNodeSelected || isResizing) && editable;
   let figureClassName = "editor-image-figure w-fit";
   let alignmentClassName = "inline-flex max-w-full";
 
@@ -76,8 +93,7 @@ export function ImageComponent({
     }
 
     const removeSelectedImage = (event: KeyboardEvent) => {
-      const selection = $getSelection();
-      if (!(isSelected && $isNodeSelection(selection))) {
+      if (!isNodeSelected) {
         return false;
       }
 
@@ -106,7 +122,7 @@ export function ImageComponent({
           }
 
           if (event.shiftKey) {
-            setSelected(!isSelected);
+            setSelected(!isNodeSelected);
           } else {
             clearSelection();
             setSelected(true);
@@ -131,7 +147,7 @@ export function ImageComponent({
       editor.registerCommand(
         FORMAT_ELEMENT_COMMAND,
         (format) => {
-          if (!isSelected) {
+          if (!isNodeSelected) {
             return false;
           }
 
@@ -167,8 +183,8 @@ export function ImageComponent({
     clearSelection,
     editable,
     editor,
+    isNodeSelected,
     isResizing,
-    isSelected,
     nodeKey,
     setSelected,
   ]);
@@ -202,7 +218,7 @@ export function ImageComponent({
             />
           </div>
 
-          {editable && isInNodeSelection && isFocused ? (
+          {isFocused ? (
             <ImageResizer
               editor={editor}
               imageRef={imageRef}
