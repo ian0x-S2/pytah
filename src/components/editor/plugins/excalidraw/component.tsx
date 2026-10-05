@@ -374,12 +374,24 @@ export function ExcalidrawComponent({
     return null;
   }
 
+  const restoreEditorFocus = () => {
+    // While open, the portaled drawing surface owns focus and lives outside
+    // the contenteditable — on unmount the browser cannot fall back to the
+    // editor root, so typing (e.g. a new slash query) would go nowhere. Put
+    // the caret back after the dialog unmount commits.
+    requestAnimationFrame(() => {
+      editor.getRootElement()?.focus({ preventScroll: true });
+    });
+  };
+
   const handleCloseEditor = () => {
     setIsEditorOpen(false);
 
     if (wasEmptyOnMountRef.current && !hasExcalidrawContent(scene)) {
       removeNode();
     }
+
+    restoreEditorFocus();
   };
 
   const handleSaveEditor = (payload: SaveExcalidrawScenePayload) => {
@@ -399,6 +411,8 @@ export function ExcalidrawComponent({
 
       node.remove();
     });
+
+    restoreEditorFocus();
   };
 
   return (
