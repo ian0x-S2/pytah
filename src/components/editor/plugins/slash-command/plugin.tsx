@@ -16,15 +16,11 @@ import { useEffect, useEffectEvent, useReducer, useRef } from "react";
 
 import { createSlashMenuAnchor, getSelectionRectangle } from "./anchor";
 import { SlashCommandMenu } from "./menu";
-import type {
-  FeatureSlashCommand,
-  SlashCommand,
-  SlashCommandSelection,
-} from "./types";
+import { createInitialSlashCommandState, slashCommandReducer } from "./state";
+import type { FeatureSlashCommand, SlashCommandSelection } from "./types";
 import {
   filterSlashCommands,
   getFirstCommandId,
-  getNeighborCommandId,
   getSelectedCommandIndex,
   getSlashQueryMatch,
   hasSelectedCommand,
@@ -39,81 +35,19 @@ export interface SlashCommandPluginProps {
   commands: readonly FeatureSlashCommand[];
 }
 
-interface SlashCommandState {
-  isOpen: boolean;
-  query: string;
-  rawSelectedCommandId: SlashCommandSelection;
-}
-
-type SlashCommandAction =
-  | { type: "patch"; payload: Partial<SlashCommandState> }
-  | {
-      type: "move-selected-command";
-      payload: {
-        commands: readonly SlashCommand[];
-        direction: "down" | "up";
-      };
-    };
-
-const createInitialSlashCommandState = (
-  rawSelectedCommandId: SlashCommandSelection
-): SlashCommandState => ({
-  isOpen: false,
-  query: "",
-  rawSelectedCommandId,
-});
-
-const applySlashCommandPatch = (
-  state: SlashCommandState,
-  patch: Partial<SlashCommandState>
-): SlashCommandState => {
-  for (const key of Object.keys(patch) as (keyof SlashCommandState)[]) {
-    if (state[key] !== patch[key]) {
-      return { ...state, ...patch };
-    }
-  }
-
-  return state;
-};
-
-const slashCommandReducer = (
-  state: SlashCommandState,
-  action: SlashCommandAction
-): SlashCommandState => {
-  switch (action.type) {
-    case "patch": {
-      return applySlashCommandPatch(state, action.payload);
-    }
-    case "move-selected-command": {
-      return applySlashCommandPatch(state, {
-        rawSelectedCommandId: getNeighborCommandId(
-          action.payload.commands,
-          state.rawSelectedCommandId,
-          action.payload.direction
-        ),
-      });
-    }
-    default: {
-      return state;
-    }
-  }
-};
-
 export function SlashCommandPlugin({ commands }: SlashCommandPluginProps) {
   const [editor] = useLexicalComposerContext();
+  const commandIds = commands.map((entry) => entry.command);
   const [state, dispatch] = useReducer(
     slashCommandReducer,
-    getFirstCommandId(commands.map((entry) => entry.command)),
+    getFirstCommandId(commandIds),
     createInitialSlashCommandState
   );
   const { isOpen, query, rawSelectedCommandId } = state;
   const commandListRef = useRef<HTMLDivElement | null>(null);
   const animationFrameRef = useRef<number | null>(null);
 
-  const filteredCommands = filterSlashCommands(
-    commands.map((entry) => entry.command),
-    query
-  );
+  const filteredCommands = filterSlashCommands(commandIds, query);
   const filteredEntries = commands.filter((entry) =>
     filteredCommands.some((command) => command.id === entry.command.id)
   );
@@ -171,8 +105,11 @@ export function SlashCommandPlugin({ commands }: SlashCommandPluginProps) {
     }
 
     dispatch({
-      payload: { isOpen: true, query: nextQuery },
-      type: "patch",
+      payload: {
+        firstCommandId: getFirstCommandId(commandIds),
+        query: nextQuery,
+      },
+      type: "open",
     });
   };
 
