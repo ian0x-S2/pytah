@@ -179,21 +179,47 @@ const FONT_STYLE_DECLARATIONS: Record<string, string> = {
 };
 
 /**
- * Inline style for one token: its palette color plus any font styles
- * (italic comments, bold headings, …) the theme declares for the type.
+ * CSS custom property prefix for token palette entries. Values are provided
+ * by `EditorContent` (see `getCodeBlockTokenVars`), so the palette hex lives
+ * outside node state: a `.dark` flip (or family switch without role remaps)
+ * recolors tokens through the vars in the same frame, with no Lexical work.
+ */
+export const CODE_BLOCK_TOKEN_VAR_PREFIX = "--editor-code-token-";
+
+/**
+ * Token color vars for one resolved theme id — every palette entry except
+ * the block `background_color` (that one feeds `--editor-code-bg` in
+ * `EditorContent`). Applied to the same wrapper as the background var so
+ * block bg and token hues always flip together.
+ */
+export function getCodeBlockTokenVars(
+  theme: string | null | undefined
+): Record<string, string> {
+  const palette = getCodeBlockPalette(theme);
+  const vars: Record<string, string> = {};
+  for (const [token, color] of Object.entries(palette)) {
+    if (token === "background_color") {
+      continue;
+    }
+    vars[`${CODE_BLOCK_TOKEN_VAR_PREFIX}${token}`] = color;
+  }
+  return vars;
+}
+
+/**
+ * Inline style for one token. The color is a var reference, not the baked
+ * palette hex: token nodes are theme-agnostic, so mode toggles diff to a
+ * no-op and recoloring happens purely through the CSS vars above. Font
+ * styles (italic comments, bold headings, …) are still theme-scoped — they
+ * are identical across a family's modes, but can differ between families,
+ * so the diff flags a family switch that restyles a token.
  */
 export function getCodeBlockTokenStyle(
   theme: string | null | undefined,
   tokenType: string
 ): string {
-  const palette = getCodeBlockPalette(theme);
-  const styles = getCodeBlockStyles(theme);
-  let style = "";
-  const color = palette[tokenType];
-  if (color) {
-    style += `color: ${color};`;
-  }
-  const tokenStyles = styles[tokenType];
+  let style = `color: var(${CODE_BLOCK_TOKEN_VAR_PREFIX}${tokenType});`;
+  const tokenStyles = getCodeBlockStyles(theme)[tokenType];
   if (tokenStyles) {
     for (const tokenStyle of tokenStyles) {
       style += FONT_STYLE_DECLARATIONS[tokenStyle] ?? "";

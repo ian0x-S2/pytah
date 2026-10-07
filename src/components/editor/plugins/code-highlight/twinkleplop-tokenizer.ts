@@ -28,11 +28,7 @@ import { $createLineBreakNode, $createTabNode } from "lexical";
 import type { LexicalNode } from "lexical";
 
 import { CODE_LANGUAGE_ALIASES, DEFAULT_CODE_LANGUAGE } from "./languages";
-import {
-  getCodeBlockBackground,
-  getCodeBlockPalette,
-  getCodeBlockTokenStyle,
-} from "./themes/registry";
+import { getCodeBlockTokenStyle } from "./themes/registry";
 import { resolveThemedTokenType } from "./themes/token-roles";
 
 type TokenizeFn = ReturnType<typeof tokenizeTypescript>;
@@ -123,8 +119,10 @@ const pushTokenNodes = (
 /**
  * Drop-in `Tokenizer` for `registerCodeHighlighting` backed by Twinkleplop
  * instead of Shiki. Mirrors the Shiki tokenizer contract: per-node theme
- * drives the light/dark palette, node bg/fg lands on the CodeNode style,
- * and each token becomes a CodeHighlightNode with an inline color.
+ * drives the light/dark palette, and each token becomes a CodeHighlightNode
+ * carrying its resolved role as the highlight type plus an inline style
+ * that references the token color var (the hex itself lives in
+ * `EditorContent`'s wrapper vars, so theme flips recolor without a splice).
  */
 export const TwinkleplopTokenizer: Tokenizer = {
   $tokenize(codeNode: CodeNode, language?: string): LexicalNode[] {
@@ -139,19 +137,11 @@ export const TwinkleplopTokenizer: Tokenizer = {
     }
 
     const theme = codeNode.getTheme() ?? this.defaultTheme;
-    const palette = getCodeBlockPalette(theme);
-    const background = getCodeBlockBackground(theme);
-    const foreground = palette["identifier"];
-    let nodeStyle = "";
-    if (background) {
-      nodeStyle += `background-color: ${background};`;
-    }
-    if (foreground) {
-      nodeStyle += `color: ${foreground};`;
-    }
-    if (codeNode.getStyle() !== nodeStyle) {
-      codeNode.setStyle(nodeStyle);
-    }
+    // Block chrome is CSS-owned: the block background resolves via
+    // `--editor-code-bg` (set by `EditorContent` from the same palette) and
+    // the base-text color via `.editor-code-block` in `core/tokens.css`
+    // (`--editor-code-token-identifier`). Baking bg/fg inline here would
+    // make the block lag the wrapper vars by a Lexical commit.
 
     // Plain-text blocks keep uncolored nodes: no grammar pass, just
     // whitespace-aware plain nodes so content is never wiped.

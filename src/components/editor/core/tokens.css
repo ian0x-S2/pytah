@@ -19,9 +19,10 @@
  * v1 scope: canvas content + toolbar + chrome + floating surfaces + table +
  * image. v1.1 tokenized the rest: code container, collapsible, layout
  * (+ preset picker), math, youtube, link panel, table menu width.
- * The `codeHighlight` Prism palette stays literal by design (swap the whole
- * map for another syntax theme); slash/TOC popovers and the Excalidraw
- * preview keep custom variants.
+ * Code token colors are `--editor-code-token-*` vars set per resolved
+ * theme id by `EditorContent` (from the code theme registry) — a `.dark`
+ * flip recolors tokens with zero Lexical work. Slash/TOC popovers and the
+ * Excalidraw preview keep custom variants.
  * ========================================================================== */
 
 :root {
@@ -644,6 +645,14 @@
      Consumers keep full control: redefine the var (or trump it with your
      own `!important`) to pin a custom block background. */
   background-color: var(--editor-code-bg) !important;
+  /* Base text follows the palette's `identifier` entry through the wrapper
+     vars — same flip-with-the-shell behavior as the background above.
+     Typed tokens carry their own color var reference, so this only styles
+     gap nodes and pasted HTML without token classes. */
+  color: var(
+    --editor-code-token-identifier,
+    var(--foreground, oklch(0.145 0 0))
+  );
   font-family: var(--font-mono, ui-monospace, SFMono-Regular, monospace);
   font-size: var(--editor-code-font-size);
 }

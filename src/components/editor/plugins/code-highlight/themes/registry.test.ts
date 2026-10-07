@@ -7,6 +7,7 @@ import {
   getCodeBlockPalette,
   getCodeBlockStyles,
   getCodeBlockTokenStyle,
+  getCodeBlockTokenVars,
   isCodeBlockThemeFamily,
   resolveCodeBlockThemeId,
 } from "./registry";
@@ -96,9 +97,32 @@ describe("code-block theme registry", () => {
     ok(typeof palette["background_color"] === "string");
   });
 
-  test("token styles carry the palette color", () => {
+  test("token styles reference the palette color var", () => {
+    // Colors are var references resolved by `EditorContent`'s wrapper vars
+    // (`getCodeBlockTokenVars`), not baked hex: token nodes stay
+    // theme-agnostic so mode toggles diff to a no-op.
     const style = getCodeBlockTokenStyle("nord-dark", "keyword");
-    ok(style.includes("#81a1c1"));
+    ok(style.includes("var(--editor-code-token-keyword)"));
+  });
+
+  test("token vars cover the palette for each resolved theme id", () => {
+    for (const family of CODE_BLOCK_THEME_FAMILIES) {
+      for (const mode of ["light", "dark"] as const) {
+        const id = resolveCodeBlockThemeId(family.value, mode);
+        const vars = getCodeBlockTokenVars(id);
+        const palette = getCodeBlockPalette(id);
+        for (const [token, color] of Object.entries(palette)) {
+          if (token === "background_color") {
+            continue;
+          }
+          strictEqual(
+            vars[`--editor-code-token-${token}`],
+            color,
+            `${id} missing var for ${token}`
+          );
+        }
+      }
+    }
   });
 
   test("nord copies the official VS Code reference", () => {

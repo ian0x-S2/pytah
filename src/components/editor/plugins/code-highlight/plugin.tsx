@@ -17,12 +17,13 @@ import {
   TextNode,
 } from "lexical";
 import type { LexicalEditor, LexicalNode, RangeSelection } from "lexical";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { useTheme } from "@/components/theme-context";
 
 import { useCodeBlockTheme } from "./theme-context";
 import {
+  CODE_BLOCK_TOKEN_VAR_PREFIX,
   DEFAULT_CODE_BLOCK_THEME_FAMILY,
   resolveCodeBlockThemeId,
 } from "./themes/registry";
@@ -58,6 +59,41 @@ const $tokensDiffer = (
     }
   }
   return false;
+};
+
+/**
+ * Family part of a resolved theme id (`nord-dark` -> `nord`). Ids outside
+ * the `<family>-<mode>` shape keep their whole value, so legacy/pasted
+ * ids never collapse into a bogus shared prefix.
+ */
+const codeBlockThemeFamilyOf = (themeId: string): string =>
+  themeId.replace(/-(?:light|dark)$/u, "");
+
+/**
+ * True when the block's children are already this tokenizer's output with
+ * var-reference styles. Tokenized children always contain a
+ * CodeHighlightNode (bare gap nodes included) or a non-text structure
+ * (line breaks); raw markdown-seeded blocks hold plain TextNodes only.
+ * Tokens still carrying baked hex styles (HTML pasted from an older
+ * snapshot) force a full pass so the stale colors are spliced away.
+ */
+const $isVarTokenized = (node: CodeNode): boolean => {
+  let sawToken = false;
+  for (const child of node.getChildren()) {
+    if ($isCodeHighlightNode(child)) {
+      sawToken = true;
+      const style = child.getStyle();
+      if (
+        style !== "" &&
+        !style.startsWith(`color: var(${CODE_BLOCK_TOKEN_VAR_PREFIX}`)
+      ) {
+        return false;
+      }
+    } else if (!$isTextNode(child)) {
+      sawToken = true;
+    }
+  }
+  return sawToken;
 };
 
 /**
@@ -160,14 +196,23 @@ const $restoreSelectionPoint = (
  * caret via mousedown-preventDefault, so family switches almost always hit
  * this). When the caret is inside, the splice retains it through text
  * offsets, mirroring upstream's `$updateAndRetainSelection`.
+ *
+ * `skipIfTokenized` marks a re-registration pass from a mode-only flip:
+ * token colors are var references resolved by `EditorContent`'s wrapper
+ * vars and `resolveThemedTokenType` gates role remaps on the family prefix
+ * only (never light/dark), so such passes converge through the `CodeNode`
+ * theme id alone — no tokenize round-trip, no splice. Typing, language
+ * changes, and family switches (which may remap roles) always tokenize.
  */
 const $syncTwinkleTokens = (
   editor: LexicalEditor,
   node: CodeNode,
   codeBlockTheme: string,
-  tokenizer: Tokenizer
+  tokenizer: Tokenizer,
+  skipIfTokenized: boolean
 ): void => {
-  if (node.getTheme() !== codeBlockTheme) {
+  const previousTheme = node.getTheme();
+  if (previousTheme !== codeBlockTheme) {
     // Theme must be final before tokenizing: the tokens carry it.
     node.setTheme(codeBlockTheme);
   }
@@ -175,6 +220,10 @@ const $syncTwinkleTokens = (
   // mid-composition drops it. The next committed edit re-dirties the node
   // and converges the tokens.
   if (editor.isComposing()) {
+    return;
+  }
+  if (skipIfTokenized && $isVarTokenized(node)) {
+    // Mode-only flip on an already-tokenized block: children are final.
     return;
   }
   let tokens: LexicalNode[];
@@ -234,6 +283,10 @@ export function CodeHighlightPlugin({
   // document has painted: content shows first as plain code text, colors
   // land one frame later, off the critical path.
   const [armed, setArmed] = useState(false);
+  // Theme id captured at the last transform registration; lets the
+  // registration effect tell mode-only flips (skip) from family switches
+  // (full re-tokenize) on re-render.
+  const lastRegisteredThemeRef = useRef<string | null>(null);
 
   // Registration follows the post-paint arm, keeping the transform on
   // its synchronous path from the first dirty pass onward.
@@ -271,16 +324,39 @@ export function CodeHighlightPlugin({
   // hooks mirror upstream's own TextNode/CodeHighlightNode pairing: typing
   // dirties text nodes, not the CodeNode, so without them edits made with
   // the caret inside the block would never re-tokenize.
-  useEffect(() => {
+  //
+  // Layout effect (not passive): a theme flip re-renders the plugin and
+  // re-registers the transforms here, synchronously before the browser
+  // paints. Registration's dirty-marking update then commits in a
+  // microtask — still pre-paint — so family switches that remap token
+  // roles splice and repaint in the same frame as the wrapper vars, with
+  // no flash of the old palette. The arm above still gates mount: this
+  // effect stays a no-op until the document has painted, and the mode-only
+  // path in `$syncTwinkleTokens` never splices at all.
+  useLayoutEffect(() => {
     if (!armed) {
       return;
     }
+    // A re-registration from a mode-only flip (family unchanged) dirties
+    // every existing block, including through the text-level hooks. Token
+    // colors are wrapper vars and role remaps are family-gated, so that
+    // pass converges through `setTheme` alone; the flag clears at the end
+    // of the commit so later typing passes tokenize normally. Family
+    // switches keep the full re-tokenize because roles may remap.
+    const previousTheme = lastRegisteredThemeRef.current;
+    lastRegisteredThemeRef.current = codeBlockTheme;
+    let skipIfTokenized =
+      previousTheme !== null &&
+      previousTheme !== codeBlockTheme &&
+      codeBlockThemeFamilyOf(previousTheme) ===
+        codeBlockThemeFamilyOf(codeBlockTheme);
     const syncNode = (codeNode: CodeNode): void => {
       $syncTwinkleTokens(
         editor,
         codeNode,
         codeBlockTheme,
-        TwinkleplopTokenizer
+        TwinkleplopTokenizer,
+        skipIfTokenized
       );
     };
     const syncParent = (node: LexicalNode): void => {
@@ -302,11 +378,16 @@ export function CodeHighlightPlugin({
       editor,
       TwinkleplopTokenizer
     );
+    const unregisterPass = editor.registerUpdateListener(() => {
+      // First commit after registration ends the skip window.
+      skipIfTokenized = false;
+    });
     return () => {
       unregisterPre();
       unregisterPreText();
       unregisterPreHighlight();
       unregisterUpstream();
+      unregisterPass();
     };
   }, [armed, codeBlockTheme, editor]);
 

@@ -2,42 +2,11 @@ import type { EditorThemeClasses } from "lexical";
 
 export const editorTheme: EditorThemeClasses = {
   code: "editor-code-block",
-  // Fixed Prism syntax palette: swap the whole map for another syntax
-  // theme. Per-token vars would just re-list these pairs, so the palette
-  // stays literal by design.
-  codeHighlight: {
-    atrule: "text-sky-700 dark:text-sky-300",
-    attr: "text-sky-700 dark:text-sky-300",
-    boolean: "text-pink-700 dark:text-pink-300",
-    builtin: "text-emerald-700 dark:text-emerald-300",
-    cdata: "text-slate-500 dark:text-slate-400",
-    char: "text-emerald-700 dark:text-emerald-300",
-    class: "text-rose-700 dark:text-rose-300",
-    "class-name": "text-rose-700 dark:text-rose-300",
-    comment: "text-slate-500 italic dark:text-slate-400",
-    constant: "text-pink-700 dark:text-pink-300",
-    deleted: "text-pink-700 dark:text-pink-300",
-    doctype: "text-slate-500 dark:text-slate-400",
-    entity: "text-amber-700 dark:text-amber-300",
-    function: "text-rose-700 dark:text-rose-300",
-    important: "text-orange-700 dark:text-orange-300",
-    inserted: "text-emerald-700 dark:text-emerald-300",
-    keyword: "text-sky-700 dark:text-sky-300",
-    namespace: "text-orange-700 dark:text-orange-300",
-    number: "text-pink-700 dark:text-pink-300",
-    operator: "text-amber-700 dark:text-amber-300",
-    prolog: "text-slate-500 dark:text-slate-400",
-    property: "text-pink-700 dark:text-pink-300",
-    punctuation: "text-slate-500 dark:text-slate-400",
-    regex: "text-orange-700 dark:text-orange-300",
-    selector: "text-emerald-700 dark:text-emerald-300",
-    string: "text-emerald-700 dark:text-emerald-300",
-    symbol: "text-pink-700 dark:text-pink-300",
-    tag: "text-pink-700 dark:text-pink-300",
-    unchanged: "text-foreground",
-    url: "text-amber-700 dark:text-amber-300",
-    variable: "text-orange-700 dark:text-orange-300",
-  },
+  // Token colors are CSS vars (`--editor-code-token-*`) set per resolved
+  // code theme by `EditorContent` — see `getCodeBlockTokenVars` in the code
+  // theme registry. The twinkleplop tokenizer bakes that var reference
+  // into every CodeHighlightNode's inline style, so there is no class map
+  // to maintain here and a `.dark` flip recolors with zero Lexical work.
   collapsibleContainer: "editor-collapsible-container shadow-xs",
   collapsibleContent: "editor-collapsible-content [&>p:last-child]:mb-0",
   collapsibleTitle:

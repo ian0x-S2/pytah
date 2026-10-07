@@ -1,7 +1,14 @@
-import { deepStrictEqual, strictEqual } from "node:assert/strict";
+import {
+  deepStrictEqual,
+  notDeepStrictEqual,
+  ok,
+  strictEqual,
+} from "node:assert/strict";
 import { after, describe, test } from "node:test";
 
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
+import type { CodeNode } from "@lexical/code";
+import type { Tokenizer } from "@lexical/code-shiki";
 import type { LexicalEditor, LexicalNode } from "lexical";
 
 // DOM globals must exist before React and Lexical evaluate their
@@ -34,6 +41,7 @@ const {
 const { createEditorConfig } = await import("../../core/config");
 const { resolveEditorFeatures } = await import("../../core/composition");
 const { getCodeBlockTokenStyle } = await import("./themes/registry");
+const { TwinkleplopTokenizer } = await import("./twinkleplop-tokenizer");
 const { ThemeContext } = await import("@/components/theme-context");
 const { EditorContent } = await import("../../ui/content");
 const { CodeHighlightPlugin } = await import("./plugin");
@@ -215,6 +223,30 @@ const readSelectionAnchor = (
     };
   });
 
+const readCodeChildKeys = (editor: LexicalEditor): string[] | null =>
+  editor.getEditorState().read(() => {
+    for (const child of $getRoot().getChildren()) {
+      if ($isCodeNode(child)) {
+        return child.getChildren().map((node: LexicalNode) => node.getKey());
+      }
+    }
+    return null;
+  });
+
+const readCodeHighlightTypes = (editor: LexicalEditor): string[] | null =>
+  editor.getEditorState().read(() => {
+    for (const child of $getRoot().getChildren()) {
+      if ($isCodeNode(child)) {
+        return child
+          .getChildren()
+          .flatMap((node: LexicalNode) =>
+            $isCodeHighlightNode(node) ? [node.getHighlightType() ?? ""] : []
+          );
+      }
+    }
+    return null;
+  });
+
 describe("CodeHighlightPlugin arming", () => {
   test("mount paints plain code first; highlighting arms after the arm frames", async () => {
     try {
@@ -393,6 +425,11 @@ describe("CodeHighlightPlugin arming", () => {
       strictEqual(await pollForHighlightNodes(), true);
       strictEqual(readCodeNode(editorRef)?.theme, "github-light");
 
+      // Capture the tokenized structure: a mode-only flip must not splice.
+      const childKeysBefore = readCodeChildKeys(editorRef);
+      const highlightTypesBefore = readCodeHighlightTypes(editorRef);
+      ok(childKeysBefore !== null && highlightTypesBefore !== null);
+
       // Toggle to dark: the theme transform re-registers, marks the code
       // nodes dirty and re-tokenizes. The out-of-node caret must survive.
       await rerenderWithTheme("dark", "github");
@@ -405,8 +442,131 @@ describe("CodeHighlightPlugin arming", () => {
       strictEqual(toggled, true);
       strictEqual(await pollForHighlightNodes(), true);
 
+      // Mode-only flips never splice: token colors are wrapper vars and the
+      // role resolver is family-gated, so the children (and their node keys)
+      // survive the toggle untouched.
+      deepStrictEqual(
+        readCodeChildKeys(editorRef as LexicalEditor),
+        childKeysBefore
+      );
+      deepStrictEqual(
+        readCodeHighlightTypes(editorRef as LexicalEditor),
+        highlightTypesBefore
+      );
+
       const anchorAfterToggle = readSelectionAnchor(editorRef);
       deepStrictEqual(anchorAfterToggle, anchorBefore);
+    } finally {
+      pendingFrames.clear();
+    }
+  });
+
+  test("mode-only theme flips skip re-tokenization entirely", async () => {
+    try {
+      // Catppuccin: the mode toggle changes the resolved id AND matches no
+      // Shiki bundle, so upstream never schedules its own async re-pass —
+      // zero tokenize calls is a deterministic assertion (github/everforest
+      // still see upstream's post-load markDirty pass; the splice-free
+      // guarantee for those families is asserted in the toggle test above).
+      await renderCodeHighlightPlugin(
+        "light",
+        () => {
+          const code = $createCodeNode("ts");
+          code.append($createTextNode(CODE_SNIPPET));
+          $getRoot().append(code);
+        },
+        "catppuccin"
+      );
+      await new Promise<void>((resolve) => {
+        queueMicrotask(() => {
+          resolve();
+        });
+      });
+      await act(() => {
+        fireFrames();
+        fireFrames();
+      });
+      strictEqual(await pollForHighlightNodes(), true);
+
+      // Spy on the tokenizer: a mode-only flip must converge through
+      // `setTheme` and the wrapper color vars without a tokenize pass.
+      const originalTokenize = TwinkleplopTokenizer.$tokenize;
+      let tokenizeCalls = 0;
+      const tokenizeSpy = function tokenizeSpy(
+        this: Tokenizer,
+        codeNode: CodeNode,
+        language?: string
+      ) {
+        tokenizeCalls += 1;
+        return originalTokenize.call(this, codeNode, language);
+      };
+      TwinkleplopTokenizer.$tokenize = tokenizeSpy;
+      try {
+        await rerenderWithTheme("dark", "catppuccin");
+        strictEqual(
+          await pollUntil(
+            () =>
+              readCodeNode(editorRef ?? (undefined as never))?.theme ===
+              "catppuccin-dark"
+          ),
+          true
+        );
+        strictEqual(tokenizeCalls, 0);
+      } finally {
+        TwinkleplopTokenizer.$tokenize = originalTokenize;
+      }
+    } finally {
+      pendingFrames.clear();
+    }
+  });
+
+  test("family switches still run the full re-tokenize", async () => {
+    try {
+      await renderCodeHighlightPlugin(
+        "light",
+        () => {
+          const code = $createCodeNode("ts");
+          code.append($createTextNode(CODE_SNIPPET));
+          $getRoot().append(code);
+        },
+        "github"
+      );
+      await new Promise<void>((resolve) => {
+        queueMicrotask(() => {
+          resolve();
+        });
+      });
+      await act(() => {
+        fireFrames();
+        fireFrames();
+      });
+      strictEqual(await pollForHighlightNodes(), true);
+
+      const originalTokenize = TwinkleplopTokenizer.$tokenize;
+      let tokenizeCalls = 0;
+      const tokenizeSpy = function tokenizeSpy(
+        this: Tokenizer,
+        codeNode: CodeNode,
+        language?: string
+      ) {
+        tokenizeCalls += 1;
+        return originalTokenize.call(this, codeNode, language);
+      };
+      TwinkleplopTokenizer.$tokenize = tokenizeSpy;
+      try {
+        await rerenderWithTheme("dark", "nord");
+        strictEqual(
+          await pollUntil(
+            () =>
+              readCodeNode(editorRef ?? (undefined as never))?.theme ===
+              "nord-dark"
+          ),
+          true
+        );
+        ok(tokenizeCalls >= 1);
+      } finally {
+        TwinkleplopTokenizer.$tokenize = originalTokenize;
+      }
     } finally {
       pendingFrames.clear();
     }
@@ -518,9 +678,11 @@ const readCodeBlockBackground = (): string =>
     .trim() ?? "";
 
 /**
- * Verifies every token was built from the node's current theme: without the
- * inline sync a family/mode switch flips `CodeNode.theme` while the token
- * inline styles keep the previous palette.
+ * Verifies every typed token was built from the node's current theme:
+ * without the inline sync a family switch flips `CodeNode.theme` while the
+ * token styles keep the previous font declarations (colors are var
+ * references resolved by `EditorContent`'s wrapper vars, outside node
+ * state). Bare gap nodes carry no highlight type and no style by design.
  */
 const readCodeTokenAudit = (
   editor: LexicalEditor
@@ -532,10 +694,16 @@ const readCodeTokenAudit = (
         const mismatches: string[] = [];
         for (const token of child.getChildren()) {
           if ($isCodeHighlightNode(token)) {
-            const expected = getCodeBlockTokenStyle(
-              theme,
-              token.getHighlightType() ?? ""
-            );
+            const highlightType = token.getHighlightType();
+            if (highlightType === null || highlightType === undefined) {
+              if (token.getStyle() !== "") {
+                mismatches.push(
+                  `${token.getTextContent()}:${token.getStyle()} is an unstyled gap node`
+                );
+              }
+              continue;
+            }
+            const expected = getCodeBlockTokenStyle(theme, highlightType);
             if ((token.getStyle() ?? "") !== expected) {
               mismatches.push(
                 `${token.getTextContent()}:${token.getStyle()}!==${expected}`
@@ -654,6 +822,10 @@ describe("CodeBlockChromePlugin", () => {
           }
         });
       });
+      const githubHighlightTypes = readCodeHighlightTypes(
+        editorRef as LexicalEditor
+      );
+      ok(githubHighlightTypes !== null);
 
       await act(() => {
         chromeControls?.setFamily("nord");
@@ -664,6 +836,13 @@ describe("CodeBlockChromePlugin", () => {
           () => readCodeNode(editorRef as LexicalEditor)?.theme === "nord-dark"
         ),
         true
+      );
+      // The family switch runs the full re-tokenize: Nord's resolver remaps
+      // roles (e.g. `const`/constants to base text), so the highlight types
+      // change even though the text is identical.
+      notDeepStrictEqual(
+        readCodeHighlightTypes(editorRef as LexicalEditor),
+        githubHighlightTypes
       );
       // `nord-*` matches no Shiki theme bundle, so upstream's transform can
       // never re-tokenize it: without the inline sync the node theme flips
