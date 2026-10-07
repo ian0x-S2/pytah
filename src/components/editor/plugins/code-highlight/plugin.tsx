@@ -287,6 +287,13 @@ export function CodeHighlightPlugin({
   // registration effect tell mode-only flips (skip) from family switches
   // (full re-tokenize) on re-render.
   const lastRegisteredThemeRef = useRef<string | null>(null);
+  // Re-entrancy guard, mirroring upstream's `nodesCurrentlyHighlighting`:
+  // registering a transform dirty-marks every node of its type — and every
+  // token IS a TextNode — so one re-registration runs this plugin's sync
+  // once per token child, each invocation re-tokenizing the parent (~700ms
+  // for a 40-line block, observed). The first child syncs the block; the
+  // rest skip until the update listener clears the window at commit end.
+  const syncingKeysRef = useRef<Set<string>>(new Set());
 
   // Registration follows the post-paint arm, keeping the transform on
   // its synchronous path from the first dirty pass onward.
@@ -350,7 +357,16 @@ export function CodeHighlightPlugin({
       previousTheme !== codeBlockTheme &&
       codeBlockThemeFamilyOf(previousTheme) ===
         codeBlockThemeFamilyOf(codeBlockTheme);
+    // Fresh window per registration: also recovers a guard entry left
+    // behind by an aborted update (its commit listener never ran).
+    const syncingKeys = syncingKeysRef.current;
+    syncingKeys.clear();
     const syncNode = (codeNode: CodeNode): void => {
+      const key = codeNode.getKey();
+      if (syncingKeys.has(key)) {
+        return;
+      }
+      syncingKeys.add(key);
       $syncTwinkleTokens(
         editor,
         codeNode,
@@ -379,8 +395,10 @@ export function CodeHighlightPlugin({
       TwinkleplopTokenizer
     );
     const unregisterPass = editor.registerUpdateListener(() => {
-      // First commit after registration ends the skip window.
+      // First commit after registration ends the skip window and the
+      // per-commit sync guard.
       skipIfTokenized = false;
+      syncingKeys.clear();
     });
     return () => {
       unregisterPre();

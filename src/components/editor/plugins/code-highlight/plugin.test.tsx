@@ -571,6 +571,96 @@ describe("CodeHighlightPlugin arming", () => {
       pendingFrames.clear();
     }
   });
+
+  test("family switches tokenize once per pass, not once per token child", async () => {
+    try {
+      // A 40-line block: the flood this test locks out scales with the
+      // token count, so a one-line snippet hides it (~a dozen calls) the
+      // way the sibling test above does.
+      const longSnippet = Array.from({ length: 40 }, (_, index) => {
+        switch (index % 8) {
+          case 0: {
+            return 'import { useState, useEffect } from "react";';
+          }
+          case 1: {
+            return "const cache = new Map<string, number>();";
+          }
+          case 2: {
+            return "export function useThing(id: string): number {";
+          }
+          case 3: {
+            return "  // derived value with a long explanatory comment";
+          }
+          case 4: {
+            return "  const value = cache.get(id) ?? compute(id, { deep: true });";
+          }
+          case 5: {
+            return "  useEffect(() => { cache.set(id, value); }, [id, value]);";
+          }
+          case 6: {
+            return "  return value * 2;";
+          }
+          default: {
+            return "}";
+          }
+        }
+      }).join("\n");
+      await renderCodeHighlightPlugin(
+        "light",
+        () => {
+          const code = $createCodeNode("ts");
+          code.append($createTextNode(longSnippet));
+          $getRoot().append(code);
+        },
+        "github"
+      );
+      await act(() => {
+        fireFrames();
+        fireFrames();
+      });
+      strictEqual(await pollForHighlightNodes(), true);
+
+      const originalTokenize = TwinkleplopTokenizer.$tokenize;
+      let tokenizeCalls = 0;
+      const tokenizeSpy = function tokenizeSpy(
+        this: Tokenizer,
+        codeNode: CodeNode,
+        language?: string
+      ) {
+        tokenizeCalls += 1;
+        return originalTokenize.call(this, codeNode, language);
+      };
+      TwinkleplopTokenizer.$tokenize = tokenizeSpy;
+      try {
+        await rerenderWithTheme("dark", "nord");
+        strictEqual(
+          await pollUntil(
+            () =>
+              readCodeNode(editorRef ?? (undefined as never))?.theme ===
+              "nord-dark"
+          ),
+          true
+        );
+        // Let the post-splice convergence pass land before reading the
+        // spy (the theme id flips in the splice pass itself).
+        await new Promise<void>((resolve) => {
+          setTimeout(resolve, 100);
+        });
+
+        // Registering a transform dirty-marks every node of its type, and
+        // every token IS a TextNode: without the re-entrancy guard the
+        // sync hook re-tokenized the parent once per token child (~1,700
+        // calls / ~700ms for this block). The guard keeps it at one
+        // tokenize per pass: the splice pass plus the convergence pass.
+        ok(tokenizeCalls >= 1);
+        ok(tokenizeCalls <= 4);
+      } finally {
+        TwinkleplopTokenizer.$tokenize = originalTokenize;
+      }
+    } finally {
+      pendingFrames.clear();
+    }
+  });
 });
 
 type ChromeThemeFamily = "github" | "catppuccin" | "nord" | "everforest";
