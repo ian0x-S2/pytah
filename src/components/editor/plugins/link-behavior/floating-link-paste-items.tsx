@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment } from "react";
+import { Fragment, useRef } from "react";
 import type { RefObject } from "react";
 
 import { cn } from "@/lib/utils";
@@ -23,9 +23,7 @@ const getOptionClassName = (isSelected: boolean, isDestructive: boolean) => {
       : "bg-accent text-accent-foreground";
   }
 
-  return isDestructive
-    ? "text-destructive hover:bg-destructive/10"
-    : "text-foreground hover:bg-accent/60";
+  return isDestructive ? "text-destructive" : "text-foreground";
 };
 
 export function FloatingLinkPasteItems({
@@ -35,6 +33,8 @@ export function FloatingLinkPasteItems({
   onSelectOption,
   selectedIndex,
 }: FloatingLinkPasteItemsProps) {
+  const lastPointerPositionRef = useRef<{ x: number; y: number } | null>(null);
+
   return (
     <>
       {LINK_PASTE_OPTIONS.map((option, index) => {
@@ -54,15 +54,36 @@ export function FloatingLinkPasteItems({
                 }
               }}
               className={cn(
-                "flex h-8 w-full cursor-pointer items-center gap-2.5 rounded-sm border-0 bg-transparent px-2.5 text-left text-xs font-medium outline-hidden transition-colors focus:outline-hidden",
+                "flex h-8 w-full cursor-pointer items-center gap-2.5 rounded-sm border-0 bg-transparent px-2.5 text-left text-xs font-medium outline-hidden select-none focus:outline-hidden",
                 getOptionClassName(isSelected, isDestructive)
               )}
+              data-highlighted={isSelected ? "" : undefined}
               id={`${menuId}-item-${index}`}
               onClick={() => onSelectOption(option.id)}
+              onMouseMove={(event) => {
+                const previousPosition = lastPointerPositionRef.current;
+                lastPointerPositionRef.current = {
+                  x: event.clientX,
+                  y: event.clientY,
+                };
+
+                if (!previousPosition) {
+                  return;
+                }
+
+                const hasPointerMoved =
+                  previousPosition.x !== event.clientX ||
+                  previousPosition.y !== event.clientY;
+
+                if (!hasPointerMoved) {
+                  return;
+                }
+
+                onNavigate(index, false);
+              }}
               onPointerDown={(event) => {
                 event.preventDefault();
               }}
-              onPointerEnter={() => onNavigate(index, false)}
               role="menuitem"
               tabIndex={isSelected ? 0 : -1}
               type="button"
