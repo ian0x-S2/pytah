@@ -1,0 +1,76 @@
+---
+title: "Callout Block"
+description: "Extension guide for callout and alert blocks: semantic variants, icons, slash commands, and GitHub Flavored Markdown alerts."
+group: "extension-guides"
+icon: "Box"
+label: "Callout Block"
+order: 35
+---
+
+import calloutNodeSource from "@/components/editor/core/nodes/callout/node.tsx?raw";
+import calloutTransformerSource from "@/components/editor/core/nodes/callout/transformer.ts?raw";
+import calloutCommandsSource from "@/components/editor/plugins/callout/commands.ts?raw";
+import calloutFeatureSource from "@/components/editor/plugins/callout/feature.ts?raw";
+import calloutPluginSource from "@/components/editor/plugins/callout/plugin.tsx?raw";
+import calloutUtilsSource from "@/components/editor/plugins/callout/utils.ts?raw";
+
+<Callout title="Extension guide">
+  Callouts provide highlighted containers for tips, notes, warnings, and alerts
+  with bidirectional Markdown conversion.
+</Callout>
+
+## Files
+
+<FileTree
+  items={[
+    "src/components/editor/core/nodes/callout/",
+    "  node.tsx          ← CalloutNode (calloutType and emoji)",
+    "  transformer.ts    ← CALLOUT_MARKDOWN_TRANSFORMER (> [!NOTE])",
+    "src/components/editor/plugins/callout/",
+    "  commands.ts       ← INSERT_CALLOUT_COMMAND",
+    "  utils.ts          ← insertCallout / replaceElementWithCallout",
+    "  plugin.tsx        ← CalloutPlugin (keyboard & command handling)",
+    "  feature.ts        ← calloutFeature descriptor",
+  ]}
+/>
+
+## Markdown Format
+
+Callout blocks convert to and from standard GitHub Flavored Markdown alerts:
+
+```markdown
+> [!NOTE] Information to take into account.
+
+> [!TIP] Helpful advice or recommendation.
+
+> [!WARNING] Critical warning that demands attention.
+
+> [!CAUTION] Negative consequences of an action.
+```
+
+## Node Implementation
+
+<CodeBlock
+  label="src/components/editor/core/nodes/callout/node.tsx"
+  language="tsx"
+>
+  {calloutNodeSource}
+</CodeBlock>
+
+## Markdown Transformer
+
+<CodeBlock
+  label="src/components/editor/core/nodes/callout/transformer.ts"
+  language="ts"
+>
+  {calloutTransformerSource}
+</CodeBlock>
+
+## Feature Descriptor
+
+<CodeBlock
+  label="src/components/editor/plugins/callout/feature.ts"
+  language="ts"
+>
+  {calloutFeatureSource}
+</CodeBlock>

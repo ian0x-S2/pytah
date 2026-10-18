@@ -15,6 +15,12 @@
       "type": "registry:block"
     },
     {
+      "description": "Callout and alert blocks with semantic variants, icons, and GitHub Alert markdown conversion.",
+      "name": "editor-callout",
+      "title": "Pytah Editor — Callouts & Alerts",
+      "type": "registry:block"
+    },
+    {
       "description": "Collapsible sections with toggle titles, indentation flows and slash-command insertion.",
       "name": "editor-collapsible",
       "title": "Pytah Editor — Collapsible Sections",

@@ -749,7 +749,7 @@ const renderChromeHarness = async () => {
               ),
             },
             showFooter: false,
-            snapshot: { html: "", markdown: "", text: "" },
+            snapshot: { html: "", json: "", markdown: "", text: "" },
             toolbar: false,
             transformers: [],
           })

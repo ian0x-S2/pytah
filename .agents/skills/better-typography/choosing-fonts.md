@@ -34,7 +34,12 @@ When a type change is asked for, two routes. The system stack gives a native mac
 ```css
 /* System-native macOS/iOS feel */
 html {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
 }
 
 /* Commercial brand face with safe fallbacks */
@@ -53,12 +58,12 @@ html {
 
 ## Anatomy of a typeface
 
-| Term | Meaning |
-| --- | --- |
-| x-height | Height of a lowercase `x` |
-| Cap height | Height of uppercase letters |
-| Baseline | The invisible line letters sit on |
-| Ascender | Part of a letter rising above the x-height |
-| Descender | Part dropping below the baseline |
+| Term       | Meaning                                    |
+| ---------- | ------------------------------------------ |
+| x-height   | Height of a lowercase `x`                  |
+| Cap height | Height of uppercase letters                |
+| Baseline   | The invisible line letters sit on          |
+| Ascender   | Part of a letter rising above the x-height |
+| Descender  | Part dropping below the baseline           |
 
 These measurements are why two fonts at the same `font-size` look like different sizes. A large x-height looks bigger.

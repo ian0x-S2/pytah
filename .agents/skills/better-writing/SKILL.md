@@ -19,12 +19,12 @@ A deliberate brand voice is not a defect. Raise a departure from plain language 
 
 The product has one voice and its existing copy establishes it. A local edit does not get to invent a new one. Keep terms consistent: if it's "Archive" in the menu, it isn't "Move to storage" in the toast. Tone flexes with the stakes:
 
-| Context | Tone |
-| --- | --- |
-| Success, onboarding, empty states | Warm, can be light |
-| Routine actions, settings | Neutral, minimal |
+| Context                           | Tone                          |
+| --------------------------------- | ----------------------------- |
+| Success, onboarding, empty states | Warm, can be light            |
+| Routine actions, settings         | Neutral, minimal              |
 | Errors, destructive confirmations | Calm, plain, zero playfulness |
-| Data loss, security | Serious, explicit |
+| Data loss, security               | Serious, explicit             |
 
 ## Address the reader directly
 
@@ -88,7 +88,9 @@ An empty state says what this place is, how to fill it and offers one clear next
 
 <!-- Good: orientation plus a next step -->
 <p class="font-medium">No projects yet</p>
-<p class="text-sm text-zinc-500">Projects keep your tasks and files together.</p>
+<p class="text-sm text-zinc-500">
+  Projects keep your tasks and files together.
+</p>
 <button class="mt-4">Create a project</button>
 ```
 
@@ -107,7 +109,7 @@ A placeholder shows the expected format: `name@example.com`, `DD/MM/YYYY`. It va
 **Format.** Group findings under the principle each violates, ordered by severity, one row per root cause listing every location it appears in:
 
 | Severity | Location | Before | After | Why |
-| --- | --- | --- | --- | --- |
+| -------- | -------- | ------ | ----- | --- |
 
 `Location` is `path/to/file:line`. `Why` names the principle and the user impact.
 

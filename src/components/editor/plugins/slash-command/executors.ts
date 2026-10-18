@@ -123,6 +123,8 @@ export const CORE_SLASH_COMMAND_EXECUTORS: Record<
   ((element: ElementNode) => void) | undefined
 > = {
   bullet: (element) => applyListCommand(element, "bullet"),
+  callout: undefined,
+  caution: undefined,
   check: (element) => applyListCommand(element, "check"),
   code: applyCodeCommand,
   collapsible: undefined,
@@ -138,6 +140,8 @@ export const CORE_SLASH_COMMAND_EXECUTORS: Record<
   paragraph: applyParagraphCommand,
   quote: applyQuoteCommand,
   table: applyTableCommand,
+  tip: undefined,
+  warning: undefined,
   youtube: undefined,
 };
 

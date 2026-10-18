@@ -8,15 +8,23 @@ Users read a near-miss in hue as a slightly different shade, not as a different 
 
 ```css
 /* Bad: the accent means both "link" and "decorative heading" */
-a { color: #3b82f6; }
-.section-title { color: #4f8ef7; }
+a {
+  color: #3b82f6;
+}
+.section-title {
+  color: #4f8ef7;
+}
 
 /* Good: interactive elements own the accent; headings stay neutral */
-a { color: var(--color-accent-text); }
-.section-title { color: var(--color-text-primary); }
+a {
+  color: var(--color-accent-text);
+}
+.section-title {
+  color: var(--color-text-primary);
+}
 ```
 
-The rule runs both ways. A color must not be *absent* where its meaning occurs. If the accent means interactive, an interactive element rendered neutral is just as misleading.
+The rule runs both ways. A color must not be _absent_ where its meaning occurs. If the accent means interactive, an interactive element rendered neutral is just as misleading.
 
 Color is never the only carrier of meaning. Pair it with an icon, a label, or a shape. `better-accessibility` owns that requirement.
 
@@ -26,10 +34,14 @@ Apply a semantic token only for the role it names. `--color-text-secondary` is m
 
 ```css
 /* Bad: separator token repurposed as a text color because it looked right */
-.caption { color: var(--color-border); }
+.caption {
+  color: var(--color-border);
+}
 
 /* Bad: text token repurposed as a background */
-.tag { background: var(--color-text-secondary); }
+.tag {
+  background: var(--color-text-secondary);
+}
 ```
 
 The role inventory in [token-naming.md](token-naming.md) is the list of roles a system needs.
@@ -107,11 +119,15 @@ Every custom color needs a light and a dark variant, derived per [palette-genera
 }
 
 @media (prefers-color-scheme: dark) {
-  :root { --color-accent-solid: #60a5fa; }
+  :root {
+    --color-accent-solid: #60a5fa;
+  }
 }
 
 @media (prefers-contrast: more) {
-  :root { --color-accent-solid: #1d4ed8; }
+  :root {
+    --color-accent-solid: #1d4ed8;
+  }
 }
 ```
 

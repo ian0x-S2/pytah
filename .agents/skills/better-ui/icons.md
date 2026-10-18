@@ -6,11 +6,11 @@ Icon weight, states, sizing and direction, the details that make icons sit natur
 
 A hairline icon beside semibold text reads as broken; a heavy icon beside regular text shouts.
 
-| Adjacent text | Icon stroke width (24px grid) |
-| --- | --- |
-| Regular (400), 14–16px | `1.5px` |
-| Medium/Semibold (500–600) | `2px` |
-| Bold (700), or emphasized standalone | `2.5px` |
+| Adjacent text                        | Icon stroke width (24px grid) |
+| ------------------------------------ | ----------------------------- |
+| Regular (400), 14–16px               | `1.5px`                       |
+| Medium/Semibold (500–600)            | `2px`                         |
+| Bold (700), or emphasized standalone | `2.5px`                       |
 
 ```html
 <!-- Good: stroke tuned to the label weight -->
@@ -41,15 +41,25 @@ Never ship separate assets for default, hover, selected and disabled states. Use
 ```
 
 ```css
-.icon-button { color: oklch(0.552 0.016 285.938); }
-.icon-button:hover { color: oklch(0.21 0.006 285.885); }
-.icon-button[aria-pressed="true"] { color: oklch(0.623 0.188 259.815); }
-.icon-button:disabled { opacity: 0.4; }
+.icon-button {
+  color: oklch(0.552 0.016 285.938);
+}
+.icon-button:hover {
+  color: oklch(0.21 0.006 285.885);
+}
+.icon-button[aria-pressed="true"] {
+  color: oklch(0.623 0.188 259.815);
+}
+.icon-button:disabled {
+  opacity: 0.4;
+}
 ```
 
 ```html
 <!-- Tailwind -->
-<button class="text-zinc-500 hover:text-zinc-900 aria-pressed:text-blue-600 disabled:opacity-40">
+<button
+  class="text-zinc-500 hover:text-zinc-900 aria-pressed:text-blue-600 disabled:opacity-40"
+>
   <BookmarkIcon />
 </button>
 ```

@@ -64,13 +64,13 @@ When a property exists, use it. `font-weight` keeps working when a non-variable 
 
 OpenType is the standard behind almost every modern font. Features are extra built-in options and, unlike axes, work the same on static and variable fonts. A font ships only the features its designer included.
 
-| Tag | Feature |
-| --- | --- |
-| `tnum` | Tabular numbers: every digit the same width |
-| `zero` | Slashed zero: `0` distinct from `O` |
-| `liga` | Ligatures: joins pairs like "fi" into one shape |
-| `ss01`–`ss20` | Stylistic sets (numbered slots) |
-| `cv01`–`cv99` | Character variants (numbered slots) |
+| Tag           | Feature                                         |
+| ------------- | ----------------------------------------------- |
+| `tnum`        | Tabular numbers: every digit the same width     |
+| `zero`        | Slashed zero: `0` distinct from `O`             |
+| `liga`        | Ligatures: joins pairs like "fi" into one shape |
+| `ss01`–`ss20` | Stylistic sets (numbered slots)                 |
+| `cv01`–`cv99` | Character variants (numbered slots)             |
 
 Same rule as axes. Prefer the `font-variant-*` properties and reserve `font-feature-settings` for tags with no property:
 

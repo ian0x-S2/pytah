@@ -18,20 +18,20 @@ A second accent hue must also never sit adjacent to the first. Where it would, t
 
 Each step maps to a role. Generate the steps the roles below call for and skip the rest.
 
-| Role | Tailwind | Radix |
-| --- | --- | --- |
-| Page background | `50` | `1` |
-| Subtle background | `50` | `2` |
-| Component background | `100` | `3` |
-| Component hover | `200` | `4` |
-| Component active / selected | `200` | `5` |
-| Subtle border | `200` | `6` |
-| Border, separator | `300` | `7` |
-| Strong border, focus ring | `400` | `8` |
-| Solid fill | `500` | `9` |
-| Solid fill hover | `600` | `10` |
-| Low-contrast text | `700` | `11` |
-| High-contrast text | `900` | `12` |
+| Role                        | Tailwind | Radix |
+| --------------------------- | -------- | ----- |
+| Page background             | `50`     | `1`   |
+| Subtle background           | `50`     | `2`   |
+| Component background        | `100`    | `3`   |
+| Component hover             | `200`    | `4`   |
+| Component active / selected | `200`    | `5`   |
+| Subtle border               | `200`    | `6`   |
+| Border, separator           | `300`    | `7`   |
+| Strong border, focus ring   | `400`    | `8`   |
+| Solid fill                  | `500`    | `9`   |
+| Solid fill hover            | `600`    | `10`  |
+| Low-contrast text           | `700`    | `11`  |
+| High-contrast text          | `900`    | `12`  |
 
 The two conventions differ in kind, not only in numbering:
 

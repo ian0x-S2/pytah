@@ -9,6 +9,7 @@ import type {
 export const DEFAULT_EDITOR_SNAPSHOT_OPTIONS = {
   emitInitialSnapshot: true,
   html: true,
+  json: true,
   markdown: true,
   text: true,
 } as const satisfies Required<EditorSnapshotOptions>;
@@ -35,6 +36,7 @@ export const DEFAULT_EDITOR_FEATURES = {
   floatingToolbar: true,
   focusOnMount: true,
   history: true,
+  linkPasteMenu: true,
   markdownShortcuts: true,
   slashCommand: true,
   snapshot: DEFAULT_EDITOR_SNAPSHOT_OPTIONS,

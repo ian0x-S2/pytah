@@ -1,10 +1,18 @@
 import type { Transformer } from "@lexical/markdown";
 import type { InitialConfigType } from "@lexical/react/LexicalComposer";
-import type { LexicalEditor } from "lexical";
+import type { LexicalEditor, SerializedEditorState } from "lexical";
 import type { ComponentType, ReactNode } from "react";
 
 import type { CodeBlockThemeFamily } from "../plugins/code-highlight/themes/registry";
 import type { FeatureSlashCommand } from "../plugins/slash-command/types";
+import type { WeblinkMetadataFetcher } from "./nodes/weblink/types";
+
+export type {
+  WeblinkFormat,
+  WeblinkMetadata,
+  WeblinkMetadataFetcher,
+  WeblinkPayload,
+} from "./nodes/weblink/types";
 
 /**
  * A serialized view of the current editor document. Fields stay `string`
@@ -13,6 +21,7 @@ import type { FeatureSlashCommand } from "../plugins/slash-command/types";
  */
 export interface EditorSnapshot {
   html: string;
+  json: string;
   markdown: string;
   text: string;
 }
@@ -25,6 +34,8 @@ export interface EditorSnapshot {
 export interface EditorSnapshotOutputs {
   /** Serialize HTML into `snapshot.html`. @default true */
   html?: boolean;
+  /** Serialize JSON AST into `snapshot.json`. @default true */
+  json?: boolean;
   /** Serialize markdown into `snapshot.markdown`. @default true */
   markdown?: boolean;
   /** Serialize plain text into `snapshot.text`. @default true */
@@ -52,6 +63,7 @@ export interface EditorFooterContext {
 
 export interface EditorOutputContext {
   onCopyHtml: () => void;
+  onCopyJson?: () => void;
   onCopyMarkdown: () => void;
   snapshot: EditorSnapshot;
 }
@@ -66,6 +78,7 @@ export interface EditorFeatureFlags {
   floatingToolbar?: boolean;
   focusOnMount?: boolean;
   history?: boolean;
+  linkPasteMenu?: boolean;
   markdownShortcuts?: boolean;
   slashCommand?: boolean;
   /**
@@ -164,6 +177,7 @@ export interface EditorProps {
   extraNodes?: NonNullable<InitialConfigType["nodes"]>;
   features?: EditorFeatureFlags;
   initialHtml?: string;
+  initialJson?: string | SerializedEditorState | Record<string, unknown>;
   initialMarkdown?: string;
   minimal?: boolean;
   namespace?: string;
@@ -173,4 +187,14 @@ export interface EditorProps {
   slots?: EditorChromeSlots;
   /** @default false */
   toolbar?: EditorToolbar;
+  /**
+   * Optional async metadata fetcher for weblink cards (small & wide).
+   * Allows enriching pasted links with OpenGraph tags (title, description, image)
+   * from a server-side scraper (e.g. metascraper, cheerio) or API route.
+   *
+   * Accepts either:
+   * - A custom async function: `(url, { signal }) => Promise<Partial<WeblinkMetadata>>`
+   * - A server endpoint URL string: `"/api/metadata"` (calls `/api/metadata?url=...`)
+   */
+  weblinkMetadataFetcher?: WeblinkMetadataFetcher | string;
 }

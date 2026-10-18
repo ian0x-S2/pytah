@@ -17,7 +17,7 @@ No ARIA is better than bad ARIA. A screen reader trusts your roles, so a wrong o
 | Element | Use for | Why |
 | --- | --- | --- |
 | `<a href>` | Navigation: anything that goes somewhere or changes the URL | Free Cmd/Ctrl/middle-click, right-click → copy link, Enter activation |
-| `<button>` | Actions: submit, toggle, open, delete | Free focus, Enter *and* Space activation, form semantics |
+| `<button>` | Actions: submit, toggle, open, delete | Free focus, Enter _and_ Space activation, form semantics |
 | `<div onClick>` | Nothing | No role, no focus, no keyboard; screen readers see plain text |
 
 ```tsx

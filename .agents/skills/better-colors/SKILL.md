@@ -39,7 +39,7 @@ Never borrow a token because its value is right today. A separator used as a tex
 
 Four properties define a well-formed ramp:
 
-- Steps step evenly in *perceived* lightness, not in whatever the format calls lightness.
+- Steps step evenly in _perceived_ lightness, not in whatever the format calls lightness.
 - Hue stays constant end to end.
 - Vividness peaks mid-ramp and falls off at both ends.
 - Steps sit denser at the light end than at the dark end.
@@ -98,7 +98,7 @@ See [color-usage.md](color-usage.md).
 **Format.** Group findings under the principle each violates, ordered by severity, one row per root cause listing every location it appears in:
 
 | Severity | Location | Before | After | Why |
-| --- | --- | --- | --- | --- |
+| -------- | -------- | ------ | ----- | --- |
 
 `Location` is `path/to/file:line`. `Why` names the principle and the user impact.
 

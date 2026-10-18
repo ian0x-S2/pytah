@@ -23,9 +23,11 @@ const editorUiFiles = [
   "command.tsx",
   "dialog.tsx",
   "dropdown-menu.tsx",
+  "hover-card.tsx",
   "input.tsx",
   "input-group.tsx",
   "popover.tsx",
+  "scroll-area.tsx",
   "select.tsx",
   "separator.tsx",
   "textarea.tsx",
@@ -40,6 +42,13 @@ const editorUiFiles = [
  * `@excalidraw/excalidraw` or `katex` unless a feature item asks for them.
  */
 const featureItems = [
+  {
+    description:
+      "Callout and alert blocks with semantic variants, icons, and GitHub Alert markdown conversion.",
+    folders: ["plugins/callout", "core/nodes/callout"],
+    name: "editor-callout",
+    title: "Pytah Editor — Callouts & Alerts",
+  },
   {
     description:
       "Collapsible sections with toggle titles, indentation flows and slash-command insertion.",

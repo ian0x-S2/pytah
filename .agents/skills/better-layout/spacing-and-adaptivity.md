@@ -41,7 +41,10 @@ In content layouts, buttons pressed against the viewport look like system chrome
   padding-inline: 16px;
   padding-bottom: calc(16px + env(safe-area-inset-bottom));
 }
-.action-bar button { width: 100%; border-radius: 12px; }
+.action-bar button {
+  width: 100%;
+  border-radius: 12px;
+}
 
 /* Bad: button glued to all three edges */
 .action-bar button {
@@ -81,7 +84,9 @@ In the peeking-scroller recipe, the container's padding creates the peek and sna
 
 ```html
 <!-- Tailwind: the 80% width keeps the next card's leading 16-32px visible -->
-<div class="flex gap-3 overflow-x-auto px-6 [scroll-padding-inline:1.5rem] snap-x snap-mandatory">
+<div
+  class="flex gap-3 overflow-x-auto px-6 [scroll-padding-inline:1.5rem] snap-x snap-mandatory"
+>
   <div class="w-[80%] shrink-0 snap-start">…</div>
   <div class="w-[80%] shrink-0 snap-start">…</div>
 </div>
@@ -100,8 +105,12 @@ The two layers behave differently at the edges:
   display: grid;
   grid-template-columns: 1fr min(65ch, calc(100% - 48px)) 1fr;
 }
-.article > * { grid-column: 2; }
-.article > .full-bleed { grid-column: 1 / -1; }
+.article > * {
+  grid-column: 2;
+}
+.article > .full-bleed {
+  grid-column: 1 / -1;
+}
 ```
 
 Sticky headers and floating action buttons account for safe areas:
@@ -124,14 +133,20 @@ Breakpoints belong to the content, not the device catalog:
 
 ```css
 /* Good: component adapts to its container */
-.card-list { container-type: inline-size; }
+.card-list {
+  container-type: inline-size;
+}
 @container (max-width: 400px) {
-  .card { grid-template-columns: 1fr; }
+  .card {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Bad: viewport media query breaks the card inside a narrow sidebar */
 @media (max-width: 768px) {
-  .card { grid-template-columns: 1fr; }
+  .card {
+    grid-template-columns: 1fr;
+  }
 }
 ```
 
@@ -150,10 +165,16 @@ Layouts fail in two directions. Content grows, and viewports shrink.
 
 ```css
 /* Good: label defines the size */
-.button { padding-inline: 16px; white-space: nowrap; }
+.button {
+  padding-inline: 16px;
+  white-space: nowrap;
+}
 
 /* Bad: German will overflow or truncate */
-.button { width: 96px; overflow: hidden; }
+.button {
+  width: 96px;
+  overflow: hidden;
+}
 ```
 
 **Clipping.** Never park a critical action where it can be cut off: the bottom edge of a resizable pane, below the fold of a fixed-height modal, behind an expanding keyboard. Keep primary actions in stable chrome, a sticky footer with safe-area padding or the top of the view. Where a modal's content scrolls, its action row does not.

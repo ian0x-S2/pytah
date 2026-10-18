@@ -107,6 +107,7 @@ export function FloatingLinkEditorPanel({
       <div className="flex items-center justify-end gap-0.5 pt-2">
         <Button
           aria-label="Open link in new tab"
+          nativeButton={false}
           render={
             <a
               aria-label="Open link in new tab"

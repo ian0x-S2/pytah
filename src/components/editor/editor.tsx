@@ -2,11 +2,12 @@
 
 import { $generateNodesFromDOM } from "@lexical/html";
 import { $convertFromMarkdownString } from "@lexical/markdown";
+import type { Transformer } from "@lexical/markdown";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 
 import "./editor.css";
 import { $createParagraphNode, $getRoot } from "lexical";
-import type { LexicalEditor } from "lexical";
+import type { LexicalEditor, SerializedEditorState } from "lexical";
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 
@@ -32,6 +33,10 @@ import {
   computeFeatureNodes,
   computeResolvedSlashCommands,
 } from "./core/features";
+import {
+  resolveWeblinkFetcher,
+  WeblinkMetadataContext,
+} from "./core/nodes/weblink/metadata";
 import type {
   EditorActionBarControls,
   EditorChromeSlots,
@@ -126,6 +131,39 @@ const getEditorOutputs = (
   );
 };
 
+interface SeedEditorInput {
+  html?: string;
+  json?: string | SerializedEditorState | Record<string, unknown>;
+  markdown?: string;
+}
+
+const createSeedEditorState =
+  (seedInput: SeedEditorInput, transformers: readonly Transformer[]) =>
+  (editor: LexicalEditor) => {
+    if (seedInput.json) {
+      const jsonString =
+        typeof seedInput.json === "string"
+          ? seedInput.json
+          : JSON.stringify(seedInput.json);
+      editor.setEditorState(editor.parseEditorState(jsonString));
+      return;
+    }
+    const root = $getRoot();
+    root.clear();
+    if (seedInput.markdown) {
+      $convertFromMarkdownString(seedInput.markdown, [...transformers]);
+      return;
+    }
+    const dom = new DOMParser().parseFromString(
+      seedInput.html ?? "",
+      "text/html"
+    );
+    root.append(...$generateNodesFromDOM(editor, dom));
+    if (root.getChildrenSize() === 0) {
+      root.append($createParagraphNode());
+    }
+  };
+
 export function Editor({
   className,
   chrome,
@@ -137,6 +175,7 @@ export function Editor({
   extraNodes,
   features,
   initialHtml,
+  initialJson,
   initialMarkdown,
   minimal = false,
   namespace,
@@ -145,10 +184,12 @@ export function Editor({
   pluginSlots,
   slots,
   toolbar = false,
+  weblinkMetadataFetcher,
 }: EditorProps) {
   const [textContent, setTextContent] = useState("");
   const [serializedSnapshot, setSerializedSnapshot] = useState<EditorSnapshot>({
     html: "",
+    json: "",
     markdown: "",
     text: "",
   });
@@ -161,14 +202,21 @@ export function Editor({
     () => resolveEditorFeatures(features),
     [features]
   );
+  const resolvedWeblinkFetcher = useMemo(
+    () => resolveWeblinkFetcher(weblinkMetadataFetcher),
+    [weblinkMetadataFetcher]
+  );
 
   // Seed props are initial-only by contract (consumers remount via `key`),
   // so they are captured once per mount.
   const [seedInput] = useState(() => ({
     html: initialHtml,
+    json: initialJson,
     markdown: initialMarkdown,
   }));
-  const seededViaConfig = Boolean(seedInput.markdown || seedInput.html);
+  const seededViaConfig = Boolean(
+    seedInput.markdown || seedInput.html || seedInput.json
+  );
 
   // Derived registries are memoized so their identities stay stable across
   // re-renders (the editor state flows into React state on every keystroke);
@@ -192,22 +240,7 @@ export function Editor({
   // post-mount effect paints an empty editor first and then re-populates the
   // whole document — a visible "content appears late" delay.
   const seedEditorState = seededViaConfig
-    ? (editor: LexicalEditor) => {
-        const root = $getRoot();
-        root.clear();
-        if (seedInput.markdown) {
-          $convertFromMarkdownString(seedInput.markdown, [...transformers]);
-          return;
-        }
-        const dom = new DOMParser().parseFromString(
-          seedInput.html ?? "",
-          "text/html"
-        );
-        root.append(...$generateNodesFromDOM(editor, dom));
-        if (root.getChildrenSize() === 0) {
-          root.append($createParagraphNode());
-        }
-      }
+    ? createSeedEditorState(seedInput, transformers)
     : undefined;
 
   const initialConfig = createEditorConfig({
@@ -236,6 +269,7 @@ export function Editor({
     setSerializedSnapshot((currentSnapshot) => {
       if (
         currentSnapshot.html === nextSnapshot.html &&
+        currentSnapshot.json === nextSnapshot.json &&
         currentSnapshot.markdown === nextSnapshot.markdown &&
         currentSnapshot.text === nextSnapshot.text
       ) {
@@ -253,18 +287,23 @@ export function Editor({
   // same gating so disabled outputs are never assumed to be real content.
   const snapshotOptions = resolvedFeatures.snapshot;
 
-  const readSerializedOutput = (output: "html" | "markdown"): string => {
+  const readSerializedOutput = (
+    output: "html" | "json" | "markdown"
+  ): string => {
     if (!editorInstance) {
       return "";
     }
 
-    return readEditorSnapshot(
-      editorInstance,
-      transformers,
-      output === "html"
-        ? { html: true, markdown: false, text: false }
-        : { html: false, markdown: true, text: false }
-    )[output];
+    const selectiveOutputs = {
+      html: output === "html",
+      json: output === "json",
+      markdown: output === "markdown",
+      text: false,
+    };
+
+    return readEditorSnapshot(editorInstance, transformers, selectiveOutputs)[
+      output
+    ];
   };
 
   const handleCopyMarkdown = async () => {
@@ -285,6 +324,14 @@ export function Editor({
     );
   };
 
+  const handleCopyJson = async () => {
+    await copyEditorOutput(
+      snapshotOptions.json
+        ? serializedSnapshot.json
+        : readSerializedOutput("json")
+    );
+  };
+
   const handleExportMarkdown = () => {
     if (!editorInstance) {
       return;
@@ -293,44 +340,12 @@ export function Editor({
     editorInstance.dispatchCommand(EXPORT_MARKDOWN_COMMAND, undefined);
   };
 
-  const handleReset = () => {
+  const runAndSync = (action: (editor: LexicalEditor) => void) => {
     if (!editorInstance) {
       return;
     }
 
-    resetEditorContent(editorInstance);
-    const nextSnapshot = readEditorSnapshot(
-      editorInstance,
-      transformers,
-      snapshotOptions
-    );
-    setTextContent(nextSnapshot.text);
-    setSerializedSnapshot(nextSnapshot);
-    onChange?.(nextSnapshot, editorInstance);
-  };
-
-  const handleLoadHtmlExample = () => {
-    if (!editorInstance) {
-      return;
-    }
-
-    loadEditorHtmlExample(editorInstance);
-    const nextSnapshot = readEditorSnapshot(
-      editorInstance,
-      transformers,
-      snapshotOptions
-    );
-    setTextContent(nextSnapshot.text);
-    setSerializedSnapshot(nextSnapshot);
-    onChange?.(nextSnapshot, editorInstance);
-  };
-
-  const handleLoadMarkdownExample = () => {
-    if (!editorInstance) {
-      return;
-    }
-
-    loadEditorMarkdownExample(editorInstance);
+    action(editorInstance);
     const nextSnapshot = readEditorSnapshot(
       editorInstance,
       transformers,
@@ -345,9 +360,9 @@ export function Editor({
     onExportMarkdown: resolvedFeatures.exportMarkdown
       ? handleExportMarkdown
       : undefined,
-    onLoadHtml: handleLoadHtmlExample,
-    onLoadMarkdown: handleLoadMarkdownExample,
-    onReset: handleReset,
+    onLoadHtml: () => runAndSync(loadEditorHtmlExample),
+    onLoadMarkdown: () => runAndSync(loadEditorMarkdownExample),
+    onReset: () => runAndSync(resetEditorContent),
   };
 
   const defaultContent = (
@@ -361,6 +376,7 @@ export function Editor({
       features={resolvedFeatures}
       footerSlot={slots?.footer}
       initialHtml={initialHtml}
+      initialJson={initialJson}
       initialMarkdown={initialMarkdown}
       minimal={minimal}
       onSnapshotChange={handleSnapshotChange}
@@ -404,6 +420,7 @@ export function Editor({
     resolvedChrome,
     {
       onCopyHtml: handleCopyHtml,
+      onCopyJson: handleCopyJson,
       onCopyMarkdown: handleCopyMarkdown,
       snapshot,
     },
@@ -415,9 +432,11 @@ export function Editor({
       className={cn(!minimal && "space-y-6", className)}
       data-density={density}
     >
-      <LexicalComposer initialConfig={initialConfig}>
-        {editorBody}
-      </LexicalComposer>
+      <WeblinkMetadataContext.Provider value={resolvedWeblinkFetcher}>
+        <LexicalComposer initialConfig={initialConfig}>
+          {editorBody}
+        </LexicalComposer>
+      </WeblinkMetadataContext.Provider>
 
       {outputContent}
     </div>

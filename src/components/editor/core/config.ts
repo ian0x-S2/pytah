@@ -7,6 +7,7 @@ import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
 
 import type { LexicalNodeList } from "./features";
+import { WeblinkNode } from "./nodes/weblink/node";
 import { editorTheme } from "./theme";
 
 function onError(error: Error) {
@@ -27,6 +28,7 @@ export const BASE_EDITOR_NODES = [
   CodeHighlightNode,
   LinkNode,
   AutoLinkNode,
+  WeblinkNode,
   HorizontalRuleNode,
   TableNode,
   TableRowNode,

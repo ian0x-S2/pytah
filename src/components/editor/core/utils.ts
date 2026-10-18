@@ -10,7 +10,7 @@ import {
   $createTextNode,
   $getRoot,
 } from "lexical";
-import type { LexicalEditor } from "lexical";
+import type { LexicalEditor, SerializedEditorState } from "lexical";
 
 import { BUILTIN_MARKDOWN_TRANSFORMERS } from "../plugins/markdown/transformers";
 import type { EditorSnapshot, EditorSnapshotOutputs } from "./types";
@@ -40,11 +40,13 @@ export const readEditorSnapshot = (
   options?: EditorSnapshotOutputs
 ): EditorSnapshot => {
   const serializeHtml = options?.html ?? true;
+  const serializeJson = options?.json ?? true;
   const serializeMarkdown = options?.markdown ?? true;
   const serializeText = options?.text ?? true;
 
   const snapshot: EditorSnapshot = {
     html: "",
+    json: "",
     markdown: "",
     text: "",
   };
@@ -52,6 +54,9 @@ export const readEditorSnapshot = (
   editor.getEditorState().read(() => {
     if (serializeHtml) {
       snapshot.html = $generateHtmlFromNodes(editor);
+    }
+    if (serializeJson) {
+      snapshot.json = JSON.stringify(editor.getEditorState().toJSON());
     }
     if (serializeMarkdown) {
       snapshot.markdown = $convertToMarkdownString([...transformers]);
@@ -152,4 +157,21 @@ export const replaceEditorHtmlContent = (
       selectStartOfRoot();
     }
   });
+};
+
+export const loadEditorJsonContent = (
+  editor: LexicalEditor,
+  json: string | SerializedEditorState | Record<string, unknown>,
+  options?: EditorContentLoadOptions
+) => {
+  const jsonString = typeof json === "string" ? json : JSON.stringify(json);
+  const parsedState = editor.parseEditorState(jsonString);
+  editor.setEditorState(parsedState, {
+    tag: options?.tag,
+  });
+  if (options?.select !== false) {
+    editor.update(() => {
+      selectStartOfRoot();
+    });
+  }
 };

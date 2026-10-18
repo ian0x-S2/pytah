@@ -1,6 +1,6 @@
 ---
 title: "Link Behavior"
-description: "Feature guide for built-in link handling: auto-linking, URL validation, sanitization, and the floating link editor."
+description: "Feature guide for built-in link handling: auto-linking, smart URL paste, floating link editor, and the link paste format menu."
 group: "feature-guides"
 icon: "Link"
 label: "Link Behavior"
@@ -9,12 +9,14 @@ order: 20
 
 import linkBehaviorConstantsSource from "@/components/editor/plugins/link-behavior/constants.ts?raw";
 import floatingLinkEditorSource from "@/components/editor/plugins/link-behavior/floating-link-editor.tsx?raw";
+import floatingLinkPasteMenuSource from "@/components/editor/plugins/link-behavior/floating-link-paste-menu.tsx?raw";
+import linkPasteSource from "@/components/editor/plugins/link-behavior/paste.ts?raw";
 import linkBehaviorPluginSource from "@/components/editor/plugins/link-behavior/plugin.tsx?raw";
 import linkBehaviorUtilsSource from "@/components/editor/plugins/link-behavior/utils.ts?raw";
 
 <Callout title="Feature guide">
-  This page explains built-in link UX. Consumers who only need to change whether
-  the link editor appears should start with the editor `features` API.
+  This page explains built-in link UX, including auto-linking, smart URL paste,
+  the Google Docs-style hover chip, and the floating link paste menu.
 </Callout>
 
 ## Files
@@ -22,16 +24,20 @@ import linkBehaviorUtilsSource from "@/components/editor/plugins/link-behavior/u
 <FileTree
   items={[
     "src/components/editor/plugins/link-behavior/",
-    "  constants.ts                    ← AUTO_LINK_MATCHERS",
+    "  constants.ts                    ← AUTO_LINK_MATCHERS, LINK_PASTE_OPTIONS",
     "  utils.ts                        ← URL normalize / validate / sanitize",
+    "  paste.ts                        ← handleLinkPasteOnSelection & PASTE_COMMAND",
     "  plugin.tsx                      ← LinkBehaviorPlugin composition",
     "  floating-link-editor.tsx        ← FloatingLinkEditorPlugin (state machine + effects host)",
     "  floating-link-editor-surfaces.tsx ← chip (HoverCard) + card (Popover) rendering",
-    "  floating-link-hover.ts           ← document pointerover link detection",
-    "  floating-link-preview-chip.tsx   ← hover preview chip (label + Edit)",
+    "  floating-link-hover.ts          ← document pointerover link detection",
+    "  floating-link-preview-chip.tsx  ← hover preview chip (label + Edit)",
     "  floating-link-editor-reducer.ts ← closed/preview/edit state machine",
     "  floating-link-editor-position.ts ← selection anchor + link readers",
     "  floating-link-editor-panel.tsx  ← text/URL fields + actions",
+    "  floating-link-paste-menu.tsx    ← link paste format popover (Base UI Popover)",
+    "  floating-link-paste-actions.ts  ← link conversion mutations",
+    "  floating-link-paste-items.tsx   ← format options list with roving tabindex",
   ]}
 />
 
@@ -48,11 +54,11 @@ Two `AutoLinkPlugin` matchers — one for URLs and one for email addresses. Plai
 
 ## utils.ts
 
-Three URL helpers used by the floating editor and `LinkPlugin`'s `validateUrl` prop.
+URL helpers used by the floating editor and `LinkPlugin`'s `validateUrl` prop.
 
 | Export | Purpose |
 | --- | --- |
-| `LINK_PLACEHOLDER_URL` | Sentinel value (`"https://"`) used as the default when creating a new link so the input is pre-filled. |
+| `LINK_PLACEHOLDER_URL` | Sentinel value (`"https://"`) used as default when creating a new link so the input is pre-filled. |
 | `normalizeEditorLinkUrl(value)` | Trims whitespace, adds `mailto:` for bare email addresses, adds `https://` for `www.` prefixed strings. |
 | `isValidEditorLinkUrl(value)` | Returns `true` for any URL whose protocol is one of `http:`, `https:`, `mailto:`, `sms:`, `tel:` — or the placeholder. |
 | `sanitizeEditorLinkUrl(value)` | Returns `about:blank` for disallowed protocols, otherwise returns the normalised URL. |
@@ -64,9 +70,58 @@ Three URL helpers used by the floating editor and `LinkPlugin`'s `validateUrl` p
   {linkBehaviorUtilsSource}
 </CodeBlock>
 
+## Smart Link Paste (paste.ts)
+
+When pasting URLs, the editor evaluates current selection state:
+
+1. **Selection with text highlighted**: Pasting a URL wraps the highlighted text into a link (`LinkNode`) instead of overwriting it with the raw URL string. Naked `www.` addresses are automatically prepended with `https://`.
+2. **Collapsed caret**: Pasting a URL inserts the link text and immediately opens the **Link Paste Format Menu** beneath the newly created link.
+
+<CodeBlock
+  label="src/components/editor/plugins/link-behavior/paste.ts"
+  language="ts"
+>
+  {linkPasteSource}
+</CodeBlock>
+
+## Link Paste Format Menu (floating-link-paste-menu.tsx)
+
+When a link is pasted with a collapsed caret, a floating menu rendered with Base UI `<Popover>` appears directly under the pasted link.
+
+### Available Formats
+
+| Option | Identifier | Description |
+| --- | --- | --- |
+| **Paste inline link** | `inline-link` | Leaves standard inline anchor text link. |
+| **Inline – Weblink** | `inline-weblink` | Converts to an inline badge with favicon and page title. |
+| **Small card – Weblink** | `small-weblink` | Converts the block to a compact side-by-side card with thumbnail. |
+| **Wide card – Weblink** | `wide-weblink` | Converts the block to a full-width hero banner card. |
+| **Remove link** | `remove-link` | Replaces link with plain unlinked text. |
+
+### Keyboard Navigation & Accessibility
+
+The paste menu uses Base UI's `<Popover>` and `<PopoverContent>` with full accessible keyboard navigation:
+
+- <kbd>↓</kbd> / <kbd>↑</kbd>: Navigates through options with cyclical wrapping
+  (roving tabindex `tabIndex={0}` on active, `-1` on others). Works seamlessly
+  both from the editor caret and when the popover is focused.
+- <kbd>Home</kbd> / <kbd>End</kbd>: Jumps directly to the first or last option.
+- <kbd>Tab</kbd> / <kbd>Shift+Tab</kbd>: Cycles between options within the menu.
+- <kbd>Enter</kbd> / <kbd>Space</kbd>: Executes the selected format
+  transformation and refocuses the editor.
+- <kbd>Escape</kbd>: Dismisses the menu and leaves the inline link intact.
+- **Continuous typing**: Pressing any printable character or Backspace immediately dismisses the menu and lets typing flow naturally into the editor without swallowed keystrokes.
+
+<CodeBlock
+  label="src/components/editor/plugins/link-behavior/floating-link-paste-menu.tsx"
+  language="tsx"
+>
+  {floatingLinkPasteMenuSource}
+</CodeBlock>
+
 ## plugin.tsx
 
-`LinkBehaviorPlugin` is a thin composition of three Lexical React plugins. Pass `editable="{true}"` when the editor is in edit mode to disable `ClickableLinkPlugin` (links should not navigate while editing).
+`LinkBehaviorPlugin` composes Lexical React plugins alongside smart paste handling and the paste menu.
 
 <CodeBlock
   label="src/components/editor/plugins/link-behavior/plugin.tsx"
@@ -77,20 +132,18 @@ Three URL helpers used by the floating editor and `LinkPlugin`'s `validateUrl` p
 
 ## floating-link-editor.tsx
 
-The link surfaces follow the Google-Docs interaction model, and a click that merely places the caret inside a link never opens anything:
+The link surfaces follow the Google-Docs interaction model:
 
-1. **Hover chip (`preview`)** — hovering a link shows a compact preview (`FloatingLinkPreviewChip`) anchored to the hovered link's rect (6px below). It renders through the shadcn `HoverCard` (Base UI preview card) in controlled mode — open state is plugin-driven because the link lives inside Lexical-owned DOM — and gains Base UI's native dismissal (Escape, outside press, pointer-leave bridging) on top of the plugin tracking. It is pointer-driven and caret-independent: detection runs on document-level `pointerover`; leaving every link arms a 120ms grace-period dismissal (the `HoverBridge` in `floating-link-hover-bridge.ts`) so the pointer can travel from the text into the chip, and re-entering a link or a surface cancels it — the grace period is a travel bridge, not an idle timeout. Hovering the chip or the edit card keeps the current surface alive.
-2. **Edit card (`edit`)** — the chip's **Edit** button, the floating toolbar's link button or Cmd/Ctrl+K open the full card (shadcn `Popover` over the surface rect): a **link-text field**, a **URL field** (`Add a link` placeholder) and **open-in-tab / remove / close** actions. Edit mode only controls initial focus (the URL input). `Enter` applies the URL and display text, moves the caret just after the link and closes the card; `Escape`/outside press close it. Clicking Edit also selects the link's text so the selection sync can carry the card.
-
-Both surfaces render through `FloatingLinkEditorSurfaces` from the same virtual anchor produced by the state machine in `floating-link-editor-reducer.ts` (`closed` / `preview` / `edit`). A closed surface stays closed — a bare selection sync never re-opens anything (the old Escape/click reopen loop is structurally impossible).
+1. **Hover chip (`preview`)** — hovering a link shows a compact preview (`FloatingLinkPreviewChip`) anchored 6px below the link. Renders through shadcn `HoverCard` (Base UI preview card) with automatic dismissal and travel bridging.
+2. **Edit card (`edit`)** — clicking **Edit** on the chip, pressing Cmd/Ctrl+K, or clicking the floating toolbar's link button opens the full card (`Popover`) with link-text and URL inputs.
 
 ### Commands handled
 
 | Command | Priority | Behaviour |
 | --- | --- | --- |
 | `SELECTION_CHANGE_COMMAND` | LOW | Syncs link state and surface anchoring on every selection change. |
-| `OPEN_FLOATING_LINK_EDITOR_COMMAND` | HIGH | Opens the edit card (dispatched by the floating toolbar's link button and the chip's Edit). |
-| `KEY_DOWN_COMMAND` | HIGH | Cmd/Ctrl+K toggles the link: removes it if the selection is already a link, otherwise creates a new one and opens the card. |
+| `OPEN_FLOATING_LINK_EDITOR_COMMAND` | HIGH | Opens the edit card. |
+| `KEY_DOWN_COMMAND` | HIGH | Cmd/Ctrl+K toggles the link. |
 | `KEY_ESCAPE_COMMAND` | HIGH | Closes the card/chip when the selection lives in a link. |
 | `CLICK_COMMAND` | LOW | Cmd/Ctrl+click opens the link URL in a new tab while editing. |
 
@@ -101,24 +154,15 @@ Both surfaces render through `FloatingLinkEditorSurfaces` from the same virtual 
   {floatingLinkEditorSource}
 </CodeBlock>
 
-## Registration
+## Registration & Flags
 
-No custom nodes are required. `LinkBehaviorPlugin` is part of the always-mounted default stack, and the floating link editor ships behind the `floatingLinkEditor` feature flag. To add the floating editor to a custom composition, contribute a descriptor via `extraFeatures`:
+Both the floating link editor and link paste menu are enabled by default and can be toggled via `EditorFeatureFlags`:
 
 ```tsx
 <Editor
-  extraFeatures={[
-    {
-      id: "floatingLinkEditor",
-      plugin: FloatingLinkEditorPlugin,
-    },
-  ]}
+  features={{
+    floatingLinkEditor: true, // Google Docs-style hover chip & edit card
+    linkPasteMenu: true, // Floating paste format menu on URL paste
+  }}
 />
 ```
-
-<Callout title="Keyboard shortcut" variant="tip">
-  Cmd/Ctrl+K is handled entirely inside `FloatingLinkEditorPlugin`. Pressing it
-  on plain text creates a link and opens the editor; pressing it again on an
-  existing link removes it. No toolbar wiring is needed for the shortcut to
-  work.
-</Callout>

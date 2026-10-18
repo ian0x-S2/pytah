@@ -18,7 +18,11 @@ export type SlashCommandId =
   | "collapsible"
   | "columns"
   | "table"
-  | "hr";
+  | "hr"
+  | "callout"
+  | "tip"
+  | "warning"
+  | "caution";
 
 export type SlashCommandSelection = SlashCommandId | "";
 

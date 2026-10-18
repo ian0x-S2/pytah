@@ -76,7 +76,7 @@ The non-absolute icon, `InactiveIcon`, defines the layout size. The absolute one
 
 ### Choosing between Motion and CSS
 
-| | Motion (Framer Motion) | CSS transitions (both icons in DOM) |
+|  | Motion (Framer Motion) | CSS transitions (both icons in DOM) |
 | --- | --- | --- |
 | **Enter animation** | Yes | Yes |
 | **Exit animation** | Yes (via `AnimatePresence`) | Yes (cross-fade, icon never unmounts) |
@@ -95,8 +95,8 @@ Check the project's `package.json`. Import from `"motion/react"` when `motion` i
 | Loading/success state indicators | Icon labels (text next to icon) |
 
 Use exactly these values for contextual icon animations. Do not deviate:
+
 - `scale`: `0.25` → `1` (never use `0.5` or `0.6`)
 - `opacity`: `0` → `1`
 - `filter`: `"blur(4px)"` → `"blur(0px)"`
 - `transition`: `{ type: "spring", duration: 0.3, bounce: 0 }`; **bounce must always be `0`**, never `0.1` or any other value
-

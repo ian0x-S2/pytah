@@ -10,12 +10,12 @@ Contrast is measured between a **foreground color**, meaning text, an icon, or a
 
 APCA (Accessible Perceptual Contrast Algorithm) models perceived contrast more accurately than WCAG 2 and is the better default for design decisions. Lc (Lightness Contrast) measures perceived contrast between foreground and background. These levels simplify APCA's full font-size and weight lookup table:
 
-| Content type | Minimum | Preferred |
-| --- | --- | --- |
-| Body text (columns or blocks of text) | Lc 75 | Lc 90 |
-| Non-body text (labels, headlines) | Lc 60 | Lc 75 |
-| Large text (≥36px) | Lc 45 | Lc 60 |
-| UI components | Lc 30 | n/a |
+| Content type                          | Minimum | Preferred |
+| ------------------------------------- | ------- | --------- |
+| Body text (columns or blocks of text) | Lc 75   | Lc 90     |
+| Non-body text (labels, headlines)     | Lc 60   | Lc 75     |
+| Large text (≥36px)                    | Lc 45   | Lc 60     |
+| UI components                         | Lc 30   | n/a       |
 
 Lc 30 is also APCA's minimum for disabled and placeholder text. The floor for a non-text element to be discernible at all is Lc 15.
 
@@ -25,11 +25,11 @@ Lc is signed: positive means dark text on a light background, negative means lig
 
 WCAG 2 is still required for formal WCAG 2.x conformance claims. Its luminance ratio is both too strict and too lenient depending on the pair, but it has the legal standing.
 
-| Content type | AA | AAA |
-| --- | --- | --- |
-| Normal text (<24px / <18.5px bold) | 4.5:1 | 7:1 |
-| Large text (≥24px / ≥18.5px bold) | 3:1 | 4.5:1 |
-| UI components and graphical objects | 3:1 | n/a |
+| Content type                        | AA    | AAA   |
+| ----------------------------------- | ----- | ----- |
+| Normal text (<24px / <18.5px bold)  | 4.5:1 | 7:1   |
+| Large text (≥24px / ≥18.5px bold)   | 3:1   | 4.5:1 |
+| UI components and graphical objects | 3:1   | n/a   |
 
 WCAG defines large text in points: 18pt ≈ `24px`, 14pt bold ≈ `18.5px`.
 

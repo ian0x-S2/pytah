@@ -9,7 +9,7 @@ import { ListPlugin } from "@lexical/react/LexicalListPlugin";
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { TabIndentationPlugin } from "@lexical/react/LexicalTabIndentationPlugin";
-import type { LexicalEditor } from "lexical";
+import type { LexicalEditor, SerializedEditorState } from "lexical";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { ComponentType, CSSProperties } from "react";
 
@@ -105,13 +105,14 @@ interface EditorContentProps {
   features: ResolvedEditorFeatureFlags;
   footerSlot?: EditorChromeSlots["footer"];
   initialHtml?: string;
+  initialJson?: string | SerializedEditorState | Record<string, unknown>;
   initialMarkdown?: string;
   minimal?: boolean;
   onSnapshotChange: (textContent: string, editor: LexicalEditor) => void;
   onSnapshotReady?: (snapshot: EditorSnapshot, editor: LexicalEditor) => void;
+  /** True when the seed was already applied via the composer's initial state. */
   placeholder: string;
   pluginSlots?: EditorPluginSlots;
-  /** True when the seed was already applied via the composer's initial state. */
   seededViaConfig?: boolean;
   showFooter: boolean;
   snapshot: EditorSnapshot;
@@ -125,6 +126,7 @@ interface DefaultEditorPluginsProps {
   extraFeatures: readonly ExtraEditorFeature[];
   features: ResolvedEditorFeatureFlags;
   initialHtml?: string;
+  initialJson?: string | SerializedEditorState | Record<string, unknown>;
   initialMarkdown?: string;
   onSnapshotChange: (textContent: string, editor: LexicalEditor) => void;
   onSnapshotReady?: (snapshot: EditorSnapshot, editor: LexicalEditor) => void;
@@ -138,6 +140,7 @@ function DefaultEditorPlugins({
   extraFeatures,
   features,
   initialHtml,
+  initialJson,
   initialMarkdown,
   onSnapshotChange,
   onSnapshotReady,
@@ -158,7 +161,10 @@ function DefaultEditorPlugins({
       <CodeBlockChromePlugin />
       <ListPlugin />
       <CheckListPlugin />
-      <LinkBehaviorPlugin editable={editable} />
+      <LinkBehaviorPlugin
+        editable={editable}
+        enablePasteMenu={features.linkPasteMenu}
+      />
       {featurePlugins.map((feature) => {
         const Plugin = feature.plugin;
         if (Plugin === undefined) {
@@ -183,6 +189,7 @@ function DefaultEditorPlugins({
       <EditablePlugin editable={editable} />
       <EditorStatePlugin
         initialHtml={initialHtml}
+        initialJson={initialJson}
         initialMarkdown={initialMarkdown}
         onChange={onSnapshotChange}
         onSnapshotReady={onSnapshotReady}
@@ -246,6 +253,7 @@ export function EditorContent({
   features,
   footerSlot,
   initialHtml,
+  initialJson,
   initialMarkdown,
   minimal = false,
   onSnapshotChange,
@@ -415,6 +423,7 @@ export function EditorContent({
             extraFeatures={extraFeatures}
             features={features}
             initialHtml={initialHtml}
+            initialJson={initialJson}
             initialMarkdown={initialMarkdown}
             onSnapshotChange={onSnapshotChange}
             onSnapshotReady={onSnapshotReady}

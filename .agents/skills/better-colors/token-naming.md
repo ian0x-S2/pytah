@@ -4,7 +4,7 @@ Naming is what makes a palette usable by anyone who did not build it. For which 
 
 ## Two tiers
 
-**Primitives** name a value. They are the ramp, named by hue and step: `--blue-500`, `--neutral-200`. A primitive describes what the color *is*, so it never changes meaning between themes and is never applied directly in a component.
+**Primitives** name a value. They are the ramp, named by hue and step: `--blue-500`, `--neutral-200`. A primitive describes what the color _is_, so it never changes meaning between themes and is never applied directly in a component.
 
 **Semantics** name a job. They point at a primitive and take the name of the role they fill: `--color-text-secondary`, `--color-border-subtle`. Components only ever reference this tier.
 
@@ -53,11 +53,11 @@ Use one shape and never deviate: `--color-{role}-{variant}-{state}`.
 
 Pick one word per concept and use only that word. Consistency matters more than the vocabulary. A reader who has seen `--color-text-primary` must be able to guess `--color-text-disabled` without looking:
 
-| Concept | Pick one | Never mix in |
-| --- | --- | --- |
-| Foreground | `text` | `fg`, `foreground`, `content`, `ink` |
-| Background | `bg` | `background`, `surface` as a synonym, `fill` |
-| Edge | `border` | `stroke`, `outline`, `line` |
+| Concept     | Pick one | Never mix in                                     |
+| ----------- | -------- | ------------------------------------------------ |
+| Foreground  | `text`   | `fg`, `foreground`, `content`, `ink`             |
+| Background  | `bg`     | `background`, `surface` as a synonym, `fill`     |
+| Edge        | `border` | `stroke`, `outline`, `line`                      |
 | Brand color | `accent` | `primary`, `brand`, `theme` used interchangeably |
 
 Reserve `primary` for exactly one meaning. `--color-text-primary` for body text beside `--color-primary` for the brand is the most common naming collision there is, and it makes every `primary` token ambiguous until you open its definition. Use `accent` for the brand and let `primary` mean "the most prominent of its group".

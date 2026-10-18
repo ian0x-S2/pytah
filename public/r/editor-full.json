@@ -6,6 +6,7 @@
   "files": [],
   "name": "editor-full",
   "registryDependencies": [
+    "@pytah/editor-callout",
     "@pytah/editor-collapsible",
     "@pytah/editor-draggable-blocks",
     "@pytah/editor-excalidraw",

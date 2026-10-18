@@ -30,6 +30,7 @@ describe("editor composition", () => {
     deepStrictEqual(resolveEditorFeatures().snapshot, {
       emitInitialSnapshot: true,
       html: true,
+      json: true,
       markdown: true,
       text: true,
     });
@@ -40,6 +41,17 @@ describe("editor composition", () => {
       snapshot: {
         emitInitialSnapshot: true,
         html: false,
+        json: true,
+        markdown: true,
+        text: true,
+      },
+    });
+    deepStrictEqual(resolveEditorFeatures({ snapshot: { json: false } }), {
+      ...DEFAULT_EDITOR_FEATURES,
+      snapshot: {
+        emitInitialSnapshot: true,
+        html: true,
+        json: false,
         markdown: true,
         text: true,
       },

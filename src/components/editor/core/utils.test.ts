@@ -3,11 +3,11 @@ import { describe, test } from "node:test";
 
 import { createHeadlessEditor } from "@lexical/headless";
 import type { LexicalEditor } from "lexical";
-import { $createParagraphNode, $createTextNode, $getRoot } from "lexical";
 
 import { createEditorConfig } from "./config";
 import { EDITOR_SEED_UPDATE_TAG } from "./constants";
 import {
+  loadEditorJsonContent,
   loadMarkdownContent,
   readEditorSnapshot,
   readEditorTextContent,
@@ -111,23 +111,37 @@ describe("readEditorSnapshot", () => {
     strictEqual(snapshot.markdown, SEED_MARKDOWN);
   });
 
-  test("disabled outputs stay empty on content with no serialization cost", async () => {
+  test("json: true serializes editor state to JSON string", async () => {
     const editor = createTestEditor();
-    editor.update(() => {
-      const paragraph = $createParagraphNode();
-      paragraph.append($createTextNode(""));
-      $getRoot().append(paragraph);
-    });
-    await flushUpdates();
+    await seedTestEditor(editor);
 
     const snapshot = readEditorSnapshot(editor, undefined, {
       html: false,
-      markdown: true,
+      json: true,
+      markdown: false,
       text: false,
     });
 
-    strictEqual(snapshot.html, "");
-    strictEqual(snapshot.text, "");
+    strictEqual(typeof snapshot.json, "string");
+    strictEqual(snapshot.json.includes('"root"'), true);
+    strictEqual(snapshot.json.includes('"type"'), true);
+    const parsed = JSON.parse(snapshot.json);
+    strictEqual(parsed.root.type, "root");
+  });
+
+  test("json: false skips JSON serialization", async () => {
+    const editor = createTestEditor();
+    await seedTestEditor(editor);
+
+    const snapshot = readEditorSnapshot(editor, undefined, {
+      html: false,
+      json: false,
+      markdown: true,
+      text: true,
+    });
+
+    strictEqual(snapshot.json, "");
+    strictEqual(snapshot.markdown, SEED_MARKDOWN);
   });
 });
 
@@ -168,5 +182,25 @@ describe("content loader update tags", () => {
     await flushUpdates();
 
     strictEqual(seenTags[0]?.includes(EDITOR_SEED_UPDATE_TAG), false);
+  });
+
+  test("loadEditorJsonContent sets editor state and forwards tag", async () => {
+    const sourceEditor = createTestEditor();
+    await seedTestEditor(sourceEditor);
+    const jsonState = sourceEditor.getEditorState().toJSON();
+
+    const targetEditor = createTestEditor();
+    const seenTags: string[][] = [];
+    targetEditor.registerUpdateListener(({ tags }) => {
+      seenTags.push([...tags]);
+    });
+
+    loadEditorJsonContent(targetEditor, jsonState, {
+      tag: EDITOR_SEED_UPDATE_TAG,
+    });
+    await flushUpdates();
+
+    strictEqual(readEditorTextContent(targetEditor).includes("Hello"), true);
+    strictEqual(seenTags[0]?.includes(EDITOR_SEED_UPDATE_TAG), true);
   });
 });

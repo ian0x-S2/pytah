@@ -2,7 +2,7 @@
 
 import type { Transformer } from "@lexical/markdown";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import type { LexicalEditor } from "lexical";
+import type { LexicalEditor, SerializedEditorState } from "lexical";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 
 import { DEFAULT_EDITOR_SNAPSHOT_OPTIONS } from "../../core/composition";
@@ -10,6 +10,7 @@ import type { ResolvedEditorSnapshotOptions } from "../../core/composition";
 import { EDITOR_SEED_UPDATE_TAG } from "../../core/constants";
 import type { EditorSnapshot } from "../../core/types";
 import {
+  loadEditorJsonContent,
   loadMarkdownContent,
   readEditorSnapshot,
   readEditorTextContent,
@@ -20,6 +21,7 @@ import { shouldEmitSnapshotUpdate } from "./snapshot-update";
 
 export interface EditorStatePluginProps {
   initialHtml?: string;
+  initialJson?: string | SerializedEditorState | Record<string, unknown>;
   initialMarkdown?: string;
   onChange?: (textContent: string, editor: LexicalEditor) => void;
   onSnapshotReady?: (snapshot: EditorSnapshot, editor: LexicalEditor) => void;
@@ -39,6 +41,7 @@ export interface EditorStatePluginProps {
 
 export function EditorStatePlugin({
   initialHtml,
+  initialJson,
   initialMarkdown,
   onChange,
   onSnapshotReady,
@@ -54,10 +57,19 @@ export function EditorStatePlugin({
   // and reset the caret.
   const [seed] = useState(() => ({
     html: initialHtml,
+    json: initialJson,
     markdown: initialMarkdown,
   }));
 
   const seedEditor = useEffectEvent(() => {
+    if (seed.json) {
+      loadEditorJsonContent(editor, seed.json, {
+        select: false,
+        tag: EDITOR_SEED_UPDATE_TAG,
+      });
+      return;
+    }
+
     if (seed.markdown) {
       loadMarkdownContent(editor, seed.markdown, {
         select: false,
@@ -80,7 +92,11 @@ export function EditorStatePlugin({
       onChange?.(readEditorTextContent(editor), editor);
     }
 
-    if (snapshotOptions.html || snapshotOptions.markdown) {
+    if (
+      snapshotOptions.html ||
+      snapshotOptions.markdown ||
+      snapshotOptions.json
+    ) {
       onSnapshotReady?.(
         readEditorSnapshot(editor, transformers, snapshotOptions),
         editor
@@ -101,7 +117,7 @@ export function EditorStatePlugin({
     if (!snapshotOptions.emitInitialSnapshot) {
       return;
     }
-    if (!(seed.markdown || seed.html)) {
+    if (!(seed.markdown || seed.html || seed.json)) {
       return;
     }
     if (didEmitInitialRef.current) {
@@ -134,7 +150,11 @@ export function EditorStatePlugin({
       onChange?.(readEditorTextContent(editor), editor);
     }
 
-    if (snapshotOptions.html || snapshotOptions.markdown) {
+    if (
+      snapshotOptions.html ||
+      snapshotOptions.markdown ||
+      snapshotOptions.json
+    ) {
       onSnapshotReady?.(
         readEditorSnapshot(editor, transformers, snapshotOptions),
         editor

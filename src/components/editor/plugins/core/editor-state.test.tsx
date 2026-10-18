@@ -46,6 +46,7 @@ const SEED_MARKDOWN = "# Seed heading\n\nSeed paragraph.";
 
 interface SnapshotRecord {
   html: string;
+  json: string;
   markdown: string;
   text: string;
 }
@@ -350,6 +351,7 @@ describe("EditorStatePlugin", () => {
       snapshotOptions: {
         emitInitialSnapshot: false,
         html: false,
+        json: false,
         markdown: true,
         text: true,
       },
@@ -382,6 +384,7 @@ describe("EditorStatePlugin", () => {
       snapshotOptions: {
         emitInitialSnapshot: false,
         html: true,
+        json: false,
         markdown: true,
         text: false,
       },
@@ -403,7 +406,7 @@ describe("EditorStatePlugin", () => {
     }
   });
 
-  test("defaults serialize html, markdown and text per change", async () => {
+  test("defaults serialize html, json, markdown and text per change", async () => {
     const render = await renderEditorStatePlugin({
       initialMarkdown: SEED_MARKDOWN,
     });
@@ -417,8 +420,36 @@ describe("EditorStatePlugin", () => {
         render.recorder.snapshots[0].markdown,
         "# Seed heading\n\nSeed paragraph.\n\nhello"
       );
+      strictEqual(typeof render.recorder.snapshots[0].json, "string");
+      strictEqual(render.recorder.snapshots[0].json.includes('"root"'), true);
       strictEqual(render.recorder.snapshots[0].text.includes("hello"), true);
       strictEqual(render.recorder.texts.length, 1);
+    } finally {
+      await render.unmount();
+    }
+  });
+
+  test("json: false skips the json serialization and emits empty json field", async () => {
+    const render = await renderEditorStatePlugin({
+      initialMarkdown: SEED_MARKDOWN,
+      snapshotOptions: {
+        emitInitialSnapshot: false,
+        html: false,
+        json: false,
+        markdown: true,
+        text: true,
+      },
+    });
+
+    try {
+      await render.appendParagraph("hello");
+
+      strictEqual(render.recorder.snapshots.length, 1);
+      strictEqual(render.recorder.snapshots[0].json, "");
+      strictEqual(
+        render.recorder.snapshots[0].markdown.includes("hello"),
+        true
+      );
     } finally {
       await render.unmount();
     }

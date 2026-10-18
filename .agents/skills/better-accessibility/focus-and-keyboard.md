@@ -92,8 +92,10 @@ Modals must trap focus. Put `inert` on everything behind the dialog, which remov
 // On open
 document.getElementById("app-content").inert = true;
 const dialog = dialogRef.current;
-(dialog.querySelector("[autofocus]") ??
-  dialog.querySelector("button, [href], input, select, textarea"))?.focus();
+(
+  dialog.querySelector("[autofocus]") ??
+  dialog.querySelector("button, [href], input, select, textarea")
+)?.focus();
 
 // On close
 document.getElementById("app-content").inert = false;

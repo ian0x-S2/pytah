@@ -1,3 +1,4 @@
+import { calloutFeature } from "@/components/editor/plugins/callout/feature";
 import { collapsibleFeature } from "@/components/editor/plugins/collapsible/feature";
 import { seedContentFeature } from "@/components/editor/plugins/core/seed-content-feature";
 import { draggableBlocksFeature } from "@/components/editor/plugins/draggable-block/feature";
@@ -15,6 +16,7 @@ import { youtubeFeature } from "@/components/editor/plugins/youtube/feature";
  * installed.
  */
 export const demoEditorFeatures = [
+  calloutFeature,
   collapsibleFeature,
   seedContentFeature,
   draggableBlocksFeature,

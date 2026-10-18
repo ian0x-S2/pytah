@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  AlertTriangleIcon,
   CalculatorIcon,
   ChevronRightIcon,
   CodeIcon,
@@ -7,6 +8,8 @@ import {
   Heading2Icon,
   Heading3Icon,
   ImageIcon,
+  InfoIcon,
+  LightbulbIcon,
   ListIcon,
   ListOrderedIcon,
   MinusIcon,
@@ -14,6 +17,7 @@ import {
   PencilRulerIcon,
   PlayIcon,
   QuoteIcon,
+  ShieldAlertIcon,
   SquareCheckIcon,
   TableIcon,
   TypeIcon,
@@ -75,6 +79,16 @@ const BLOCK_METADATA: Record<
     description: "Unordered list",
     icon: ListIcon,
     label: "Bullet list",
+  },
+  callout: {
+    description: "Highlighted callout box",
+    icon: InfoIcon,
+    label: "Callout",
+  },
+  caution: {
+    description: "Critical caution callout",
+    icon: ShieldAlertIcon,
+    label: "Caution",
   },
   check: {
     description: "Todo items with checkboxes",
@@ -150,6 +164,16 @@ const BLOCK_METADATA: Record<
     description: "Simple editable table",
     icon: TableIcon,
     label: "Table",
+  },
+  tip: {
+    description: "Helpful tip callout",
+    icon: LightbulbIcon,
+    label: "Tip",
+  },
+  warning: {
+    description: "Warning alert callout",
+    icon: AlertTriangleIcon,
+    label: "Warning",
   },
   youtube: {
     description: "Embed a YouTube video",

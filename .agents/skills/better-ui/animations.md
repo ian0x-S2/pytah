@@ -8,7 +8,7 @@ Users change intent mid-interaction. Animations that cannot be interrupted make 
 
 ### CSS transitions vs. keyframes
 
-| | CSS Transitions | CSS Keyframe Animations |
+|  | CSS Transitions | CSS Keyframe Animations |
 | --- | --- | --- |
 | **Behavior** | Interpolate toward latest state | Run on a fixed timeline |
 | **Interruptible** | Yes, retargets mid-animation | No, restarts from beginning |
@@ -70,9 +70,7 @@ Not every button needs it. Add a `static` prop that disables the scale where the
 ### Motion example
 
 ```tsx
-<motion.button whileTap={{ scale: 0.96 }}>
-  Click me
-</motion.button>
+<motion.button whileTap={{ scale: 0.96 }}>Click me</motion.button>
 ```
 
 ### Static prop pattern
@@ -202,4 +200,3 @@ Motion is a budget, not a garnish. Three rules decide whether an animation belon
   animation: bounceIn 500ms;
 }
 ```
-

@@ -1,0 +1,122 @@
+---
+title: "Weblink"
+description: "Feature guide for rich weblink bookmarks: inline badges, small and wide cards, format switching, and pluggable metadata fetchers."
+group: "feature-guides"
+icon: "Link"
+label: "Weblink"
+order: 25
+---
+
+import weblinkNodeSource from "@/components/editor/core/nodes/weblink/node.tsx?raw";
+import weblinkMetadataSource from "@/components/editor/core/nodes/weblink/metadata.ts?raw";
+
+<Callout title="Feature guide">
+  Weblinks represent rich visual bookmarks for web URLs. They support inline
+  badges, compact cards, full-width hero cards, and pluggable server-side
+  OpenGraph metadata enrichment.
+</Callout>
+
+## Files
+
+<FileTree
+  items={[
+    "src/components/editor/core/nodes/weblink/",
+    "  node.tsx          ← WeblinkNode (Lexical decorator node)",
+    "  component.tsx     ← Layout dispatcher & selection boundary",
+    "  card-inline.tsx   ← Inline badge (favicon + title)",
+    "  card-small.tsx    ← Side-by-side compact card with thumbnail",
+    "  card-wide.tsx     ← Full-width hero banner card",
+    "  format-menu.tsx   ← 3-dots format switcher dropdown",
+    "  metadata.ts       ← OpenGraph normalization & fetcher adapters",
+    "  icon.tsx          ← Favicon renderer with fallback",
+  ]}
+/>
+
+## Formats
+
+`WeblinkNode` supports three distinct visual formats:
+
+| Format | Display | Description |
+| --- | --- | --- |
+| `inline` | Inline | Compact badge fitting inside paragraphs with domain favicon and title. |
+| `small` | Block | Side-by-side card with thumbnail image on the right, title, description, and domain. |
+| `wide` | Block | Full-width responsive banner card with large preview image on top. |
+
+## Interaction UX
+
+Weblink cards implement the **stretched link** pattern:
+
+- **Opening the link**: Clicking anywhere on the card opens the target URL in a new browser tab (`target="_blank" rel="noopener noreferrer"`).
+- **Changing format**: Clicking the 3-dots options menu in the top-right corner stops event propagation (`event.stopPropagation()`), allowing users to switch between `inline`, `small`, and `wide` formats without triggering external navigation.
+- **Copying link**: The options menu includes a direct "Copy link" action.
+- **Refreshing metadata**: When a server metadata fetcher is configured, the menu includes a "Refresh metadata" action to re-query latest OpenGraph tags.
+
+## Server-side Metadata Fetching
+
+While `WeblinkNode` provides instant client-side fallback metadata (domain extraction, readable title, and Google high-res favicon service), rich metadata (preview images, OpenGraph titles, and descriptions) can be fetched asynchronously from your server.
+
+Pass `weblinkMetadataFetcher` to `<Editor>`:
+
+### Option A: Server Endpoint String
+
+Pass an endpoint string; the editor automatically calls `GET /api/metadata?url=...`:
+
+```tsx
+<Editor weblinkMetadataFetcher="/api/metadata" />
+```
+
+### Option B: Custom Async Fetcher Function
+
+Provide a custom fetcher using your preferred HTTP client:
+
+```tsx
+<Editor
+  weblinkMetadataFetcher={async (url, { signal }) => {
+    const res = await fetch(`/api/metadata?url=${encodeURIComponent(url)}`, {
+      signal,
+    });
+    return res.ok ? await res.json() : null;
+  }}
+/>
+```
+
+### Option C: Metascraper Adapter
+
+When building backend scrapers (e.g. in Next.js Route Handlers or Express), use `createMetascraperAdapter` to normalize output from `metascraper`:
+
+```ts
+import { createMetascraperAdapter } from "@/components/editor/core/nodes/weblink/metadata";
+import metascraper from "metascraper";
+import metascraperTitle from "metascraper-title";
+import metascraperDescription from "metascraper-description";
+import metascraperImage from "metascraper-image";
+
+const scraper = metascraper([
+  metascraperTitle(),
+  metascraperDescription(),
+  metascraperImage(),
+]);
+
+export const fetchMetadata = createMetascraperAdapter(async (url) => {
+  const html = await fetch(url).then((r) => r.text());
+  return await scraper({ html, url });
+});
+```
+
+## Node Implementation
+
+<CodeBlock
+  label="src/components/editor/core/nodes/weblink/node.tsx"
+  language="tsx"
+>
+  {weblinkNodeSource}
+</CodeBlock>
+
+## Metadata Fetcher Utilities
+
+<CodeBlock
+  label="src/components/editor/core/nodes/weblink/metadata.ts"
+  language="ts"
+>
+  {weblinkMetadataSource}
+</CodeBlock>
