@@ -6,8 +6,8 @@ export interface CodeBlockLanguage {
 }
 
 /**
- * Canonical code-block languages backed by an installed Twinkleplop
- * grammar. `value` is what is persisted on the Lexical `CodeNode`
+ * Canonical code-block languages backed by fine-grained `@shikijs/langs/*`
+ * grammars. `value` is what is persisted on the Lexical `CodeNode`
  * (and in markdown fences); `label` is the human-readable dropdown text.
  */
 export const CODE_BLOCK_LANGUAGES: readonly CodeBlockLanguage[] = [
@@ -37,8 +37,8 @@ export const CODE_BLOCK_LANGUAGES: readonly CodeBlockLanguage[] = [
 
 /**
  * Lexical language ids (toolbar, markdown fences, persisted nodes) map onto
- * the installed Twinkleplop grammars. JSX has no dedicated package: TSX
- * covers it. Unknown ids fall back to the default language like Shiki does.
+ * the pre-selected `@shikijs/langs/*` grammars. JSX uses the TSX grammar.
+ * Unknown ids fall back to the default language.
  */
 export const CODE_LANGUAGE_ALIASES: Record<string, string> = {
   bash: "bash",

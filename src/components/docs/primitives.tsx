@@ -1,56 +1,19 @@
-import { tokenize as tokenizeBash } from "@twinkleplop/bash";
-import { tokenize as tokenizeCss } from "@twinkleplop/css";
-import { tokenize as tokenizeDiff } from "@twinkleplop/diff";
-import { tokenize as tokenizeDotenv } from "@twinkleplop/dotenv";
-import { tokenize as tokenizeGo } from "@twinkleplop/go";
-import { tokenize as tokenizeHtml } from "@twinkleplop/html";
-import { tokenize as tokenizeHttp } from "@twinkleplop/http";
-import { tokenize as tokenizeIni } from "@twinkleplop/ini";
-import { tokenize as tokenizeJavascript } from "@twinkleplop/javascript";
-import { tokenize as tokenizeJson } from "@twinkleplop/json";
-import { tokenize as tokenizeJsonc } from "@twinkleplop/jsonc";
-import { tokenize as tokenizeMarkdown } from "@twinkleplop/markdown";
-import { tokenize as tokenizePython } from "@twinkleplop/python";
-import { tokenize as tokenizeRust } from "@twinkleplop/rust";
-import { tokenize as tokenizeShellsession } from "@twinkleplop/shellsession";
-import { tokenize as tokenizeSql } from "@twinkleplop/sql";
-import { tokenize as tokenizeSvelte } from "@twinkleplop/svelte";
-import "@twinkleplop/theme-github";
-import { tokenize as tokenizeToml } from "@twinkleplop/toml";
-import { tokenize as tokenizeTsx } from "@twinkleplop/tsx";
-import { tokenize as tokenizeTypescript } from "@twinkleplop/typescript";
-import { tokenize as tokenizeYaml } from "@twinkleplop/yaml";
-import { useMemo } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
+import type { CSSProperties } from "react";
 
+import {
+  isCodeLanguageLoaded,
+  isCodeThemeLoaded,
+  loadCodeLanguage,
+  loadCodeThemeFamily,
+  tokenizeCodeLines,
+} from "@/components/editor/plugins/code-highlight/shiki-tokenizer";
+import type { ShikiTokenSegment } from "@/components/editor/plugins/code-highlight/shiki-tokenizer";
+import { resolveCodeBlockThemeId } from "@/components/editor/plugins/code-highlight/themes/registry";
+import type { CodeBlockThemeId } from "@/components/editor/plugins/code-highlight/themes/registry";
+import { ThemeContext } from "@/components/theme-context";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-
-type TokenizeFactory = typeof tokenizeTypescript;
-type TokenizerFn = ReturnType<TokenizeFactory>;
-
-const TOKENIZERS: Record<string, TokenizerFn> = {
-  bash: tokenizeBash(),
-  css: tokenizeCss(),
-  diff: tokenizeDiff(),
-  dotenv: tokenizeDotenv(),
-  go: tokenizeGo(),
-  html: tokenizeHtml(),
-  http: tokenizeHttp(),
-  ini: tokenizeIni(),
-  javascript: tokenizeJavascript(),
-  json: tokenizeJson(),
-  jsonc: tokenizeJsonc(),
-  markdown: tokenizeMarkdown(),
-  python: tokenizePython(),
-  rust: tokenizeRust(),
-  shellsession: tokenizeShellsession(),
-  sql: tokenizeSql(),
-  svelte: tokenizeSvelte(),
-  toml: tokenizeToml(),
-  tsx: tokenizeTsx(),
-  typescript: tokenizeTypescript(),
-  yaml: tokenizeYaml(),
-};
 
 // JSX has no dedicated package: TSX covers it.
 const CODE_BLOCK_LANGUAGES = [
@@ -79,68 +42,20 @@ const CODE_BLOCK_LANGUAGES = [
 
 type CodeBlockSyntaxLanguage = (typeof CODE_BLOCK_LANGUAGES)[number];
 
-interface TokenSegment {
-  text: string;
-  type: string | null;
-}
-
-const codeTokenCache = new Map<string, TokenSegment[][]>();
+const codeTokenCache = new Map<string, ShikiTokenSegment[][]>();
 
 const getCodeTokenCacheKey = (
   code: string,
-  language: CodeBlockSyntaxLanguage | null
-) => (language ? `${language}:${code}` : null);
-
-function tokenizeToLines(
-  code: string,
-  language: CodeBlockSyntaxLanguage
-): TokenSegment[][] | null {
-  const tokenizeFn = TOKENIZERS[language];
-  if (!tokenizeFn) {
-    return null;
-  }
-  let result: ReturnType<TokenizerFn>;
-  try {
-    result = tokenizeFn(code);
-  } catch {
-    return null;
-  }
-  const lines: TokenSegment[][] = [[]];
-  const pushText = (text: string, type: string | null) => {
-    const parts = text.split("\n");
-    for (let index = 0; index < parts.length; index += 1) {
-      if (index > 0) {
-        lines.push([]);
-      }
-      const part = parts[index] ?? "";
-      if (part !== "") {
-        lines.at(-1)?.push({ text: part, type });
-      }
-    }
-  };
-  const { token_types, tokens } = result;
-  let cursor = 0;
-  for (let i = 0; i < tokens.length; i += 3) {
-    const typeIndex = tokens[i] as number;
-    const start = tokens[i + 1] as number;
-    const end = tokens[i + 2] as number;
-    if (start > cursor) {
-      pushText(code.slice(cursor, start), null);
-    }
-    pushText(code.slice(start, end), token_types[typeIndex] ?? null);
-    cursor = end;
-  }
-  if (cursor < code.length) {
-    pushText(code.slice(cursor), null);
-  }
-  return lines;
-}
+  language: CodeBlockSyntaxLanguage | null,
+  themeId: CodeBlockThemeId
+) => (language ? `${themeId}:${language}:${code}` : null);
 
 function getCachedTokenLines(
   code: string,
-  language: CodeBlockSyntaxLanguage
-): TokenSegment[][] | null {
-  const key = getCodeTokenCacheKey(code, language);
+  language: CodeBlockSyntaxLanguage,
+  themeId: CodeBlockThemeId
+): ShikiTokenSegment[][] | null {
+  const key = getCodeTokenCacheKey(code, language, themeId);
   if (!key) {
     return null;
   }
@@ -148,11 +63,41 @@ function getCachedTokenLines(
   if (cached) {
     return cached;
   }
-  const lines = tokenizeToLines(code, language);
+  const lines = tokenizeCodeLines(code, language, themeId);
   if (lines) {
     codeTokenCache.set(key, lines);
   }
   return lines;
+}
+
+function parseTokenStyle(style: string): CSSProperties | undefined {
+  if (!style) {
+    return undefined;
+  }
+  const css: CSSProperties = {};
+  for (const declaration of style.split(";")) {
+    const colonIndex = declaration.indexOf(":");
+    if (colonIndex === -1) {
+      continue;
+    }
+    const prop = declaration.slice(0, colonIndex).trim();
+    const value = declaration.slice(colonIndex + 1).trim();
+    if (!prop || !value) {
+      continue;
+    }
+    if (prop === "color") {
+      css.color = value;
+    } else if (prop === "background-color") {
+      css.backgroundColor = value;
+    } else if (prop === "font-style") {
+      css.fontStyle = value;
+    } else if (prop === "font-weight") {
+      css.fontWeight = value;
+    } else if (prop === "text-decoration") {
+      css.textDecoration = value;
+    }
+  }
+  return css;
 }
 
 const CODE_LANGUAGE_ALIASES = {
@@ -202,18 +147,48 @@ type CodeLanguage =
 
 function useCodeTokenLines(
   code: string,
-  language: CodeBlockSyntaxLanguage | null
-) {
+  language: CodeBlockSyntaxLanguage | null,
+  themeId: CodeBlockThemeId
+): ShikiTokenSegment[][] | null {
+  const [, setLoadTick] = useState(0);
+  const isReady = Boolean(
+    language && isCodeThemeLoaded(themeId) && isCodeLanguageLoaded(language)
+  );
+
+  useEffect(() => {
+    if (!language || isReady) {
+      return;
+    }
+    let cancelled = false;
+    const loadAssets = async () => {
+      try {
+        await Promise.all([
+          loadCodeThemeFamily(themeId),
+          loadCodeLanguage(language),
+        ]);
+        if (!cancelled) {
+          setLoadTick((tick) => tick + 1);
+        }
+      } catch {
+        // Ignore load errors and keep fallback plain text.
+      }
+    };
+    void loadAssets();
+    return () => {
+      cancelled = true;
+    };
+  }, [isReady, language, themeId]);
+
   return useMemo(() => {
-    if (!language) {
+    if (!language || !isReady) {
       return null;
     }
     try {
-      return getCachedTokenLines(code, language);
+      return getCachedTokenLines(code, language, themeId);
     } catch {
       return null;
     }
-  }, [code, language]);
+  }, [code, isReady, language, themeId]);
 }
 
 function normalizeCodeLanguage(language?: string): CodeLanguage | null {
@@ -343,6 +318,31 @@ function isRedundantCodeLabel(
   return label.toLowerCase() === language.toLowerCase();
 }
 
+function toPlainTokenLines(code: string): ShikiTokenSegment[][] {
+  return code
+    .split("\n")
+    .map((line) => (line === "" ? [] : [{ style: "", text: line }]));
+}
+
+function resolveLineNumberState(
+  lineNumbers: boolean | { start?: number } | undefined,
+  lineCount: number,
+  shouldRenderPlainText: boolean
+): {
+  lineNumberStart: number;
+  lineNumberWidth: string;
+  showLineNumbers: boolean;
+} {
+  const lineNumberStart =
+    typeof lineNumbers === "object" ? (lineNumbers.start ?? 1) : 1;
+  const showLineNumbers =
+    !shouldRenderPlainText &&
+    (lineNumbers === undefined ? lineCount > 1 : lineNumbers !== false);
+  const lastLineNumber = lineNumberStart + Math.max(lineCount, 1) - 1;
+  const lineNumberWidth = `${String(Math.max(lastLineNumber, 1)).length}ch`;
+  return { lineNumberStart, lineNumberWidth, showLineNumbers };
+}
+
 export function CodeBlock({
   children,
   language,
@@ -353,36 +353,31 @@ export function CodeBlock({
   language?: string;
   label?: string;
   /**
-   * Line numbers (`<span class="ln">`) per the Twinkleplop `line_numbers`
-   * render option: `true` numbers from 1, `{ start }` numbers from `start`,
+   * Line numbers: `true` numbers from 1, `{ start }` numbers from `start`,
    * `false` disables. Defaults to on for multiline highlighted blocks.
    * Plain-text blocks never render numbers.
    */
   lineNumbers?: boolean | { start?: number };
 }) {
+  const themeContext = useContext(ThemeContext);
+  const resolvedTheme = themeContext?.resolvedTheme ?? "light";
+  const themeId = resolveCodeBlockThemeId("github", resolvedTheme);
   const { label: resolvedLabel, syntaxLanguage } = resolveCodeBlockMeta(
     language,
     label
   );
-  const shouldHighlight = syntaxLanguage && syntaxLanguage !== "text";
-  const tokenLines = useCodeTokenLines(
-    children,
-    shouldHighlight ? syntaxLanguage : null
-  );
-  const shouldRenderPlainText = !shouldHighlight || !tokenLines;
-  const lineNumberStart =
-    typeof lineNumbers === "object" ? (lineNumbers.start ?? 1) : 1;
-  const showLineNumbers =
-    !shouldRenderPlainText &&
-    (lineNumbers === undefined
-      ? (tokenLines?.length ?? 0) > 1
-      : lineNumbers !== false);
-  const lastLineNumber = lineNumberStart + (tokenLines?.length ?? 1) - 1;
-  // Gutter column fits the widest number (monospace digits are 1ch each),
-  // so single-digit blocks keep numbers close to the container edge
-  // instead of floating right-aligned in a fixed wide column.
-  const lineNumberWidth = `${String(Math.max(lastLineNumber, 1)).length}ch`;
-
+  const activeLanguage =
+    syntaxLanguage && syntaxLanguage !== "text" ? syntaxLanguage : null;
+  const tokenLines = useCodeTokenLines(children, activeLanguage, themeId);
+  const displayLines =
+    tokenLines ?? (activeLanguage ? toPlainTokenLines(children) : null);
+  const shouldRenderPlainText = !activeLanguage || !displayLines;
+  const { lineNumberStart, lineNumberWidth, showLineNumbers } =
+    resolveLineNumberState(
+      lineNumbers,
+      displayLines?.length ?? 0,
+      shouldRenderPlainText
+    );
   const isRedundantLabel = isRedundantCodeLabel(resolvedLabel, syntaxLanguage);
 
   return (
@@ -400,14 +395,14 @@ export function CodeBlock({
         </div>
       ) : null}
 
-      {shouldRenderPlainText || !tokenLines ? (
+      {shouldRenderPlainText || !displayLines ? (
         <pre className="scrollbar-hidden overflow-x-auto p-3.5 font-mono text-xs leading-relaxed sm:p-4 sm:text-xs">
           <code>{children}</code>
         </pre>
       ) : (
-        <pre className="twinkleplop m-0 scrollbar-hidden overflow-x-auto bg-transparent p-3.5 font-mono text-xs leading-relaxed sm:p-4 sm:text-xs">
+        <pre className="m-0 scrollbar-hidden overflow-x-auto bg-transparent p-3.5 font-mono text-xs leading-relaxed sm:p-4 sm:text-xs">
           <code>
-            {tokenLines.map((line, lineIndex) => {
+            {displayLines.map((line, lineIndex) => {
               const lineText = line.map((token) => token.text).join("");
               const lineKey = `${lineIndex}:${lineText}`;
 
@@ -416,7 +411,7 @@ export function CodeBlock({
                   {showLineNumbers ? (
                     <span
                       aria-hidden="true"
-                      className="ln"
+                      className="mr-3 inline-block w-8 text-right text-muted-foreground select-none"
                       style={{ width: lineNumberWidth }}
                     >
                       {lineNumberStart + lineIndex}
@@ -425,9 +420,10 @@ export function CodeBlock({
                   {line.length > 0
                     ? line.map((token, tokenIndex) => {
                         const tokenKey = `${lineKey}:${tokenIndex}:${token.text}`;
+                        const tokenStyle = parseTokenStyle(token.style);
 
-                        return token.type ? (
-                          <span className={token.type} key={tokenKey}>
+                        return tokenStyle ? (
+                          <span key={tokenKey} style={tokenStyle}>
                             {token.text}
                           </span>
                         ) : (

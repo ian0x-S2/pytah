@@ -4,6 +4,7 @@
 
 ### Added
 
+- Tokyo Night code-block theme (`tokyo-night`): added the Tokyo Night theme family (`@shikijs/themes/tokyo-night`), selectable from the code-block chrome theme picker.
 - Callout and alert blocks (`editor-callout`): added built-in support for callout containers with five semantic types (`note`, `tip`, `info`, `warning`, `caution`), contextual SVG indicators, customizable emojis, block-type toolbar options, and slash commands (`/callout`, `/tip`, `/warning`, `/caution`). Supports bidirectional round-trip conversion to GitHub Flavored Markdown alerts (`> [!NOTE]`, etc.) via a multiline transformer.
 - Lossless JSON AST state and persistence: `Editor` now accepts `initialJson` (`string | SerializedEditorState | Record<string, unknown>`) for instant synchronous document seeding from a persisted Lexical JSON AST. Document snapshots now include `snapshot.json` by default alongside markdown, HTML, and text. Added selective snapshot gating via `features.snapshot.json` (defaults to `true`), a JSON content loader (`loadEditorJsonContent`), and an `onCopyJson` action.
 - Smart link paste: pasting a URL over highlighted text wraps the selected text in a link instead of overwriting it with plain text. Normalizes naked `www.` URLs to `https://` and supports standard link schemes. Falls through to standard paste when the selection is collapsed or when the clipboard contains files or multiline text.
@@ -47,6 +48,8 @@
 - The Excalidraw full-screen editor and its discard-confirm overlay now render as native `<dialog>` elements instead of `<div role="dialog">` / `<div role="alertdialog">`, so assistive tech gets built-in dialog semantics. Both stay non-modal (`open`, no `showModal`) with UA chrome reset, preserving the existing focus and custom Escape behavior (the canvas keeps its own Escape semantics).
 
 ### Changed
+
+- **Fine-grained Shiki syntax highlighting**: migrated code-block syntax highlighting in both the Lexical editor (`plugins/code-highlight/`) and docs (`<CodeBlock>`) to a fine-grained Shiki bundle (`shiki/core`, `shiki/engine/javascript`, `@shikijs/themes/*`, and `@shikijs/langs/*`), removing `@lexical/code-shiki` and all 24 `@twinkleplop/*` packages. A singleton `HighlighterCore` backed by the pure-JavaScript RegExp engine starts with zero grammars/themes loaded and dynamically imports only the pre-selected theme families (`github`, `catppuccin`, `nord`, `everforest`, `tokyo-night`) and the 21 supported languages on demand. Dual-variant families (`github`, `catppuccin`, `everforest`) preload their light and dark sibling themes together for synchronous `.dark` mode switches, while single-variant dark themes (`nord`, `tokyo-night`) stay pinned to dark across both app modes with zero re-tokenization on mode flips.
 
 - The link hover preview chip renders on the popover background with a real `border-border` outline: the 1px `box-shadow` ring (`--editor-floating-ring`) stays dropped via the `editor-floating-no-ring` token class — background and drop shadow unchanged, only the edge treatment swapped from shadow-ring to border.
 - The floating link edit card locks the page scroll while it is open: the popover is mounted as a Base UI modal (`modal` on the `Popover` root), so wheel scrolling can no longer move the page out from under the card's anchor while the link text/URL is being edited. Scrolling is restored as soon as the card closes (Escape, outside press or the close button). The hover preview chip stays non-modal — it must never hijack scroll on hover.
@@ -102,6 +105,8 @@
 - `readEditorSnapshot(editor, transformers, options?)` accepts an options bag to skip disabled outputs (`EditorSnapshotOutputs`).
 
 ### Changed
+
+- **Fine-grained Shiki syntax highlighting**: migrated code-block syntax highlighting in both the Lexical editor (`plugins/code-highlight/`) and docs (`<CodeBlock>`) to a fine-grained Shiki bundle (`shiki/core`, `shiki/engine/javascript`, `@shikijs/themes/*`, and `@shikijs/langs/*`), removing `@lexical/code-shiki` and all 24 `@twinkleplop/*` packages. A singleton `HighlighterCore` backed by the pure-JavaScript RegExp engine starts with zero grammars/themes loaded and dynamically imports only the pre-selected theme families (`github`, `catppuccin`, `nord`, `everforest`, `tokyo-night`) and the 21 supported languages on demand. Dual-variant families (`github`, `catppuccin`, `everforest`) preload their light and dark sibling themes together for synchronous `.dark` mode switches, while single-variant dark themes (`nord`, `tokyo-night`) stay pinned to dark across both app modes with zero re-tokenization on mode flips.
 
 - `initialMarkdown` / `initialHtml` are now **initial-only by contract**: the seed is captured once per mount and never re-applied when prop identities change. Consumers should remount via `key` to load different initial content; re-seeding in place previously replaced live state and reset the caret.
 - The demo seed-content plugin (`editor-seed-content`) tags its seed update with the same `pytah-seed` tag.

@@ -239,9 +239,10 @@ Core apenas (sem features de conteúdo):
 
 ```bash
 bun add lexical @lexical/react @lexical/rich-text @lexical/list @lexical/code \
-  @lexical/code-shiki @lexical/link @lexical/table @lexical/html @lexical/markdown \
+  @lexical/link @lexical/table @lexical/html @lexical/markdown \
   @lexical/utils @lexical/selection @lexical/clipboard @lexical/history \
   @lexical/extension @base-ui/react \
+  shiki @shikijs/langs @shikijs/themes \
   class-variance-authority clsx tailwind-merge \
   cmdk lucide-react tw-animate-css
 ```

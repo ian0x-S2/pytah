@@ -1,48 +1,22 @@
 "use client";
 
-import type { theme_palette, theme_styles } from "@twinkleplop/core";
-import {
-  dark as catppuccinDark,
-  dark_styles as catppuccinDarkStyles,
-  light as catppuccinLight,
-  light_styles as catppuccinLightStyles,
-} from "@twinkleplop/theme-catppuccin/tokens";
-import {
-  dark as githubDark,
-  dark_styles as githubDarkStyles,
-  light as githubLight,
-  light_styles as githubLightStyles,
-} from "@twinkleplop/theme-github/tokens";
-
-import {
-  dark as everforestDark,
-  dark_styles as everforestDarkStyles,
-  light as everforestLight,
-  light_styles as everforestLightStyles,
-} from "./everforest";
-import {
-  dark as nordDark,
-  dark_styles as nordDarkStyles,
-  light as nordLight,
-  light_styles as nordLightStyles,
-} from "./nord";
+import type { ThemeRegistration } from "shiki/core";
 
 /**
- * Code-block theme families. Most families ship a light and a dark
- * palette and the active variant follows the app theme (`resolvedTheme`),
- * so one picker value covers both modes. Nord is the exception: the
- * reference ships dark-only, so the family is pinned to its dark variant
- * in both modes (see `resolveCodeBlockThemeId`).
+ * Pre-selected code-block theme families backed by fine-grained
+ * `@shikijs/themes/*` imports.
  *
- * `github` and `catppuccin` are upstream Twinkleplop packages;
- * `nord` and `everforest` are local themes authored in this folder
- * (see `nord.ts` / `everforest.ts`).
+ * Dual-variant families (`github`, `catppuccin`, `everforest`) switch
+ * between their light and dark Shiki themes alongside the app's
+ * `resolvedTheme`. Single-variant families (`nord`, `tokyo-night`) ship
+ * dark-only in `@shikijs/themes` and stay pinned to dark in both app modes.
  */
 export const CODE_BLOCK_THEME_FAMILIES = [
   { label: "GitHub", value: "github" },
   { label: "Catppuccin", value: "catppuccin" },
   { label: "Nord", value: "nord" },
   { label: "Everforest", value: "everforest" },
+  { label: "Tokyo Night", value: "tokyo-night" },
 ] as const;
 
 export type CodeBlockThemeFamily =
@@ -59,31 +33,99 @@ export const DEFAULT_CODE_BLOCK_THEME_FAMILY: CodeBlockThemeFamily = "nord";
 const SINGLE_VARIANT_FAMILIES: Partial<
   Record<CodeBlockThemeFamily, CodeBlockThemeMode>
 > = {
-  // The Nord reference ships dark-only: keep the dark Polar Night block
-  // (bg + verbatim token hues) even when the app runs in light mode.
   nord: "dark",
+  "tokyo-night": "dark",
 };
 
-const PALETTES: Record<CodeBlockThemeId, theme_palette> = {
-  "catppuccin-dark": catppuccinDark,
-  "catppuccin-light": catppuccinLight,
-  "everforest-dark": everforestDark,
-  "everforest-light": everforestLight,
-  "github-dark": githubDark,
-  "github-light": githubLight,
-  "nord-dark": nordDark,
-  "nord-light": nordLight,
+export interface CodeBlockThemeMeta {
+  background: string;
+  foreground: string;
+  gutter: string;
+}
+
+/**
+ * Static block chrome metadata extracted from each `@shikijs/themes/*`
+ * definition (`colors["editor.background"]`, `colors["editor.foreground"]`,
+ * `colors["editorLineNumber.foreground"]`). Kept inline so `--editor-code-bg`,
+ * `--editor-code-fg`, and the line-number gutter paint synchronously on
+ * frame 0 before any async theme chunk resolves.
+ */
+const THEME_META: Record<CodeBlockThemeId, CodeBlockThemeMeta> = {
+  "catppuccin-dark": {
+    background: "#1e1e2e",
+    foreground: "#cdd6f4",
+    gutter: "#7f849c",
+  },
+  "catppuccin-light": {
+    background: "#eff1f5",
+    foreground: "#4c4f69",
+    gutter: "#8c8fa1",
+  },
+  "everforest-dark": {
+    background: "#2d353b",
+    foreground: "#d3c6aa",
+    gutter: "#7f897da0",
+  },
+  "everforest-light": {
+    background: "#fdf6e3",
+    foreground: "#5c6a72",
+    gutter: "#a4ad9ea0",
+  },
+  "github-dark": {
+    background: "#24292e",
+    foreground: "#e1e4e8",
+    gutter: "#444d56",
+  },
+  "github-light": {
+    background: "#fff",
+    foreground: "#24292e",
+    gutter: "#1b1f234d",
+  },
+  "nord-dark": {
+    background: "#2e3440",
+    foreground: "#d8dee9",
+    gutter: "#4c566a",
+  },
+  "nord-light": {
+    background: "#2e3440",
+    foreground: "#d8dee9",
+    gutter: "#4c566a",
+  },
+  "tokyo-night-dark": {
+    background: "#1a1b26",
+    foreground: "#a9b1d6",
+    gutter: "#363b54",
+  },
+  "tokyo-night-light": {
+    background: "#1a1b26",
+    foreground: "#a9b1d6",
+    gutter: "#363b54",
+  },
 };
 
-const STYLES: Record<CodeBlockThemeId, theme_styles> = {
-  "catppuccin-dark": catppuccinDarkStyles,
-  "catppuccin-light": catppuccinLightStyles,
-  "everforest-dark": everforestDarkStyles,
-  "everforest-light": everforestLightStyles,
-  "github-dark": githubDarkStyles,
-  "github-light": githubLightStyles,
-  "nord-dark": nordDarkStyles,
-  "nord-light": nordLightStyles,
+export interface ShikiThemeModule {
+  default: ThemeRegistration;
+}
+
+/**
+ * Fine-grained dynamic imports for the pre-selected Shiki themes only.
+ * Bundlers split each entry into a dedicated on-demand chunk without pulling
+ * the remaining 55+ themes from `@shikijs/themes`.
+ */
+export const SHIKI_THEME_LOADERS: Record<
+  CodeBlockThemeId,
+  () => Promise<ShikiThemeModule>
+> = {
+  "catppuccin-dark": () => import("@shikijs/themes/catppuccin-mocha"),
+  "catppuccin-light": () => import("@shikijs/themes/catppuccin-latte"),
+  "everforest-dark": () => import("@shikijs/themes/everforest-dark"),
+  "everforest-light": () => import("@shikijs/themes/everforest-light"),
+  "github-dark": () => import("@shikijs/themes/github-dark"),
+  "github-light": () => import("@shikijs/themes/github-light"),
+  "nord-dark": () => import("@shikijs/themes/nord"),
+  "nord-light": () => import("@shikijs/themes/nord"),
+  "tokyo-night-dark": () => import("@shikijs/themes/tokyo-night"),
+  "tokyo-night-light": () => import("@shikijs/themes/tokyo-night"),
 };
 
 export function isCodeBlockThemeFamily(
@@ -100,13 +142,54 @@ export function resolveCodeBlockThemeId(
   return `${family}-${pinned ?? mode}`;
 }
 
-const FALLBACK_THEME_ID: CodeBlockThemeId = "github-light";
+export const FALLBACK_CODE_BLOCK_THEME_ID: CodeBlockThemeId = "nord-dark";
 
-/** Block background overrides per resolved theme id.
+export function isCodeBlockThemeId(value: unknown): value is CodeBlockThemeId {
+  return typeof value === "string" && value in THEME_META;
+}
+
+export function normalizeCodeBlockThemeId(
+  theme: string | null | undefined
+): CodeBlockThemeId {
+  if (isCodeBlockThemeId(theme)) {
+    const family = theme.replace(/-(?:light|dark)$/u, "");
+    if (isCodeBlockThemeFamily(family)) {
+      const pinned = SINGLE_VARIANT_FAMILIES[family];
+      if (pinned) {
+        return `${family}-${pinned}`;
+      }
+    }
+    return theme;
+  }
+  return FALLBACK_CODE_BLOCK_THEME_ID;
+}
+
+/**
+ * Returns the resolved theme ids belonging to the same family as `themeId`.
+ * Dual-variant families return both light and dark ids so preloading a
+ * family warms its sibling mode for instant `.dark` toggles.
+ */
+export function getFamilyCodeBlockThemeIds(
+  theme: string | null | undefined
+): readonly CodeBlockThemeId[] {
+  const resolved = normalizeCodeBlockThemeId(theme);
+  const family = resolved.replace(
+    /-(?:light|dark)$/u,
+    ""
+  ) as CodeBlockThemeFamily;
+  const pinned = SINGLE_VARIANT_FAMILIES[family];
+  if (pinned) {
+    return [`${family}-${pinned}`];
+  }
+  return [`${family}-light`, `${family}-dark`];
+}
+
+/**
+ * Block background overrides per resolved theme id.
  *
  * GitHub renders on the shadcn card surface instead of its upstream
- * `#ffffff` / `#0d1117` so code blocks sit on `--card` like the rest of
- * the chrome. Every other family keeps its palette `background_color`.
+ * `#ffffff` / `#24292e` so code blocks sit on `--card` like the rest of
+ * the chrome. Every other family keeps its theme `editor.background`.
  * Fallbacks mirror `src/index.css` (`:root` / `.dark` `--card`).
  */
 const CODE_BLOCK_BACKGROUND_OVERRIDES: Partial<
@@ -116,114 +199,46 @@ const CODE_BLOCK_BACKGROUND_OVERRIDES: Partial<
   "github-light": "var(--card, oklch(1 0 0))",
 };
 
-/** Block background for a persisted node theme: override first, palette
- * `background_color` otherwise. Used both for `--editor-code-bg` and the
- * CodeNode inline style so the two never diverge. */
+export function getCodeBlockThemeMeta(
+  theme: string | null | undefined
+): CodeBlockThemeMeta {
+  if (isCodeBlockThemeId(theme)) {
+    return THEME_META[theme];
+  }
+  return THEME_META[FALLBACK_CODE_BLOCK_THEME_ID];
+}
+
+/**
+ * Block background for a persisted node theme: override first, theme
+ * `background` otherwise. Used both for `--editor-code-bg` and the
+ * `CodeNode` inline style so the two never diverge.
+ */
 export function getCodeBlockBackground(
   theme: string | null | undefined
 ): string {
-  if (theme !== null && theme !== undefined) {
-    const override = (
-      CODE_BLOCK_BACKGROUND_OVERRIDES as Record<string, string | undefined>
-    )[theme];
+  if (isCodeBlockThemeId(theme)) {
+    const override = CODE_BLOCK_BACKGROUND_OVERRIDES[theme];
     if (override) {
       return override;
     }
-    const palette = (PALETTES as Record<string, theme_palette | undefined>)[
-      theme
-    ];
-    if (palette?.["background_color"]) {
-      return palette["background_color"] as string;
-    }
+    return THEME_META[theme].background;
   }
   return (
-    CODE_BLOCK_BACKGROUND_OVERRIDES[FALLBACK_THEME_ID] ??
-    (PALETTES[FALLBACK_THEME_ID]?.["background_color"] as string) ??
-    "#ffffff"
+    CODE_BLOCK_BACKGROUND_OVERRIDES[FALLBACK_CODE_BLOCK_THEME_ID] ??
+    THEME_META[FALLBACK_CODE_BLOCK_THEME_ID].background
   );
 }
 
-/** Palette for a persisted node theme; unknown ids fall back to GitHub light. */
-export function getCodeBlockPalette(
+/** Base foreground color for a persisted node theme. */
+export function getCodeBlockForeground(
   theme: string | null | undefined
-): theme_palette {
-  if (theme !== null && theme !== undefined) {
-    const palette = (PALETTES as Record<string, theme_palette | undefined>)[
-      theme
-    ];
-    if (palette) {
-      return palette;
-    }
-  }
-  return PALETTES[FALLBACK_THEME_ID] ?? githubLight;
-}
-
-/** Font-style map (`italic`/`bold`/…) for a persisted node theme. */
-export function getCodeBlockStyles(
-  theme: string | null | undefined
-): theme_styles {
-  if (theme !== null && theme !== undefined) {
-    const styles = (STYLES as Record<string, theme_styles | undefined>)[theme];
-    if (styles) {
-      return styles;
-    }
-  }
-  return STYLES[FALLBACK_THEME_ID] ?? githubLightStyles;
-}
-
-const FONT_STYLE_DECLARATIONS: Record<string, string> = {
-  bold: "font-weight: bold;",
-  italic: "font-style: italic;",
-  strikethrough: "text-decoration: line-through;",
-  underline: "text-decoration: underline;",
-};
-
-/**
- * CSS custom property prefix for token palette entries. Values are provided
- * by `EditorContent` (see `getCodeBlockTokenVars`), so the palette hex lives
- * outside node state: a `.dark` flip (or family switch without role remaps)
- * recolors tokens through the vars in the same frame, with no Lexical work.
- */
-export const CODE_BLOCK_TOKEN_VAR_PREFIX = "--editor-code-token-";
-
-/**
- * Token color vars for one resolved theme id — every palette entry except
- * the block `background_color` (that one feeds `--editor-code-bg` in
- * `EditorContent`). Applied to the same wrapper as the background var so
- * block bg and token hues always flip together.
- */
-export function getCodeBlockTokenVars(
-  theme: string | null | undefined
-): Record<string, string> {
-  const palette = getCodeBlockPalette(theme);
-  const vars: Record<string, string> = {};
-  for (const [token, color] of Object.entries(palette)) {
-    if (token === "background_color") {
-      continue;
-    }
-    vars[`${CODE_BLOCK_TOKEN_VAR_PREFIX}${token}`] = color;
-  }
-  return vars;
-}
-
-/**
- * Inline style for one token. The color is a var reference, not the baked
- * palette hex: token nodes are theme-agnostic, so mode toggles diff to a
- * no-op and recoloring happens purely through the CSS vars above. Font
- * styles (italic comments, bold headings, …) are still theme-scoped — they
- * are identical across a family's modes, but can differ between families,
- * so the diff flags a family switch that restyles a token.
- */
-export function getCodeBlockTokenStyle(
-  theme: string | null | undefined,
-  tokenType: string
 ): string {
-  let style = `color: var(${CODE_BLOCK_TOKEN_VAR_PREFIX}${tokenType});`;
-  const tokenStyles = getCodeBlockStyles(theme)[tokenType];
-  if (tokenStyles) {
-    for (const tokenStyle of tokenStyles) {
-      style += FONT_STYLE_DECLARATIONS[tokenStyle] ?? "";
-    }
-  }
-  return style;
+  return getCodeBlockThemeMeta(theme).foreground;
+}
+
+/** Line-number gutter foreground color (`editorLineNumber.foreground`). */
+export function getCodeBlockGutterColor(
+  theme: string | null | undefined
+): string {
+  return getCodeBlockThemeMeta(theme).gutter;
 }

@@ -44,6 +44,7 @@ export default defineConfig({
         "src/components/editor/editor.tsx",
         "src/components/editor/plugins/block-type-toolbar/plugin.tsx",
         "src/components/editor/plugins/block-type-toolbar/utils.ts",
+        "src/components/editor/plugins/code-highlight/code-commands.ts",
         "src/components/editor/plugins/floating-toolbar/overflow-menu.tsx",
         "src/components/editor/plugins/floating-toolbar/plugin.tsx",
         "src/components/editor/plugins/markdown/transformers.test.ts",
@@ -281,8 +282,6 @@ export default defineConfig({
     // comment at the top of the utilities section there) are unstyled JS
     // hooks or registry CSS, not Tailwind utilities: an empty `@utility` is
     // a Tailwind build error, so they are allowlisted.
-    // `twinkleplop` is the theme class from `@twinkleplop/theme-github`
-    // (plain CSS import, not a Tailwind utility).
     "shadcn/no-unknown-classes": [
       "error",
       {
@@ -341,7 +340,6 @@ export default defineConfig({
           "editor-table-selected",
           "editor-toolbar",
           "editor-youtube-frame",
-          "twinkleplop",
         ],
       },
     ],

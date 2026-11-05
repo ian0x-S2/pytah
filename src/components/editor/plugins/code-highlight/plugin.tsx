@@ -6,10 +6,9 @@ import {
   CodeHighlightNode,
   CodeNode,
 } from "@lexical/code";
-import { registerCodeHighlighting } from "@lexical/code-shiki";
-import type { Tokenizer } from "@lexical/code-shiki";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
+  $getNodeByKey,
   $getSelection,
   $isLineBreakNode,
   $isRangeSelection,
@@ -21,19 +20,26 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { useTheme } from "@/components/theme-context";
 
+import { registerCodeBlockBehavior } from "./code-commands";
+import { normalizeCodeLanguageId } from "./languages";
+import {
+  isCodeLanguageLoaded,
+  isCodeThemeLoaded,
+  loadCodeLanguage,
+  loadCodeThemeFamily,
+  ShikiTokenizer,
+} from "./shiki-tokenizer";
+import type { Tokenizer } from "./shiki-tokenizer";
 import { useCodeBlockTheme } from "./theme-context";
 import {
-  CODE_BLOCK_TOKEN_VAR_PREFIX,
   DEFAULT_CODE_BLOCK_THEME_FAMILY,
   resolveCodeBlockThemeId,
 } from "./themes/registry";
 import type { CodeBlockThemeFamily } from "./themes/registry";
-import { TwinkleplopTokenizer } from "./twinkleplop-tokenizer";
 
 /**
  * Mirrors the tokenizer diff equality (text + token style + token
- * type): `true` only when re-tokenizing would produce a splice, i.e. when
- * letting the highlighter run its transform would change the node.
+ * type): `true` only when re-tokenizing would produce a splice.
  */
 const $tokensDiffer = (
   current: LexicalNode[],
@@ -45,6 +51,9 @@ const $tokensDiffer = (
   for (let index = 0; index < tokens.length; index += 1) {
     const currentNode = current[index];
     const tokenNode = tokens[index];
+    if (!currentNode || !tokenNode) {
+      return true;
+    }
     if (currentNode.getType() !== tokenNode.getType()) {
       return true;
     }
@@ -61,56 +70,6 @@ const $tokensDiffer = (
   return false;
 };
 
-/**
- * Family part of a resolved theme id (`nord-dark` -> `nord`). Ids outside
- * the `<family>-<mode>` shape keep their whole value, so legacy/pasted
- * ids never collapse into a bogus shared prefix.
- */
-const codeBlockThemeFamilyOf = (themeId: string): string =>
-  themeId.replace(/-(?:light|dark)$/u, "");
-
-/**
- * True when the block's children are already this tokenizer's output with
- * var-reference styles. Tokenized children always contain a
- * CodeHighlightNode (bare gap nodes included) or a non-text structure
- * (line breaks); raw markdown-seeded blocks hold plain TextNodes only.
- * Tokens still carrying baked hex styles (HTML pasted from an older
- * snapshot) force a full pass so the stale colors are spliced away.
- */
-const $isVarTokenized = (node: CodeNode): boolean => {
-  let sawToken = false;
-  for (const child of node.getChildren()) {
-    if ($isCodeHighlightNode(child)) {
-      sawToken = true;
-      const style = child.getStyle();
-      if (
-        style !== "" &&
-        !style.startsWith(`color: var(${CODE_BLOCK_TOKEN_VAR_PREFIX}`)
-      ) {
-        return false;
-      }
-    } else if (!$isTextNode(child)) {
-      sawToken = true;
-    }
-  }
-  return sawToken;
-};
-
-/**
- * Front-runs the highlighter's CodeNode transform so its own tokenize pass
- * diffs to a no-op. Upstream's `$updateAndRetainSelection` does not verify
- * that the current selection belongs to the code node: whenever its tokenize
- * diff produces changes (first highlight, theme swap, a newly usable
- * language) it relocates ANY range selection in the document into the code
- * block, and the untagged nested update then re-applies the DOM selection
- * and scrolls the page to the caret (mount and theme-toggle scroll jump).
- *
- * By tokenizing inline with the final theme first, the diff upstream computes
- * is empty and it returns before touching the selection. This transform must
- * be registered BEFORE `registerCodeHighlighting`: Lexical marks all existing
- * nodes of the type dirty the moment a transform is registered, and transform
- * execution follows registration order, so ours always runs first in a pass.
- */
 type SelectionPoint = RangeSelection["anchor"];
 
 const $isPointInside = (node: CodeNode, point: SelectionPoint): boolean => {
@@ -127,8 +86,8 @@ interface RetainedPoint {
 
 /**
  * Records one selection end as restorable data. Text ends become absolute
- * text offsets (sum of previous siblings plus the point offset, like
- * upstream); element ends keep their child index.
+ * text offsets (sum of previous siblings plus the point offset); element
+ * ends keep their child index.
  */
 const $retainSelectionPoint = (point: SelectionPoint): RetainedPoint => {
   if (point.type === "element") {
@@ -187,44 +146,32 @@ const $restoreSelectionPoint = (
 };
 
 /**
- * Inline token sync that owns re-tokenization (it cannot be left to
- * upstream): upstream's CodeNode transform gates on Shiki theme bundles
- * (`isCodeThemeLoaded`), and our `"<family>-<mode>"` ids only match a bundle
- * by accident (`github-*`, `everforest-*`). For `nord-*`/`catppuccin-*` the
- * gate never opens, so upstream returns early forever and tokens would stay
- * stale whenever the caret sits inside the block (the theme picker keeps the
- * caret via mousedown-preventDefault, so family switches almost always hit
- * this). When the caret is inside, the splice retains it through text
- * offsets, mirroring upstream's `$updateAndRetainSelection`.
- *
- * `skipIfTokenized` marks a re-registration pass from a mode-only flip:
- * token colors are var references resolved by `EditorContent`'s wrapper
- * vars and `resolveThemedTokenType` gates role remaps on the family prefix
- * only (never light/dark), so such passes converge through the `CodeNode`
- * theme id alone — no tokenize round-trip, no splice. Typing, language
- * changes, and family switches (which may remap roles) always tokenize.
+ * Synchronously tokenizes a `CodeNode` with the fine-grained Shiki tokenizer
+ * once its theme and language chunks are loaded. Preserves out-of-node
+ * selections untouched (preventing mount and theme-toggle scroll jumps) and
+ * retains in-node carets across token splices.
  */
-const $syncTwinkleTokens = (
+const $syncShikiTokens = (
   editor: LexicalEditor,
   node: CodeNode,
   codeBlockTheme: string,
-  tokenizer: Tokenizer,
-  skipIfTokenized: boolean
+  tokenizer: Tokenizer
 ): void => {
-  const previousTheme = node.getTheme();
-  if (previousTheme !== codeBlockTheme) {
-    // Theme must be final before tokenizing: the tokens carry it.
-    node.setTheme(codeBlockTheme);
-  }
   // Never splice under an active IME session: replacing text nodes
   // mid-composition drops it. The next committed edit re-dirties the node
   // and converges the tokens.
   if (editor.isComposing()) {
     return;
   }
-  if (skipIfTokenized && $isVarTokenized(node)) {
-    // Mode-only flip on an already-tokenized block: children are final.
-    return;
+  if (node.getLanguage() === undefined) {
+    node.setLanguage(tokenizer.defaultLanguage);
+  }
+  const previousTheme = node.getTheme();
+  if (previousTheme !== codeBlockTheme) {
+    node.setTheme(codeBlockTheme);
+  }
+  if (!node.getIsSyntaxHighlightSupported()) {
+    node.setIsSyntaxHighlightSupported(true);
   }
   let tokens: LexicalNode[];
   try {
@@ -233,21 +180,19 @@ const $syncTwinkleTokens = (
       node.getLanguage() ?? tokenizer.defaultLanguage
     );
   } catch {
-    // Tokenizer threw (unknown language): leave this node to the registered
-    // transform's own error path.
     return;
   }
-  const selection = $getSelection();
   if (!$tokensDiffer(node.getChildren(), tokens)) {
     return;
   }
+  const selection = $getSelection();
   if (
     !$isRangeSelection(selection) ||
     (!$isPointInside(node, selection.anchor) &&
       !$isPointInside(node, selection.focus))
   ) {
-    // Out-of-node selections are untouched by the splice, so upstream keeps
-    // diffing to a no-op and never relocates the caret (scroll-jump fix).
+    // Out-of-node selections are untouched by the splice, so highlighting
+    // never relocates the caret into the code block.
     node.splice(0, node.getChildrenSize(), tokens);
     return;
   }
@@ -264,7 +209,8 @@ export function CodeHighlightPlugin({
   /**
    * Explicit family override. Defaults to the shared theme context (fed by
    * the `codeBlockTheme` Editor prop and the per-block chrome picker), so
-   * standalone renders without a provider still highlight with GitHub.
+   * standalone renders without a provider still highlight with the default
+   * family (`nord`).
    */
   themeFamily?: CodeBlockThemeFamily;
 }) {
@@ -281,28 +227,16 @@ export function CodeHighlightPlugin({
   // chained updates starve the first paint (observed multi-second
   // blank freeze opening a code-heavy document). Arm highlighting after the
   // document has painted: content shows first as plain code text, colors
-  // land one frame later, off the critical path.
+  // land after paint, off the critical path.
   const [armed, setArmed] = useState(false);
-  // Theme id captured at the last transform registration; lets the
-  // registration effect tell mode-only flips (skip) from family switches
-  // (full re-tokenize) on re-render.
-  const lastRegisteredThemeRef = useRef<string | null>(null);
-  // Re-entrancy guard, mirroring upstream's `nodesCurrentlyHighlighting`:
-  // registering a transform dirty-marks every node of its type — and every
-  // token IS a TextNode — so one re-registration runs this plugin's sync
-  // once per token child, each invocation re-tokenizing the parent (~700ms
-  // for a 40-line block, observed). The first child syncs the block; the
-  // rest skip until the update listener clears the window at commit end.
-  const syncingKeysRef = useRef<Set<string>>(new Set());
 
-  // Registration follows the post-paint arm, keeping the transform on
-  // its synchronous path from the first dirty pass onward.
-  // Twinkleplop grammars compile at import time and palettes are static
-  // imports: there are no async highlighter assets, so registration can
-  // follow the arm directly with no `await` in between. Do NOT add an
-  // async boundary here: awaiting even an already-resolved promise would
-  // push registration outside `act()` in tests, stalling it on React's
-  // act queue until the next test's `act()` call.
+  // Re-entrancy guard: registering a transform dirty-marks every node of
+  // its type — and every token IS a TextNode — so one re-registration
+  // would otherwise run the sync once per token child. The first child
+  // syncs the block; the rest skip until the update listener clears the
+  // window at commit end.
+  const syncingKeysRef = useRef<Set<string>>(new Set());
+  const pendingLoadsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (armed) {
@@ -322,89 +256,91 @@ export function CodeHighlightPlugin({
     };
   }, [armed]);
 
-  // ORDERING IS LOAD-BEARING: these transforms must be registered before
-  // `registerCodeHighlighting` below. Registering a transform marks all
-  // existing nodes of its type dirty immediately, so the very first pass
-  // after arming already runs through here — tokenizing inline keeps
-  // the registered tokenizer's own first pass (and every later pass) a
-  // no-op, which is what prevents the mount scroll jump. The text-level
-  // hooks mirror upstream's own TextNode/CodeHighlightNode pairing: typing
-  // dirties text nodes, not the CodeNode, so without them edits made with
-  // the caret inside the block would never re-tokenize.
-  //
-  // Layout effect (not passive): a theme flip re-renders the plugin and
-  // re-registers the transforms here, synchronously before the browser
-  // paints. Registration's dirty-marking update then commits in a
-  // microtask — still pre-paint — so family switches that remap token
-  // roles splice and repaint in the same frame as the wrapper vars, with
-  // no flash of the old palette. The arm above still gates mount: this
-  // effect stays a no-op until the document has painted, and the mode-only
-  // path in `$syncTwinkleTokens` never splices at all.
   useLayoutEffect(() => {
     if (!armed) {
       return;
     }
-    // A re-registration from a mode-only flip (family unchanged) dirties
-    // every existing block, including through the text-level hooks. Token
-    // colors are wrapper vars and role remaps are family-gated, so that
-    // pass converges through `setTheme` alone; the flag clears at the end
-    // of the commit so later typing passes tokenize normally. Family
-    // switches keep the full re-tokenize because roles may remap.
-    const previousTheme = lastRegisteredThemeRef.current;
-    lastRegisteredThemeRef.current = codeBlockTheme;
-    let skipIfTokenized =
-      previousTheme !== null &&
-      previousTheme !== codeBlockTheme &&
-      codeBlockThemeFamilyOf(previousTheme) ===
-        codeBlockThemeFamilyOf(codeBlockTheme);
-    // Fresh window per registration: also recovers a guard entry left
-    // behind by an aborted update (its commit listener never ran).
+    let disposed = false;
     const syncingKeys = syncingKeysRef.current;
+    const pendingLoads = pendingLoadsRef.current;
     syncingKeys.clear();
+
+    // Warm both light and dark variants of the active family so subsequent
+    // `.dark` mode toggles find the sibling theme already loaded and
+    // re-tokenize synchronously inside this layout effect.
+    void loadCodeThemeFamily(codeBlockTheme);
+
     const syncNode = (codeNode: CodeNode): void => {
       const key = codeNode.getKey();
       if (syncingKeys.has(key)) {
         return;
       }
       syncingKeys.add(key);
-      $syncTwinkleTokens(
-        editor,
-        codeNode,
-        codeBlockTheme,
-        TwinkleplopTokenizer,
-        skipIfTokenized
+
+      const language = normalizeCodeLanguageId(
+        codeNode.getLanguage() ?? ShikiTokenizer.defaultLanguage
       );
+      if (
+        !isCodeThemeLoaded(codeBlockTheme) ||
+        !isCodeLanguageLoaded(language)
+      ) {
+        if (codeNode.getIsSyntaxHighlightSupported()) {
+          codeNode.setIsSyntaxHighlightSupported(false);
+        }
+        const loadKey = `${key}:${codeBlockTheme}:${language}`;
+        if (!pendingLoads.has(loadKey)) {
+          pendingLoads.add(loadKey);
+          const preloadNodeAssets = async () => {
+            try {
+              await Promise.all([
+                loadCodeThemeFamily(codeBlockTheme),
+                loadCodeLanguage(language),
+              ]);
+            } catch {
+              // Keep plain text when a grammar or theme fails to load.
+            }
+            pendingLoads.delete(loadKey);
+            if (!disposed) {
+              editor.update(() => {
+                const latest = $getNodeByKey(key);
+                if ($isCodeNode(latest)) {
+                  latest.markDirty();
+                }
+              });
+            }
+          };
+          void preloadNodeAssets();
+        }
+        return;
+      }
+
+      $syncShikiTokens(editor, codeNode, codeBlockTheme, ShikiTokenizer);
     };
+
     const syncParent = (node: LexicalNode): void => {
       const parent = node.getParent();
       if ($isCodeNode(parent)) {
         syncNode(parent);
       }
     };
-    const unregisterPre = editor.registerNodeTransform(CodeNode, syncNode);
-    const unregisterPreText = editor.registerNodeTransform(
-      TextNode,
-      syncParent
-    );
-    const unregisterPreHighlight = editor.registerNodeTransform(
+
+    const unregisterCode = editor.registerNodeTransform(CodeNode, syncNode);
+    const unregisterText = editor.registerNodeTransform(TextNode, syncParent);
+    const unregisterHighlight = editor.registerNodeTransform(
       CodeHighlightNode,
       syncParent
     );
-    const unregisterUpstream = registerCodeHighlighting(
-      editor,
-      TwinkleplopTokenizer
-    );
+    const unregisterBehavior = registerCodeBlockBehavior(editor);
     const unregisterPass = editor.registerUpdateListener(() => {
-      // First commit after registration ends the skip window and the
-      // per-commit sync guard.
-      skipIfTokenized = false;
       syncingKeys.clear();
     });
+
     return () => {
-      unregisterPre();
-      unregisterPreText();
-      unregisterPreHighlight();
-      unregisterUpstream();
+      disposed = true;
+      unregisterCode();
+      unregisterText();
+      unregisterHighlight();
+      unregisterBehavior();
       unregisterPass();
     };
   }, [armed, codeBlockTheme, editor]);

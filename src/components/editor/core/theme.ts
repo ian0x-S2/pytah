@@ -2,11 +2,9 @@ import type { EditorThemeClasses } from "lexical";
 
 export const editorTheme: EditorThemeClasses = {
   code: "editor-code-block",
-  // Token colors are CSS vars (`--editor-code-token-*`) set per resolved
-  // code theme by `EditorContent` — see `getCodeBlockTokenVars` in the code
-  // theme registry. The twinkleplop tokenizer bakes that var reference
-  // into every CodeHighlightNode's inline style, so there is no class map
-  // to maintain here and a `.dark` flip recolors with zero Lexical work.
+  // Token colors and font-style are written directly as inline styles on each
+  // `CodeHighlightNode` by `ShikiTokenizer` from the active fine-grained Shiki
+  // theme, so there is no class map to maintain here.
   collapsibleContainer: "editor-collapsible-container shadow-xs",
   collapsibleContent: "editor-collapsible-content [&>p:last-child]:mb-0",
   collapsibleTitle:

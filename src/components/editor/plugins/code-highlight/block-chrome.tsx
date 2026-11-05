@@ -56,7 +56,7 @@ const sameAnchors = (
  * wrapper host, like the line-number gutter) and are absolutely positioned
  * over each code block. Picking a theme re-tokenizes every block through
  * the shared theme context; picking a language calls
- * `CodeNode.setLanguage`, which re-runs the Twinkleplop tokenizer through
+ * `CodeNode.setLanguage`, which re-runs the Shiki tokenizer through
  * the existing highlight transform.
  */
 export function CodeBlockChromePlugin({ className }: { className?: string }) {

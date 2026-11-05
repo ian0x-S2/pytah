@@ -10,7 +10,7 @@ import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPl
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { TabIndentationPlugin } from "@lexical/react/LexicalTabIndentationPlugin";
 import type { LexicalEditor, SerializedEditorState } from "lexical";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ComponentType, CSSProperties } from "react";
 
 import { useTheme } from "@/components/theme-context";
@@ -39,9 +39,8 @@ import { CodeSelectAllPlugin } from "../plugins/code-highlight/select-all-plugin
 import { CodeBlockThemeContext } from "../plugins/code-highlight/theme-context";
 import {
   DEFAULT_CODE_BLOCK_THEME_FAMILY,
-  CODE_BLOCK_TOKEN_VAR_PREFIX,
   getCodeBlockBackground,
-  getCodeBlockTokenVars,
+  getCodeBlockForeground,
   resolveCodeBlockThemeId,
 } from "../plugins/code-highlight/themes/registry";
 import type { CodeBlockThemeFamily } from "../plugins/code-highlight/themes/registry";
@@ -306,61 +305,19 @@ export function EditorContent({
     [themeFamily]
   );
 
-  // Block chrome follows the code theme too: `getCodeBlockBackground`
-  // feeds `--editor-code-bg`, which the `editor-code-block` rule already
-  // consumes (its `!important` only beats pasted inline node styles). The
-  // palette's token colors ride along as `--editor-code-token-*` vars in
-  // the same scope, so token hues flip in the same frame as the shell — a
-  // `.dark` toggle recolors blocks purely through CSS, with no Lexical
-  // splice. GitHub resolves its background to shadcn `--card`; every other
-  // family uses its palette `background_color`. Scoped to this wrapper so
-  // concurrent editors with different themes don't clash.
+  // Block chrome follows the code theme: `getCodeBlockBackground` and
+  // `getCodeBlockForeground` feed `--editor-code-bg` and `--editor-code-fg`,
+  // which the `editor-code-block` rule consumes. GitHub resolves its
+  // background to shadcn `--card`; every other family uses its Shiki theme
+  // `editor.background`. Scoped to this wrapper so concurrent editors with
+  // different themes don't clash.
   const { resolvedTheme } = useTheme();
   const resolvedCodeThemeId = resolveCodeBlockThemeId(
     themeFamily,
     resolvedTheme
   );
   const codeBlockBackground = getCodeBlockBackground(resolvedCodeThemeId);
-  const codeBlockTokenVars = useMemo(
-    () => getCodeBlockTokenVars(resolvedCodeThemeId),
-    [resolvedCodeThemeId]
-  );
-  const wrapperRef = useRef<HTMLDivElement | null>(null);
-
-  // Token color vars are applied imperatively: the palette carries far more
-  // roles than a literal style prop can declare, and dynamic style objects
-  // are outside the design-system lint contract. The layout effect keeps
-  // the flip pre-paint — same frame as `.dark` and the inline background
-  // var above — and stale vars from a previous theme are dropped so a
-  // removed role falls back to base text instead of an old hue.
-  useLayoutEffect(() => {
-    const wrapper = wrapperRef.current;
-    if (!wrapper) {
-      return;
-    }
-    // Stale custom property names are parsed from the style attribute:
-    // CSSStyleDeclaration iteration is not available in every DOM
-    // implementation (happy-dom). Removing first lets a dropped role fall
-    // back to base text instead of an old hue.
-    const inlineStyle = wrapper.getAttribute("style") ?? "";
-    const staleNames: string[] = [];
-    for (const declaration of inlineStyle.split(";")) {
-      const colon = declaration.indexOf(":");
-      if (colon === -1) {
-        continue;
-      }
-      const name = declaration.slice(0, colon).trim();
-      if (name.startsWith(CODE_BLOCK_TOKEN_VAR_PREFIX)) {
-        staleNames.push(name);
-      }
-    }
-    for (const name of staleNames) {
-      wrapper.style.removeProperty(name);
-    }
-    for (const [name, value] of Object.entries(codeBlockTokenVars)) {
-      wrapper.style.setProperty(name, value);
-    }
-  }, [codeBlockTokenVars]);
+  const codeBlockForeground = getCodeBlockForeground(resolvedCodeThemeId);
 
   const commandIds = useMemo(
     () => commands.map((entry) => entry.command.id),
@@ -379,10 +336,14 @@ export function EditorContent({
           />
 
           <div
-            ref={wrapperRef}
             className="group relative bg-background"
             data-density={density}
-            style={{ "--editor-code-bg": codeBlockBackground } as CSSProperties}
+            style={
+              {
+                "--editor-code-bg": codeBlockBackground,
+                "--editor-code-fg": codeBlockForeground,
+              } as CSSProperties
+            }
           >
             <RichTextPlugin
               contentEditable={

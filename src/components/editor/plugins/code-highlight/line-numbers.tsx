@@ -13,7 +13,7 @@ import { CodeGutterHostContext } from "./gutter-host";
 import { useCodeBlockTheme } from "./theme-context";
 import {
   DEFAULT_CODE_BLOCK_THEME_FAMILY,
-  getCodeBlockPalette,
+  getCodeBlockGutterColor,
   resolveCodeBlockThemeId,
 } from "./themes/registry";
 
@@ -75,15 +75,13 @@ export function CodeLineNumbersPlugin({ className }: { className?: string }) {
   const host = useContext(CodeGutterHostContext);
   const themeContext = useCodeBlockTheme();
   const { resolvedTheme } = useTheme();
-  // Block chrome follows the code theme too: Nord ships a `gutter` entry
-  // (`editorLineNumber.foreground` `#4C566A`); families without one keep
-  // the muted fallback class below.
-  const gutterColor = getCodeBlockPalette(
+  // Block chrome follows the code theme (`editorLineNumber.foreground`).
+  const gutterColor = getCodeBlockGutterColor(
     resolveCodeBlockThemeId(
       themeContext?.family ?? DEFAULT_CODE_BLOCK_THEME_FAMILY,
       resolvedTheme
     )
-  )["gutter"];
+  );
   const [gutters, setGutters] = useState<CodeGutter[]>([]);
   const touchedElements = useRef(new Set<HTMLElement>());
 

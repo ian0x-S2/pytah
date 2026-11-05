@@ -2,55 +2,51 @@ import { deepStrictEqual, ok, strictEqual } from "node:assert/strict";
 import { describe, test } from "node:test";
 
 import {
+  getShikiHighlighter,
+  isCodeLanguageLoaded,
+  isCodeThemeLoaded,
+  loadCodeLanguage,
+  loadCodeTheme,
+  loadCodeThemeFamily,
+  tokenizeCodeLines,
+} from "../shiki-tokenizer";
+import {
   CODE_BLOCK_THEME_FAMILIES,
   DEFAULT_CODE_BLOCK_THEME_FAMILY,
-  getCodeBlockPalette,
-  getCodeBlockStyles,
-  getCodeBlockTokenStyle,
-  getCodeBlockTokenVars,
+  getCodeBlockBackground,
+  getCodeBlockForeground,
+  getCodeBlockGutterColor,
+  getFamilyCodeBlockThemeIds,
   isCodeBlockThemeFamily,
+  normalizeCodeBlockThemeId,
   resolveCodeBlockThemeId,
+  SHIKI_THEME_LOADERS,
 } from "./registry";
 
-const REQUIRED_TOKENS = [
-  "background_color",
-  "identifier",
-  "keyword",
-  "string",
-  "comment",
-  "number",
-  "function",
-  "operator",
-  "punctuation",
-] as const;
-
-const luminanceChannel = (hex: string, index: number): number => {
-  const value = Number.parseInt(hex.slice(index, index + 2), 16) / 255;
-  return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
-};
-
-const hexToLuminance = (hex: string): number =>
-  0.2126 * luminanceChannel(hex, 1) +
-  0.7152 * luminanceChannel(hex, 3) +
-  0.0722 * luminanceChannel(hex, 5);
-
 describe("code-block theme registry", () => {
-  test("ships the builtin family plus the two local themes", () => {
+  test("ships the pre-selected theme families", () => {
     deepStrictEqual(
       CODE_BLOCK_THEME_FAMILIES.map((family) => family.value),
-      ["github", "catppuccin", "nord", "everforest"]
+      ["github", "catppuccin", "nord", "everforest", "tokyo-night"]
     );
+    for (const family of CODE_BLOCK_THEME_FAMILIES) {
+      strictEqual(isCodeBlockThemeFamily(family.value), true);
+    }
+    strictEqual(isCodeBlockThemeFamily("dracula"), false);
   });
 
   test("every family resolves a theme id per mode", () => {
     for (const family of CODE_BLOCK_THEME_FAMILIES) {
-      if (family.value === "nord") {
-        // Pinned to the dark-only reference in both modes.
+      if (family.value === "nord" || family.value === "tokyo-night") {
+        // Single-variant dark-only Shiki themes stay pinned in both modes.
         strictEqual(
           resolveCodeBlockThemeId(family.value, "light"),
-          "nord-dark"
+          `${family.value}-dark`
         );
-        strictEqual(resolveCodeBlockThemeId(family.value, "dark"), "nord-dark");
+        strictEqual(
+          resolveCodeBlockThemeId(family.value, "dark"),
+          `${family.value}-dark`
+        );
         continue;
       }
       strictEqual(
@@ -76,208 +72,97 @@ describe("code-block theme registry", () => {
     );
   });
 
-  test("every theme id carries the core token colors", () => {
+  test("every resolved theme id provides background, foreground, and gutter colors", () => {
     for (const family of CODE_BLOCK_THEME_FAMILIES) {
       for (const mode of ["light", "dark"] as const) {
-        const palette = getCodeBlockPalette(
-          resolveCodeBlockThemeId(family.value, mode)
-        );
-        for (const token of REQUIRED_TOKENS) {
-          ok(
-            typeof palette[token] === "string" && palette[token] !== "",
-            `${family.value}-${mode} is missing ${token}`
-          );
-        }
+        const themeId = resolveCodeBlockThemeId(family.value, mode);
+        const bg = getCodeBlockBackground(themeId);
+        const fg = getCodeBlockForeground(themeId);
+        const gutter = getCodeBlockGutterColor(themeId);
+        ok(bg.length > 0, `${themeId} missing background`);
+        ok(fg.length > 0, `${themeId} missing foreground`);
+        ok(gutter.length > 0, `${themeId} missing gutter`);
       }
     }
   });
 
-  test("unknown theme ids fall back to a usable palette", () => {
-    const palette = getCodeBlockPalette("not-a-theme");
-    ok(typeof palette["background_color"] === "string");
+  test("github blocks use the shadcn card surface token", () => {
+    strictEqual(
+      getCodeBlockBackground("github-light"),
+      "var(--card, oklch(1 0 0))"
+    );
+    strictEqual(
+      getCodeBlockBackground("github-dark"),
+      "var(--card, oklch(0.205 0 0))"
+    );
   });
 
-  test("token styles reference the palette color var", () => {
-    // Colors are var references resolved by `EditorContent`'s wrapper vars
-    // (`getCodeBlockTokenVars`), not baked hex: token nodes stay
-    // theme-agnostic so mode toggles diff to a no-op.
-    const style = getCodeBlockTokenStyle("nord-dark", "keyword");
-    ok(style.includes("var(--editor-code-token-keyword)"));
+  test("unknown theme ids normalize to nord-dark", () => {
+    strictEqual(normalizeCodeBlockThemeId("not-a-theme"), "nord-dark");
+    strictEqual(getCodeBlockBackground("not-a-theme"), "#2e3440");
+    strictEqual(getCodeBlockForeground("not-a-theme"), "#d8dee9");
+    strictEqual(getCodeBlockGutterColor("not-a-theme"), "#4c566a");
   });
 
-  test("token vars cover the palette for each resolved theme id", () => {
-    for (const family of CODE_BLOCK_THEME_FAMILIES) {
-      for (const mode of ["light", "dark"] as const) {
-        const id = resolveCodeBlockThemeId(family.value, mode);
-        const vars = getCodeBlockTokenVars(id);
-        const palette = getCodeBlockPalette(id);
-        for (const [token, color] of Object.entries(palette)) {
-          if (token === "background_color") {
-            continue;
-          }
-          strictEqual(
-            vars[`--editor-code-token-${token}`],
-            color,
-            `${id} missing var for ${token}`
-          );
-        }
-      }
-    }
+  test("getFamilyCodeBlockThemeIds returns sibling mode variants only when supported", () => {
+    deepStrictEqual(getFamilyCodeBlockThemeIds("nord-dark"), ["nord-dark"]);
+    deepStrictEqual(getFamilyCodeBlockThemeIds("tokyo-night-dark"), [
+      "tokyo-night-dark",
+    ]);
+    deepStrictEqual(getFamilyCodeBlockThemeIds("github-light"), [
+      "github-light",
+      "github-dark",
+    ]);
+    deepStrictEqual(getFamilyCodeBlockThemeIds("catppuccin-dark"), [
+      "catppuccin-light",
+      "catppuccin-dark",
+    ]);
+    deepStrictEqual(getFamilyCodeBlockThemeIds("everforest-light"), [
+      "everforest-light",
+      "everforest-dark",
+    ]);
   });
 
-  test("nord copies the official VS Code reference", () => {
-    // Spot-checks against arcticicestudio/nord tokenColors; the full map
-    // lives in nord.ts. CASE: official hexes are lowercase. Dark is the
-    // verbatim reference; light shades each hue toward black to hold
-    // WCAG AA (see the contrast floor test below).
-    // `tag_name` shares the blue `entity.name.tag` rule, `blockquote_marker`
-    // the teal quote rule, and `gutter` the block chrome
-    // (`editorLineNumber.foreground`).
-    const expected: Record<string, Record<string, string>> = {
-      "nord-dark": {
-        attr_name: "#8fbcbb",
-        background_color: "#2e3440",
-        blockquote_marker: "#8fbcbb",
-        boolean: "#81a1c1",
-        changed: "#ebcb8b",
-        comment: "#616e88",
-        decorator: "#d08770",
-        deleted: "#bf616a",
-        directive: "#5e81ac",
-        function: "#88c0d0",
-        gutter: "#4c566a",
-        identifier: "#d8dee9",
-        inserted: "#a3be8c",
-        keyword: "#81a1c1",
-        number: "#b48ead",
-        operator: "#81a1c1",
-        punctuation: "#eceff4",
-        string: "#a3be8c",
-        tag: "#81a1c1",
-        tag_name: "#81a1c1",
-        type: "#8fbcbb",
-      },
-      "nord-light": {
-        background_color: "#eceff4",
-        blockquote_marker: "#475e5e",
-        comment: "#4c566a",
-        function: "#425e67",
-        gutter: "#4c566a",
-        identifier: "#3b4252",
-        keyword: "#495b6f",
-        number: "#6a5266",
-        punctuation: "#2e3440",
-        string: "#505e44",
-        tag: "#495b6f",
-        tag_name: "#495b6f",
-        type: "#475e5e",
-      },
-    };
-    for (const [id, tokens] of Object.entries(expected)) {
-      const palette = getCodeBlockPalette(id);
-      for (const [token, color] of Object.entries(tokens)) {
-        strictEqual(
-          (palette[token] ?? "").toLowerCase(),
-          color.toLowerCase(),
-          `${id} ${token} drifted from the official reference`
-        );
-      }
-    }
-  });
-
-  test("everforest copies the official VS Code reference", () => {
-    // Spot-checks against sainnhe/everforest tokenColors; the full map
-    // lives in everforest.ts. CASE: official hexes are lowercase.
-    const expected: Record<string, Record<string, string>> = {
-      "everforest-dark": {
-        attr_name: "#dbbc7f",
-        background_color: "#2d353b",
-        comment: "#859289",
-        function: "#a7c080",
-        keyword: "#e67e80",
-        number: "#d699b6",
-        operator: "#e69875",
-        punctuation: "#d3c6aa",
-        string: "#dbbc7f",
-        tag: "#e69875",
-        tag_name: "#a7c080",
-        type: "#7fbbb3",
-      },
-      "everforest-light": {
-        attr_name: "#dfa000",
-        background_color: "#fdf6e3",
-        comment: "#939f91",
-        function: "#8da101",
-        keyword: "#f85552",
-        number: "#df69ba",
-        operator: "#f57d26",
-        punctuation: "#5c6a72",
-        string: "#dfa000",
-        tag: "#f57d26",
-        tag_name: "#8da101",
-        type: "#3a94c5",
-      },
-    };
-    for (const [id, tokens] of Object.entries(expected)) {
-      const palette = getCodeBlockPalette(id);
-      for (const [token, color] of Object.entries(tokens)) {
-        strictEqual(
-          (palette[token] ?? "").toLowerCase(),
-          color.toLowerCase(),
-          `${id} ${token} drifted from the official reference`
-        );
-      }
-    }
-  });
-
-  test("nord-light holds the 6.0 contrast floor on Snow Storm", () => {
-    // Light trades exact hues for readability: every painted token must
-    // reach 6.0:1 against `background_color` — AA with margin. Dark stays
-    // verbatim and is intentionally exempt.
-    const palette = getCodeBlockPalette("nord-light");
-    const bg = palette["background_color"] ?? "#eceff4";
-    const bgLum = hexToLuminance(bg);
-    for (const [token, color] of Object.entries(palette)) {
-      if (token === "background_color" || color === "inherit") {
-        continue;
-      }
-      const lum = hexToLuminance(color);
-      const ratio =
-        (Math.max(lum, bgLum) + 0.05) / (Math.min(lum, bgLum) + 0.05);
+  test("fine-grained Shiki theme loaders resolve valid registrations for all pre-selected themes", async () => {
+    const entries = Object.entries(SHIKI_THEME_LOADERS);
+    strictEqual(entries.length, 10);
+    for (const [themeId, loader] of entries) {
+      const mod = await loader();
       ok(
-        ratio >= 6,
-        `nord-light ${token} (${color}) is ${ratio.toFixed(2)}:1, below 6.0`
+        mod.default && typeof mod.default.name === "string",
+        `${themeId} loader did not resolve a Shiki ThemeRegistration`
+      );
+      ok(
+        Array.isArray(mod.default.tokenColors) ||
+          Array.isArray(mod.default.settings),
+        `${themeId} registration is missing tokenColors/settings`
       );
     }
   });
 
-  test("italic themes mark comments italic", () => {
-    // Nord is excluded: the official reference specifies no fontStyle
-    // for comments, so they render upright.
-    for (const theme of ["catppuccin-dark", "everforest-dark"] as const) {
-      const styles = getCodeBlockStyles(theme);
-      deepStrictEqual(styles["comment"], ["italic"]);
-    }
-  });
+  test("fine-grained Shiki highlighter loads requested themes and languages on demand", async () => {
+    const highlighter = getShikiHighlighter();
+    ok(highlighter !== null);
 
-  test("nord underlines markdown links like markup.underline.link", () => {
-    for (const theme of ["nord-dark", "nord-light"] as const) {
-      const styles = getCodeBlockStyles(theme);
-      for (const token of [
-        "autolink",
-        "link_text",
-        "url",
-        "url_link",
-        "url_title",
-      ] as const) {
-        deepStrictEqual(styles[token], ["underline"], `${theme} ${token}`);
-      }
-    }
-  });
+    await loadCodeTheme("nord-dark");
+    await loadCodeLanguage("ts");
 
-  test("family guard accepts known values only", () => {
-    strictEqual(isCodeBlockThemeFamily("nord"), true);
-    strictEqual(isCodeBlockThemeFamily("solarized"), false);
-    strictEqual(isCodeBlockThemeFamily(null), false);
+    strictEqual(isCodeThemeLoaded("nord-dark"), true);
+    strictEqual(isCodeLanguageLoaded("typescript"), true);
+    ok(highlighter.getLoadedThemes().includes("nord-dark"));
+    ok(highlighter.getLoadedLanguages().includes("typescript"));
+
+    const lines = tokenizeCodeLines("const x = 1;", "ts", "nord-dark");
+    ok(lines !== null && lines.length === 1);
+    const firstLine = lines[0] ?? [];
+    strictEqual(firstLine.map((t) => t.text).join(""), "const x = 1;");
+    ok(
+      firstLine.some((t) => t.style.toLowerCase().includes("#81a1c1")),
+      "expected Nord keyword color (#81a1c1) on `const`"
+    );
+
+    await loadCodeThemeFamily("github-light");
+    strictEqual(isCodeThemeLoaded("github-light"), true);
+    strictEqual(isCodeThemeLoaded("github-dark"), true);
   });
 });
