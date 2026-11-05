@@ -50,6 +50,8 @@ import type {
   TabNode,
 } from "lexical";
 
+import { registerCodePaste } from "./paste";
+
 type CodeLineChild = CodeHighlightNode | TabNode | LineBreakNode;
 
 const $isCodeLineChild = (node: LexicalNode | null): node is CodeLineChild =>
@@ -481,6 +483,7 @@ export function registerCodeBlockBehavior(editor: LexicalEditor): () => void {
   }
 
   registrations.push(
+    registerCodePaste(editor),
     editor.registerNodeTransform(CodeHighlightNode, (node) => {
       if (!$isCodeNode(node.getParent())) {
         node.replace($createTextNode(node.getTextContent()));
