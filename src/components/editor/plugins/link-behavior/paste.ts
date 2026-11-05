@@ -1,13 +1,15 @@
 "use client";
 
+import { $isCodeNode } from "@lexical/code";
 import { $createLinkNode, TOGGLE_LINK_COMMAND } from "@lexical/link";
 import {
   $createTextNode,
   $getSelection,
   $insertNodes,
   $isRangeSelection,
+  PASTE_TAG,
 } from "lexical";
-import type { LexicalEditor } from "lexical";
+import type { LexicalEditor, LexicalNode } from "lexical";
 
 import type { FloatingLinkEditorAnchor } from "./floating-link-editor-position";
 import { toFloatingLinkEditorAnchor } from "./floating-link-editor-position";
@@ -16,6 +18,17 @@ import {
   isValidEditorLinkUrl,
   normalizeEditorLinkUrl,
 } from "./utils";
+
+const $isInsideCodeBlock = (node: LexicalNode): boolean => {
+  let current: LexicalNode | null = node;
+  while (current !== null) {
+    if ($isCodeNode(current)) {
+      return true;
+    }
+    current = current.getParent();
+  }
+  return false;
+};
 
 export interface LinkPasteMenuPayload {
   anchor: FloatingLinkEditorAnchor | null;
@@ -56,12 +69,34 @@ export const handleLinkPaste = (
   }
 
   let hasSelectedText = false;
+  let isInCodeBlock = false;
   editor.getEditorState().read(() => {
     const selection = $getSelection();
-    if ($isRangeSelection(selection) && !selection.isCollapsed()) {
-      hasSelectedText = true;
+    if ($isRangeSelection(selection)) {
+      hasSelectedText = !selection.isCollapsed();
+      isInCodeBlock =
+        $isInsideCodeBlock(selection.anchor.getNode()) ||
+        $isInsideCodeBlock(selection.focus.getNode());
     }
   });
+
+  // Code blocks only hold plain text: links can neither wrap nor live inside
+  // them. Falling through would let the core `LinkPlugin` paste handler
+  // (which runs after this one) try to link the selection and swallow the
+  // paste silently, so the URL is inserted as plain code text right here.
+  if (isInCodeBlock) {
+    event.preventDefault();
+    editor.update(
+      () => {
+        const selection = $getSelection();
+        if ($isRangeSelection(selection)) {
+          selection.insertText(clipboardText);
+        }
+      },
+      { tag: PASTE_TAG }
+    );
+    return true;
+  }
 
   const normalizedUrl = normalizeEditorLinkUrl(clipboardText);
 

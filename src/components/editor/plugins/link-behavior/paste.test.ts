@@ -25,12 +25,14 @@ const {
 } = await import("lexical");
 const { $isLinkNode, $toggleLink, LinkNode, TOGGLE_LINK_COMMAND } =
   await import("@lexical/link");
+const { $createCodeNode, CodeHighlightNode, CodeNode } =
+  await import("@lexical/code");
 
 const { handleLinkPaste } = await import("./paste");
 
 const createTestEditor = () => {
   const editor = createEditor({
-    nodes: [LinkNode, ParagraphNode, TextNode],
+    nodes: [CodeHighlightNode, CodeNode, LinkNode, ParagraphNode, TextNode],
   });
 
   editor.registerCommand(
@@ -240,6 +242,34 @@ describe("handleLinkPaste", () => {
       strictEqual(linkChild !== undefined, true);
       strictEqual(linkChild?.getURL(), "https://www.google.com");
       strictEqual(linkChild?.getTextContent(), "Documentation");
+    });
+  });
+
+  test("replaces a code block selection with the plain url instead of linking it", async () => {
+    const editor = createTestEditor();
+    await editor.update(
+      () => {
+        const codeNode = $createCodeNode("javascript");
+        const textNode = $createTextNode("const a = 1;");
+        codeNode.append(textNode);
+        $getRoot().append(codeNode);
+        textNode.select(0, textNode.getTextContentSize());
+      },
+      { discrete: true }
+    );
+
+    const event = createFakePasteEvent({ text: "https://example.com" });
+    strictEqual(
+      handleLinkPaste(editor, event, { onShowPasteMenu: () => {} }),
+      true
+    );
+    strictEqual(event.prevented, true);
+    await flushUpdates();
+
+    editor.getEditorState().read(() => {
+      const codeNode = $getRoot().getFirstChild();
+      strictEqual(codeNode?.getTextContent(), "https://example.com");
+      strictEqual($isLinkNode(codeNode?.getFirstChild()), false);
     });
   });
 });
