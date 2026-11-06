@@ -269,7 +269,10 @@ describe("handleLinkPaste", () => {
     editor.getEditorState().read(() => {
       const codeNode = $getRoot().getFirstChild();
       strictEqual(codeNode?.getTextContent(), "https://example.com");
-      strictEqual($isLinkNode(codeNode?.getFirstChild()), false);
+      strictEqual(
+        $isLinkNode($isElementNode(codeNode) ? codeNode.getFirstChild() : null),
+        false
+      );
     });
   });
 });
