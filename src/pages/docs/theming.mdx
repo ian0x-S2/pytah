@@ -131,6 +131,25 @@ Dark mode is controlled by a `.dark` class on the `<html>` element. The included
 
 Tailwind's `dark:` variant is configured as `@custom-variant dark (&:is(.dark *))`, matching any element inside a `.dark` ancestor.
 
+## Code Block Theming (Shiki)
+
+Syntax highlighting inside code blocks is powered by fine-grained Shiki (`shiki/core`). The editor provides five curated theme families: `github`, `catppuccin`, `nord`, `everforest`, and `tokyo-night`.
+
+The code block theme integrates with the app theme via CSS custom properties:
+
+- `--editor-code-bg` and `--editor-code-fg`: extracted synchronously from theme metadata on frame 0 to eliminate initial paint flicker.
+- **Dual-variant families** (`github`, `catppuccin`, `everforest`): automatically preload both light and dark Shiki themes together. When `.dark` toggles on the `html` element, the code blocks recolor immediately without network latency or re-tokenization.
+- **Single-variant families** (`nord`, `tokyo-night`): stay pinned to dark across both light and dark application modes.
+- **GitHub theme integration**: The `github` family resolves its background to the shadcn `--card` token so it blends seamlessly with your application palette.
+
+You can set the default theme family on `<Editor />`:
+
+```tsx
+<Editor codeBlockTheme="tokyo-night" />
+```
+
+For complete details on language support, on-demand loading, and scoped code block behaviors, read the [Code Block Guide](/docs/guides/code-block).
+
 ## Customizing the Highlight Color
 
 The highlight token defaults to a warm yellow. To change it, update the `--highlight` values in your `:root` and `.dark` blocks:

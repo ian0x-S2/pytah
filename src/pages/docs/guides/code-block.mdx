@@ -1,0 +1,212 @@
+---
+title: "Code Block"
+description: "Feature guide for code blocks with fine-grained Shiki syntax highlighting, on-demand language and theme loading, line numbers, and scoped editor behaviors."
+group: "feature-guides"
+icon: "Code"
+label: "Code Block"
+order: 25
+---
+
+import codeCommandsSource from "@/components/editor/plugins/code-highlight/code-commands.ts?raw";
+import codeLanguagesSource from "@/components/editor/plugins/code-highlight/languages.ts?raw";
+import codePluginSource from "@/components/editor/plugins/code-highlight/plugin.tsx?raw";
+import shikiTokenizerSource from "@/components/editor/plugins/code-highlight/shiki-tokenizer.ts?raw";
+import themeRegistrySource from "@/components/editor/plugins/code-highlight/themes/registry.ts?raw";
+
+<Callout title="Feature guide">
+  Code blocks in Pytah are powered by a fine-grained <strong>Shiki</strong>{" "}
+  syntax highlighting engine with on-demand chunk loading, per-block theme and
+  language pickers, line number gutters, and scoped keyboard and paste
+  ergonomics.
+</Callout>
+
+## Files
+
+<FileTree
+  items={[
+    "src/components/editor/plugins/code-highlight/",
+    "  shiki-tokenizer.ts        ← Singleton HighlighterCore (pure JS regex) & dynamic loaders",
+    "  languages.ts              ← 21 supported languages & canonical alias mappings",
+    "  themes/registry.ts        ← Pre-selected theme families, block metadata & loaders",
+    "  plugin.tsx                ← CodeHighlightPlugin (re-entrancy guard, AST token sync)",
+    "  block-chrome.tsx          ← CodeBlockChromePlugin (language & theme select, copy button)",
+    "  line-numbers.tsx          ← CodeLineNumbersPlugin (gutter overlay + ResizeObserver)",
+    "  code-commands.ts          ← Scoped paste (plain text), scoped select-all & indentation",
+    "  code-language-select.tsx  ← Base UI Select trigger & content for languages",
+    "  code-theme-select.tsx     ← Base UI Select trigger & content for theme families",
+  ]}
+/>
+
+## Fine-Grained Shiki Engine
+
+Instead of bundling full grammar engines or loading massive WASM binaries into the client bundle, Pytah uses a fine-grained Shiki setup (`shiki/core` backed by `shiki/engine/javascript`):
+
+- **Zero-WASM, Pure JavaScript**: Powered by `createJavaScriptRegexEngine()`, eliminating the overhead and download size of the Oniguruma WebAssembly binary (`oniguruma.wasm`).
+- **Zero Initial Footprint**: The singleton `HighlighterCore` initializes synchronously on frame 0 with zero themes and zero grammars loaded.
+- **On-Demand Loading**: Grammars and themes are dynamically imported as split chunks only when a code block actually references them.
+- **Off-Critical-Path Highlighting**: Highlighting arms after the document paints (double `requestAnimationFrame`), ensuring documents with heavy code snippets render immediately as readable plain text before token splices land.
+
+```tsx
+import { createHighlighterCoreSync } from "shiki/core";
+import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
+
+export function getShikiHighlighter(): HighlighterCore {
+  if (!shikiHighlighter) {
+    shikiHighlighter = createHighlighterCoreSync({
+      engine: createJavaScriptRegexEngine(),
+      langs: [],
+      themes: [],
+    });
+  }
+  return shikiHighlighter;
+}
+```
+
+## Supported Languages & Aliases
+
+Pytah pre-configures fine-grained loaders for **21 canonical programming languages** via `@shikijs/langs/*`. Plain text (`plaintext`) is supported natively without loading any grammar chunk.
+
+| Canonical ID   | Label         | Common Aliases Handled |
+| -------------- | ------------- | ---------------------- |
+| `bash`         | Bash          | `sh`, `shell`          |
+| `css`          | CSS           | `css`                  |
+| `diff`         | Diff          | `diff`                 |
+| `dotenv`       | Dotenv        | `env`                  |
+| `go`           | Go            | `golang`               |
+| `html`         | HTML          | `xml`                  |
+| `http`         | HTTP          | `rest`                 |
+| `ini`          | INI           | `ini`                  |
+| `javascript`   | JavaScript    | `js`                   |
+| `json`         | JSON          | `json`                 |
+| `jsonc`        | JSONC         | `jsonc`                |
+| `markdown`     | Markdown      | `md`                   |
+| `plaintext`    | Plain text    | `plain`, `text`, `txt` |
+| `python`       | Python        | `py`                   |
+| `rust`         | Rust          | `rs`                   |
+| `shellsession` | Shell session | `console`, `terminal`  |
+| `sql`          | SQL           | `sql`                  |
+| `svelte`       | Svelte        | `svelte`               |
+| `toml`         | TOML          | `toml`                 |
+| `tsx`          | TSX           | `jsx`                  |
+| `typescript`   | TypeScript    | `ts`                   |
+| `yaml`         | YAML          | `yml`                  |
+
+When a language alias or unknown identifier is passed (e.g. from markdown fences or copy-paste), `normalizeCodeLanguageId` maps it to its canonical language or falls back to `javascript`.
+
+## Theme Families & Mode Switching
+
+Pytah provides five curated theme families from `@shikijs/themes/*`:
+
+| Family ID | Label | Mode Behavior | Underlying Shiki Themes |
+| --- | --- | --- | --- |
+| `github` | GitHub | Dual-variant | `github-light` / `github-dark` (resolves background to `--card`) |
+| `catppuccin` | Catppuccin | Dual-variant | `catppuccin-latte` (light) / `catppuccin-mocha` (dark) |
+| `nord` | Nord | Single-variant (dark) | `nord` (pinned to dark in both light & dark app modes) |
+| `everforest` | Everforest | Dual-variant | `everforest-light` / `everforest-dark` |
+| `tokyo-night` | Tokyo Night | Single-variant (dark) | `tokyo-night` (pinned to dark in both light & dark app modes) |
+
+### Pre-warming Sibling Themes for Instant Mode Flips
+
+Dual-variant theme families (`github`, `catppuccin`, `everforest`) automatically load both their light and dark themes together via `loadCodeThemeFamily`. When the user or system toggles dark mode:
+
+1. Both theme variants are already cached in memory.
+2. Token styles and background CSS variables (`--editor-code-bg`, `--editor-code-fg`) update synchronously without network waterfalls or painted frame flashes.
+3. Single-variant dark families (`nord`, `tokyo-night`) stay pinned to dark across both application modes with zero re-tokenization on mode flips.
+
+### Synchronous Frame 0 Block Chrome
+
+Static block chrome metadata (`THEME_META`) extracts each theme's `editor.background`, `editor.foreground`, and `editorLineNumber.foreground`. This ensures `--editor-code-bg`, `--editor-code-fg`, and line number gutters paint synchronously on frame 0 even before the asynchronous Shiki tokenization chunk finishes downloading.
+
+## Scoped Editor Ergonomics
+
+Code blocks register dedicated high-priority command handlers so typical editor behaviors remain ergonomic when editing code:
+
+### 1. Scoped Paste (code-commands.ts)
+
+Pasting formatted text or HTML into a code block can corrupt the block by inserting paragraph or rich wrapper nodes that are invalid children of `CodeNode`.
+
+`CodeHighlightPlugin` intercepts `PASTE_COMMAND` at high priority:
+
+- All pasted clipboard text (plain text, rich HTML, or serialized Lexical JSON) is inserted as **pure unformatted text** through `$insertDataTransferForPlainText`.
+- Replaces the active selection cleanly without escaping the code block.
+- Files and image pastes still fall through to the image upload handler.
+
+### 2. URL Paste as Plain Text
+
+Normal link pasting in the editor converts URLs into links or shows the floating link paste menu. Inside code blocks, URL pastes are treated as literal code text, replacing the selected code without wrapping it in an anchor or displaying link menus.
+
+### 3. Scoped Select-All (Ctrl/Cmd + A)
+
+Lexical's default `SELECT_ALL_COMMAND` selects the entire document. When triggered while the caret is inside a code block, `registerCodeBlockBehavior` intercepts the command and expands the selection to cover **only that code block's text and line breaks**. Pressing `Ctrl/Cmd+A` a second time outside the code block selects the whole document as usual.
+
+### 4. Code Indentation & Navigation
+
+- **Tab**: Inserts a tab or indents selected lines.
+- **Shift + Tab**: Dedents the current line or selection.
+- **Enter**: Automatically replicates the leading indentation of the previous line.
+
+## Configuring the Initial Code Theme
+
+You can set the default code block theme family across the entire editor using the `codeBlockTheme` prop:
+
+````tsx
+import { Editor } from "@/components/editor";
+
+export function DocumentationEditor() {
+  return (
+    <Editor
+      codeBlockTheme="tokyo-night" // "github" | "catppuccin" | "nord" | "everforest" | "tokyo-night"
+      initialMarkdown="```typescript\nconst greeting: string = 'Hello World';\n```"
+    />
+  );
+}
+````
+
+The per-block theme select in the floating block chrome allows the user to switch theme families on the fly, which updates all code blocks in the document synchronously.
+
+## Source Code Reference
+
+### Tokenizer & Engine (shiki-tokenizer.ts)
+
+<CodeBlock
+  label="src/components/editor/plugins/code-highlight/shiki-tokenizer.ts"
+  language="typescript"
+>
+  {shikiTokenizerSource}
+</CodeBlock>
+
+### Theme Registry & Metadata (registry.ts)
+
+<CodeBlock
+  label="src/components/editor/plugins/code-highlight/themes/registry.ts"
+  language="typescript"
+>
+  {themeRegistrySource}
+</CodeBlock>
+
+### Languages & Aliases (languages.ts)
+
+<CodeBlock
+  label="src/components/editor/plugins/code-highlight/languages.ts"
+  language="typescript"
+>
+  {codeLanguagesSource}
+</CodeBlock>
+
+### Plugin Orchestration (plugin.tsx)
+
+<CodeBlock
+  label="src/components/editor/plugins/code-highlight/plugin.tsx"
+  language="tsx"
+>
+  {codePluginSource}
+</CodeBlock>
+
+### Scoped Commands & Behaviors (code-commands.ts)
+
+<CodeBlock
+  label="src/components/editor/plugins/code-highlight/code-commands.ts"
+  language="typescript"
+>
+  {codeCommandsSource}
+</CodeBlock>

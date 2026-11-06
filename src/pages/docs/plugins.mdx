@@ -41,6 +41,8 @@ The `Composition` page explains where to mount plugins from a consumer perspecti
 | **draggable-block** | Drag handle that appears on hover to reorder blocks via drag-and-drop | None (DOM-level handles) |
 | **image** | Image rendering with selection ring, alignment support, and resize handles | None (custom DOM) |
 | **excalidraw** | Drawing blocks with a lazy-loaded canvas editor, static svg preview, selection ring, alignment, edge-handle resizing, and HTML round-trip via an embedded svg | None (custom DOM) |
+| **code-block-chrome** | Per-block floating controls (language picker, theme family selector, copy code button) anchored at the top-right of code blocks | Select, Button |
+| **code-line-numbers** | Gutter line numbers overlay anchored to the left of each code block, responsive to density and editor resize | None (custom DOM overlay) |
 
 ## Headless Plugins
 
@@ -51,7 +53,8 @@ The `Composition` page explains where to mount plugins from a consumer perspecti
 | **core/focus-on-mount** | Focuses the editor on first mount |
 | **core/horizontal-rule** | Horizontal rule insertion, click selection, keyboard navigation, and the `---` markdown shortcut |
 | **core/seed-content** | Seeds default Markdown content when the editor starts empty |
-| **code-highlight** | Syntax highlighting for code blocks via fine-grained Shiki (`shiki/core`, pure-JS regex engine, and on-demand `@shikijs/themes/*` and `@shikijs/langs/*` chunks) |
+| **code-highlight** | Syntax highlighting for code blocks via fine-grained Shiki (`shiki/core`, pure-JS regex engine, on-demand `@shikijs/themes/*` and `@shikijs/langs/*` chunks), scoped plain-text paste, and Tab indentation |
+| **code-select-all** | Scoped `Ctrl/Cmd+A` selection handler that restricts select-all to the active code block's boundaries |
 | **collapsible** | Collapsible block node transforms and keyboard shortcuts |
 | **layout** | Column layout insert command registration |
 | **math** | KaTeX math block and inline equation commands and Markdown transformers ($...$ and $$...$$) |

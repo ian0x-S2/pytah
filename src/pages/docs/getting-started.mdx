@@ -104,11 +104,12 @@ bun add lexical @lexical/react @lexical/rich-text @lexical/list \
   @lexical/clipboard @lexical/history @lexical/extension
 ```
 
-Then install the UI dependencies you still need:
+Then install the UI and syntax highlighting dependencies you still need:
 
 ```bash
 bun add @base-ui/react class-variance-authority clsx \
-  tailwind-merge cmdk lucide-react
+  tailwind-merge cmdk lucide-react \
+  shiki @shikijs/langs @shikijs/themes
 ```
 
 Then copy these directories and files into your project, preserving their relative paths:
