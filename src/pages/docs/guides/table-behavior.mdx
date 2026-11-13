@@ -45,7 +45,7 @@ Thin wrappers around the `@lexical/table` mutations. These are kept separate so 
 
 ## plugin.tsx
 
-Three components in one file. `TableBehaviorPlugin` is the public entry point — it renders `<TablePlugin>` and conditionally mounts the action-menu container. `TableCellActionMenuContainer` listens for selection changes and positions a small chevron button at the active cell. `TableActionMenu` is the popover content with insert/delete actions.
+`TableBehaviorPlugin` is the public entry point — it renders `<TablePlugin>` and conditionally mounts the action-menu container. `TableCellActionMenuContainer` listens for selection changes and positions a small chevron button at the active cell. `TableActionMenu` is the dropdown menu content with insert/delete actions.
 
 <CodeBlock
   label="src/components/editor/plugins/table-behavior/plugin.tsx"

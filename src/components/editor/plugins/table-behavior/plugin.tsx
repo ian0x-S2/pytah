@@ -4,27 +4,24 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { TablePlugin } from "@lexical/react/LexicalTablePlugin";
 import { useLexicalEditable } from "@lexical/react/useLexicalEditable";
 import { mergeRegister } from "@lexical/utils";
-import {
-  COMMAND_PRIORITY_CRITICAL,
-  isDOMNode,
-  SELECTION_CHANGE_COMMAND,
-} from "lexical";
+import { COMMAND_PRIORITY_CRITICAL, SELECTION_CHANGE_COMMAND } from "lexical";
 import { ChevronDownIcon } from "lucide-react";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 import { TableActionMenu } from "./menu";
 import {
   areSelectionCountsEqual,
   DEFAULT_SELECTION_COUNTS,
   readTableMenuContext,
+  resolveNextMenuIndex,
 } from "./selection";
 import type {
   ButtonPosition,
@@ -170,37 +167,6 @@ function TableCellActionMenuContainer({
     };
   }, []);
 
-  const onMenuClickOutside = useEffectEvent((event: MouseEvent) => {
-    const { target } = event;
-    if (!(target && isDOMNode(target))) {
-      return;
-    }
-
-    const menuRoot = anchorElem.querySelector(
-      "[data-table-actions-root='true']"
-    );
-    if (menuRoot?.contains(target)) {
-      return;
-    }
-
-    closeMenuAtCurrentPosition();
-  });
-
-  useEffect(() => {
-    if (!isMenuOpen) {
-      return;
-    }
-
-    const handleClickOutside = (event: MouseEvent) => {
-      onMenuClickOutside(event);
-    };
-
-    window.addEventListener("click", handleClickOutside);
-    return () => {
-      window.removeEventListener("click", handleClickOutside);
-    };
-  }, [isMenuOpen]);
-
   return createPortal(
     <div
       className={
@@ -211,7 +177,7 @@ function TableCellActionMenuContainer({
       data-table-actions-root="true"
       style={{ left: position.left, top: position.top }}
     >
-      <Popover
+      <DropdownMenu
         onOpenChange={(open) => {
           setMenuOpen(open);
 
@@ -232,14 +198,16 @@ function TableCellActionMenuContainer({
         }}
         open={isMenuOpen}
       >
-        <PopoverTrigger
+        <DropdownMenuTrigger
           render={
             <Button
               aria-label="Open table actions"
               className="size-5"
-              onMouseDown={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
+              onKeyDown={(event) => {
+                if (event.key === "Escape") {
+                  event.preventDefault();
+                  editor.focus();
+                }
               }}
               onPointerDown={(event) => {
                 event.stopPropagation();
@@ -250,10 +218,32 @@ function TableCellActionMenuContainer({
           }
         >
           <ChevronDownIcon className="size-2.5" />
-        </PopoverTrigger>
-        <PopoverContent
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
           align="start"
-          className="editor-table-menu"
+          className="editor-table-menu w-56"
+          onKeyDown={(event) => {
+            if (event.key === "Tab") {
+              event.preventDefault();
+              const items = [
+                ...event.currentTarget.querySelectorAll<HTMLElement>(
+                  '[role="menuitem"]:not([aria-disabled="true"])'
+                ),
+              ];
+              if (items.length === 0) {
+                return;
+              }
+              const currentIndex = items.indexOf(
+                document.activeElement as HTMLElement
+              );
+              const nextIndex = resolveNextMenuIndex(
+                currentIndex,
+                items.length,
+                event.shiftKey
+              );
+              items[nextIndex]?.focus();
+            }
+          }}
           side="right"
           sideOffset={8}
         >
@@ -261,8 +251,8 @@ function TableCellActionMenuContainer({
             onClose={closeMenuAtCurrentPosition}
             selectionCounts={selectionCounts}
           />
-        </PopoverContent>
-      </Popover>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>,
     anchorElem
   );

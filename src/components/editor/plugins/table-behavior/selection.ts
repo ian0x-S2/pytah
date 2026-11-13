@@ -18,6 +18,20 @@ export const areSelectionCountsEqual = (
   right: SelectionCounts
 ) => left.columns === right.columns && left.rows === right.rows;
 
+export const resolveNextMenuIndex = (
+  currentIndex: number,
+  itemCount: number,
+  shiftKey: boolean
+): number => {
+  if (itemCount <= 0) {
+    return 0;
+  }
+  if (shiftKey) {
+    return currentIndex <= 0 ? itemCount - 1 : currentIndex - 1;
+  }
+  return currentIndex >= itemCount - 1 ? 0 : currentIndex + 1;
+};
+
 export const resolveSelectionCounts = (
   selection: ReturnType<typeof $getSelection>
 ): SelectionCounts => {

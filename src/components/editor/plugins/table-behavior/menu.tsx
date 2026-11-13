@@ -1,9 +1,10 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { Columns2Icon, Rows3Icon, Trash2Icon } from "lucide-react";
-import type { MouseEvent } from "react";
 
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import {
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 import {
   deleteSelectedTable,
@@ -19,11 +20,6 @@ interface TableActionMenuProps {
   selectionCounts: SelectionCounts;
 }
 
-const handleTableActionMouseDown = (event: MouseEvent<HTMLButtonElement>) => {
-  event.preventDefault();
-  event.stopPropagation();
-};
-
 export function TableActionMenu({
   onClose,
   selectionCounts,
@@ -38,106 +34,79 @@ export function TableActionMenu({
       : `${selectionCounts.columns} columns`;
 
   return (
-    <div className="flex w-56 flex-col gap-1 p-1">
-      <Button
-        className="justify-start"
+    <>
+      <DropdownMenuItem
         onClick={() => {
           insertTableRows(editor, false, selectionCounts.rows);
           onClose();
+          editor.focus();
         }}
-        onMouseDown={handleTableActionMouseDown}
-        size="sm"
-        type="button"
-        variant="ghost"
       >
         <Rows3Icon />
         <span>Insert {rowLabel} above</span>
-      </Button>
-      <Button
-        className="justify-start"
+      </DropdownMenuItem>
+      <DropdownMenuItem
         onClick={() => {
           insertTableRows(editor, true, selectionCounts.rows);
           onClose();
+          editor.focus();
         }}
-        onMouseDown={handleTableActionMouseDown}
-        size="sm"
-        type="button"
-        variant="ghost"
       >
         <Rows3Icon />
         <span>Insert {rowLabel} below</span>
-      </Button>
-      <Button
-        className="justify-start"
+      </DropdownMenuItem>
+      <DropdownMenuItem
         onClick={() => {
           insertTableColumns(editor, false, selectionCounts.columns);
           onClose();
+          editor.focus();
         }}
-        onMouseDown={handleTableActionMouseDown}
-        size="sm"
-        type="button"
-        variant="ghost"
       >
         <Columns2Icon />
         <span>Insert {columnLabel} left</span>
-      </Button>
-      <Button
-        className="justify-start"
+      </DropdownMenuItem>
+      <DropdownMenuItem
         onClick={() => {
           insertTableColumns(editor, true, selectionCounts.columns);
           onClose();
+          editor.focus();
         }}
-        onMouseDown={handleTableActionMouseDown}
-        size="sm"
-        type="button"
-        variant="ghost"
       >
         <Columns2Icon />
         <span>Insert {columnLabel} right</span>
-      </Button>
-      <Separator className="my-1" />
-      <Button
-        className="justify-start"
+      </DropdownMenuItem>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem
         onClick={() => {
           deleteSelectedTableRow(editor);
           onClose();
+          editor.focus();
         }}
-        onMouseDown={handleTableActionMouseDown}
-        size="sm"
-        type="button"
-        variant="ghost"
       >
         <Trash2Icon />
         <span>Delete row</span>
-      </Button>
-      <Button
-        className="justify-start"
+      </DropdownMenuItem>
+      <DropdownMenuItem
         onClick={() => {
           deleteSelectedTableColumn(editor);
           onClose();
+          editor.focus();
         }}
-        onMouseDown={handleTableActionMouseDown}
-        size="sm"
-        type="button"
-        variant="ghost"
       >
         <Trash2Icon />
         <span>Delete column</span>
-      </Button>
-      <Button
-        className="justify-start text-destructive hover:bg-destructive/10 hover:text-destructive"
+      </DropdownMenuItem>
+      <DropdownMenuItem
         onClick={() => {
           deleteSelectedTable(editor);
           onClose();
+          editor.focus();
         }}
-        onMouseDown={handleTableActionMouseDown}
-        size="sm"
-        type="button"
-        variant="ghost"
+        variant="destructive"
       >
         <Trash2Icon />
         <span>Delete table</span>
-      </Button>
-    </div>
+      </DropdownMenuItem>
+    </>
   );
 }
