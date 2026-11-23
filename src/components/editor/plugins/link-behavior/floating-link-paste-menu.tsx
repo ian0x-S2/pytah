@@ -2,7 +2,14 @@
 
 import { COMMAND_PRIORITY_HIGH, KEY_DOWN_COMMAND } from "lexical";
 import type { LexicalEditor } from "lexical";
-import { useEffect, useEffectEvent, useId, useRef, useState } from "react";
+import {
+  useEffect,
+  useEffectEvent,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { Popover, PopoverContent } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -221,14 +228,20 @@ export function FloatingLinkPasteMenu({
     }
   };
 
-  if (!isOpen || !anchor) {
+  const anchorElement = useMemo(
+    () =>
+      anchor
+        ? {
+            getBoundingClientRect: () =>
+              new DOMRect(anchor.left, anchor.top, anchor.width, anchor.height),
+          }
+        : null,
+    [anchor]
+  );
+
+  if (!isOpen || !anchorElement) {
     return null;
   }
-
-  const anchorElement = {
-    getBoundingClientRect: () =>
-      new DOMRect(anchor.left, anchor.top, anchor.width, anchor.height),
-  };
 
   return (
     <Popover
@@ -243,7 +256,6 @@ export function FloatingLinkPasteMenu({
       <PopoverContent
         align="start"
         anchor={anchorElement}
-        aria-activedescendant={`${menuId}-item-${selectedIndex}`}
         aria-label="Link paste options"
         className={cn(
           "editor-floating z-50 flex w-64 origin-(--transform-origin) flex-col gap-0.5 overflow-hidden rounded-md border border-border p-1 text-sm shadow-lg ring-1 ring-border outline-hidden duration-100 fade-in-0 select-none zoom-in-95"

@@ -1,6 +1,7 @@
 "use client";
 
-import { $insertNodeToNearestRoot } from "@lexical/utils";
+import { $isCodeNode } from "@lexical/code";
+import { $findMatchingParent, $insertNodeToNearestRoot } from "@lexical/utils";
 import {
   $createParagraphNode,
   $getSelection,
@@ -38,7 +39,14 @@ export const handleExcalidrawPaste = (
   editor: LexicalEditor,
   event: ClipboardEvent
 ): boolean => {
-  if (!$isRangeSelection($getSelection())) {
+  const selection = $getSelection();
+  if (!$isRangeSelection(selection)) {
+    return false;
+  }
+
+  // Inside a code block, Excalidraw clipboard JSON is plain code text.
+  const anchorNode = selection.anchor.getNode();
+  if ($isCodeNode(anchorNode) || $findMatchingParent(anchorNode, $isCodeNode)) {
     return false;
   }
 

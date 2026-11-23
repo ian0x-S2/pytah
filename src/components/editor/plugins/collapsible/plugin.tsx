@@ -5,6 +5,7 @@ import { $findMatchingParent, mergeRegister } from "@lexical/utils";
 import {
   $createParagraphNode,
   $getSelection,
+  $isElementNode,
   $isRangeSelection,
   COMMAND_PRIORITY_LOW,
   INSERT_PARAGRAPH_COMMAND,
@@ -20,6 +21,7 @@ import {
   CollapsibleContainerNode,
 } from "../../core/nodes/collapsible/container-node";
 import {
+  $createCollapsibleContentNode,
   $isCollapsibleContentNode,
   CollapsibleContentNode,
 } from "../../core/nodes/collapsible/content-node";
@@ -85,7 +87,8 @@ const shouldInsertParagraphAfterCollapsible = () => {
     (contentParagraph &&
       selection.anchor.key === contentParagraph.getKey() &&
       selection.anchor.offset === contentParagraph.getTextContentSize()) ||
-    (titleParagraph &&
+    (!container.getOpen() &&
+      titleParagraph &&
       selection.anchor.key === titleParagraph.getKey() &&
       selection.anchor.offset === titleParagraph.getTextContentSize())
   );
@@ -125,7 +128,27 @@ export function CollapsiblePlugin() {
           return;
         }
 
-        node.replace($createParagraphNode().append(...node.getChildren()));
+        const children = node.getChildren();
+        let inlineParagraph: ReturnType<typeof $createParagraphNode> | null =
+          null;
+        for (const child of children) {
+          if ($isElementNode(child) && !child.isInline()) {
+            if (inlineParagraph) {
+              node.insertBefore(inlineParagraph);
+              inlineParagraph = null;
+            }
+            node.insertBefore(child);
+          } else {
+            if (!inlineParagraph) {
+              inlineParagraph = $createParagraphNode();
+            }
+            inlineParagraph.append(child);
+          }
+        }
+        if (inlineParagraph) {
+          node.insertBefore(inlineParagraph);
+        }
+        node.remove();
       }),
       editor.registerNodeTransform(CollapsibleContainerNode, (node) => {
         const children = node.getChildren();
@@ -134,6 +157,37 @@ export function CollapsiblePlugin() {
           $isCollapsibleTitleNode(children[0]) &&
           $isCollapsibleContentNode(children[1])
         ) {
+          return;
+        }
+
+        // Standard HTML `<details><summary>...</summary><p>...</p></details>`
+        // lacks `data-lexical-collapsible-content`: normalize trailing siblings
+        // into a `CollapsibleContentNode` instead of destroying the block.
+        if (children.length >= 1 && $isCollapsibleTitleNode(children[0])) {
+          const rest = children.slice(1);
+          const existingContent = rest.find($isCollapsibleContentNode);
+          const contentNode =
+            existingContent ?? $createCollapsibleContentNode();
+
+          for (const sibling of rest) {
+            if (sibling === contentNode) {
+              continue;
+            }
+            if ($isElementNode(sibling) && !sibling.isInline()) {
+              contentNode.append(sibling);
+            } else {
+              const paragraph = $createParagraphNode();
+              paragraph.append(sibling);
+              contentNode.append(paragraph);
+            }
+          }
+
+          if (contentNode.getChildrenSize() === 0) {
+            contentNode.append($createParagraphNode());
+          }
+          if (!existingContent) {
+            node.append(contentNode);
+          }
           return;
         }
 
@@ -267,7 +321,15 @@ export function CollapsiblePlugin() {
             container.toggleOpen();
           }
 
-          titleNode.getNextSibling()?.selectEnd();
+          const contentNode = titleNode.getNextSibling();
+          if ($isElementNode(contentNode)) {
+            const firstChild = contentNode.getFirstChild();
+            if (firstChild) {
+              firstChild.selectStart();
+            } else {
+              contentNode.selectStart();
+            }
+          }
           return true;
         },
         COMMAND_PRIORITY_LOW

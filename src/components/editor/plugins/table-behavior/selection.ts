@@ -1,5 +1,6 @@
 import {
   $getTableCellNodeFromLexicalNode,
+  $getTableNodeFromLexicalNodeOrThrow,
   $isTableSelection,
 } from "@lexical/table";
 import type { TableSelection } from "@lexical/table";
@@ -62,12 +63,37 @@ export const readTableMenuContext = (
     return null;
   }
 
+  const focusTableCellNode = $getTableCellNodeFromLexicalNode(
+    selection.focus.getNode()
+  );
+  if (
+    !focusTableCellNode?.isAttached() ||
+    !$getTableNodeFromLexicalNodeOrThrow(tableCellNode).is(
+      $getTableNodeFromLexicalNodeOrThrow(focusTableCellNode)
+    )
+  ) {
+    return null;
+  }
+
   const tableCellElement = editor.getElementByKey(tableCellNode.getKey());
   if (!tableCellElement) {
     return null;
   }
 
   const cellRect = tableCellElement.getBoundingClientRect();
+  const scrollWrapper = tableCellElement.closest(
+    ".editor-table-scroll-wrapper"
+  );
+  if (scrollWrapper) {
+    const wrapperRect = scrollWrapper.getBoundingClientRect();
+    if (
+      wrapperRect.width > 0 &&
+      (cellRect.right <= wrapperRect.left || cellRect.left >= wrapperRect.right)
+    ) {
+      return null;
+    }
+  }
+
   const anchorRect = anchorElem.getBoundingClientRect();
   const buttonSize = 20;
 

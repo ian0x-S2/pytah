@@ -16,6 +16,7 @@ import { DecoratorNode } from "lexical";
 import type { JSX } from "react";
 
 import { ImageComponent } from "../../../plugins/image/component";
+import { sanitizeMediaUrl } from "../../url";
 
 export type SerializedImageNode = Spread<
   {
@@ -64,8 +65,11 @@ const convertImageElement = (domNode: Node): DOMConversionOutput | null => {
     return null;
   }
 
-  const src = domNode.getAttribute("src");
-  if (!src || src.startsWith("file:///")) {
+  const rawSrc = domNode.getAttribute("src");
+  const src = rawSrc
+    ? sanitizeMediaUrl(rawSrc, { allowDataImage: true, allowRelative: true })
+    : null;
+  if (!src) {
     return null;
   }
 
@@ -128,22 +132,35 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
   }
 
   static importJSON(serializedNode: SerializedImageNode): ImageNode {
+    const safeSrc =
+      sanitizeMediaUrl(serializedNode.src, {
+        allowDataImage: true,
+        allowRelative: true,
+      }) ?? "";
     return $createImageNode({
       alignment: serializedNode.alignment,
       altText: serializedNode.altText,
       height: serializedNode.height,
-      src: serializedNode.src,
+      src: safeSrc,
       width: serializedNode.width,
-    }).updateFromJSON(serializedNode);
+    }).updateFromJSON({
+      ...serializedNode,
+      src: safeSrc,
+    });
   }
 
   updateFromJSON(serializedNode: LexicalUpdateJSON<SerializedImageNode>): this {
+    const safeSrc =
+      sanitizeMediaUrl(serializedNode.src, {
+        allowDataImage: true,
+        allowRelative: true,
+      }) ?? "";
     return super
       .updateFromJSON(serializedNode)
       .setAlignment(serializedNode.alignment ?? "left")
       .setAltText(serializedNode.altText)
       .setHeight(serializedNode.height)
-      .setSrc(serializedNode.src)
+      .setSrc(safeSrc)
       .setWidth(serializedNode.width);
   }
 
@@ -272,7 +289,9 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
 
   setSrc(src: string): this {
     const writable = this.getWritable();
-    writable.__src = src;
+    writable.__src =
+      sanitizeMediaUrl(src, { allowDataImage: true, allowRelative: true }) ??
+      "";
     return writable;
   }
 }

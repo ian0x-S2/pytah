@@ -72,6 +72,17 @@ describe("clampFloatingToolbarPosition", () => {
     );
   });
 
+  test("clamps the bottom viewport edge when selection is below viewport", () => {
+    deepStrictEqual(
+      clampFloatingToolbarPosition({
+        position: { left: 600, top: 900 },
+        toolbar: TOOLBAR,
+        viewport: VIEWPORT,
+      }),
+      { left: 600, top: VIEWPORT.height - TOOLBAR_VIEWPORT_MARGIN }
+    );
+  });
+
   test("respects a custom margin", () => {
     deepStrictEqual(
       clampFloatingToolbarPosition({

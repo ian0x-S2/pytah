@@ -38,9 +38,10 @@ export const clampFloatingToolbarPosition = ({
   // the left margin (best effort — the toolbar overflows either way).
   const maxLeft = Math.max(minLeft, viewport.width - halfWidth - margin);
   const minTop = toolbar.height + margin;
+  const maxTop = Math.max(minTop, viewport.height - margin);
 
   return {
     left: Math.min(maxLeft, Math.max(minLeft, position.left)),
-    top: Math.max(minTop, position.top),
+    top: Math.min(maxTop, Math.max(minTop, position.top)),
   };
 };

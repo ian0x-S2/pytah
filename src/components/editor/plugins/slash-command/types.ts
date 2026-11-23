@@ -1,7 +1,7 @@
 import type { LexicalEditor } from "lexical";
 import type { LucideIcon } from "lucide-react";
 
-export type SlashCommandId =
+export type CoreSlashCommandId =
   | "paragraph"
   | "h1"
   | "h2"
@@ -20,15 +20,22 @@ export type SlashCommandId =
   | "table"
   | "hr"
   | "callout"
+  | "info"
   | "tip"
   | "warning"
   | "caution";
 
+/**
+ * Built-in slash command ids plus open string extension so consumer
+ * `extraFeatures` can register custom commands without TypeScript errors.
+ */
+export type SlashCommandId =
+  | CoreSlashCommandId
+  | (string & Record<never, never>);
+
 export type SlashCommandSelection = SlashCommandId | "";
 
 export interface SlashCommand {
-  /** Always show regardless of feature toggles (base block types). */
-  alwaysOn?: boolean;
   description: string;
   icon: LucideIcon;
   id: SlashCommandId;

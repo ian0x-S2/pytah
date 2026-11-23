@@ -1,8 +1,8 @@
 "use client";
 
-import { $isCodeNode } from "@lexical/code";
+import { $isCodeNode, CodeNode } from "@lexical/code";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { $getNodeByKey, $getRoot } from "lexical";
+import { $getNodeByKey, $nodesOfType } from "lexical";
 import { useContext, useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 import { createPortal } from "react-dom";
@@ -49,15 +49,7 @@ const sameAnchors = (
 
 /**
  * Per-block chrome overlay for editor code blocks: theme picker + language
- * picker over the top-right corner of each block.
- *
- * Lexical renders a `CodeNode` as a single `<pre>` with no chrome, so the
- * pickers live outside the editable root (portal'd into the positioned
- * wrapper host, like the line-number gutter) and are absolutely positioned
- * over each code block. Picking a theme re-tokenizes every block through
- * the shared theme context; picking a language calls
- * `CodeNode.setLanguage`, which re-runs the Shiki tokenizer through
- * the existing highlight transform.
+ * picker over the top-right corner of each block (including nested blocks).
  */
 export function CodeBlockChromePlugin({ className }: { className?: string }) {
   const [editor] = useLexicalComposerContext();
@@ -74,6 +66,8 @@ export function CodeBlockChromePlugin({ className }: { className?: string }) {
   );
 
   useEffect(() => {
+    let frameId: number | null = null;
+
     const collect = (): void => {
       if (!host) {
         return;
@@ -81,19 +75,17 @@ export function CodeBlockChromePlugin({ className }: { className?: string }) {
       const hostRect = host.getBoundingClientRect();
       const next: CodeBlockChromeAnchor[] = [];
       editor.getEditorState().read(() => {
-        for (const child of $getRoot().getChildren()) {
-          if (!$isCodeNode(child)) {
-            continue;
-          }
-          const element = editor.getElementByKey(child.getKey());
+        for (const node of $nodesOfType(CodeNode)) {
+          const key = node.getKey();
+          const element = editor.getElementByKey(key);
           if (!(element instanceof HTMLElement)) {
             continue;
           }
           const rect = element.getBoundingClientRect();
           next.push({
-            key: child.getKey(),
-            language: normalizeCodeLanguageId(child.getLanguage()),
-            nodeKey: child.getKey(),
+            key,
+            language: normalizeCodeLanguageId(node.getLanguage()),
+            nodeKey: key,
             right: Math.round(hostRect.right - rect.right + CHROME_RIGHT_INSET),
             top: Math.round(rect.top - hostRect.top + CHROME_TOP_INSET),
           });
@@ -102,25 +94,31 @@ export function CodeBlockChromePlugin({ className }: { className?: string }) {
       setAnchors((previous) => (sameAnchors(previous, next) ? previous : next));
     };
 
+    const scheduleCollect = (): void => {
+      if (frameId !== null) {
+        return;
+      }
+      frameId = window.requestAnimationFrame(() => {
+        frameId = null;
+        collect();
+      });
+    };
+
     collect();
-    const unregister = editor.registerUpdateListener(() => {
-      collect();
-    });
-    // Same layout-without-update case as the gutter: the density toggle only
-    // flips `data-density` (all rhythm is CSS vars), so anchors go stale
-    // until the next edit. The host box tracks the wrapper on density, zen
-    // and container changes — re-collect on its resize.
-    const observer = new ResizeObserver(() => {
-      collect();
-    });
+    const unregister = editor.registerUpdateListener(scheduleCollect);
+    const observer = new ResizeObserver(scheduleCollect);
     if (host) {
       observer.observe(host);
     }
-    window.addEventListener("resize", collect);
+    window.addEventListener("resize", scheduleCollect);
     return () => {
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+        frameId = null;
+      }
       unregister();
       observer.disconnect();
-      window.removeEventListener("resize", collect);
+      window.removeEventListener("resize", scheduleCollect);
     };
   }, [editor, host]);
 
@@ -148,10 +146,12 @@ export function CodeBlockChromePlugin({ className }: { className?: string }) {
             } as CSSProperties
           }
         >
-          <CodeThemeSelect
-            onValueChange={(next) => themeContext?.setFamily(next)}
-            value={family}
-          />
+          {themeContext ? (
+            <CodeThemeSelect
+              onValueChange={(next) => themeContext.setFamily(next)}
+              value={family}
+            />
+          ) : null}
           <CodeLanguageSelect
             onValueChange={(value) => {
               editor.update(() => {

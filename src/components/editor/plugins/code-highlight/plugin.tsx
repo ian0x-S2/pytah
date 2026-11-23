@@ -13,12 +13,13 @@ import {
   $isLineBreakNode,
   $isRangeSelection,
   $isTextNode,
+  HISTORY_MERGE_TAG,
   TextNode,
 } from "lexical";
 import type { LexicalEditor, LexicalNode, RangeSelection } from "lexical";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
-import { useTheme } from "@/components/theme-context";
+import { useResolvedTheme } from "@/components/theme-context";
 
 import { registerCodeBlockBehavior } from "./code-commands";
 import { normalizeCodeLanguageId } from "./languages";
@@ -148,8 +149,8 @@ const $restoreSelectionPoint = (
 /**
  * Synchronously tokenizes a `CodeNode` with the fine-grained Shiki tokenizer
  * once its theme and language chunks are loaded. Preserves out-of-node
- * selections untouched (preventing mount and theme-toggle scroll jumps) and
- * retains in-node carets across token splices.
+ * selections untouched (including cross-block selection endpoints outside the
+ * code node) and retains in-node carets across token splices.
  */
 const $syncShikiTokens = (
   editor: LexicalEditor,
@@ -157,9 +158,6 @@ const $syncShikiTokens = (
   codeBlockTheme: string,
   tokenizer: Tokenizer
 ): void => {
-  // Never splice under an active IME session: replacing text nodes
-  // mid-composition drops it. The next committed edit re-dirties the node
-  // and converges the tokens.
   if (editor.isComposing()) {
     return;
   }
@@ -186,21 +184,31 @@ const $syncShikiTokens = (
     return;
   }
   const selection = $getSelection();
-  if (
-    !$isRangeSelection(selection) ||
-    (!$isPointInside(node, selection.anchor) &&
-      !$isPointInside(node, selection.focus))
-  ) {
-    // Out-of-node selections are untouched by the splice, so highlighting
-    // never relocates the caret into the code block.
+  if (!$isRangeSelection(selection)) {
     node.splice(0, node.getChildrenSize(), tokens);
     return;
   }
-  const retainedAnchor = $retainSelectionPoint(selection.anchor);
-  const retainedFocus = $retainSelectionPoint(selection.focus);
+
+  const anchorInside = $isPointInside(node, selection.anchor);
+  const focusInside = $isPointInside(node, selection.focus);
+  if (!(anchorInside || focusInside)) {
+    node.splice(0, node.getChildrenSize(), tokens);
+    return;
+  }
+
+  const retainedAnchor = anchorInside
+    ? $retainSelectionPoint(selection.anchor)
+    : null;
+  const retainedFocus = focusInside
+    ? $retainSelectionPoint(selection.focus)
+    : null;
   node.splice(0, node.getChildrenSize(), tokens);
-  $restoreSelectionPoint(node, selection.anchor, retainedAnchor);
-  $restoreSelectionPoint(node, selection.focus, retainedFocus);
+  if (retainedAnchor) {
+    $restoreSelectionPoint(node, selection.anchor, retainedAnchor);
+  }
+  if (retainedFocus) {
+    $restoreSelectionPoint(node, selection.focus, retainedFocus);
+  }
 };
 
 export function CodeHighlightPlugin({
@@ -215,28 +223,24 @@ export function CodeHighlightPlugin({
   themeFamily?: CodeBlockThemeFamily;
 }) {
   const [editor] = useLexicalComposerContext();
-  const { resolvedTheme } = useTheme();
+  const resolvedTheme = useResolvedTheme();
   const themeContext = useCodeBlockTheme();
   const codeBlockTheme = resolveCodeBlockThemeId(
     themeFamily ?? themeContext?.family ?? DEFAULT_CODE_BLOCK_THEME_FAMILY,
     resolvedTheme
   );
 
-  // Tokenization + per-node diff/re-splice is the most expensive
-  // synchronous work an editor mount can do; with many code blocks the
-  // chained updates starve the first paint (observed multi-second
-  // blank freeze opening a code-heavy document). Arm highlighting after the
-  // document has painted: content shows first as plain code text, colors
-  // land after paint, off the critical path.
+  // Arm syntax highlighting after the first paint so code-heavy documents
+  // paint immediately as plain text.
   const [armed, setArmed] = useState(false);
 
-  // Re-entrancy guard: registering a transform dirty-marks every node of
-  // its type — and every token IS a TextNode — so one re-registration
-  // would otherwise run the sync once per token child. The first child
-  // syncs the block; the rest skip until the update listener clears the
-  // window at commit end.
   const syncingKeysRef = useRef<Set<string>>(new Set());
   const pendingLoadsRef = useRef<Set<string>>(new Set());
+  const failedLoadsRef = useRef<Set<string>>(new Set());
+
+  // Keyboard behavior (Tab/Shift+Tab, Enter, Alt+Up/Down) mounts immediately
+  // and stays independent of theme switches.
+  useEffect(() => registerCodeBlockBehavior(editor), [editor]);
 
   useEffect(() => {
     if (armed) {
@@ -263,12 +267,19 @@ export function CodeHighlightPlugin({
     let disposed = false;
     const syncingKeys = syncingKeysRef.current;
     const pendingLoads = pendingLoadsRef.current;
+    const failedLoads = failedLoadsRef.current;
     syncingKeys.clear();
 
     // Warm both light and dark variants of the active family so subsequent
-    // `.dark` mode toggles find the sibling theme already loaded and
-    // re-tokenize synchronously inside this layout effect.
-    void loadCodeThemeFamily(codeBlockTheme);
+    // `.dark` mode toggles find the sibling theme already loaded.
+    const preloadThemeFamily = async () => {
+      try {
+        await loadCodeThemeFamily(codeBlockTheme);
+      } catch {
+        // Ignore preload errors; per-block sync retries with failed-load guard.
+      }
+    };
+    void preloadThemeFamily();
 
     const syncNode = (codeNode: CodeNode): void => {
       const key = codeNode.getKey();
@@ -287,30 +298,43 @@ export function CodeHighlightPlugin({
         if (codeNode.getIsSyntaxHighlightSupported()) {
           codeNode.setIsSyntaxHighlightSupported(false);
         }
-        const loadKey = `${key}:${codeBlockTheme}:${language}`;
-        if (!pendingLoads.has(loadKey)) {
-          pendingLoads.add(loadKey);
-          const preloadNodeAssets = async () => {
-            try {
-              await Promise.all([
-                loadCodeThemeFamily(codeBlockTheme),
-                loadCodeLanguage(language),
-              ]);
-            } catch {
-              // Keep plain text when a grammar or theme fails to load.
-            }
-            pendingLoads.delete(loadKey);
-            if (!disposed) {
-              editor.update(() => {
+        const assetKey = `${codeBlockTheme}:${language}`;
+        const loadKey = `${key}:${assetKey}`;
+        if (failedLoads.has(assetKey) || pendingLoads.has(loadKey)) {
+          return;
+        }
+        pendingLoads.add(loadKey);
+        const preloadNodeAssets = async () => {
+          let loaded = false;
+          try {
+            await Promise.all([
+              loadCodeThemeFamily(codeBlockTheme),
+              loadCodeLanguage(language),
+            ]);
+            loaded =
+              isCodeThemeLoaded(codeBlockTheme) &&
+              isCodeLanguageLoaded(language);
+          } catch {
+            loaded = false;
+          }
+          pendingLoads.delete(loadKey);
+          if (!loaded) {
+            failedLoads.add(assetKey);
+            return;
+          }
+          if (!disposed) {
+            editor.update(
+              () => {
                 const latest = $getNodeByKey(key);
                 if ($isCodeNode(latest)) {
                   latest.markDirty();
                 }
-              });
-            }
-          };
-          void preloadNodeAssets();
-        }
+              },
+              { tag: HISTORY_MERGE_TAG }
+            );
+          }
+        };
+        void preloadNodeAssets();
         return;
       }
 
@@ -330,7 +354,6 @@ export function CodeHighlightPlugin({
       CodeHighlightNode,
       syncParent
     );
-    const unregisterBehavior = registerCodeBlockBehavior(editor);
     const unregisterPass = editor.registerUpdateListener(() => {
       syncingKeys.clear();
     });
@@ -340,7 +363,6 @@ export function CodeHighlightPlugin({
       unregisterCode();
       unregisterText();
       unregisterHighlight();
-      unregisterBehavior();
       unregisterPass();
     };
   }, [armed, codeBlockTheme, editor]);

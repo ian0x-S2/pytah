@@ -12,6 +12,7 @@ import type {
 import { DecoratorNode } from "lexical";
 import type { JSX } from "react";
 
+import { sanitizeHrefUrl, sanitizeMediaUrl, sanitizeWebUrl } from "../../url";
 import { WeblinkComponent } from "./component";
 import type {
   SerializedWeblinkNode,
@@ -22,6 +23,7 @@ import { resolveWeblinkMetadata } from "./utils";
 
 export type {
   SerializedWeblinkNode,
+  WeblinkFaviconResolver,
   WeblinkFormat,
   WeblinkMetadata,
   WeblinkMetadataFetcher,
@@ -30,13 +32,22 @@ export type {
 
 export { resolveWeblinkMetadata } from "./utils";
 
+const sanitizeWeblinkAsset = (value?: string): string | undefined =>
+  value
+    ? (sanitizeMediaUrl(value, {
+        allowDataImage: false,
+        allowRelative: true,
+      }) ?? undefined)
+    : undefined;
+
 const convertWeblinkElement = (domNode: Node): DOMConversionOutput | null => {
   if (!(domNode instanceof HTMLElement)) {
     return null;
   }
 
   const { description, format, icon, image, title, url } = domNode.dataset;
-  if (!url) {
+  const safeUrl = url ? sanitizeWebUrl(url) : null;
+  if (!safeUrl) {
     return null;
   }
 
@@ -47,10 +58,10 @@ const convertWeblinkElement = (domNode: Node): DOMConversionOutput | null => {
     node: $createWeblinkNode({
       description,
       format: resolvedFormat,
-      icon,
-      image,
+      icon: sanitizeWeblinkAsset(icon),
+      image: sanitizeWeblinkAsset(image),
       title,
-      url,
+      url: safeUrl,
     }),
   };
 };
@@ -65,12 +76,16 @@ export class WeblinkNode extends DecoratorNode<JSX.Element> {
 
   constructor(payload: WeblinkPayload, key?: NodeKey) {
     super(key);
-    this.__url = payload.url;
-    const defaultMeta = resolveWeblinkMetadata(payload.url);
+    const safeUrl = sanitizeWebUrl(payload.url) ?? "about:blank";
+    this.__url = safeUrl;
+    const defaultMeta = resolveWeblinkMetadata(safeUrl);
     this.__title = payload.title ?? defaultMeta.title;
     this.__description = payload.description;
-    this.__icon = payload.icon ?? defaultMeta.icon;
-    this.__image = payload.image;
+    this.__icon =
+      payload.icon === undefined
+        ? defaultMeta.icon
+        : sanitizeWeblinkAsset(payload.icon);
+    this.__image = sanitizeWeblinkAsset(payload.image);
     this.__format = payload.format ?? "inline";
   }
 
@@ -138,20 +153,29 @@ export class WeblinkNode extends DecoratorNode<JSX.Element> {
     serializedNode: LexicalUpdateJSON<SerializedWeblinkNode>
   ): this {
     const writable = this.getWritable();
-    writable.__url = serializedNode.url;
-    writable.__title = serializedNode.title;
+    const safeUrl = sanitizeWebUrl(serializedNode.url) ?? "about:blank";
+    const defaultMeta = resolveWeblinkMetadata(safeUrl);
+    writable.__url = safeUrl;
+    writable.__title = serializedNode.title ?? defaultMeta.title;
     writable.__description = serializedNode.description;
-    writable.__icon = serializedNode.icon;
-    writable.__image = serializedNode.image;
-    writable.__format = serializedNode.format;
+    writable.__icon =
+      serializedNode.icon === undefined
+        ? defaultMeta.icon
+        : sanitizeWeblinkAsset(serializedNode.icon);
+    writable.__image = sanitizeWeblinkAsset(serializedNode.image);
+    writable.__format =
+      serializedNode.format === "small" || serializedNode.format === "wide"
+        ? serializedNode.format
+        : "inline";
     return super.updateFromJSON(serializedNode);
   }
 
   override exportDOM(): DOMExportOutput {
     const isInline = this.__format === "inline";
+    const safeHref = sanitizeHrefUrl(this.__url);
     const element = document.createElement(isInline ? "a" : "figure");
     element.dataset.lexicalWeblink = "true";
-    element.dataset.url = this.__url;
+    element.dataset.url = safeHref;
     element.dataset.title = this.__title;
     element.dataset.format = this.__format;
     if (this.__description) {
@@ -165,12 +189,12 @@ export class WeblinkNode extends DecoratorNode<JSX.Element> {
     }
 
     if (isInline) {
-      (element as HTMLAnchorElement).href = this.__url;
-      element.textContent = this.__title || this.__url;
+      (element as HTMLAnchorElement).href = safeHref;
+      element.textContent = this.__title || safeHref;
     } else {
       const link = document.createElement("a");
-      link.href = this.__url;
-      link.textContent = this.__title || this.__url;
+      link.href = safeHref;
+      link.textContent = this.__title || safeHref;
       element.append(link);
     }
 
@@ -233,7 +257,7 @@ export class WeblinkNode extends DecoratorNode<JSX.Element> {
 
   setUrl(url: string): this {
     const writable = this.getWritable();
-    writable.__url = url;
+    writable.__url = sanitizeWebUrl(url) ?? "about:blank";
     return writable;
   }
 
@@ -263,7 +287,7 @@ export class WeblinkNode extends DecoratorNode<JSX.Element> {
 
   setIcon(icon?: string): this {
     const writable = this.getWritable();
-    writable.__icon = icon;
+    writable.__icon = sanitizeWeblinkAsset(icon);
     return writable;
   }
 
@@ -273,7 +297,7 @@ export class WeblinkNode extends DecoratorNode<JSX.Element> {
 
   setImage(image?: string): this {
     const writable = this.getWritable();
-    writable.__image = image;
+    writable.__image = sanitizeWeblinkAsset(image);
     return writable;
   }
 

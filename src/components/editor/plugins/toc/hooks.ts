@@ -1,7 +1,6 @@
 "use client";
 
 import type { TableOfContentsEntry } from "@lexical/react/LexicalTableOfContentsPlugin";
-import { mergeRegister } from "@lexical/utils";
 import { $getNodeByKey } from "lexical";
 import type { LexicalEditor, NodeKey } from "lexical";
 import { useEffect, useEffectEvent, useReducer, useRef } from "react";
@@ -11,7 +10,6 @@ import type { TocState } from "./types";
 import {
   getScrollParent,
   resolveActiveHeadingKey,
-  resolveSelectedHeadingKey,
   scrollToHeading,
 } from "./utils";
 
@@ -58,6 +56,7 @@ export function useActiveHeading(
 
   const rafRef = useRef<number>(0);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const activeClickCleanupRef = useRef<(() => void) | null>(null);
 
   // References to keep callbacks stable
   const entriesRef = useRef(entries);
@@ -152,43 +151,26 @@ export function useActiveHeading(
     });
   });
 
-  // Handle selected heading (cursor selection)
-  useEffect(
-    () =>
-      mergeRegister(
-        editor.registerUpdateListener(({ editorState }) => {
-          editorState.read(() => {
-            dispatch({
-              payload: resolveSelectedHeadingKey(),
-              type: "set_selected",
-            });
-          });
-        })
-      ),
-    [editor]
-  );
-
-  // Listen to keys of entries. Re-setup observers only when the keys list changes.
+  // Rebuild observer whenever the heading keys list changes or on remount
+  // (including React StrictMode double-invoke).
   const keysStr = entries.map(([key]) => key).join(",");
-  const prevKeysStrRef = useRef("");
 
   useEffect(() => {
-    // Initial setups
     handleResize();
 
-    // Rebuild observer only when the list of heading keys changes
-    const keysChanged = keysStr !== prevKeysStrRef.current;
-    prevKeysStrRef.current = keysStr;
+    const scrollParent = scrollParentRef.current;
+    const observer =
+      typeof IntersectionObserver === "function"
+        ? new IntersectionObserver(syncActiveHeading, {
+            root:
+              scrollParent === window ? null : (scrollParent as HTMLElement),
+            rootMargin: OBSERVER_ROOT_MARGIN,
+            threshold: 0,
+          })
+        : null;
 
-    let observer: IntersectionObserver | null = null;
-
-    if (keysChanged) {
-      observer = new IntersectionObserver(syncActiveHeading, {
-        rootMargin: OBSERVER_ROOT_MARGIN,
-        threshold: 0,
-      });
-
-      for (const [key] of entriesRef.current) {
+    if (observer && keysStr) {
+      for (const key of keysStr.split(",")) {
         const element = editor.getElementByKey(key);
         if (element instanceof HTMLElement) {
           observer.observe(element);
@@ -196,10 +178,8 @@ export function useActiveHeading(
       }
     }
 
-    // Always sync active heading when keys change or on mount
     syncActiveHeading();
 
-    // Listen on window for scroll with capture: true to catch all scroll events
     window.addEventListener("scroll", syncActiveHeading, {
       capture: true,
       passive: true,
@@ -208,8 +188,11 @@ export function useActiveHeading(
 
     return () => {
       cancelAnimationFrame(rafRef.current);
+      activeClickCleanupRef.current?.();
+      activeClickCleanupRef.current = null;
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
       }
       observer?.disconnect();
       window.removeEventListener("scroll", syncActiveHeading, {
@@ -226,7 +209,9 @@ export function useActiveHeading(
       return;
     }
 
-    // Stop any pending animation frames
+    // Clear any in-flight programmatic scroll listeners/timers before starting a new one.
+    activeClickCleanupRef.current?.();
+    activeClickCleanupRef.current = null;
     cancelAnimationFrame(rafRef.current);
 
     // Instantly update active heading highlight in the UI for premium UX
@@ -268,8 +253,14 @@ export function useActiveHeading(
       window.removeEventListener("keydown", handleUserInterrupt);
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      if (activeClickCleanupRef.current === cleanup) {
+        activeClickCleanupRef.current = null;
       }
     };
+
+    activeClickCleanupRef.current = cleanup;
 
     // Listen for scrollend or user interruption to restore scroll tracking
     scrollParent.addEventListener("scrollend", onScrollEnd, { once: true });

@@ -5,12 +5,13 @@ import { ListItemNode, ListNode } from "@lexical/list";
 import type { InitialConfigType } from "@lexical/react/LexicalComposer";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
+import type { LexicalEditor } from "lexical";
 
 import type { LexicalNodeList } from "./features";
 import { WeblinkNode } from "./nodes/weblink/node";
 import { editorTheme } from "./theme";
 
-function onError(error: Error) {
+function defaultOnError(error: Error) {
   console.error("[Editor]", error);
 }
 
@@ -48,6 +49,8 @@ interface CreateEditorConfigOptions {
   /** Nodes contributed by enabled feature descriptors. */
   featureNodes?: LexicalNodeList;
   namespace?: string;
+  /** Consumer-provided error handler overriding the default logger. */
+  onError?: (error: Error, editor: LexicalEditor) => void;
 }
 
 export const createEditorConfig = ({
@@ -56,6 +59,7 @@ export const createEditorConfig = ({
   namespace = "PytahEditor",
   featureNodes = [],
   extraNodes,
+  onError,
 }: CreateEditorConfigOptions): InitialConfigType => {
   const nodes = [...BASE_EDITOR_NODES, ...featureNodes, ...(extraNodes ?? [])];
 
@@ -63,7 +67,7 @@ export const createEditorConfig = ({
     editable,
     namespace,
     nodes,
-    onError,
+    onError: onError ?? defaultOnError,
     theme: editorTheme,
     ...(editorState ? { editorState } : {}),
   };

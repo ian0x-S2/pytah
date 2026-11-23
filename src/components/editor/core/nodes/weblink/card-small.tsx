@@ -42,6 +42,7 @@ export function WeblinkSmallCard({
         onClick={handleLinkClick}
         rel="noopener noreferrer"
         target="_blank"
+        title={isEditable ? "Ctrl/Cmd+Click to open link" : undefined}
       />
       <div className="pointer-events-none relative z-0 flex min-w-0 flex-1 items-center gap-3">
         <div className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border/50 bg-muted/60">
@@ -59,7 +60,10 @@ export function WeblinkSmallCard({
       <div className="relative z-10 flex items-center gap-0.5">
         {formatMenu}
         <div className="pointer-events-none p-1">
-          <ExternalLinkIcon className="size-3.5 shrink-0 text-muted-foreground/60 transition-colors group-hover:text-foreground" />
+          <ExternalLinkIcon
+            aria-hidden
+            className="size-3.5 shrink-0 text-muted-foreground/60 transition-colors group-hover:text-foreground"
+          />
         </div>
       </div>
     </div>

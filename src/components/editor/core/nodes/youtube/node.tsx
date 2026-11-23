@@ -16,6 +16,8 @@ import type {
 } from "lexical";
 import type { JSX } from "react";
 
+import { isValidYouTubeVideoId } from "../../../plugins/youtube/utils";
+
 /**
  * Sandboxed embed permissions for the YouTube nocookie player. Scripts and
  * same-origin are required for playback; presentation enables fullscreen/PiP.
@@ -25,6 +27,23 @@ import type { JSX } from "react";
  */
 const YOUTUBE_IFRAME_SANDBOX =
   "allow-scripts allow-same-origin allow-presentation";
+
+const VALID_YOUTUBE_FORMATS = new Set<ElementFormatType>([
+  "left",
+  "start",
+  "center",
+  "right",
+  "end",
+  "justify",
+  "",
+]);
+
+const parseYouTubeFormat = (
+  value: string | undefined
+): ElementFormatType | undefined =>
+  value && VALID_YOUTUBE_FORMATS.has(value as ElementFormatType)
+    ? (value as ElementFormatType)
+    : undefined;
 
 type YouTubeComponentProps = Readonly<{
   className: Readonly<{
@@ -52,6 +71,7 @@ function YouTubeComponent({
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
         className="editor-youtube-frame aspect-video h-auto w-full max-w-full shadow-xs"
+        referrerPolicy="strict-origin-when-cross-origin"
         sandbox={YOUTUBE_IFRAME_SANDBOX}
         src={`https://www.youtube-nocookie.com/embed/${videoId}`}
         title="YouTube video"
@@ -71,13 +91,17 @@ const convertYouTubeElement = (
   domNode: HTMLElement
 ): DOMConversionOutput | null => {
   const videoId = domNode.dataset.lexicalYoutube;
-  if (!videoId) {
+  if (!(videoId && isValidYouTubeVideoId(videoId))) {
     return null;
   }
 
-  return {
-    node: $createYouTubeNode(videoId),
-  };
+  const node = $createYouTubeNode(videoId);
+  const format = parseYouTubeFormat(domNode.dataset.lexicalYoutubeFormat);
+  if (format) {
+    node.setFormat(format);
+  }
+
+  return { node };
 };
 
 export class YouTubeNode extends DecoratorBlockNode {
@@ -92,9 +116,10 @@ export class YouTubeNode extends DecoratorBlockNode {
   }
 
   static importJSON(serializedNode: SerializedYouTubeNode): YouTubeNode {
-    return $createYouTubeNode(serializedNode.videoId).updateFromJSON(
-      serializedNode
-    );
+    const videoId = isValidYouTubeVideoId(serializedNode.videoId)
+      ? serializedNode.videoId
+      : "";
+    return $createYouTubeNode(videoId).updateFromJSON(serializedNode);
   }
 
   static importDOM(): DOMConversionMap | null {
@@ -129,6 +154,9 @@ export class YouTubeNode extends DecoratorBlockNode {
   exportDOM(): DOMExportOutput {
     const element = document.createElement("iframe");
     element.dataset.lexicalYoutube = this.__videoId;
+    if (this.__format) {
+      element.dataset.lexicalYoutubeFormat = this.__format;
+    }
     element.setAttribute(
       "src",
       `https://www.youtube-nocookie.com/embed/${this.__videoId}`
@@ -138,6 +166,7 @@ export class YouTubeNode extends DecoratorBlockNode {
       "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
     );
     element.setAttribute("allowfullscreen", "true");
+    element.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
     element.setAttribute("sandbox", YOUTUBE_IFRAME_SANDBOX);
     // Replaces the obsolete `frameborder` attribute; keeps pasted/exported
     // embeds borderless in contexts without the editor stylesheet.

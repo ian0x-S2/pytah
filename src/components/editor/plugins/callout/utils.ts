@@ -31,13 +31,30 @@ export const replaceElementWithCallout = (
 ) => {
   const calloutNode = $createCalloutNode(type, emoji);
   const children = targetElement.getChildren();
+
   if (children.length > 0) {
+    let inlineParagraph: ReturnType<typeof $createParagraphNode> | null = null;
     for (const child of children) {
-      calloutNode.append(child);
+      if ($isElementNode(child) && !child.isInline()) {
+        if (inlineParagraph) {
+          calloutNode.append(inlineParagraph);
+          inlineParagraph = null;
+        }
+        calloutNode.append(child);
+      } else {
+        if (!inlineParagraph) {
+          inlineParagraph = $createParagraphNode();
+        }
+        inlineParagraph.append(child);
+      }
+    }
+    if (inlineParagraph) {
+      calloutNode.append(inlineParagraph);
     }
   } else {
     calloutNode.append($createParagraphNode());
   }
+
   targetElement.replace(calloutNode);
   calloutNode.selectEnd();
 };
@@ -58,11 +75,11 @@ export const insertCallout = (
 
   const selection = $getSelection();
   if ($isRangeSelection(selection)) {
-    const targetElement = selection.anchor
-      .getNode()
-      .getTopLevelElementOrThrow();
-    replaceElementWithCallout(targetElement, type, emoji);
-    return true;
+    const targetElement = selection.anchor.getNode().getTopLevelElement();
+    if (targetElement && $isElementNode(targetElement)) {
+      replaceElementWithCallout(targetElement, type, emoji);
+      return true;
+    }
   }
 
   const { calloutNode, paragraph } = createCalloutStructure(type, emoji);

@@ -10,11 +10,14 @@
     "cmdk": "cmdk",
     "cva": "class-variance-authority",
     "lucide": "lucide-react",
-    "tailwindMerge": "tailwind-merge"
+    "shiki": "shiki",
+    "tailwindMerge": "tailwind-merge",
+    "twAnimateCss": "tw-animate-css"
   },
   "notes": {
     "alias": "The standard @/ alias must resolve to ./src.",
     "animate": "Your global Tailwind v4 stylesheet should import tw-animate-css.",
-    "css": "The registry item injects the editor highlight tokens automatically."
+    "css": "The registry item injects the editor highlight tokens automatically.",
+    "theme": "Light/dark mode detects the .dark class on <html> automatically; wrapping your app in ThemeProvider is optional."
   }
 }

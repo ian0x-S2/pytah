@@ -1,7 +1,27 @@
-const IMAGE_MIME_PREFIX = "image/";
+const ALLOWED_IMAGE_MIME_TYPES = new Set([
+  "image/avif",
+  "image/gif",
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+]);
+
+export const MAX_IMAGE_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 
 export const isImageFile = (file: File): boolean =>
-  file.type.startsWith(IMAGE_MIME_PREFIX);
+  ALLOWED_IMAGE_MIME_TYPES.has(file.type.toLowerCase()) &&
+  file.size <= MAX_IMAGE_FILE_SIZE_BYTES;
+
+export const getImageFiles = (files: Iterable<File>): File[] => {
+  const validFiles: File[] = [];
+  for (const file of files) {
+    if (isImageFile(file)) {
+      validFiles.push(file);
+    }
+  }
+  return validFiles;
+};
 
 export const getFirstImageFile = (files: Iterable<File>): File | null => {
   for (const file of files) {

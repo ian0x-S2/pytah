@@ -1,5 +1,14 @@
-import { $getSelection, $isRangeSelection, $isTextNode } from "lexical";
-import type { ElementNode, LexicalEditor } from "lexical";
+import {
+  $createParagraphNode,
+  $getRoot,
+  $getSelection,
+  $isElementNode,
+  $isParagraphNode,
+  $isRangeSelection,
+  $isRootNode,
+  $isTextNode,
+} from "lexical";
+import type { ElementNode, LexicalEditor, LexicalNode } from "lexical";
 
 import type { SlashCommand, SlashCommandSelection } from "./types";
 
@@ -38,9 +47,6 @@ export const getNeighborCommandId = (
 ): SlashCommandSelection => {
   const currentIndex = getSelectedCommandIndex(commands, selectedCommandId);
 
-  // A stale selection (the query filtered it out) acts as if it sat at the
-  // effective highlight edge, so the very first arrow key press moves off it
-  // instead of re-syncing to the first item.
   if (currentIndex < 0) {
     return direction === "down"
       ? (commands.at(1)?.id ?? getFirstCommandId(commands))
@@ -66,11 +72,24 @@ export const getSlashQueryMatch = (textUpToCursor: string): string | null => {
   return match?.groups?.query ?? null;
 };
 
+const $resolveNearestBlockElement = (node: LexicalNode): ElementNode | null => {
+  let current: LexicalNode | null = node;
+  while (current !== null && !$isRootNode(current)) {
+    if ($isElementNode(current) && !current.isInline()) {
+      return current;
+    }
+    current = current.getParent();
+  }
+  return null;
+};
+
 /**
- * Runs a block-level replacement against the current selection: clears the
- * text content of the selected text node and hands the enclosing top-level
- * element to the callback. Mirrors the flow the slash menu has always used
- * for direct executors.
+ * Runs a block-level replacement against the current selection:
+ * - On a text node: clears its text (slash query) and hands the nearest
+ *   enclosing block element to `replace` without destroying nested containers
+ *   like tables, callouts, or collapsibles.
+ * - On an empty block element (e.g. empty paragraph): replaces it directly.
+ * - On `RootNode`: appends a fresh paragraph and replaces it.
  */
 export const replaceCurrentBlock = (
   editor: LexicalEditor,
@@ -85,11 +104,74 @@ export const replaceCurrentBlock = (
 
     const node = selection.anchor.getNode();
 
-    if (!$isTextNode(node)) {
+    if ($isTextNode(node)) {
+      node.setTextContent("");
+      const block =
+        $resolveNearestBlockElement(node) ?? node.getTopLevelElement();
+      if (block && $isElementNode(block)) {
+        replace(block);
+      }
       return;
     }
 
-    node.setTextContent("");
-    replace(node.getTopLevelElementOrThrow());
+    if ($isRootNode(node)) {
+      const paragraph = $createParagraphNode();
+      node.append(paragraph);
+      paragraph.select();
+      replace(paragraph);
+      return;
+    }
+
+    const block = $resolveNearestBlockElement(node);
+    if (block) {
+      replace(block);
+    }
   });
+};
+
+/**
+ * Runs an insert-style command from a toolbar surface without destroying
+ * existing text: replaces the current block only if it is an empty paragraph
+ * (or holds a slash query), otherwise inserts a new paragraph below it first.
+ */
+export const runToolbarInsert = (
+  editor: LexicalEditor,
+  run: (editor: LexicalEditor) => void
+): void => {
+  editor.update(
+    () => {
+      const selection = $getSelection();
+      if (!$isRangeSelection(selection)) {
+        const paragraph = $createParagraphNode();
+        $getRoot().append(paragraph);
+        paragraph.select();
+        return;
+      }
+
+      const anchorNode = selection.anchor.getNode();
+      const topLevel = anchorNode.getTopLevelElement();
+
+      if (!topLevel) {
+        const paragraph = $createParagraphNode();
+        $getRoot().append(paragraph);
+        paragraph.select();
+        return;
+      }
+
+      const trimmedText = topLevel.getTextContent().trim();
+      const isEmptyParagraph =
+        $isParagraphNode(topLevel) && trimmedText.length === 0;
+      const isSlashQuery =
+        $isParagraphNode(topLevel) && SLASH_QUERY_PATTERN.test(trimmedText);
+
+      if (!(isEmptyParagraph || isSlashQuery)) {
+        const paragraph = $createParagraphNode();
+        topLevel.insertAfter(paragraph);
+        paragraph.select();
+      }
+    },
+    { discrete: true }
+  );
+
+  run(editor);
 };

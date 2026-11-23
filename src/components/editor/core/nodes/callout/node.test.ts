@@ -409,4 +409,28 @@ describe("CalloutNode", () => {
       }
     });
   });
+
+  test("normalizes invalid callout types to note and exports multi-paragraph callouts", () => {
+    const editor = createEditor({
+      nodes: [CalloutNode, ParagraphNode, TextNode],
+    });
+
+    editor.update(() => {
+      const invalid = $createCalloutNode("unknown" as never);
+      strictEqual(invalid.getCalloutType(), "note");
+
+      const multi = $createCalloutNode("info");
+      const p1 = $createParagraphNode();
+      p1.append($createTextNode("First line"));
+      const p2 = $createParagraphNode();
+      p2.append($createTextNode("Second line"));
+      multi.append(p1, p2);
+      $getRoot().append(multi);
+
+      const exported = CALLOUT_MARKDOWN_TRANSFORMER.export?.(multi, (node) =>
+        node.getTextContent()
+      );
+      strictEqual(exported, "> [!INFO]\n> First line\n>\n> Second line");
+    });
+  });
 });

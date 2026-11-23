@@ -7,7 +7,6 @@ import { useRef } from "react";
 
 import {
   Command,
-  CommandEmpty,
   CommandGroup,
   CommandItem,
   CommandList,
@@ -31,7 +30,6 @@ interface SlashCommandMenuProps {
   commandListRef: RefObject<HTMLDivElement | null>;
   editor: LexicalEditor;
   filteredEntries: readonly FeatureSlashCommand[];
-  hasResults: boolean;
   isMenuVisible: boolean;
   onHoverCommand: (id: SlashCommandSelection) => void;
   onSelectEntry: (entry: FeatureSlashCommand) => void;
@@ -39,17 +37,11 @@ interface SlashCommandMenuProps {
   selectedIndex: number;
 }
 
-/**
- * Floating slash-menu surface: popover positioning plus the cmdk list.
- * State, keyboard handling and scroll-into-view stay in the plugin so this
- * component only maps entries to items.
- */
 export function SlashCommandMenu({
   anchor,
   commandListRef,
   editor,
   filteredEntries,
-  hasResults,
   isMenuVisible,
   onHoverCommand,
   onSelectEntry,
@@ -78,9 +70,6 @@ export function SlashCommandMenu({
             finalFocus={false}
             initialFocus={false}
             onFocus={(event) => {
-              // `initialFocus: false` makes the focus manager grab focus for
-              // the popup, stealing the caret from the editor. Bounce focus
-              // back to the editor root so typing continues seamlessly.
               const rootElement = editor.getRootElement();
               if (
                 rootElement &&
@@ -131,7 +120,10 @@ export function SlashCommandMenu({
                         }}
                         value={command.id}
                       >
-                        <command.icon className="size-4 shrink-0 text-muted-foreground" />
+                        <command.icon
+                          aria-hidden
+                          className="size-4 shrink-0 text-muted-foreground"
+                        />
                         <div className="flex flex-col">
                           <span className="text-sm">{command.label}</span>
                           <span className="text-xs text-muted-foreground">
@@ -142,9 +134,6 @@ export function SlashCommandMenu({
                     );
                   })}
                 </CommandGroup>
-                {hasResults ? null : (
-                  <CommandEmpty>No results found</CommandEmpty>
-                )}
               </CommandList>
             </Command>
           </PopoverPrimitive.Popup>

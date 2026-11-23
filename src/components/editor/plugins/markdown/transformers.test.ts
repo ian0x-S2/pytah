@@ -8,7 +8,11 @@ import {
 import { createHeadlessEditor } from "@lexical/headless";
 import { createEmptyHistoryState, registerHistory } from "@lexical/history";
 import type { ElementTransformer } from "@lexical/markdown";
-import { $convertFromMarkdownString } from "@lexical/markdown";
+import {
+  $convertFromMarkdownString,
+  $convertToMarkdownString,
+} from "@lexical/markdown";
+import { $isTableNode } from "@lexical/table";
 import {
   $createParagraphNode,
   $createTextNode,
@@ -19,6 +23,7 @@ import {
 import type { ElementNode } from "lexical";
 
 import { createEditorConfig } from "../../core/config";
+import { $createWeblinkNode } from "../../core/nodes/weblink/node";
 import {
   $replaceWithHorizontalRule,
   BUILTIN_MARKDOWN_TRANSFORMERS,
@@ -184,5 +189,65 @@ describe("Horizontal rule markdown transformer", () => {
       strictEqual($isParagraphNode(children[0]), true);
       strictEqual(children[0]?.getTextContent(), "---");
     });
+  });
+});
+
+describe("Table and Weblink markdown transformers", () => {
+  test("round-trips markdown tables containing escaped pipes", async () => {
+    const editor = createTestEditor();
+    const markdown = [
+      "| Expr | Result |",
+      "| --- | --- |",
+      "| a \\| b | ok |",
+    ].join("\n");
+
+    await editor.update(() => {
+      $convertFromMarkdownString(markdown, [...BUILTIN_MARKDOWN_TRANSFORMERS]);
+    });
+
+    let exported = "";
+    editor.getEditorState().read(() => {
+      const first = $getRoot().getFirstChild();
+      strictEqual($isTableNode(first), true);
+      strictEqual(first?.getTextContent().includes("a | b"), true);
+      exported = $convertToMarkdownString([...BUILTIN_MARKDOWN_TRANSFORMERS]);
+    });
+
+    strictEqual(exported.includes("a \\| b"), true);
+  });
+
+  test("exports inline and block weblink nodes as markdown links", async () => {
+    const editor = createTestEditor();
+
+    await editor.update(() => {
+      const root = $getRoot();
+      const paragraph = $createParagraphNode();
+      paragraph.append(
+        $createTextNode("See "),
+        $createWeblinkNode({
+          format: "inline",
+          title: "Pytah Docs",
+          url: "https://pytah.dev/docs",
+        })
+      );
+      root.append(
+        paragraph,
+        $createWeblinkNode({
+          format: "wide",
+          title: "Lexical",
+          url: "https://lexical.dev",
+        })
+      );
+    });
+
+    const markdown = editor
+      .getEditorState()
+      .read(() => $convertToMarkdownString([...BUILTIN_MARKDOWN_TRANSFORMERS]));
+
+    strictEqual(
+      markdown.includes("[Pytah Docs](https://pytah.dev/docs)"),
+      true
+    );
+    strictEqual(markdown.includes("[Lexical](https://lexical.dev)"), true);
   });
 });

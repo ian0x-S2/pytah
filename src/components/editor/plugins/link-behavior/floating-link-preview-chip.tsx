@@ -5,6 +5,8 @@ import { ExternalLinkIcon, PencilIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface FloatingLinkPreviewChipProps {
+  /** Owning editor key used to isolate hover surfaces across multi-editor pages. */
+  editorKey: string;
   /** Sanitized href for the open-in-new-tab action. */
   href: string;
   label: string;
@@ -17,6 +19,7 @@ interface FloatingLinkPreviewChipProps {
  * link while typing keeps the caret where it was.
  */
 export function FloatingLinkPreviewChip({
+  editorKey,
   href,
   label,
   onEdit,
@@ -24,6 +27,7 @@ export function FloatingLinkPreviewChip({
   return (
     <div
       className="flex max-w-[min(24rem,calc(100vw-2rem))] items-center gap-1"
+      data-editor-key={editorKey}
       data-slot="floating-link-preview"
     >
       <Button
@@ -40,7 +44,7 @@ export function FloatingLinkPreviewChip({
         size="icon-xs"
         variant="ghost"
       >
-        <ExternalLinkIcon />
+        <ExternalLinkIcon aria-hidden />
       </Button>
       <span
         className="min-w-0 flex-1 truncate text-xs text-muted-foreground"
@@ -56,7 +60,7 @@ export function FloatingLinkPreviewChip({
         type="button"
         variant="secondary"
       >
-        <PencilIcon />
+        <PencilIcon aria-hidden />
         Edit
       </Button>
     </div>

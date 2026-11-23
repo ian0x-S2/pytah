@@ -7,7 +7,12 @@ import {
   $insertTableRowAtSelection,
   $isTableSelection,
 } from "@lexical/table";
-import { $getSelection, $isRangeSelection } from "lexical";
+import {
+  $createParagraphNode,
+  $getRoot,
+  $getSelection,
+  $isRangeSelection,
+} from "lexical";
 import type { LexicalEditor } from "lexical";
 
 export const insertTableRows = (
@@ -60,6 +65,19 @@ export const deleteSelectedTable = (editor: LexicalEditor) => {
       return;
     }
 
-    $getTableNodeFromLexicalNodeOrThrow(tableCellNode).remove();
+    const tableNode = $getTableNodeFromLexicalNodeOrThrow(tableCellNode);
+    const nextSibling = tableNode.getNextSibling();
+    const prevSibling = tableNode.getPreviousSibling();
+    tableNode.remove();
+
+    if ($getRoot().getChildrenSize() === 0) {
+      const paragraph = $createParagraphNode();
+      $getRoot().append(paragraph);
+      paragraph.select();
+    } else if (nextSibling) {
+      nextSibling.selectStart();
+    } else if (prevSibling) {
+      prevSibling.selectEnd();
+    }
   });
 };

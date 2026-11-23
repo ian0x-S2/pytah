@@ -3,6 +3,7 @@ import {
   AlertTriangleIcon,
   InfoIcon,
   LightbulbIcon,
+  NotebookPenIcon,
   ShieldAlertIcon,
 } from "lucide-react";
 
@@ -28,13 +29,25 @@ export const calloutFeature: ExtraEditorFeature = {
     {
       command: {
         description: "Highlighted callout box",
-        icon: InfoIcon,
+        icon: NotebookPenIcon,
         id: "callout",
-        keywords: ["callout", "note", "alert", "box", "info"],
+        keywords: ["callout", "note", "alert", "box"],
         label: "Callout",
       },
       run: (editor) => {
         replaceCurrentBlock(editor, applyCalloutCommand("note"));
+      },
+    },
+    {
+      command: {
+        description: "Informational callout box",
+        icon: InfoIcon,
+        id: "info",
+        keywords: ["info", "information", "callout", "alert"],
+        label: "Info",
+      },
+      run: (editor) => {
+        replaceCurrentBlock(editor, applyCalloutCommand("info"));
       },
     },
     {

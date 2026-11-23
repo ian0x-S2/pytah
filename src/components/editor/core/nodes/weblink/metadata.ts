@@ -1,6 +1,14 @@
 import { createContext, useContext } from "react";
 
-import type { WeblinkMetadata, WeblinkMetadataFetcher } from "./types";
+import { sanitizeMediaUrl, sanitizeWebUrl } from "../../url";
+import type {
+  WeblinkFaviconResolver,
+  WeblinkMetadata,
+  WeblinkMetadataFetcher,
+} from "./types";
+
+const DEFAULT_CACHE_MAX_AGE_MS = 1000 * 60 * 5;
+const MAX_CACHE_ENTRIES = 200;
 
 /**
  * Normalizes arbitrary scraped metadata (e.g. from metascraper, open-graph-scraper,
@@ -32,9 +40,26 @@ export function normalizeWeblinkMetadata(
     "og:description",
     "twitter:description"
   );
-  const image = pickString("image", "og:image", "twitter:image", "banner");
-  const icon = pickString("icon", "logo", "favicon", "shortcut icon");
-  const url = pickString("url", "canonical") || fallbackUrl;
+  const rawImage = pickString("image", "og:image", "twitter:image", "banner");
+  const rawIcon = pickString("icon", "logo", "favicon", "shortcut icon");
+  const rawUrl = pickString("url", "canonical");
+
+  const image = rawImage
+    ? (sanitizeMediaUrl(rawImage, {
+        allowDataImage: false,
+        allowRelative: true,
+      }) ?? undefined)
+    : undefined;
+  const icon = rawIcon
+    ? (sanitizeMediaUrl(rawIcon, {
+        allowDataImage: false,
+        allowRelative: true,
+      }) ?? undefined)
+    : undefined;
+  const url =
+    (rawUrl ? sanitizeWebUrl(rawUrl) : null) ??
+    sanitizeWebUrl(fallbackUrl) ??
+    fallbackUrl;
 
   return {
     description,
@@ -48,15 +73,6 @@ export function normalizeWeblinkMetadata(
 /**
  * Adapter helper for `metascraper` (or any scraper library that returns a dictionary).
  * Wraps any scraper function into a standard `WeblinkMetadataFetcher`.
- *
- * @example
- * ```ts
- * // In an Electron/Node backend or API client:
- * const fetcher = createMetascraperAdapter(async (url) => {
- *   const res = await fetch(`/api/metadata?url=${encodeURIComponent(url)}`);
- *   return await res.json();
- * });
- * ```
  */
 export function createMetascraperAdapter(
   scrapeFn: (
@@ -86,13 +102,6 @@ export interface EndpointFetcherOptions {
 /**
  * Creates a `WeblinkMetadataFetcher` pointing to a backend API endpoint
  * (e.g. Next.js Route Handler `/api/metadata`, Express route, or Cloudflare Worker).
- *
- * @example
- * ```tsx
- * <Editor weblinkMetadataFetcher={createEndpointWeblinkFetcher("/api/metadata")} />
- * // Or simply:
- * <Editor weblinkMetadataFetcher="/api/metadata" />
- * ```
  */
 export function createEndpointWeblinkFetcher(
   endpoint: string,
@@ -131,8 +140,8 @@ export interface CachedFetcherOptions {
 }
 
 /**
- * Wraps any `WeblinkMetadataFetcher` in an in-memory cache to prevent
- * duplicate network calls for the same URL during the session.
+ * Wraps any `WeblinkMetadataFetcher` in an in-memory cache with in-flight
+ * deduplication and TTL eviction. Failed or aborted lookups are never cached.
  */
 export function createCachedWeblinkFetcher(
   fetcher: WeblinkMetadataFetcher,
@@ -140,20 +149,75 @@ export function createCachedWeblinkFetcher(
 ): WeblinkMetadataFetcher {
   const cache = new Map<
     string,
-    { data: Partial<WeblinkMetadata> | null; timestamp: number }
+    { data: Partial<WeblinkMetadata>; timestamp: number }
   >();
-  const maxAge = options?.maxAgeMs ?? 1000 * 60 * 5;
+  const inFlight = new Map<
+    string,
+    Promise<Partial<WeblinkMetadata> | null | undefined>
+  >();
+  const maxAge = options?.maxAgeMs ?? DEFAULT_CACHE_MAX_AGE_MS;
 
-  return async (url: string, fetchOpt?: { signal?: AbortSignal }) => {
-    const cached = cache.get(url);
+  const pruneExpired = (now: number) => {
+    for (const [key, entry] of cache) {
+      if (now - entry.timestamp >= maxAge) {
+        cache.delete(key);
+      }
+    }
+    while (cache.size > MAX_CACHE_ENTRIES) {
+      const oldestKey = cache.keys().next().value;
+      if (oldestKey === undefined) {
+        break;
+      }
+      cache.delete(oldestKey);
+    }
+  };
+
+  return (
+    url: string,
+    fetchOpt?: { forceRefresh?: boolean; signal?: AbortSignal }
+  ): Promise<Partial<WeblinkMetadata> | null | undefined> => {
     const now = Date.now();
-    if (cached && now - cached.timestamp < maxAge) {
-      return cached.data;
+    const forceRefresh = fetchOpt?.forceRefresh === true;
+
+    if (!forceRefresh) {
+      const cached = cache.get(url);
+      if (cached) {
+        if (now - cached.timestamp < maxAge) {
+          return Promise.resolve(cached.data);
+        }
+        cache.delete(url);
+      }
+
+      const pending = inFlight.get(url);
+      if (pending) {
+        return pending;
+      }
     }
 
-    const data = await fetcher(url, fetchOpt);
-    cache.set(url, { data: data ?? null, timestamp: now });
-    return data;
+    const runRequest = async (): Promise<
+      Partial<WeblinkMetadata> | null | undefined
+    > => {
+      try {
+        const data = await fetcher(url, fetchOpt);
+        if (data && !fetchOpt?.signal?.aborted) {
+          const timestamp = Date.now();
+          cache.set(url, { data, timestamp });
+          pruneExpired(timestamp);
+        }
+        return data;
+      } finally {
+        if (inFlight.get(url) === request) {
+          inFlight.delete(url);
+        }
+      }
+    };
+
+    const request = runRequest();
+    if (!forceRefresh) {
+      inFlight.set(url, request);
+    }
+
+    return request;
   };
 }
 
@@ -182,4 +246,14 @@ export const WeblinkMetadataContext =
 
 export function useWeblinkMetadataFetcher(): WeblinkMetadataFetcher | null {
   return useContext(WeblinkMetadataContext);
+}
+
+export const WeblinkFaviconContext = createContext<
+  WeblinkFaviconResolver | undefined
+>(undefined);
+
+export function useWeblinkFaviconResolver():
+  | WeblinkFaviconResolver
+  | undefined {
+  return useContext(WeblinkFaviconContext);
 }

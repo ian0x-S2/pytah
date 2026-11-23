@@ -138,9 +138,12 @@ export class MathNode extends DecoratorNode<JSX.Element> {
       addClassNamesToElement(element, config.theme.math);
     }
 
-    element.className = this.__inline
-      ? "inline-block cursor-pointer select-none"
-      : "block my-2 cursor-pointer select-none text-center";
+    addClassNamesToElement(
+      element,
+      this.__inline
+        ? "inline-block cursor-pointer select-none"
+        : "block my-2 cursor-pointer select-none text-center"
+    );
 
     return element;
   }

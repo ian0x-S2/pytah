@@ -251,4 +251,15 @@ describe("submitToolbarLinkText (link title edit)", () => {
     });
     deepStrictEqual(format, { format: 1, style: "color: red;" });
   });
+
+  test("returns false without unlinking when an invalid URL is submitted", async () => {
+    const editor = createTestEditor();
+    const linkKey = await seedLink(editor, "Keep me");
+    await selectWholeLink(editor, linkKey);
+
+    const applied = applyToolbarLink(editor, "javascript:alert(1)", "Changed");
+    strictEqual(applied, false);
+    strictEqual(readRootText(editor), "Keep me");
+    strictEqual(readLinkUrl(editor), "https://lexical.dev");
+  });
 });

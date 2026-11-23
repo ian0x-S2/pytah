@@ -1,3 +1,5 @@
+import type { LucideIcon } from "lucide-react";
+
 import type { SlashCommandId } from "../slash-command/types";
 
 /**
@@ -9,6 +11,7 @@ export type BlockTypeValue = SlashCommandId;
 export interface BlockOption {
   alwaysOn?: boolean;
   description: string;
+  icon?: LucideIcon;
   label: string;
   value: BlockTypeValue;
 }

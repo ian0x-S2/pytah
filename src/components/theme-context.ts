@@ -1,4 +1,4 @@
-import { createContext, useContext } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 export type Theme = "light" | "dark" | "system";
 
@@ -101,4 +101,49 @@ export function useTheme(): ThemeProviderState {
   }
 
   return context;
+}
+
+const readDomTheme = (): "light" | "dark" => {
+  if (typeof document === "undefined") {
+    return "light";
+  }
+
+  return document.documentElement.classList.contains("dark") ? "dark" : "light";
+};
+
+/**
+ * Resolves the active light/dark theme without requiring Pytah's own
+ * `ThemeProvider`. When a `ThemeProvider` is present, reads directly from it;
+ * otherwise observes the `.dark` class on `<html>` (compatible with
+ * `next-themes`, Tailwind dark mode, or standalone apps).
+ */
+export function useResolvedTheme(): "light" | "dark" {
+  const context = useContext(ThemeContext);
+  const [domTheme, setDomTheme] = useState<"light" | "dark">(readDomTheme);
+
+  useEffect(() => {
+    if (context || typeof document === "undefined") {
+      return;
+    }
+
+    const sync = () => {
+      setDomTheme(readDomTheme());
+    };
+
+    sync();
+
+    if (typeof MutationObserver === "undefined") {
+      return;
+    }
+
+    const observer = new MutationObserver(sync);
+    observer.observe(document.documentElement, {
+      attributeFilter: ["class"],
+      attributes: true,
+    });
+
+    return () => observer.disconnect();
+  }, [context]);
+
+  return context ? context.resolvedTheme : domTheme;
 }

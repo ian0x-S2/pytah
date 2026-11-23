@@ -9,15 +9,12 @@ import {
   XIcon,
 } from "lucide-react";
 import type { KeyboardEvent } from "react";
-import { useId } from "react";
+import { useId, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import {
-  applyToolbarLink,
-  clearToolbarLink,
-} from "../floating-toolbar/actions";
+import { applyToolbarLink, clearToolbarLink } from "./actions";
 import { sanitizeEditorLinkUrl } from "./utils";
 
 interface FloatingLinkEditorPanelProps {
@@ -50,8 +47,16 @@ export function FloatingLinkEditorPanel({
   onEditedLinkUrlChange,
   onRequestClose,
 }: FloatingLinkEditorPanelProps) {
+  const [urlError, setUrlError] = useState<string | null>(null);
+
   const applyLink = () => {
-    applyToolbarLink(editor, editedLinkUrl, editedLinkText);
+    const applied = applyToolbarLink(editor, editedLinkUrl, editedLinkText);
+    if (!applied) {
+      setUrlError("Enter a valid URL");
+      return;
+    }
+
+    setUrlError(null);
     onRequestClose();
   };
 
@@ -64,6 +69,7 @@ export function FloatingLinkEditorPanel({
 
   const textInputId = useId();
   const urlInputId = useId();
+  const urlErrorId = useId();
 
   return (
     <div className="flex w-full min-w-0 flex-col gap-2">
@@ -93,16 +99,28 @@ export function FloatingLinkEditorPanel({
           Link
         </label>
         <Input
+          aria-describedby={urlError ? urlErrorId : undefined}
+          aria-invalid={urlError !== null}
           className="h-8 min-w-0 flex-1 text-xs"
           id={urlInputId}
           inputMode="url"
-          onChange={(event) => onEditedLinkUrlChange(event.target.value)}
+          onChange={(event) => {
+            if (urlError !== null) {
+              setUrlError(null);
+            }
+            onEditedLinkUrlChange(event.target.value);
+          }}
           onKeyDown={handleFieldKeyDown}
           placeholder="Add a link"
           ref={isLinkEditMode ? inputRef : undefined}
           type="url"
           value={editedLinkUrl}
         />
+        {urlError ? (
+          <p className="text-xs text-destructive" id={urlErrorId} role="alert">
+            {urlError}
+          </p>
+        ) : null}
       </div>
       <div className="flex items-center justify-end gap-0.5 pt-2">
         <Button
@@ -119,7 +137,7 @@ export function FloatingLinkEditorPanel({
           size="icon-xs"
           variant="ghost"
         >
-          <ExternalLinkIcon />
+          <ExternalLinkIcon aria-hidden />
         </Button>
         <Button
           aria-label="Remove link"
@@ -131,7 +149,7 @@ export function FloatingLinkEditorPanel({
           type="button"
           variant="ghost"
         >
-          <Trash2Icon />
+          <Trash2Icon aria-hidden />
         </Button>
         <Button
           aria-label="Close link editor"
@@ -140,7 +158,7 @@ export function FloatingLinkEditorPanel({
           type="button"
           variant="ghost"
         >
-          <XIcon />
+          <XIcon aria-hidden />
         </Button>
       </div>
     </div>

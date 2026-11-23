@@ -3,18 +3,12 @@
 import { TOGGLE_LINK_COMMAND } from "@lexical/link";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { mergeRegister } from "@lexical/utils";
-import { COMMAND_PRIORITY_LOW, SELECTION_CHANGE_COMMAND } from "lexical";
 import {
-  BaselineIcon,
-  BoldIcon,
-  CodeIcon,
-  HighlighterIcon,
-  ItalicIcon,
-  LinkIcon,
-  PaintBucketIcon,
-  StrikethroughIcon,
-  UnderlineIcon,
-} from "lucide-react";
+  BLUR_COMMAND,
+  COMMAND_PRIORITY_LOW,
+  SELECTION_CHANGE_COMMAND,
+} from "lexical";
+import { BaselineIcon, LinkIcon, PaintBucketIcon } from "lucide-react";
 import {
   useEffect,
   useEffectEvent,
@@ -29,16 +23,23 @@ import { Toggle } from "@/components/ui/toggle";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
-import { useEditorResolvedCommands } from "../../core/editor-commands-context";
+import {
+  useEditorFloatingLinkEnabled,
+  useEditorResolvedCommands,
+} from "../../core/editor-commands-context";
 import { ColorSwatches } from "../../ui/color-swatches";
 import { ToolbarTooltip } from "../../ui/toolbar-tooltip";
 import { BlockTypeDrop } from "../block-type-toolbar/block-type-drop";
 import type { BlockTypeValue } from "../block-type-toolbar/types";
 import { getBlockTypeFromSelection } from "../block-type-toolbar/utils";
+import { OPEN_FLOATING_LINK_EDITOR_COMMAND } from "../link-behavior/commands";
 import { LINK_PLACEHOLDER_URL } from "../link-behavior/utils";
 import { applyBgColor, applyTextColor, toggleToolbarFormat } from "./actions";
-import { DEFAULT_FORMAT_STATE, EMPTY_TOOLBAR_POSITION } from "./constants";
-import { OPEN_FLOATING_LINK_EDITOR_COMMAND } from "./link-command";
+import {
+  DEFAULT_FORMAT_STATE,
+  EMPTY_TOOLBAR_POSITION,
+  TOOLBAR_FORMAT_ACTIONS,
+} from "./constants";
 import { FloatingToolbarOverflowMenu } from "./overflow-menu";
 import { clampFloatingToolbarPosition } from "./position";
 import {
@@ -51,36 +52,14 @@ import type {
   FloatingToolbarPosition,
 } from "./types";
 
-const TOOLBAR_FORMAT_ACTIONS = [
-  { format: "bold", icon: BoldIcon, key: "isBold", label: "Bold" },
-  { format: "italic", icon: ItalicIcon, key: "isItalic", label: "Italic" },
-  {
-    format: "underline",
-    icon: UnderlineIcon,
-    key: "isUnderline",
-    label: "Underline",
-  },
-  {
-    format: "strikethrough",
-    icon: StrikethroughIcon,
-    key: "isStrikethrough",
-    label: "Strikethrough",
-  },
-  {
-    format: "highlight",
-    icon: HighlighterIcon,
-    key: "isHighlight",
-    label: "Highlight",
-  },
-  { format: "code", icon: CodeIcon, key: "isCode", label: "Inline code" },
-] as const;
-
 export function FloatingToolbarPlugin() {
   const [editor] = useLexicalComposerContext();
   const toolbarRef = useRef<HTMLDivElement>(null);
   const commandIds = useEditorResolvedCommands();
+  const isFloatingLinkEnabled = useEditorFloatingLinkEnabled();
 
   const [isVisible, setIsVisible] = useState(false);
+  const isVisibleRef = useRef(false);
   const [position, setPosition] = useState<FloatingToolbarPosition>(
     EMPTY_TOOLBAR_POSITION
   );
@@ -96,6 +75,7 @@ export function FloatingToolbarPlugin() {
     useState<FloatingToolbarPosition>(EMPTY_TOOLBAR_POSITION);
 
   useLayoutEffect(() => {
+    isVisibleRef.current = isVisible;
     if (!isVisible) {
       return;
     }
@@ -127,10 +107,11 @@ export function FloatingToolbarPlugin() {
   // stays closed: the card is the active editing surface. The flag clears
   // once the selection leaves the link.
   const linkEditorOpenRef = useRef(false);
+  const viewportRafRef = useRef<number | null>(null);
 
   const updateToolbar = useEffectEvent(() => {
     editor.getEditorState().read(() => {
-      const toolbarState = readFloatingToolbarState();
+      const toolbarState = readFloatingToolbarState(editor);
 
       setFormats((currentFormats) =>
         areFloatingToolbarFormatsEqual(currentFormats, toolbarState.formats)
@@ -148,6 +129,7 @@ export function FloatingToolbarPlugin() {
 
       if (linkEditorOpenRef.current) {
         if (toolbarState.linkUrl !== "") {
+          openSurfaceCountRef.current = 0;
           setIsVisible((currentIsVisible) =>
             currentIsVisible ? false : currentIsVisible
           );
@@ -157,6 +139,9 @@ export function FloatingToolbarPlugin() {
       }
 
       if (openSurfaceCountRef.current === 0) {
+        if (!toolbarState.isVisible) {
+          openSurfaceCountRef.current = 0;
+        }
         setIsVisible((currentIsVisible) =>
           currentIsVisible === toolbarState.isVisible
             ? currentIsVisible
@@ -174,6 +159,23 @@ export function FloatingToolbarPlugin() {
     });
   });
 
+  const handleBlur = useEffectEvent((event: FocusEvent) => {
+    if (openSurfaceCountRef.current > 0) {
+      return;
+    }
+
+    const nextTarget = event.relatedTarget;
+    if (
+      nextTarget instanceof Node &&
+      toolbarRef.current?.contains(nextTarget)
+    ) {
+      return;
+    }
+
+    openSurfaceCountRef.current = 0;
+    setIsVisible(false);
+  });
+
   useEffect(
     () =>
       mergeRegister(
@@ -185,12 +187,48 @@ export function FloatingToolbarPlugin() {
           },
           COMMAND_PRIORITY_LOW
         ),
+        editor.registerCommand(
+          BLUR_COMMAND,
+          (event) => {
+            handleBlur(event);
+            return false;
+          },
+          COMMAND_PRIORITY_LOW
+        ),
         editor.registerUpdateListener(() => {
           updateToolbar();
         })
       ),
     [editor]
   );
+
+  useEffect(() => {
+    const scheduleViewportSync = () => {
+      if (!isVisibleRef.current || viewportRafRef.current !== null) {
+        return;
+      }
+
+      viewportRafRef.current = window.requestAnimationFrame(() => {
+        viewportRafRef.current = null;
+        updateToolbar();
+      });
+    };
+
+    window.addEventListener("resize", scheduleViewportSync, { passive: true });
+    window.addEventListener("scroll", scheduleViewportSync, {
+      capture: true,
+      passive: true,
+    });
+
+    return () => {
+      if (viewportRafRef.current !== null) {
+        window.cancelAnimationFrame(viewportRafRef.current);
+        viewportRafRef.current = null;
+      }
+      window.removeEventListener("resize", scheduleViewportSync);
+      window.removeEventListener("scroll", scheduleViewportSync, true);
+    };
+  }, []);
 
   const handleLinkToggle = () => {
     if (formats.isLink) {
@@ -199,13 +237,19 @@ export function FloatingToolbarPlugin() {
     }
 
     editor.dispatchCommand(TOGGLE_LINK_COMMAND, LINK_PLACEHOLDER_URL);
-    editor.dispatchCommand(OPEN_FLOATING_LINK_EDITOR_COMMAND, undefined);
-    linkEditorOpenRef.current = true;
-    setIsVisible(false);
+    if (isFloatingLinkEnabled) {
+      editor.dispatchCommand(OPEN_FLOATING_LINK_EDITOR_COMMAND, undefined);
+      linkEditorOpenRef.current = true;
+      openSurfaceCountRef.current = 0;
+      setIsVisible(false);
+    }
   };
 
   const handleSurfaceOpenChange = (open: boolean) => {
-    openSurfaceCountRef.current += open ? 1 : -1;
+    openSurfaceCountRef.current = Math.max(
+      0,
+      openSurfaceCountRef.current + (open ? 1 : -1)
+    );
   };
 
   if (!isVisible) {
@@ -247,13 +291,14 @@ export function FloatingToolbarPlugin() {
               <ToolbarTooltip key={action.format} label={action.label}>
                 <Toggle
                   aria-label={action.label}
+                  onMouseDown={(event) => event.preventDefault()}
                   onPressedChange={() =>
                     toggleToolbarFormat(editor, action.format)
                   }
                   pressed={formats[action.key]}
                   size="sm"
                 >
-                  <Icon />
+                  <Icon aria-hidden />
                 </Toggle>
               </ToolbarTooltip>
             );
@@ -281,17 +326,19 @@ export function FloatingToolbarPlugin() {
 
           <Separator className="mx-0.5 h-5" orientation="vertical" />
 
-          <ToolbarTooltip label="Link">
-            <Toggle
-              aria-label="Link"
-              onMouseDown={(event) => event.preventDefault()}
-              onPressedChange={handleLinkToggle}
-              pressed={formats.isLink}
-              size="sm"
-            >
-              <LinkIcon />
-            </Toggle>
-          </ToolbarTooltip>
+          {isFloatingLinkEnabled ? (
+            <ToolbarTooltip label="Link">
+              <Toggle
+                aria-label="Link"
+                onMouseDown={(event) => event.preventDefault()}
+                onPressedChange={handleLinkToggle}
+                pressed={formats.isLink}
+                size="sm"
+              >
+                <LinkIcon aria-hidden />
+              </Toggle>
+            </ToolbarTooltip>
+          ) : null}
 
           <FloatingToolbarOverflowMenu
             editor={editor}

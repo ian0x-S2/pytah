@@ -2,6 +2,7 @@
 
 import type { Transformer } from "@lexical/markdown";
 import { CheckListPlugin } from "@lexical/react/LexicalCheckListPlugin";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
@@ -11,15 +12,19 @@ import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { TabIndentationPlugin } from "@lexical/react/LexicalTabIndentationPlugin";
 import type { LexicalEditor, SerializedEditorState } from "lexical";
 import { useEffect, useMemo, useState } from "react";
-import type { ComponentType, CSSProperties } from "react";
+import type { ComponentType, CSSProperties, RefObject } from "react";
 
-import { useTheme } from "@/components/theme-context";
+import { useResolvedTheme } from "@/components/theme-context";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
 import { renderEditorSlot } from "../core/composition";
 import type { ResolvedEditorFeatureFlags } from "../core/composition";
-import { EditorResolvedCommandsContext } from "../core/editor-commands-context";
+import {
+  EditorCommandsContext,
+  EditorFloatingLinkEnabledContext,
+  EditorResolvedCommandsContext,
+} from "../core/editor-commands-context";
 import { EditorTransformersContext } from "../core/editor-transformers-context";
 import { EDITOR_FEATURES, renderSlashCommandPlugin } from "../core/features";
 import type {
@@ -49,10 +54,6 @@ import { EditorStatePlugin } from "../plugins/core/editor-state";
 import { HorizontalRulePlugin } from "../plugins/core/horizontal-rule";
 import { FullToolbarPlugin } from "../plugins/full-toolbar/plugin";
 import { LinkBehaviorPlugin } from "../plugins/link-behavior/plugin";
-import {
-  registerSlashRunner,
-  unregisterSlashRunner,
-} from "../plugins/slash-command/executors";
 import type { FeatureSlashCommand } from "../plugins/slash-command/types";
 import { EditorFooter } from "./chrome";
 
@@ -100,6 +101,7 @@ interface EditorContentProps {
   contentClassName?: string;
   density?: EditorDensity;
   editable: boolean;
+  editorRef?: RefObject<LexicalEditor | null>;
   extraFeatures: readonly ExtraEditorFeature[];
   features: ResolvedEditorFeatureFlags;
   footerSlot?: EditorChromeSlots["footer"];
@@ -129,7 +131,6 @@ interface DefaultEditorPluginsProps {
   initialMarkdown?: string;
   onSnapshotChange: (textContent: string, editor: LexicalEditor) => void;
   onSnapshotReady?: (snapshot: EditorSnapshot, editor: LexicalEditor) => void;
-  /** True when the seed was already applied via the composer's initial state. */
   seededViaConfig?: boolean;
   transformers: readonly Transformer[];
 }
@@ -152,7 +153,7 @@ function DefaultEditorPlugins({
   );
 
   return (
-    <EditorTransformersContext.Provider value={transformers}>
+    <>
       {features.history ? <HistoryPlugin /> : null}
       <CodeHighlightPlugin />
       <CodeSelectAllPlugin />
@@ -171,8 +172,6 @@ function DefaultEditorPlugins({
         }
         return <Plugin key={feature.flag} />;
       })}
-      {/* Extras without `editableOnly` mount for every mode, so read-only
-            surfaces keep rendering installed nodes. */}
       {extraFeatures.flatMap((extra) => {
         if (extra.editableOnly || !extra.plugin) {
           return [];
@@ -196,7 +195,7 @@ function DefaultEditorPlugins({
         snapshotOptions={features.snapshot}
         transformers={transformers}
       />
-    </EditorTransformersContext.Provider>
+    </>
   );
 }
 
@@ -228,7 +227,6 @@ function EditableEditorPlugins({
         }
         return null;
       })}
-      {/* Editable-only extras (e.g. drag handles). */}
       {extraFeatures.flatMap((extra) => {
         if (!extra.editableOnly || !extra.plugin) {
           return [];
@@ -248,6 +246,7 @@ export function EditorContent({
   contentClassName,
   density = "comfortable",
   editable,
+  editorRef,
   extraFeatures,
   features,
   footerSlot,
@@ -266,24 +265,20 @@ export function EditorContent({
   toolbar,
   transformers,
 }: EditorContentProps) {
-  // Expose installed feature actions to core surfaces (toolbar dropdowns)
-  // without any static import from feature folders.
-  useEffect(() => {
-    const registered: string[] = [];
+  const [editor] = useLexicalComposerContext();
 
-    for (const extra of extraFeatures) {
-      for (const contribution of extra.slashCommands ?? []) {
-        registerSlashRunner(contribution.command.id, contribution.run);
-        registered.push(contribution.command.id);
-      }
+  useEffect(() => {
+    if (!editorRef) {
+      return;
     }
 
+    editorRef.current = editor;
     return () => {
-      for (const id of registered) {
-        unregisterSlashRunner(id);
+      if (editorRef.current === editor) {
+        editorRef.current = null;
       }
     };
-  }, [extraFeatures]);
+  }, [editor, editorRef]);
 
   const footerContent =
     footerSlot === undefined ? (
@@ -294,9 +289,6 @@ export function EditorContent({
 
   const [gutterHost, setGutterHost] = useState<HTMLElement | null>(null);
 
-  // Theme family is owned here (initial-only prop, like the seed content):
-  // the highlight plugin and the per-block chrome picker share it through
-  // context, so picking a theme on any block re-tokenizes every block.
   const [themeFamily, setThemeFamily] = useState<CodeBlockThemeFamily>(
     codeBlockTheme ?? DEFAULT_CODE_BLOCK_THEME_FAMILY
   );
@@ -305,13 +297,7 @@ export function EditorContent({
     [themeFamily]
   );
 
-  // Block chrome follows the code theme: `getCodeBlockBackground` and
-  // `getCodeBlockForeground` feed `--editor-code-bg` and `--editor-code-fg`,
-  // which the `editor-code-block` rule consumes. GitHub resolves its
-  // background to shadcn `--card`; every other family uses its Shiki theme
-  // `editor.background`. Scoped to this wrapper so concurrent editors with
-  // different themes don't clash.
-  const { resolvedTheme } = useTheme();
+  const resolvedTheme = useResolvedTheme();
   const resolvedCodeThemeId = resolveCodeBlockThemeId(
     themeFamily,
     resolvedTheme
@@ -327,80 +313,81 @@ export function EditorContent({
   return (
     <CodeGutterHostContext.Provider value={gutterHost}>
       <CodeBlockThemeContext.Provider value={themeValue}>
-        <EditorResolvedCommandsContext.Provider value={commandIds}>
-          <EditorTopToolbar
-            commandIds={commandIds}
-            editable={editable}
-            toolbar={toolbar}
-            topToolbar={topToolbar}
-          />
-
-          <div
-            className="group relative bg-background"
-            data-density={density}
-            style={
-              {
-                "--editor-code-bg": codeBlockBackground,
-                "--editor-code-fg": codeBlockForeground,
-              } as CSSProperties
-            }
+        <EditorTransformersContext.Provider value={transformers}>
+          <EditorFloatingLinkEnabledContext.Provider
+            value={features.floatingLinkEditor}
           >
-            <RichTextPlugin
-              contentEditable={
-                <ContentEditable
-                  aria-placeholder={placeholder}
-                  className={cn(
-                    "ContentEditable__root editor-content focus:outline-none",
-                    contentClassName
-                  )}
-                  placeholder={
-                    <div className="editor-content-placeholder pointer-events-none text-muted-foreground">
-                      {placeholder}
-                    </div>
-                  }
-                  // WebKitGTK lazily boots its enchant spell-checking broker on the
-                  // first spellcheck-enabled editable region; with no enchant
-                  // backend installed it dlopen-probes every provider serially on
-                  // the web-process main thread (~2s freeze, zero JS long tasks,
-                  // first mount per session).
-                  spellCheck={false}
+            <EditorCommandsContext.Provider value={commands}>
+              <EditorResolvedCommandsContext.Provider value={commandIds}>
+                <EditorTopToolbar
+                  commandIds={commandIds}
+                  editable={editable}
+                  toolbar={toolbar}
+                  topToolbar={topToolbar}
                 />
-              }
-              ErrorBoundary={LexicalErrorBoundary}
-            />
-            {/* Host for the code gutter overlay (React-owned DOM the editor
-            reconciler never touches). */}
-            <div
-              className="pointer-events-none absolute inset-0"
-              ref={setGutterHost}
-            />
-          </div>
 
-          {!minimal && showFooter ? footerContent : null}
+                <div
+                  className="group relative bg-background"
+                  data-density={density}
+                  style={
+                    {
+                      "--editor-code-bg": codeBlockBackground,
+                      "--editor-code-fg": codeBlockForeground,
+                    } as CSSProperties
+                  }
+                >
+                  <RichTextPlugin
+                    contentEditable={
+                      <ContentEditable
+                        aria-placeholder={placeholder}
+                        className={cn(
+                          "ContentEditable__root editor-content focus:outline-none",
+                          contentClassName
+                        )}
+                        placeholder={
+                          <div className="editor-content-placeholder pointer-events-none text-muted-foreground">
+                            {placeholder}
+                          </div>
+                        }
+                        spellCheck={false}
+                      />
+                    }
+                    ErrorBoundary={LexicalErrorBoundary}
+                  />
+                  <div
+                    className="pointer-events-none absolute inset-0"
+                    ref={setGutterHost}
+                  />
+                </div>
 
-          {pluginSlots?.beforeDefault}
-          <DefaultEditorPlugins
-            editable={editable}
-            extraFeatures={extraFeatures}
-            features={features}
-            initialHtml={initialHtml}
-            initialJson={initialJson}
-            initialMarkdown={initialMarkdown}
-            onSnapshotChange={onSnapshotChange}
-            onSnapshotReady={onSnapshotReady}
-            seededViaConfig={seededViaConfig}
-            transformers={transformers}
-          />
-          {editable ? (
-            <EditableEditorPlugins
-              commands={commands}
-              extraFeatures={extraFeatures}
-              features={features}
-              pluginSlots={pluginSlots}
-            />
-          ) : null}
-          {pluginSlots?.afterDefault}
-        </EditorResolvedCommandsContext.Provider>
+                {!minimal && showFooter ? footerContent : null}
+
+                {pluginSlots?.beforeDefault}
+                <DefaultEditorPlugins
+                  editable={editable}
+                  extraFeatures={extraFeatures}
+                  features={features}
+                  initialHtml={initialHtml}
+                  initialJson={initialJson}
+                  initialMarkdown={initialMarkdown}
+                  onSnapshotChange={onSnapshotChange}
+                  onSnapshotReady={onSnapshotReady}
+                  seededViaConfig={seededViaConfig}
+                  transformers={transformers}
+                />
+                {editable ? (
+                  <EditableEditorPlugins
+                    commands={commands}
+                    extraFeatures={extraFeatures}
+                    features={features}
+                    pluginSlots={pluginSlots}
+                  />
+                ) : null}
+                {pluginSlots?.afterDefault}
+              </EditorResolvedCommandsContext.Provider>
+            </EditorCommandsContext.Provider>
+          </EditorFloatingLinkEnabledContext.Provider>
+        </EditorTransformersContext.Provider>
       </CodeBlockThemeContext.Provider>
     </CodeGutterHostContext.Provider>
   );

@@ -46,10 +46,11 @@ export function EditorWithToc({
         return;
       }
       const rect = content.getBoundingClientRect();
-      // Position is relative to the viewport only while it is scrolled to
-      // the top; beyond that the sticky-style alignment would drift, so it
-      // saturates at a sensible minimum instead of going negative.
-      setTocTop(Math.max(rect.top, 24));
+      // Measure the document-relative top so resizing while scrolled down
+      // preserves the top-of-page alignment instead of pinning to 24px.
+      const documentTop = Math.round(rect.top + window.scrollY);
+      const maxTop = Math.max(24, window.innerHeight - 120);
+      setTocTop(Math.min(maxTop, Math.max(24, documentTop)));
     };
 
     measure();

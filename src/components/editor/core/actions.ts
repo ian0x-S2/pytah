@@ -1,3 +1,4 @@
+import type { Transformer } from "@lexical/markdown";
 import type { LexicalEditor } from "lexical";
 
 import { HTML_EXAMPLE, MARKDOWN_EXAMPLE } from "./constants";
@@ -7,8 +8,17 @@ import {
   replaceEditorHtmlContent,
 } from "./utils";
 
-export const copyEditorOutput = async (value: string) => {
-  await navigator.clipboard.writeText(value);
+export const copyEditorOutput = async (value: string): Promise<boolean> => {
+  if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
+    return false;
+  }
+
+  try {
+    await navigator.clipboard.writeText(value);
+    return true;
+  } catch {
+    return false;
+  }
 };
 
 /**
@@ -39,6 +49,9 @@ export const loadEditorHtmlExample = (editor: LexicalEditor) => {
   replaceEditorHtmlContent(editor, HTML_EXAMPLE);
 };
 
-export const loadEditorMarkdownExample = (editor: LexicalEditor) => {
-  loadMarkdownContent(editor, MARKDOWN_EXAMPLE);
+export const loadEditorMarkdownExample = (
+  editor: LexicalEditor,
+  transformers?: readonly Transformer[]
+) => {
+  loadMarkdownContent(editor, MARKDOWN_EXAMPLE, { transformers });
 };

@@ -17,7 +17,8 @@ const { createEditor } = await import("lexical");
 
 const { $createWeblinkNode, $isWeblinkNode, WeblinkNode } =
   await import("./node");
-const { resolveWeblinkMetadata } = await import("./utils");
+const { resolveWeblinkFavicon, resolveWeblinkMetadata } =
+  await import("./utils");
 
 describe("WeblinkNode", () => {
   test("creates a WeblinkNode with default inline format", () => {
@@ -149,5 +150,31 @@ describe("WeblinkNode", () => {
     strictEqual(meta.url, "https://sub.domain.com/awesome-guide.html");
     strictEqual(meta.title, "Awesome guide");
     strictEqual(meta.icon?.includes("sub.domain.com"), true);
+  });
+
+  test("sanitizes unsafe URLs and supports favicon resolver opt-out and customizer", () => {
+    const editor = createEditor({
+      nodes: [WeblinkNode],
+    });
+
+    editor.update(() => {
+      const unsafe = $createWeblinkNode({
+        icon: "javascript:alert(1)",
+        image: "data:image/svg+xml,<svg/>",
+        url: "javascript:alert(1)",
+      });
+      strictEqual(unsafe.getUrl(), "about:blank");
+      strictEqual(unsafe.getIcon(), undefined);
+      strictEqual(unsafe.getImage(), undefined);
+    });
+
+    strictEqual(resolveWeblinkFavicon("example.com", false), undefined);
+    strictEqual(
+      resolveWeblinkFavicon(
+        "example.com",
+        (host) => `https://icons.internal/${host}.png`
+      ),
+      "https://icons.internal/example.com.png"
+    );
   });
 });

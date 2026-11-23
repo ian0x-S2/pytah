@@ -16,13 +16,6 @@ interface ExcalidrawImageProps {
   width: number | "inherit";
 }
 
-/**
- * Appends an excalidraw-produced svg element to the DOM. The element is built
- * imperatively by excalidraw's export runtime, so it is attached outside of
- * React's ownership model instead of serialized into markup. The wrapper is
- * the direct child of the sized container and must forward its height so
- * `height: 100%` on the svg reaches the container's explicit box.
- */
 function SvgHost({ svg }: { svg: SVGSVGElement }) {
   return (
     <div
@@ -49,18 +42,12 @@ export function ExcalidrawImage({
   width,
 }: ExcalidrawImageProps) {
   const [svg, setSvg] = useState<SVGSVGElement | null>(null);
+  const [renderFailed, setRenderFailed] = useState(false);
   const boxRef = useRef<HTMLDivElement | null>(null);
-  // The drawing fills its box (free resize) whenever both axes carry explicit
-  // dimensions; otherwise it keeps the viewBox aspect ratio and drives its
-  // own height. Initialized from the committed props so SSR-safe renders
-  // match, then kept in sync with the box's live inline styles.
-  const [fillsBox, setFillsBox] = useState(
-    width !== "inherit" && height !== "inherit"
-  );
+  const hasExplicitDimensions = width !== "inherit" && height !== "inherit";
+  const [isDraggingBox, setIsDraggingBox] = useState(false);
+  const fillsBox = hasExplicitDimensions || isDraggingBox;
 
-  // A resize drag styles the box imperatively every frame, long before the
-  // node commit updates `width`/`height` props. Observing the box keeps the
-  // svg stretching in real time so handles never detach mid-drag.
   useEffect(() => {
     const box = boxRef.current;
     if (!box || typeof ResizeObserver === "undefined") {
@@ -68,7 +55,7 @@ export function ExcalidrawImage({
     }
 
     const syncFillMode = () => {
-      setFillsBox(box.style.width !== "" && box.style.height !== "");
+      setIsDraggingBox(box.style.width !== "" && box.style.height !== "");
     };
 
     const observer = new ResizeObserver(syncFillMode);
@@ -89,12 +76,11 @@ export function ExcalidrawImage({
         files: files ?? null,
       });
 
-      // Generated svgs carry fixed pixel dimensions; strip them so the
-      // sizing effect below fully controls the fluid box.
       nextSvg.removeAttribute("width");
       nextSvg.removeAttribute("height");
 
       if (!cancelled) {
+        setRenderFailed(false);
         setSvg(nextSvg);
       }
     };
@@ -103,7 +89,9 @@ export function ExcalidrawImage({
       try {
         await renderScene();
       } catch {
-        // Scene export is best-effort; a failed render leaves the placeholder.
+        if (!cancelled) {
+          setRenderFailed(true);
+        }
       }
     })();
 
@@ -121,13 +109,11 @@ export function ExcalidrawImage({
     svg.style.width = "100%";
 
     if (fillsBox) {
-      // Fill the resized box; corners stay glued to the drawing.
       svg.style.height = "100%";
       svg.setAttribute("preserveAspectRatio", "none");
       return;
     }
 
-    // Keep the viewBox aspect ratio and drive the container height.
     svg.style.height = "auto";
     svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
   }, [fillsBox, svg]);
@@ -152,6 +138,11 @@ export function ExcalidrawImage({
       style={style}
     >
       {svg ? <SvgHost svg={svg} /> : null}
+      {!svg && renderFailed ? (
+        <div className="flex min-h-24 min-w-48 items-center justify-center px-4 py-3 text-xs text-muted-foreground">
+          Unable to render drawing
+        </div>
+      ) : null}
     </div>
   );
 }

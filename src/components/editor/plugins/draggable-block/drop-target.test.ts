@@ -80,10 +80,13 @@ describe("block drag start capture", () => {
 });
 
 describe("drop-target math", () => {
-  test("decideInsertAfter splits at the target top edge", () => {
+  test("decideInsertAfter splits at the target top edge or midpoint when height is provided", () => {
     strictEqual(decideInsertAfter(99, 100), false);
     strictEqual(decideInsertAfter(100, 100), true);
     strictEqual(decideInsertAfter(250, 100), true);
+    strictEqual(decideInsertAfter(120, 100, 100), false);
+    strictEqual(decideInsertAfter(150, 100, 100), true);
+    strictEqual(decideInsertAfter(180, 100, 100), true);
   });
 
   test("readBlockDragKey only accepts the block payload", () => {

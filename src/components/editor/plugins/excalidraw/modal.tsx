@@ -7,7 +7,8 @@ import type {
   ExcalidrawProps,
 } from "@excalidraw/excalidraw/types";
 import { XIcon } from "lucide-react";
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import type { ComponentType } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
@@ -18,20 +19,6 @@ import type {
   SaveableExcalidrawScene,
 } from "./scene";
 import { hasExcalidrawContent } from "./scene";
-
-// The excalidraw runtime (component, styles and fonts) is loaded on demand:
-// documents without drawings never download it.
-const loadExcalidrawEditor = async (): Promise<{
-  default: React.ComponentType<ExcalidrawProps>;
-}> => {
-  await import("@excalidraw/excalidraw/index.css");
-  const { Excalidraw } = await import("@excalidraw/excalidraw");
-  return {
-    default: Excalidraw as unknown as React.ComponentType<ExcalidrawProps>,
-  };
-};
-
-const LazyExcalidrawEditor = lazy(loadExcalidrawEditor);
 
 export interface SaveExcalidrawScenePayload {
   appState: Partial<AppState>;
@@ -46,7 +33,6 @@ interface ExcalidrawEditorDialogProps {
   onSave: (payload: SaveExcalidrawScenePayload) => void;
 }
 
-/** Only the app state pieces worth persisting alongside a drawing. */
 const pickPersistedAppState = (appState: AppState): Partial<AppState> => ({
   exportBackground: appState.exportBackground,
   exportScale: appState.exportScale,
@@ -59,6 +45,27 @@ const pickPersistedAppState = (appState: AppState): Partial<AppState> => ({
   zenModeEnabled: appState.zenModeEnabled,
 });
 
+const getSceneSignature = (scene: SaveableExcalidrawScene): string => {
+  const activeElements: string[] = [];
+  for (const element of scene.elements ?? []) {
+    if (!element.isDeleted) {
+      activeElements.push(
+        `${element.id}:${element.version}:${element.versionNonce}`
+      );
+    }
+  }
+  const fileKeys = Object.keys(scene.files ?? {}).toSorted();
+  return `${activeElements.join(",")}|${fileKeys.join(",")}`;
+};
+
+const loadExcalidrawCanvas = async (): Promise<
+  ComponentType<ExcalidrawProps>
+> => {
+  await import("@excalidraw/excalidraw/index.css");
+  const module = await import("@excalidraw/excalidraw");
+  return module.Excalidraw as unknown as ComponentType<ExcalidrawProps>;
+};
+
 /**
  * Full-screen editing surface for a single excalidraw scene. Saving hands the
  * current elements back to the caller; closing discards local edits.
@@ -69,23 +76,83 @@ export function ExcalidrawEditorDialog({
   onSave,
 }: ExcalidrawEditorDialogProps) {
   const [api, setApi] = useState<ExcalidrawImperativeAPI | null>(null);
+  const [excalidrawCanvas, setExcalidrawCanvas] =
+    useState<ComponentType<ExcalidrawProps> | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [isDiscardConfirmOpen, setIsDiscardConfirmOpen] = useState(false);
   const dialogRef = useRef<HTMLDialogElement | null>(null);
+  const initialSignatureRef = useRef<string | null>(null);
   const latestSceneRef = useRef<SaveableExcalidrawScene>({
     elements: initialScene.elements,
     files: initialScene.files ?? {},
   });
 
   useEffect(() => {
-    // Focus the dialog wrapper so Escape reaches it before the canvas takes
-    // over keyboard handling.
-    dialogRef.current?.focus();
+    initialSignatureRef.current = getSceneSignature({
+      elements: initialScene.elements,
+      files: initialScene.files ?? {},
+    });
+  }, [initialScene.elements, initialScene.files]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      try {
+        const loadedCanvas = await loadExcalidrawCanvas();
+        if (!cancelled) {
+          setExcalidrawCanvas(() => loadedCanvas);
+        }
+      } catch {
+        if (!cancelled) {
+          setLoadFailed(true);
+        }
+      }
+    };
+
+    void load();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const hasUnsavedContent = () => hasExcalidrawContent(latestSceneRef.current);
+  useEffect(() => {
+    dialogRef.current?.focus();
+
+    if (typeof document === "undefined") {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
+
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  const hasUnsavedChanges = () => {
+    const baseline =
+      initialSignatureRef.current ??
+      getSceneSignature({
+        elements: initialScene.elements,
+        files: initialScene.files ?? {},
+      });
+    const currentSignature = getSceneSignature(latestSceneRef.current);
+    if (currentSignature !== baseline) {
+      return true;
+    }
+    return (
+      !hasExcalidrawContent(initialScene) &&
+      hasExcalidrawContent(latestSceneRef.current)
+    );
+  };
 
   const requestClose = () => {
-    if (hasUnsavedContent()) {
+    if (hasUnsavedChanges()) {
       setIsDiscardConfirmOpen(true);
       return;
     }
@@ -102,21 +169,69 @@ export function ExcalidrawEditorDialog({
     });
   };
 
+  const Canvas = excalidrawCanvas;
+
+  const renderCanvasContent = () => {
+    if (loadFailed) {
+      return (
+        <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
+          <p className="text-sm font-medium text-destructive">
+            Failed to load the drawing canvas.
+          </p>
+          <Button onClick={onClose} size="sm" variant="outline">
+            Close
+          </Button>
+        </div>
+      );
+    }
+
+    if (Canvas) {
+      return (
+        <Canvas
+          excalidrawAPI={setApi}
+          initialData={{
+            appState: initialScene.appState ?? {},
+            elements: initialScene.elements,
+            files: initialScene.files ?? {},
+          }}
+          onChange={(elements, _appState, files) => {
+            latestSceneRef.current = { elements, files };
+          }}
+        />
+      );
+    }
+
+    return (
+      <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+        Loading drawing canvas…
+      </div>
+    );
+  };
+
   return createPortal(
-    // biome-ignore lint/a11y/noNoninteractiveElementInteractions: full-screen dialog captures Escape before page handlers
     <dialog
       aria-label="Excalidraw drawing editor"
+      aria-modal="true"
       className="fixed inset-0 z-50 m-0 flex h-full max-h-none w-full max-w-none flex-col border-0 bg-background p-0 outline-none"
       onKeyDown={(event) => {
-        // Only capture Escape before it reaches the page; the canvas keeps
-        // its own Escape semantics (e.g. exiting zen mode).
-        if (
-          event.key === "Escape" &&
-          !isDiscardConfirmOpen &&
-          event.target === dialogRef.current
-        ) {
-          requestClose();
+        if (event.key !== "Escape") {
+          return;
         }
+
+        if (isDiscardConfirmOpen) {
+          event.preventDefault();
+          event.stopPropagation();
+          setIsDiscardConfirmOpen(false);
+          return;
+        }
+
+        const target = event.target as HTMLElement | null;
+        if (target?.closest(".excalidraw")) {
+          return;
+        }
+
+        event.preventDefault();
+        requestClose();
       }}
       open
       ref={dialogRef}
@@ -128,7 +243,7 @@ export function ExcalidrawEditorDialog({
           <Button onClick={requestClose} size="sm" variant="ghost">
             Discard
           </Button>
-          <Button onClick={handleSave} size="sm">
+          <Button disabled={loadFailed} onClick={handleSave} size="sm">
             Save &amp; insert
           </Button>
           <Button
@@ -137,36 +252,19 @@ export function ExcalidrawEditorDialog({
             size="icon-sm"
             variant="ghost"
           >
-            <XIcon />
+            <XIcon aria-hidden />
           </Button>
         </div>
       </header>
 
       <div className="relative min-h-0 flex-1">
-        <Suspense
-          fallback={
-            <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-              Loading drawing canvas…
-            </div>
-          }
-        >
-          <LazyExcalidrawEditor
-            excalidrawAPI={setApi}
-            initialData={{
-              appState: initialScene.appState ?? {},
-              elements: initialScene.elements,
-              files: initialScene.files ?? {},
-            }}
-            onChange={(elements, _appState, files) => {
-              latestSceneRef.current = { elements, files };
-            }}
-          />
-        </Suspense>
+        {renderCanvasContent()}
 
         {isDiscardConfirmOpen ? (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/80 backdrop-blur-xs">
             <dialog
               aria-label="Discard changes"
+              aria-modal="true"
               className="editor-floating editor-floating-padding-lg m-0 max-h-none w-80 max-w-none border-0"
               open
               role="alertdialog"
@@ -201,10 +299,6 @@ export function ExcalidrawEditorDialog({
         ) : null}
       </div>
     </dialog>,
-    // Portaled to `document.body`: rendered inline it would live inside the
-    // editor's contenteditable, so every canvas paste/keydown would bubble
-    // into Lexical's root listeners and land in the document instead of the
-    // drawing board.
     document.body
   );
 }

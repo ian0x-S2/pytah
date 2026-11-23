@@ -1,21 +1,31 @@
 "use client";
+
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { useLexicalEditable } from "@lexical/react/useLexicalEditable";
+import { $insertNodeToNearestRoot } from "@lexical/utils";
 import {
   $createParagraphNode,
   $createTextNode,
   $getNodeByKey,
   $isElementNode,
   $isParagraphNode,
+  $isRootNode,
+  HISTORY_MERGE_TAG,
 } from "lexical";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
+import { sanitizeHrefUrl } from "../../url";
 import { WeblinkInlineCard } from "./card-inline";
 import { WeblinkSmallCard } from "./card-small";
 import { WeblinkWideCard } from "./card-wide";
 import { WeblinkFormatMenu } from "./format-menu";
-import { useWeblinkMetadataFetcher } from "./metadata";
+import {
+  useWeblinkFaviconResolver,
+  useWeblinkMetadataFetcher,
+} from "./metadata";
 import type { WeblinkNode } from "./node";
 import type { WeblinkFormat, WeblinkMetadata } from "./types";
+import { isDefaultGoogleFavicon, resolveWeblinkFavicon } from "./utils";
 
 interface WeblinkComponentProps {
   description?: string;
@@ -32,24 +42,27 @@ function updateWeblinkNodeMetadata(
   nodeKey: string,
   meta: Partial<WeblinkMetadata>
 ) {
-  editor.update(() => {
-    const node = $getNodeByKey(nodeKey);
-    if (node && "setTitle" in node && typeof node.setTitle === "function") {
-      const weblink = node as unknown as WeblinkNode;
-      if (meta.title && meta.title.trim().length > 0) {
-        weblink.setTitle(meta.title.trim());
+  editor.update(
+    () => {
+      const node = $getNodeByKey(nodeKey);
+      if (node && "setTitle" in node && typeof node.setTitle === "function") {
+        const weblink = node as unknown as WeblinkNode;
+        if (meta.title && meta.title.trim().length > 0) {
+          weblink.setTitle(meta.title.trim());
+        }
+        if (meta.description && meta.description.trim().length > 0) {
+          weblink.setDescription(meta.description.trim());
+        }
+        if (meta.image && meta.image.trim().length > 0) {
+          weblink.setImage(meta.image.trim());
+        }
+        if (meta.icon && meta.icon.trim().length > 0) {
+          weblink.setIcon(meta.icon.trim());
+        }
       }
-      if (meta.description && meta.description.trim().length > 0) {
-        weblink.setDescription(meta.description.trim());
-      }
-      if (meta.image && meta.image.trim().length > 0) {
-        weblink.setImage(meta.image.trim());
-      }
-      if (meta.icon && meta.icon.trim().length > 0) {
-        weblink.setIcon(meta.icon.trim());
-      }
-    }
-  });
+    },
+    { tag: HISTORY_MERGE_TAG }
+  );
 }
 
 export function WeblinkComponent({
@@ -62,9 +75,14 @@ export function WeblinkComponent({
   url,
 }: WeblinkComponentProps) {
   const [editor] = useLexicalComposerContext();
+  const isEditable = useLexicalEditable();
   const fetcher = useWeblinkMetadataFetcher();
+  const faviconResolver = useWeblinkFaviconResolver();
   const [isLoading, setIsLoading] = useState(false);
-  const isEditable = editor.isEditable();
+  const fetchedKeyRef = useRef<string | null>(null);
+  const refreshControllerRef = useRef<AbortController | null>(null);
+
+  const safeHref = sanitizeHrefUrl(url);
 
   const domain = (() => {
     try {
@@ -74,12 +92,38 @@ export function WeblinkComponent({
     }
   })();
 
+  const resolvedIcon = (() => {
+    if (faviconResolver === false && isDefaultGoogleFavicon(icon)) {
+      return;
+    }
+    if (
+      typeof faviconResolver === "function" &&
+      (!icon || isDefaultGoogleFavicon(icon))
+    ) {
+      return resolveWeblinkFavicon(domain, faviconResolver);
+    }
+    return icon;
+  })();
+
+  useEffect(
+    () => () => {
+      refreshControllerRef.current?.abort();
+      refreshControllerRef.current = null;
+    },
+    []
+  );
+
   useEffect(() => {
-    if (!fetcher || !isEditable) {
+    if (!(fetcher && isEditable)) {
       return;
     }
 
     if (description && image) {
+      return;
+    }
+
+    const fetchKey = `${nodeKey}:${url}`;
+    if (fetchedKeyRef.current === fetchKey) {
       return;
     }
 
@@ -90,8 +134,11 @@ export function WeblinkComponent({
       setIsLoading(true);
       try {
         const meta = await fetcher(url, { signal: controller.signal });
-        if (!isCancelled && meta) {
-          updateWeblinkNodeMetadata(editor, nodeKey, meta);
+        if (!isCancelled) {
+          fetchedKeyRef.current = fetchKey;
+          if (meta) {
+            updateWeblinkNodeMetadata(editor, nodeKey, meta);
+          }
         }
       } catch {
         // Silently ignore network or abort errors
@@ -113,16 +160,27 @@ export function WeblinkComponent({
     if (!fetcher) {
       return;
     }
+    refreshControllerRef.current?.abort();
+    const controller = new AbortController();
+    refreshControllerRef.current = controller;
+
     setIsLoading(true);
     try {
-      const meta = await fetcher(url);
-      if (meta) {
+      const meta = await fetcher(url, {
+        forceRefresh: true,
+        signal: controller.signal,
+      });
+      if (!controller.signal.aborted && meta) {
         updateWeblinkNodeMetadata(editor, nodeKey, meta);
       }
     } catch {
-      // Ignore
+      // Ignore refresh failures or abort errors
     }
-    setIsLoading(false);
+
+    if (refreshControllerRef.current === controller) {
+      refreshControllerRef.current = null;
+      setIsLoading(false);
+    }
   };
 
   const handleSetFormat = (nextFormat: WeblinkFormat) => {
@@ -136,7 +194,7 @@ export function WeblinkComponent({
       }
       const parent = node.getParent();
       if (nextFormat === "inline") {
-        if (!parent || !$isParagraphNode(parent)) {
+        if (!(parent && $isParagraphNode(parent))) {
           const paragraph = $createParagraphNode();
           node.replace(paragraph);
           paragraph.append(node);
@@ -145,13 +203,19 @@ export function WeblinkComponent({
           space.select();
         }
       } else if (parent && $isParagraphNode(parent)) {
+        const grandParent = parent.getParent();
         if (
-          parent.getChildrenSize() === 1 ||
-          parent.getTextContent().trim() === ""
+          grandParent &&
+          $isRootNode(grandParent) &&
+          (parent.getChildrenSize() === 1 ||
+            parent.getTextContent().trim() === "")
         ) {
           parent.replace(node);
-        } else {
+        } else if (grandParent && $isRootNode(grandParent)) {
           parent.insertAfter(node);
+        } else {
+          node.remove();
+          $insertNodeToNearestRoot(node);
         }
         const trailing = $createParagraphNode();
         node.insertAfter(trailing);
@@ -182,12 +246,13 @@ export function WeblinkComponent({
 
   const formatMenu = isEditable ? (
     <WeblinkFormatMenu
+      currentFormat={format}
       isLoading={isLoading}
       onRefreshMetadata={handleRefreshMetadata}
       onRemoveNode={handleRemoveNode}
       onSetFormat={handleSetFormat}
       showRefresh={Boolean(fetcher)}
-      url={url}
+      url={safeHref}
     />
   ) : null;
 
@@ -195,10 +260,11 @@ export function WeblinkComponent({
     return (
       <WeblinkInlineCard
         domain={domain}
-        icon={icon}
+        formatMenu={formatMenu}
+        icon={resolvedIcon}
         isEditable={isEditable}
         title={title}
-        url={url}
+        url={safeHref}
       />
     );
   }
@@ -209,27 +275,26 @@ export function WeblinkComponent({
         description={description}
         domain={domain}
         formatMenu={formatMenu}
-        icon={icon}
+        icon={resolvedIcon}
         isEditable={isEditable}
         isLoading={isLoading}
         title={title}
-        url={url}
+        url={safeHref}
       />
     );
   }
 
-  // format === "wide"
   return (
     <WeblinkWideCard
       description={description}
       domain={domain}
       formatMenu={formatMenu}
-      icon={icon}
+      icon={resolvedIcon}
       image={image}
       isEditable={isEditable}
       isLoading={isLoading}
       title={title}
-      url={url}
+      url={safeHref}
     />
   );
 }

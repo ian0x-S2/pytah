@@ -4,6 +4,7 @@ import type {
   DOMConversionOutput,
   DOMExportOutput,
   EditorConfig,
+  LexicalNode,
   LexicalUpdateJSON,
   NodeKey,
   SerializedElementNode,
@@ -91,6 +92,8 @@ export class LayoutContainerNode extends ElementNode {
   exportDOM(): DOMExportOutput {
     const element = document.createElement("div");
     element.dataset.lexicalLayoutContainer = "true";
+    element.style.display = "grid";
+    element.style.gap = "1rem";
     element.style.gridTemplateColumns = this.__templateColumns;
 
     return { element };
@@ -136,4 +139,10 @@ export function $createLayoutContainerNode(
   templateColumns = ""
 ): LayoutContainerNode {
   return new LayoutContainerNode(templateColumns);
+}
+
+export function $isLayoutContainerNode(
+  node: LexicalNode | null | undefined
+): node is LayoutContainerNode {
+  return node instanceof LayoutContainerNode;
 }

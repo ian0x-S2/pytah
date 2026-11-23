@@ -3,8 +3,8 @@
 import type { TableOfContentsEntry } from "@lexical/react/LexicalTableOfContentsPlugin";
 import type { LexicalEditor, NodeKey } from "lexical";
 import { AlignLeftIcon } from "lucide-react";
-import { useRef, useState } from "react";
-import type { FocusEvent } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { FocusEvent, RefObject } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -33,10 +33,12 @@ function EditorTocMiniBars({
   activeKey,
   entries,
   onHeadingClick,
+  onHeadingFocus,
 }: {
   activeKey: NodeKey | null;
   entries: readonly TableOfContentsEntry[];
   onHeadingClick: (key: NodeKey) => void;
+  onHeadingFocus: (key: NodeKey) => void;
 }) {
   if (entries.length === 0) {
     return (
@@ -52,7 +54,7 @@ function EditorTocMiniBars({
     // Height-capped and densified so heading-heavy documents keep the rail a
     // quiet outline affordance: compact gaps, thin dashes, overflow scrolled
     // via wheel/touch with the scrollbar itself hidden.
-    <div className="scrollbar-hidden flex max-h-[45vh] flex-col items-end gap-1 overflow-y-auto py-1">
+    <div className="scrollbar-hidden flex max-h-[45vh] flex-col items-end gap-0.5 overflow-y-auto py-1">
       {entries.map(([key, text, tag]) => {
         const isActive = key === activeKey;
         const widthClass = DASH_WIDTHS[tag] ?? "w-3";
@@ -60,9 +62,10 @@ function EditorTocMiniBars({
         return (
           <button
             aria-label={`Jump to ${text.trim() || "heading"}`}
-            className="group relative flex cursor-pointer items-center justify-end rounded-xs py-px outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+            className="group relative flex cursor-pointer items-center justify-end rounded-xs px-1 py-1 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
             key={key}
             onClick={() => onHeadingClick(key)}
+            onFocus={() => onHeadingFocus(key)}
             type="button"
           >
             <span
@@ -84,17 +87,19 @@ function EditorTocMiniBars({
 function EditorTocPopoverCard({
   activeKey,
   entries,
+  navRef,
   onHeadingClick,
 }: {
   activeKey: NodeKey | null;
   entries: readonly TableOfContentsEntry[];
+  navRef: RefObject<HTMLElement | null>;
   onHeadingClick: (key: NodeKey) => void;
 }) {
   if (entries.length === 0) {
     return (
       <div className="absolute top-0 right-0 z-50 flex min-w-45 animate-in flex-col items-center justify-center gap-1.5 rounded-md border border-border/50 bg-popover/95 px-4 py-5 text-center shadow-2xl backdrop-blur-md duration-150 fade-in-0 zoom-in-95">
         <div className="flex size-6 items-center justify-center rounded-md bg-muted/20 text-muted-foreground/60">
-          <AlignLeftIcon className="size-3.5" />
+          <AlignLeftIcon aria-hidden className="size-3.5" />
         </div>
         <p className="text-xs font-medium text-muted-foreground">
           No outline available
@@ -107,6 +112,7 @@ function EditorTocPopoverCard({
     <nav
       aria-label="Table of contents popover"
       className="relative top-0 right-0 z-50 scrollbar-hidden max-h-[55vh] max-w-65 min-w-50 animate-in overflow-y-auto rounded-md border border-border/50 bg-popover/95 p-2 shadow-2xl backdrop-blur-md duration-150 fade-in-0 zoom-in-95"
+      ref={navRef}
     >
       <ul className="flex flex-col gap-1">
         {entries.map(([key, text, tag]) => {
@@ -125,6 +131,7 @@ function EditorTocPopoverCard({
                     ? "bg-primary/10 font-medium text-primary"
                     : "text-muted-foreground hover:bg-accent/80 hover:text-foreground"
                 )}
+                data-toc-key={key}
                 onClick={() => onHeadingClick(key)}
                 type="button"
               >
@@ -153,6 +160,9 @@ function EditorTableOfContentsInner({
   // keyboard focus) is still inside. Close only happens on hover-out/unfocus.
   const [isHovered, setIsHovered] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const asideRef = useRef<HTMLElement | null>(null);
+  const popoverNavRef = useRef<HTMLElement | null>(null);
+  const pendingFocusKeyRef = useRef<NodeKey | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearPendingClose = () => {
@@ -162,6 +172,41 @@ function EditorTableOfContentsInner({
     }
   };
 
+  useEffect(
+    () => () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    },
+    []
+  );
+
+  // When keyboard focus opens the popover, the mini-bar button unmounts;
+  // hand focus straight to the corresponding heading button inside the card
+  // so focus is never dropped onto document.body.
+  useEffect(() => {
+    if (!isFocused) {
+      return;
+    }
+
+    const nav = popoverNavRef.current;
+    if (!nav || nav.contains(document.activeElement)) {
+      return;
+    }
+
+    const preferredKey = pendingFocusKeyRef.current ?? activeKey;
+    pendingFocusKeyRef.current = null;
+    const preferredButton = preferredKey
+      ? nav.querySelector<HTMLButtonElement>(
+          `button[data-toc-key="${CSS.escape(preferredKey)}"]`
+        )
+      : null;
+    const targetButton =
+      preferredButton ?? nav.querySelector<HTMLButtonElement>("button");
+    targetButton?.focus();
+  }, [activeKey, isFocused]);
+
   const handleMouseEnter = () => {
     clearPendingClose();
     setIsHovered(true);
@@ -170,6 +215,7 @@ function EditorTableOfContentsInner({
   const handleMouseLeave = () => {
     clearPendingClose();
     timeoutRef.current = setTimeout(() => {
+      timeoutRef.current = null;
       setIsHovered(false);
     }, 150);
   };
@@ -188,7 +234,6 @@ function EditorTableOfContentsInner({
   const isOpen = isHovered || isFocused;
 
   return (
-    // biome-ignore lint/a11y/noNoninteractiveElementInteractions: hover popover container
     <aside
       aria-label="Table of contents outline"
       className={cn(
@@ -199,11 +244,13 @@ function EditorTableOfContentsInner({
       onFocusCapture={handleFocusCapture}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      ref={asideRef}
     >
       {isOpen ? (
         <EditorTocPopoverCard
           activeKey={activeKey}
           entries={entries}
+          navRef={popoverNavRef}
           onHeadingClick={handleHeadingClick}
         />
       ) : (
@@ -211,6 +258,9 @@ function EditorTableOfContentsInner({
           activeKey={activeKey}
           entries={entries}
           onHeadingClick={handleHeadingClick}
+          onHeadingFocus={(key) => {
+            pendingFocusKeyRef.current = key;
+          }}
         />
       )}
     </aside>

@@ -49,6 +49,15 @@ const getExcalidrawAlignment = (domNode: HTMLElement): ExcalidrawAlignment => {
   return "left";
 };
 
+const parsePixelDimension = (value: string): ExcalidrawDimension => {
+  const normalized = value.trim().replace(/px$/iu, "");
+  if (!normalized) {
+    return "inherit";
+  }
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed) : "inherit";
+};
+
 const convertExcalidrawElement = (
   domNode: HTMLElement
 ): DOMConversionOutput | null => {
@@ -61,6 +70,8 @@ const convertExcalidrawElement = (
     node: $createExcalidrawNode({
       alignment: getExcalidrawAlignment(domNode),
       data,
+      height: parsePixelDimension(domNode.style.height),
+      width: parsePixelDimension(domNode.style.width),
     }),
   };
 };

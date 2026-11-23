@@ -2,7 +2,7 @@
 
 import { calculateZoomLevel } from "@lexical/utils";
 import type { LexicalEditor } from "lexical";
-import { useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 
 import { computeNextSize, getCursor } from "./resize-geometry";
 import type {
@@ -34,8 +34,20 @@ interface ImageResizerProps {
   onResizeStart: () => void;
 }
 
+const MIN_MAX_WIDTH = 100;
 const CORNER_DIRECTIONS: CornerDirection[] = ["ne", "se", "sw", "nw"];
 const EDGE_DIRECTIONS: EdgeDirection[] = ["n", "e", "s", "w"];
+
+const DIRECTION_LABELS: Record<ResizeDirection, string> = {
+  e: "Resize from right edge",
+  n: "Resize from top edge",
+  ne: "Resize from top-right corner",
+  nw: "Resize from top-left corner",
+  s: "Resize from bottom edge",
+  se: "Resize from bottom-right corner",
+  sw: "Resize from bottom-left corner",
+  w: "Resize from left edge",
+};
 
 const CORNER_CLASSES: Record<CornerDirection, string> = {
   ne: "right-0 top-0 translate-x-1/2 -translate-y-1/2 cursor-nesw-resize",
@@ -74,6 +86,8 @@ export function ImageResizer({
   edgeHandles = false,
 }: ImageResizerProps) {
   const controlWrapperRef = useRef<HTMLDivElement | null>(null);
+  const maxWidthContainerRef = useRef<number>(MIN_MAX_WIDTH);
+  const cleanupActiveResizeRef = useRef<(() => void) | null>(null);
   const userSelect = useRef({ priority: "", value: "default" });
   const positioningRef = useRef<ResizeState>({
     currentHeight: 0,
@@ -87,27 +101,6 @@ export function ImageResizer({
     startY: 0,
   });
 
-  const editorRootElement = editor.getRootElement();
-  let maxWidthContainer = 100;
-  if (maxWidth) {
-    maxWidthContainer = maxWidth;
-  } else if (editorRootElement) {
-    maxWidthContainer = editorRootElement.getBoundingClientRect().width - 20;
-  }
-
-  // The overlay must track the element being resized, not the surrounding
-  // container. The container is `max-w-full` and gets clamped to the content
-  // column, but the element keeps its explicit box and can overflow it — so
-  // `inset-0` (relative to the container) would detach the handles from the
-  // element's true corners. Anchor instead to the element's layout geometry
-  // (offset* are unaffected by ancestor transforms/zoom) and re-sync whenever
-  // the element or its positioning context changes.
-  //
-  // `imageRef` (the stable ref object) is the dependency, not `.current`:
-  // reading ref values during render is invalid. Callers bind the ref to an
-  // element that persists for this component's lifetime — the overlay mounts
-  // together with selection — and the ResizeObserver keeps bounds in sync
-  // after that.
   useLayoutEffect(() => {
     const image = imageRef.current;
     const controlWrapper = controlWrapperRef.current;
@@ -137,9 +130,31 @@ export function ImageResizer({
     return () => observer.disconnect();
   }, [imageRef]);
 
+  useEffect(
+    () => () => {
+      cleanupActiveResizeRef.current?.();
+      cleanupActiveResizeRef.current = null;
+    },
+    []
+  );
+
+  const resolveMaxWidthContainer = (): number => {
+    if (maxWidth && maxWidth > 0) {
+      return Math.max(MIN_MAX_WIDTH, maxWidth);
+    }
+    const editorRootElement = editor.getRootElement();
+    if (editorRootElement) {
+      return Math.max(
+        MIN_MAX_WIDTH,
+        editorRootElement.getBoundingClientRect().width - 20
+      );
+    }
+    return MIN_MAX_WIDTH;
+  };
+
   const setStartCursor = (direction: ResizeDirection) => {
     const cursor = getCursor(direction);
-    editorRootElement?.style.setProperty("cursor", cursor, "important");
+    editor.getRootElement()?.style.setProperty("cursor", cursor, "important");
     document.body.style.setProperty("cursor", cursor, "important");
     userSelect.current.value = document.body.style.getPropertyValue(
       "-webkit-user-select"
@@ -151,65 +166,17 @@ export function ImageResizer({
   };
 
   const setEndCursor = () => {
-    editorRootElement?.style.setProperty("cursor", "text");
-    document.body.style.setProperty("cursor", "default");
-    document.body.style.setProperty(
-      "-webkit-user-select",
-      userSelect.current.value,
-      userSelect.current.priority
-    );
-  };
-
-  const handlePointerMove = (event: PointerEvent) => {
-    const image = imageRef.current;
-    const positioning = positioningRef.current;
-
-    if (!(image && positioning.isResizing)) {
-      return;
+    editor.getRootElement()?.style.removeProperty("cursor");
+    document.body.style.removeProperty("cursor");
+    if (userSelect.current.value) {
+      document.body.style.setProperty(
+        "-webkit-user-select",
+        userSelect.current.value,
+        userSelect.current.priority
+      );
+    } else {
+      document.body.style.removeProperty("-webkit-user-select");
     }
-
-    const zoom = calculateZoomLevel(image);
-    const nextSize = computeNextSize(
-      positioning,
-      event.clientX,
-      event.clientY,
-      zoom,
-      maxWidthContainer
-    );
-
-    image.style.width = `${nextSize.width}px`;
-    image.style.height = `${nextSize.height}px`;
-    positioning.currentHeight = nextSize.height;
-    positioning.currentWidth = nextSize.width;
-  };
-
-  const handlePointerUp = () => {
-    const image = imageRef.current;
-    const controlWrapper = controlWrapperRef.current;
-    const positioning = positioningRef.current;
-
-    document.removeEventListener("pointermove", handlePointerMove);
-    document.removeEventListener("pointerup", handlePointerUp);
-    setEndCursor();
-
-    if (!(image && controlWrapper && positioning.isResizing)) {
-      return;
-    }
-
-    const width = positioning.currentWidth;
-    const height = positioning.currentHeight;
-
-    positioning.startWidth = 0;
-    positioning.startHeight = 0;
-    positioning.ratio = 0;
-    positioning.startX = 0;
-    positioning.startY = 0;
-    positioning.currentWidth = 0;
-    positioning.currentHeight = 0;
-    positioning.isResizing = false;
-
-    controlWrapper.classList.remove("image-control-wrapper--resizing");
-    onResizeEnd(width, height);
   };
 
   const handlePointerDown = (
@@ -227,9 +194,15 @@ export function ImageResizer({
       return;
     }
 
+    const { height, width } = image.getBoundingClientRect();
+    if (width <= 0 || height <= 0) {
+      return;
+    }
+
     event.preventDefault();
 
-    const { height, width } = image.getBoundingClientRect();
+    maxWidthContainerRef.current = resolveMaxWidthContainer();
+
     const zoom = calculateZoomLevel(image);
     const positioning = positioningRef.current;
 
@@ -243,6 +216,69 @@ export function ImageResizer({
     positioning.isResizing = true;
     positioning.direction = direction;
 
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      if (!positioning.isResizing) {
+        return;
+      }
+
+      const activeZoom = calculateZoomLevel(image);
+      const nextSize = computeNextSize(
+        positioning,
+        moveEvent.clientX,
+        moveEvent.clientY,
+        activeZoom,
+        maxWidthContainerRef.current
+      );
+
+      image.style.width = `${nextSize.width}px`;
+      image.style.height = `${nextSize.height}px`;
+      positioning.currentHeight = nextSize.height;
+      positioning.currentWidth = nextSize.width;
+    };
+
+    const abortController = new AbortController();
+
+    const detachListeners = () => {
+      abortController.abort();
+      setEndCursor();
+      // Remove imperative inline dimensions so React/Lexical attributes own
+      // sizing after resize (including Undo/Redo transitions).
+      image.style.removeProperty("width");
+      image.style.removeProperty("height");
+      controlWrapper.classList.remove("image-control-wrapper--resizing");
+      cleanupActiveResizeRef.current = null;
+    };
+
+    const resetPositioning = () => {
+      positioning.startWidth = 0;
+      positioning.startHeight = 0;
+      positioning.ratio = 0;
+      positioning.startX = 0;
+      positioning.startY = 0;
+      positioning.currentWidth = 0;
+      positioning.currentHeight = 0;
+      positioning.isResizing = false;
+    };
+
+    const handlePointerFinish = () => {
+      const finalWidth = positioning.currentWidth;
+      const finalHeight = positioning.currentHeight;
+      const wasResizing = positioning.isResizing;
+      resetPositioning();
+      detachListeners();
+
+      if (wasResizing && finalWidth > 0 && finalHeight > 0) {
+        onResizeEnd(finalWidth, finalHeight);
+      }
+    };
+
+    const handlePointerCancel = () => {
+      resetPositioning();
+      detachListeners();
+    };
+
+    cleanupActiveResizeRef.current = handlePointerCancel;
+
     setStartCursor(direction);
     onResizeStart();
 
@@ -250,8 +286,22 @@ export function ImageResizer({
     image.style.height = `${height}px`;
     image.style.width = `${width}px`;
 
-    document.addEventListener("pointermove", handlePointerMove);
-    document.addEventListener("pointerup", handlePointerUp);
+    const listenerOptions = { signal: abortController.signal };
+    document.addEventListener(
+      "pointermove",
+      handlePointerMove,
+      listenerOptions
+    );
+    document.addEventListener(
+      "pointerup",
+      handlePointerFinish,
+      listenerOptions
+    );
+    document.addEventListener(
+      "pointercancel",
+      handlePointerCancel,
+      listenerOptions
+    );
   };
 
   return (
@@ -261,6 +311,7 @@ export function ImageResizer({
     >
       {CORNER_DIRECTIONS.map((direction) => (
         <div
+          aria-label={DIRECTION_LABELS[direction]}
           className={`editor-resize-handle shadow-sm ${CORNER_CLASSES[direction]}`}
           key={direction}
           onPointerDown={(event) => handlePointerDown(event, direction)}
@@ -269,6 +320,7 @@ export function ImageResizer({
       {edgeHandles
         ? EDGE_DIRECTIONS.map((direction) => (
             <div
+              aria-label={DIRECTION_LABELS[direction]}
               className={`absolute rounded-full border border-background/20 bg-foreground shadow-sm ${EDGE_CLASSES[direction]} ${EDGE_BAR_CLASSES[direction]}`}
               key={direction}
               onPointerDown={(event) => handlePointerDown(event, direction)}

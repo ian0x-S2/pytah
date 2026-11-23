@@ -72,12 +72,15 @@ export function FloatingLinkEditorSurfaces({
           align="start"
           anchor={anchorElement}
           className="editor-floating editor-floating-no-ring editor-floating-padding-sm w-72 max-w-[calc(100vw-2rem)] border border-border"
+          data-editor-key={editor.getKey()}
+          data-slot="floating-link-preview"
           onPointerEnter={() => onPointerOverChipChange(true)}
           onPointerLeave={() => onPointerOverChipChange(false)}
           side="bottom"
           sideOffset={6}
         >
           <FloatingLinkPreviewChip
+            editorKey={editor.getKey()}
             href={sanitizeEditorLinkUrl(hoverTarget.linkUrl)}
             label={hoverTarget.linkText}
             onEdit={() => {
@@ -122,6 +125,7 @@ export function FloatingLinkEditorSurfaces({
         align="start"
         anchor={anchorElement}
         className="editor-floating editor-floating-padding-md max-w-[calc(100vw-2rem)]"
+        data-editor-key={editor.getKey()}
         data-floating-link-card
         initialFocus={false}
         side="bottom"

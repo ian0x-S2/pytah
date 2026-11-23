@@ -13,6 +13,7 @@ import {
   ListIcon,
   ListOrderedIcon,
   MinusIcon,
+  NotebookPenIcon,
   PanelsTopLeftIcon,
   PencilRulerIcon,
   PlayIcon,
@@ -23,17 +24,13 @@ import {
   TypeIcon,
 } from "lucide-react";
 
+import type {
+  CoreSlashCommandId,
+  FeatureSlashCommand,
+} from "../slash-command/types";
 import type { BlockOption, BlockTypeValue } from "./types";
 
-/**
- * Toolbar dropdown metadata. Self-contained on purpose: the toolbar is core
- * chrome and must not import feature modules. Feature-gated options only
- * render when their command id was resolved from installed extras (see
- * `getAvailableBlockOptions`).
- */
-
-/** Core block types every install ships; never gated by command ids. */
-const CORE_BLOCK_TYPES = new Set<BlockTypeValue>([
+const CORE_BLOCK_TYPES = new Set<string>([
   "paragraph",
   "h1",
   "h2",
@@ -47,7 +44,7 @@ const CORE_BLOCK_TYPES = new Set<BlockTypeValue>([
   "hr",
 ]);
 
-export const BLOCK_TYPE_ORDER: BlockTypeValue[] = [
+export const BLOCK_TYPE_ORDER: CoreSlashCommandId[] = [
   "paragraph",
   "h1",
   "h2",
@@ -57,6 +54,11 @@ export const BLOCK_TYPE_ORDER: BlockTypeValue[] = [
   "check",
   "quote",
   "code",
+  "callout",
+  "info",
+  "tip",
+  "warning",
+  "caution",
   "math",
   "image",
   "youtube",
@@ -68,7 +70,7 @@ export const BLOCK_TYPE_ORDER: BlockTypeValue[] = [
 ];
 
 const BLOCK_METADATA: Record<
-  BlockTypeValue,
+  CoreSlashCommandId,
   {
     description: string;
     icon: LucideIcon;
@@ -82,7 +84,7 @@ const BLOCK_METADATA: Record<
   },
   callout: {
     description: "Highlighted callout box",
-    icon: InfoIcon,
+    icon: NotebookPenIcon,
     label: "Callout",
   },
   caution: {
@@ -140,6 +142,11 @@ const BLOCK_METADATA: Record<
     icon: ImageIcon,
     label: "Image",
   },
+  info: {
+    description: "Informational callout box",
+    icon: InfoIcon,
+    label: "Info",
+  },
   math: {
     description: "Insert TeX math equation",
     icon: CalculatorIcon,
@@ -185,31 +192,50 @@ const BLOCK_METADATA: Record<
 export const BLOCK_OPTIONS: BlockOption[] = BLOCK_TYPE_ORDER.map((value) => ({
   alwaysOn: CORE_BLOCK_TYPES.has(value),
   description: BLOCK_METADATA[value].description,
+  icon: BLOCK_METADATA[value].icon,
   label: BLOCK_METADATA[value].label,
   value,
 }));
 
 export const getAvailableBlockOptions = (
-  commandIds: readonly string[]
+  commandIds: readonly string[],
+  extraCommands?: readonly FeatureSlashCommand[]
 ): BlockOption[] => {
   const idSet = new Set(commandIds);
-
-  return BLOCK_OPTIONS.filter(
+  const builtIns = BLOCK_OPTIONS.filter(
     (option) => option.alwaysOn || idSet.has(option.value)
   );
+  const knownIds = new Set<string>(BLOCK_TYPE_ORDER);
+
+  if (!extraCommands || extraCommands.length === 0) {
+    return builtIns;
+  }
+
+  const customOptions: BlockOption[] = [];
+  for (const { command } of extraCommands) {
+    if (!knownIds.has(command.id) && idSet.has(command.id)) {
+      customOptions.push({
+        description: command.description,
+        icon: command.icon,
+        label: command.label,
+        value: command.id,
+      });
+    }
+  }
+
+  return [...builtIns, ...customOptions];
 };
 
-export const BLOCK_ICONS: Record<BlockTypeValue, LucideIcon> =
-  Object.fromEntries(
-    BLOCK_TYPE_ORDER.map((value) => [value, BLOCK_METADATA[value].icon])
-  ) as Record<BlockTypeValue, LucideIcon>;
+export const BLOCK_ICONS: Record<string, LucideIcon> = Object.fromEntries(
+  BLOCK_TYPE_ORDER.map((value) => [value, BLOCK_METADATA[value].icon])
+);
 
-export const BLOCK_LABELS: Record<BlockTypeValue, string> = Object.fromEntries(
+export const BLOCK_LABELS: Record<string, string> = Object.fromEntries(
   BLOCK_TYPE_ORDER.map((value) => [value, BLOCK_METADATA[value].label])
-) as Record<BlockTypeValue, string>;
+);
 
 /** Options rendered under an "Insert" section instead of conversion lists. */
-export const INSERT_SECTION_TYPES = new Set<BlockTypeValue>([
+export const INSERT_SECTION_TYPES = new Set<string>([
   "collapsible",
   "columns",
   "excalidraw",

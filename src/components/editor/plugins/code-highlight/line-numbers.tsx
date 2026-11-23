@@ -1,12 +1,12 @@
 "use client";
 
-import { $isCodeNode } from "@lexical/code";
+import { CodeNode } from "@lexical/code";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { $getRoot } from "lexical";
+import { $nodesOfType } from "lexical";
 import { useContext, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-import { useTheme } from "@/components/theme-context";
+import { useResolvedTheme } from "@/components/theme-context";
 import { cn } from "@/lib/utils";
 
 import { CodeGutterHostContext } from "./gutter-host";
@@ -27,9 +27,19 @@ interface CodeGutter {
   width: string;
 }
 
+interface PendingCodeBlockMeasure {
+  basePaddingLeft: string;
+  density: string;
+  element: HTMLElement;
+  key: string;
+  lineHeight: number;
+  lines: number;
+  paddingTop: number;
+  rect: DOMRect;
+  width: string;
+}
+
 const GUTTER_GAP = 8;
-// Breathing room between the code block edge and the first digit: with a
-// content-fitted column the numbers would otherwise sit flush against it.
 const GUTTER_LEFT_INSET = 16;
 
 const sameGutters = (left: CodeGutter[], right: CodeGutter[]): boolean => {
@@ -55,27 +65,20 @@ const restoreCodePadding = (elements: ReadonlySet<HTMLElement>): void => {
   for (const element of elements) {
     element.style.paddingLeft = element.dataset.codeGutterBase ?? "";
     delete element.dataset.codeGutterBase;
+    delete element.dataset.codeGutterDensity;
   }
 };
 
 /**
- * Line-number gutter overlay for editor code blocks.
- *
- * Lexical renders a `CodeNode` as a single `<code>` element with no
- * per-line elements, so CSS counters cannot number lines. Instead this
- * plugin measures each code block after commit and renders a
- * pointer-events-none gutter (portal'd into the positioned wrapper host)
- * with one number per logical line. Counts track edits through the update
- * listener; the gutter stays pinned on horizontal scroll because it lives
- * outside the code element's own scroller, and page scroll moves gutter
- * and code together.
+ * Line-number gutter overlay for editor code blocks (including code blocks
+ * nested inside callouts, collapsibles, layouts, or tables). Separates DOM
+ * reads from writes to avoid interleaved layout thrashing.
  */
 export function CodeLineNumbersPlugin({ className }: { className?: string }) {
   const [editor] = useLexicalComposerContext();
   const host = useContext(CodeGutterHostContext);
   const themeContext = useCodeBlockTheme();
-  const { resolvedTheme } = useTheme();
-  // Block chrome follows the code theme (`editorLineNumber.foreground`).
+  const resolvedTheme = useResolvedTheme();
   const gutterColor = getCodeBlockGutterColor(
     resolveCodeBlockThemeId(
       themeContext?.family ?? DEFAULT_CODE_BLOCK_THEME_FAMILY,
@@ -86,69 +89,138 @@ export function CodeLineNumbersPlugin({ className }: { className?: string }) {
   const touchedElements = useRef(new Set<HTMLElement>());
 
   useEffect(() => {
+    let frameId: number | null = null;
+
     const collect = (): void => {
       if (!host) {
         return;
       }
-      const hostRect = host.getBoundingClientRect();
-      const next: CodeGutter[] = [];
+
+      const activeDensity =
+        host.closest<HTMLElement>("[data-density]")?.dataset.density ?? "";
+      const codeBlocks: { element: HTMLElement; key: string; lines: number }[] =
+        [];
+
       editor.getEditorState().read(() => {
-        for (const child of $getRoot().getChildren()) {
-          if (!$isCodeNode(child)) {
-            continue;
-          }
-          const element = editor.getElementByKey(child.getKey());
+        for (const node of $nodesOfType(CodeNode)) {
+          const key = node.getKey();
+          const element = editor.getElementByKey(key);
           if (!(element instanceof HTMLElement)) {
             continue;
           }
-          const computed = window.getComputedStyle(element);
-          // Remember the theme's own padding once so re-collection never
-          // stacks the gutter reservation on top of itself.
-          const basePaddingLeft =
-            element.dataset.codeGutterBase ??
-            (() => {
-              const value = computed.paddingLeft;
-              element.dataset.codeGutterBase = value;
-              return value;
-            })();
-          const lines = child.getTextContent().split("\n").length;
-          // Gutter column fits the widest number: code and gutter share
-          // the mono 14px context, so 1ch per digit keeps short blocks
-          // close to the container edge while longer blocks stay aligned.
-          const width = `${String(lines).length}ch`;
-          element.style.paddingLeft = `calc(${basePaddingLeft} + ${width} + ${GUTTER_LEFT_INSET + GUTTER_GAP}px)`;
-          touchedElements.current.add(element);
-          const rect = element.getBoundingClientRect();
-          next.push({
-            key: child.getKey(),
-            left: rect.left - hostRect.left + GUTTER_LEFT_INSET,
-            lineHeight: Number.parseFloat(computed.lineHeight) || 32,
-            lines,
-            paddingTop: Number.parseFloat(computed.paddingTop) || 0,
-            top: rect.top - hostRect.top,
-            width,
+          codeBlocks.push({
+            element,
+            key,
+            lines: node.getTextContent().split("\n").length,
           });
         }
       });
+
+      // Prune detached or deleted code blocks so touchedElements never leaks.
+      const activeElements = new Set(codeBlocks.map((item) => item.element));
+      for (const element of touchedElements.current) {
+        if (!activeElements.has(element)) {
+          touchedElements.current.delete(element);
+        }
+      }
+
+      // Reset cached base padding if density changed before measuring.
+      for (const { element } of codeBlocks) {
+        if (
+          element.dataset.codeGutterBase !== undefined &&
+          element.dataset.codeGutterDensity !== activeDensity
+        ) {
+          element.style.paddingLeft = "";
+          delete element.dataset.codeGutterBase;
+          delete element.dataset.codeGutterDensity;
+        }
+      }
+
+      // Phase 1: batch all layout reads.
+      const hostRect = host.getBoundingClientRect();
+      const measures: PendingCodeBlockMeasure[] = [];
+
+      for (const { element, key, lines } of codeBlocks) {
+        const computed = window.getComputedStyle(element);
+        const basePaddingLeft =
+          element.dataset.codeGutterBase ?? computed.paddingLeft;
+        const width = `${String(lines).length}ch`;
+        const rect = element.getBoundingClientRect();
+
+        measures.push({
+          basePaddingLeft,
+          density: activeDensity,
+          element,
+          key,
+          lineHeight: Number.parseFloat(computed.lineHeight) || 32,
+          lines,
+          paddingTop: Number.parseFloat(computed.paddingTop) || 0,
+          rect,
+          width,
+        });
+      }
+
+      // Phase 2: batch all DOM style writes.
+      const next: CodeGutter[] = [];
+      for (const measure of measures) {
+        const {
+          basePaddingLeft,
+          density,
+          element,
+          key,
+          lineHeight,
+          lines,
+          paddingTop,
+          rect,
+          width,
+        } = measure;
+
+        if (element.dataset.codeGutterBase !== basePaddingLeft) {
+          element.dataset.codeGutterBase = basePaddingLeft;
+        }
+        element.dataset.codeGutterDensity = density;
+        const nextPaddingLeft = `calc(${basePaddingLeft} + ${width} + ${GUTTER_LEFT_INSET + GUTTER_GAP}px)`;
+        if (element.style.paddingLeft !== nextPaddingLeft) {
+          element.style.paddingLeft = nextPaddingLeft;
+        }
+        touchedElements.current.add(element);
+
+        next.push({
+          key,
+          left: rect.left - hostRect.left + GUTTER_LEFT_INSET,
+          lineHeight,
+          lines,
+          paddingTop,
+          top: rect.top - hostRect.top,
+          width,
+        });
+      }
+
       setGutters((previous) => (sameGutters(previous, next) ? previous : next));
     };
 
+    const scheduleCollect = (): void => {
+      if (frameId !== null) {
+        return;
+      }
+      frameId = window.requestAnimationFrame(() => {
+        frameId = null;
+        collect();
+      });
+    };
+
     collect();
-    const unregister = editor.registerUpdateListener(() => {
-      collect();
-    });
-    // Layout can shift without any Lexical update: the density toggle only
-    // flips `data-density` (line-height, paddings and gaps are CSS vars), and
-    // zen mode or container resizes move blocks the same way. The host box
-    // tracks the wrapper in all these cases, so re-collect on its resize.
-    const observer = new ResizeObserver(() => {
-      collect();
-    });
+    const unregister = editor.registerUpdateListener(scheduleCollect);
+    const observer = new ResizeObserver(scheduleCollect);
     if (host) {
       observer.observe(host);
     }
     const touched = touchedElements.current;
     return () => {
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+        frameId = null;
+      }
       unregister();
       observer.disconnect();
       restoreCodePadding(touched);

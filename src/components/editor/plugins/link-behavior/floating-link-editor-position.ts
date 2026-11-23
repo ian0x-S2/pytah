@@ -5,7 +5,7 @@ import {
   getFloatingToolbarSelectedNode,
   getSelectedLinkNode,
   isSelectionWithinSingleLink,
-} from "../floating-toolbar/selection";
+} from "./selection";
 
 /**
  * A plain selection rectangle (floating-ui `ClientRectObject` shape) used as

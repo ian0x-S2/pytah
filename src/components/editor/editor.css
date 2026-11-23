@@ -11,7 +11,7 @@
  * artifact behind the highlight).
  */
 @import "./core/tokens.css";
-mark {
+.editor-content mark {
   color: inherit;
   background-color: transparent;
 }

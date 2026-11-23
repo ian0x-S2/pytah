@@ -1,15 +1,54 @@
+import { $insertNodeToNearestRoot } from "@lexical/utils";
 import {
   $createParagraphNode,
   $createTextNode,
   $getNodeByKey,
-  $isElementNode,
   $isParagraphNode,
+  $isRootNode,
   $isTextNode,
 } from "lexical";
-import type { LexicalEditor } from "lexical";
+import type { LexicalEditor, LexicalNode } from "lexical";
 
 import { $createWeblinkNode } from "../../core/nodes/weblink/node";
 import type { LinkPasteOptionId } from "./constants";
+
+const replaceLinkWithBlockWeblink = (
+  linkNode: LexicalNode,
+  url: string,
+  format: "small" | "wide"
+) => {
+  const weblinkNode = $createWeblinkNode({
+    format,
+    url,
+  });
+  const parent = linkNode.getParent();
+  const grandParent = parent?.getParent();
+
+  if (
+    parent &&
+    $isParagraphNode(parent) &&
+    grandParent &&
+    $isRootNode(grandParent) &&
+    parent.getTextContent().trim() === url
+  ) {
+    parent.replace(weblinkNode);
+  } else if (
+    parent &&
+    $isParagraphNode(parent) &&
+    grandParent &&
+    $isRootNode(grandParent)
+  ) {
+    linkNode.remove();
+    parent.insertAfter(weblinkNode);
+  } else {
+    linkNode.remove();
+    $insertNodeToNearestRoot(weblinkNode);
+  }
+
+  const trailingParagraph = $createParagraphNode();
+  weblinkNode.insertAfter(trailingParagraph);
+  trailingParagraph.select();
+};
 
 export function executeLinkPasteOption(
   editor: LexicalEditor,
@@ -25,7 +64,6 @@ export function executeLinkPasteOption(
 
     switch (optionId) {
       case "inline-link": {
-        // Keep as standard text link; select end of link
         linkNode.selectEnd();
         break;
       }
@@ -46,49 +84,11 @@ export function executeLinkPasteOption(
         break;
       }
       case "small-weblink": {
-        const weblinkNode = $createWeblinkNode({
-          format: "small",
-          url,
-        });
-        const parent = linkNode.getParent();
-        if (
-          parent &&
-          $isParagraphNode(parent) &&
-          parent.getTextContent().trim() === url
-        ) {
-          parent.replace(weblinkNode);
-        } else if (parent && $isElementNode(parent)) {
-          linkNode.remove();
-          parent.insertAfter(weblinkNode);
-        } else {
-          linkNode.replace(weblinkNode);
-        }
-        const trailingParagraph = $createParagraphNode();
-        weblinkNode.insertAfter(trailingParagraph);
-        trailingParagraph.select();
+        replaceLinkWithBlockWeblink(linkNode, url, "small");
         break;
       }
       case "wide-weblink": {
-        const weblinkNode = $createWeblinkNode({
-          format: "wide",
-          url,
-        });
-        const parent = linkNode.getParent();
-        if (
-          parent &&
-          $isParagraphNode(parent) &&
-          parent.getTextContent().trim() === url
-        ) {
-          parent.replace(weblinkNode);
-        } else if (parent && $isElementNode(parent)) {
-          linkNode.remove();
-          parent.insertAfter(weblinkNode);
-        } else {
-          linkNode.replace(weblinkNode);
-        }
-        const trailingParagraph = $createParagraphNode();
-        weblinkNode.insertAfter(trailingParagraph);
-        trailingParagraph.select();
+        replaceLinkWithBlockWeblink(linkNode, url, "wide");
         break;
       }
       case "remove-link": {

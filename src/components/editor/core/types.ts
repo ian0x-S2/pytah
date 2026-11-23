@@ -5,9 +5,13 @@ import type { ComponentType, ReactNode } from "react";
 
 import type { CodeBlockThemeFamily } from "../plugins/code-highlight/themes/registry";
 import type { FeatureSlashCommand } from "../plugins/slash-command/types";
-import type { WeblinkMetadataFetcher } from "./nodes/weblink/types";
+import type {
+  WeblinkFaviconResolver,
+  WeblinkMetadataFetcher,
+} from "./nodes/weblink/types";
 
 export type {
+  WeblinkFaviconResolver,
   WeblinkFormat,
   WeblinkMetadata,
   WeblinkMetadataFetcher,
@@ -167,7 +171,7 @@ export interface EditorProps {
    * swaps the family for every block, and `useCodeBlockTheme` exposes the
    * same state for custom switchers inside the editor tree. Token colors
    * and the block background both follow the family.
-   * @default "github"
+   * @default "nord"
    */
   codeBlockTheme?: CodeBlockThemeFamily;
   contentClassName?: string;
@@ -182,11 +186,20 @@ export interface EditorProps {
   minimal?: boolean;
   namespace?: string;
   onChange?: (snapshot: EditorSnapshot, editor: LexicalEditor) => void;
+  /** Optional error callback for Lexical runtime and JSON seed parse errors. */
+  onError?: (error: Error, editor: LexicalEditor) => void;
   placeholder?: string;
   pluginSlots?: EditorPluginSlots;
   slots?: EditorChromeSlots;
   /** @default false */
   toolbar?: EditorToolbar;
+  /**
+   * Controls client-side favicon resolution for weblink cards.
+   * - `undefined` (default): uses Google's public favicon service
+   * - `false`: disables external favicon requests completely (e.g. private/intranet)
+   * - `(hostname) => string | undefined`: custom favicon URL resolver
+   */
+  weblinkFaviconResolver?: WeblinkFaviconResolver;
   /**
    * Optional async metadata fetcher for weblink cards (small & wide).
    * Allows enriching pasted links with OpenGraph tags (title, description, image)

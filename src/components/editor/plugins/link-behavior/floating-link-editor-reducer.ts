@@ -71,12 +71,13 @@ export const FLOATING_LINK_EDITOR_INITIAL_STATE: FloatingLinkEditorState = {
 
 const keepHoverChip = (
   state: FloatingLinkEditorState,
+  isLink: boolean,
   linkText: string,
   linkUrl: string
 ): FloatingLinkEditorState => ({
   ...state,
   anchor: state.anchor,
-  isLink: false,
+  isLink,
   linkText,
   linkUrl,
   surface: "preview",
@@ -125,14 +126,14 @@ const applySyncAction = (
 ): FloatingLinkEditorState => {
   const { anchor, isLink, linkText, linkUrl } = payload;
 
-  // The selection itself carries no link anymore: the edit card dies with
-  // it, but a live hover chip is caret-independent and survives — the
-  // pointer's link is separate from the selection.
-  if (!isLink) {
-    if (state.surface === "preview" && !isEditSurface(state)) {
-      return keepHoverChip(state, linkText, linkUrl);
-    }
+  // A live hover chip is caret-independent: preserve its anchor and target
+  // regardless of whether the caret is outside a link or inside another link.
+  if (state.surface === "preview" && !isEditSurface(state)) {
+    return keepHoverChip(state, isLink, linkText, linkUrl);
+  }
 
+  // The selection itself carries no link anymore: the edit card dies with it.
+  if (!isLink) {
     return closeEverySurface(state, { isLink, linkText, linkUrl });
   }
 
@@ -235,7 +236,7 @@ export const floatingLinkEditorReducer = (
       };
     }
     case "close-link-editor": {
-      return state.isLink || state.isLinkEditMode
+      return state.isLink || state.isLinkEditMode || state.surface !== "closed"
         ? {
             ...state,
             anchor: null,

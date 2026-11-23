@@ -1,6 +1,10 @@
+import type { ElementFormatType } from "lexical";
+
 export interface FloatingToolbarFormatState {
   /** Current background-color CSS value of the selection, or "" if none/mixed. */
   bgColor: string;
+  /** Current block-level alignment of the selection. */
+  elementFormat: ElementFormatType;
   isBold: boolean;
   isCode: boolean;
   isHighlight: boolean;

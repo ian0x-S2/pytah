@@ -7,6 +7,7 @@ import {
   $getNodeByKey,
   $getSelection,
   $isElementNode,
+  $isParagraphNode,
   $isRangeSelection,
   $isTextNode,
   COMMAND_PRIORITY_EDITOR,
@@ -17,6 +18,7 @@ import { useEffect, useState } from "react";
 import { $createYouTubeNode, YouTubeNode } from "../../core/nodes/youtube/node";
 import { INSERT_YOUTUBE_COMMAND } from "./commands";
 import { InsertYouTubeDialog } from "./insert-dialog";
+import { isValidYouTubeVideoId, parseYouTubeUrl } from "./utils";
 
 const insertParagraphAfterYouTube = (
   youTubeNode: ReturnType<typeof $createYouTubeNode>
@@ -49,7 +51,14 @@ export function YouTubePlugin() {
           return false;
         }
 
-        const youTubeNode = $createYouTubeNode(trimmedVideoId);
+        const resolvedVideoId = isValidYouTubeVideoId(trimmedVideoId)
+          ? trimmedVideoId
+          : parseYouTubeUrl(trimmedVideoId);
+        if (!resolvedVideoId) {
+          return false;
+        }
+
+        const youTubeNode = $createYouTubeNode(resolvedVideoId);
 
         if (targetNodeKey) {
           const targetNode = $getNodeByKey(targetNodeKey);
@@ -89,8 +98,18 @@ export function YouTubePlugin() {
                 return;
               }
               const node = selection.anchor.getNode();
-              if ($isTextNode(node)) {
-                targetNodeKey = node.getTopLevelElementOrThrow().getKey();
+              const topLevel = node.getTopLevelElement();
+              if (
+                topLevel &&
+                $isParagraphNode(topLevel) &&
+                topLevel.getTextContent().trim().length === 0
+              ) {
+                targetNodeKey = topLevel.getKey();
+              } else if (
+                $isTextNode(node) &&
+                node.getTextContent().trim().startsWith("/")
+              ) {
+                targetNodeKey = topLevel?.getKey() ?? null;
               }
             });
           }
@@ -112,10 +131,15 @@ export function YouTubePlugin() {
   };
 
   const handleSubmit = () => {
+    const videoId = parseYouTubeUrl(dialogState.url);
+    if (!videoId) {
+      return;
+    }
+
     editor.update(() => {
       editor.dispatchCommand(INSERT_YOUTUBE_COMMAND, {
         targetNodeKey: dialogState.pendingTargetKey ?? undefined,
-        videoId: dialogState.url,
+        videoId,
       });
     });
     closeDialog();

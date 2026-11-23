@@ -159,12 +159,12 @@ const resolveAbsoluteBottomHeadingKey = (
     return null;
   }
 
-  const clientHeight =
+  const visibleBottom =
     scrollParent === window
       ? window.innerHeight
-      : (scrollParent as HTMLElement).clientHeight;
+      : (scrollParent as HTMLElement).getBoundingClientRect().bottom;
 
-  if (lastElement.getBoundingClientRect().top <= clientHeight) {
+  if (lastElement.getBoundingClientRect().top <= visibleBottom) {
     return lastKey;
   }
 
@@ -217,10 +217,8 @@ export const resolveSelectedHeadingKey = (): NodeKey | null => {
     return null;
   }
 
-  const topLevelElement = selection.anchor
-    .getNode()
-    .getTopLevelElementOrThrow();
-  if (!$isHeadingNode(topLevelElement)) {
+  const topLevelElement = selection.anchor.getNode().getTopLevelElement();
+  if (!topLevelElement || !$isHeadingNode(topLevelElement)) {
     return null;
   }
 

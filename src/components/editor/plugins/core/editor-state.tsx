@@ -13,7 +13,6 @@ import {
   loadEditorJsonContent,
   loadMarkdownContent,
   readEditorSnapshot,
-  readEditorTextContent,
   replaceEditorHtmlContent,
 } from "../../core/utils";
 import type { SnapshotUpdateSignal } from "./snapshot-update";
@@ -87,9 +86,25 @@ export function EditorStatePlugin({
     }
   });
 
-  const emitInitialSnapshot = useEffectEvent(() => {
+  const emitSnapshot = useEffectEvent(() => {
+    const hasAnyOutput =
+      snapshotOptions.text ||
+      snapshotOptions.html ||
+      snapshotOptions.markdown ||
+      snapshotOptions.json;
+
+    if (!hasAnyOutput) {
+      return;
+    }
+
+    const nextSnapshot = readEditorSnapshot(
+      editor,
+      transformers,
+      snapshotOptions
+    );
+
     if (snapshotOptions.text) {
-      onChange?.(readEditorTextContent(editor), editor);
+      onChange?.(nextSnapshot.text, editor);
     }
 
     if (
@@ -97,20 +112,10 @@ export function EditorStatePlugin({
       snapshotOptions.markdown ||
       snapshotOptions.json
     ) {
-      onSnapshotReady?.(
-        readEditorSnapshot(editor, transformers, snapshotOptions),
-        editor
-      );
+      onSnapshotReady?.(nextSnapshot, editor);
     }
   });
 
-  // When the seed was applied through the composer's initial state there is
-  // no seed update to observe, so the initial snapshot (when enabled) is
-  // emitted directly from the already-populated state. The emission is
-  // deferred one microtask because the composer's initial update commits
-  // asynchronously (scheduleMicroTask) — this keeps the read deterministic
-  // whether effects flush before or after that commit. The post-mount
-  // seeding path remains for standalone plugin usage.
   const didEmitInitialRef = useRef(false);
 
   const emitConfiguredSeedSnapshot = useEffectEvent(() => {
@@ -125,7 +130,7 @@ export function EditorStatePlugin({
     }
     didEmitInitialRef.current = true;
     queueMicrotask(() => {
-      emitInitialSnapshot();
+      emitSnapshot();
     });
   });
 
@@ -146,20 +151,7 @@ export function EditorStatePlugin({
       return;
     }
 
-    if (snapshotOptions.text) {
-      onChange?.(readEditorTextContent(editor), editor);
-    }
-
-    if (
-      snapshotOptions.html ||
-      snapshotOptions.markdown ||
-      snapshotOptions.json
-    ) {
-      onSnapshotReady?.(
-        readEditorSnapshot(editor, transformers, snapshotOptions),
-        editor
-      );
-    }
+    emitSnapshot();
   });
 
   useEffect(() => editor.registerUpdateListener(handleUpdate), [editor]);

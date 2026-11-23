@@ -18,28 +18,22 @@ import {
   $createParagraphNode,
   $findMatchingParent,
   $getSelection,
+  $isElementNode,
   $isParagraphNode,
   $isRangeSelection,
 } from "lexical";
-import type { LexicalEditor, LexicalNode, RangeSelection } from "lexical";
+import type {
+  ElementFormatType,
+  LexicalEditor,
+  LexicalNode,
+  RangeSelection,
+} from "lexical";
 
-import { getSlashRunner } from "../slash-command/executors";
+import { getCoreSlashRunner } from "../slash-command/executors";
+import type { FeatureSlashCommand } from "../slash-command/types";
 import type { BlockOption, BlockTypeValue } from "./types";
 
 const HEADING_VALUES = ["h1", "h2", "h3"] as const;
-
-const EXECUTOR_BLOCK_TYPES = [
-  "collapsible",
-  "columns",
-  "excalidraw",
-  "hr",
-  "math",
-] as const satisfies readonly BlockTypeValue[];
-
-const isExecutorBlockType = (
-  value: BlockTypeValue
-): value is (typeof EXECUTOR_BLOCK_TYPES)[number] =>
-  EXECUTOR_BLOCK_TYPES.includes(value as (typeof EXECUTOR_BLOCK_TYPES)[number]);
 
 const isHeadingValue = (
   value: BlockTypeValue
@@ -48,6 +42,38 @@ const isHeadingValue = (
 
 const findSelectedTableAncestor = (node: LexicalNode) =>
   $findMatchingParent(node, (parentNode) => $isTableNode(parentNode));
+
+export const getElementFormatFromSelection = (): ElementFormatType => {
+  const selection = $getSelection();
+  if (!$isRangeSelection(selection)) {
+    return "";
+  }
+
+  const topLevelElement = selection.anchor.getNode().getTopLevelElement();
+  if (topLevelElement && $isElementNode(topLevelElement)) {
+    return topLevelElement.getFormatType();
+  }
+
+  return "";
+};
+
+const resolveCalloutBlockType = (element: LexicalNode): BlockTypeValue => {
+  const calloutType =
+    "getCalloutType" in element && typeof element.getCalloutType === "function"
+      ? (element.getCalloutType() as string)
+      : "note";
+
+  if (
+    calloutType === "info" ||
+    calloutType === "tip" ||
+    calloutType === "warning" ||
+    calloutType === "caution"
+  ) {
+    return calloutType;
+  }
+
+  return "callout";
+};
 
 export const getBlockTypeFromSelection = (): BlockTypeValue | null => {
   const selection = $getSelection();
@@ -61,15 +87,20 @@ export const getBlockTypeFromSelection = (): BlockTypeValue | null => {
     return "table";
   }
 
-  const topLevelElement = anchorNode.getTopLevelElementOrThrow();
+  const topLevelElement = anchorNode.getTopLevelElement();
+  if (!topLevelElement) {
+    return null;
+  }
+
+  if (topLevelElement.getType() === "callout") {
+    return resolveCalloutBlockType(topLevelElement);
+  }
 
   if ($isHeadingNode(topLevelElement)) {
     const headingTag = topLevelElement.getTag();
-    if (headingTag === "h1" || headingTag === "h2" || headingTag === "h3") {
-      return headingTag;
-    }
-
-    return null;
+    return headingTag === "h1" || headingTag === "h2" || headingTag === "h3"
+      ? headingTag
+      : "h3";
   }
 
   if ($isQuoteNode(topLevelElement)) {
@@ -82,15 +113,11 @@ export const getBlockTypeFromSelection = (): BlockTypeValue | null => {
 
   if ($isListNode(topLevelElement)) {
     const listType = topLevelElement.getListType();
-    if (
-      listType === "bullet" ||
+    return listType === "bullet" ||
       listType === "number" ||
       listType === "check"
-    ) {
-      return listType;
-    }
-
-    return null;
+      ? listType
+      : null;
   }
 
   if ($isParagraphNode(topLevelElement)) {
@@ -129,13 +156,20 @@ const $applyConversionBlockType = (
 
 export const applyBlockType = (
   editor: LexicalEditor,
-  blockType: BlockTypeValue
+  blockType: BlockTypeValue,
+  commandRunner?: FeatureSlashCommand["run"]
 ) => {
-  // Insert-style blocks reuse the slash command runners so every surface
-  // (slash menu, toolbar, dialogs) produces identical results. Feature runs
-  // come from the runtime registry — no static feature imports here.
-  if (isExecutorBlockType(blockType)) {
-    const run = getSlashRunner(blockType);
+  const isBuiltinConversion =
+    blockType === "paragraph" ||
+    isHeadingValue(blockType) ||
+    blockType === "quote" ||
+    blockType === "code" ||
+    blockType === "bullet" ||
+    blockType === "number" ||
+    blockType === "check";
+
+  if (!isBuiltinConversion) {
+    const run = commandRunner ?? getCoreSlashRunner(blockType);
     if (run) {
       run(editor);
       return;
@@ -158,6 +192,14 @@ export const applyBlockType = (
         includeHeaders: true,
         rows: "3",
       });
+      return;
+    }
+
+    if (
+      blockType !== "bullet" &&
+      blockType !== "check" &&
+      blockType !== "number"
+    ) {
       return;
     }
 

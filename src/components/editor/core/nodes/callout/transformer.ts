@@ -1,3 +1,8 @@
+import {
+  $convertFromMarkdownString,
+  TEXT_FORMAT_TRANSFORMERS,
+  TEXT_MATCH_TRANSFORMERS,
+} from "@lexical/markdown";
 import type { MultilineElementTransformer } from "@lexical/markdown";
 import {
   $createParagraphNode,
@@ -5,6 +10,7 @@ import {
   $isElementNode,
   ParagraphNode,
 } from "lexical";
+import type { LexicalNode } from "lexical";
 
 import { $createCalloutNode, $isCalloutNode, CalloutNode } from "./node";
 import type { CalloutType } from "./node";
@@ -21,6 +27,37 @@ const TYPE_MAP: Record<string, CalloutType> = {
   warning: "warning",
 };
 
+const INLINE_TRANSFORMERS = [
+  ...TEXT_FORMAT_TRANSFORMERS,
+  ...TEXT_MATCH_TRANSFORMERS,
+];
+
+const appendNodesToCallout = (
+  calloutNode: CalloutNode,
+  children: readonly LexicalNode[]
+) => {
+  let inlineParagraph: ParagraphNode | null = null;
+
+  for (const child of children) {
+    if ($isElementNode(child) && !child.isInline()) {
+      if (inlineParagraph) {
+        calloutNode.append(inlineParagraph);
+        inlineParagraph = null;
+      }
+      calloutNode.append(child);
+    } else {
+      if (!inlineParagraph) {
+        inlineParagraph = $createParagraphNode();
+      }
+      inlineParagraph.append(child);
+    }
+  }
+
+  if (inlineParagraph || calloutNode.getChildrenSize() === 0) {
+    calloutNode.append(inlineParagraph ?? $createParagraphNode());
+  }
+};
+
 export const CALLOUT_MARKDOWN_TRANSFORMER: MultilineElementTransformer = {
   dependencies: [CalloutNode, ParagraphNode],
   export: (node, traverseChildren) => {
@@ -28,7 +65,23 @@ export const CALLOUT_MARKDOWN_TRANSFORMER: MultilineElementTransformer = {
       return null;
     }
     const alertType = node.getCalloutType().toUpperCase();
-    const childrenText = traverseChildren(node).trim();
+    const blockChildren = node.getChildren();
+
+    let childrenText = "";
+    if (blockChildren.length > 0) {
+      const blocks: string[] = [];
+      for (const child of blockChildren) {
+        if ($isElementNode(child)) {
+          blocks.push(traverseChildren(child));
+        } else {
+          blocks.push(child.getTextContent());
+        }
+      }
+      childrenText = blocks.join("\n\n").trim();
+    } else {
+      childrenText = traverseChildren(node).trim();
+    }
+
     if (!childrenText) {
       return `> [!${alertType}]\n>`;
     }
@@ -66,12 +119,25 @@ export const CALLOUT_MARKDOWN_TRANSFORMER: MultilineElementTransformer = {
     }
 
     const calloutNode = $createCalloutNode(calloutType);
-    if (contentLines.length === 0) {
+    const bodyMarkdown = contentLines.join("\n").trim();
+
+    if (bodyMarkdown.length === 0) {
       calloutNode.append($createParagraphNode());
     } else {
-      const paragraph = $createParagraphNode();
-      paragraph.append($createTextNode(contentLines.join("\n")));
-      calloutNode.append(paragraph);
+      try {
+        $convertFromMarkdownString(
+          bodyMarkdown,
+          INLINE_TRANSFORMERS,
+          calloutNode
+        );
+      } catch {
+        const paragraph = $createParagraphNode();
+        paragraph.append($createTextNode(bodyMarkdown));
+        calloutNode.append(paragraph);
+      }
+      if (calloutNode.getChildrenSize() === 0) {
+        calloutNode.append($createParagraphNode());
+      }
     }
 
     rootNode.append(calloutNode);
@@ -96,30 +162,15 @@ export const CALLOUT_MARKDOWN_TRANSFORMER: MultilineElementTransformer = {
     const calloutType: CalloutType = TYPE_MAP[rawType ?? ""] ?? "note";
 
     const calloutNode = $createCalloutNode(calloutType);
-    const paragraph = $createParagraphNode();
 
     if (children && children.length > 0) {
-      let hasInline = false;
-      for (const child of children) {
-        if ($isElementNode(child)) {
-          if (hasInline) {
-            calloutNode.append(paragraph);
-            hasInline = false;
-          }
-          calloutNode.append(child);
-        } else {
-          paragraph.append(child);
-          hasInline = true;
-        }
-      }
-      if (hasInline || calloutNode.getChildrenSize() === 0) {
-        calloutNode.append(paragraph);
-      }
+      appendNodesToCallout(calloutNode, children);
     } else if (linesInBetween && linesInBetween.length > 0) {
+      const paragraph = $createParagraphNode();
       paragraph.append($createTextNode(linesInBetween.join("\n")));
       calloutNode.append(paragraph);
     } else {
-      calloutNode.append(paragraph);
+      calloutNode.append($createParagraphNode());
     }
 
     if (isImport) {

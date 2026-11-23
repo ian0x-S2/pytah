@@ -9,18 +9,21 @@ interface WeblinkIconProps {
 }
 
 export function WeblinkIcon({ className, icon }: WeblinkIconProps) {
-  const [error, setError] = useState(false);
+  const [failedIconUrl, setFailedIconUrl] = useState<string | null>(null);
+  const hasError = Boolean(icon && failedIconUrl === icon);
 
-  if (icon && !error) {
+  if (icon && !hasError) {
     return (
       <img
         alt=""
         className={className}
-        onError={() => setError(true)}
+        onError={() => setFailedIconUrl(icon)}
         src={icon}
       />
     );
   }
 
-  return <GlobeIcon className={cn(className, "text-muted-foreground")} />;
+  return (
+    <GlobeIcon aria-hidden className={cn(className, "text-muted-foreground")} />
+  );
 }

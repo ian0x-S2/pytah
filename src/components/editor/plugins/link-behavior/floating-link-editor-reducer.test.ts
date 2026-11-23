@@ -256,6 +256,26 @@ describe("floatingLinkEditorReducer", () => {
     deepStrictEqual(synced.hoverTarget, HOVER_TARGET);
   });
 
+  test("sync preserves hovered link anchor even when caret sits in a different link", () => {
+    const preview = floatingLinkEditorReducer(
+      FLOATING_LINK_EDITOR_INITIAL_STATE,
+      { payload: HOVER_TARGET, type: "hover-link" }
+    );
+    const synced = floatingLinkEditorReducer(preview, {
+      payload: syncPayload({
+        anchor: NEXT_ANCHOR,
+        isLink: true,
+        linkText: "other",
+        linkUrl: "https://other.example",
+      }),
+      type: "sync",
+    });
+
+    strictEqual(synced.surface, "preview");
+    deepStrictEqual(synced.anchor, ANCHOR);
+    deepStrictEqual(synced.hoverTarget, HOVER_TARGET);
+  });
+
   test("close-link-editor resets every surface", () => {
     const editing = floatingLinkEditorReducer(
       linkedState({ isLinkEditMode: true, surface: "edit" }),

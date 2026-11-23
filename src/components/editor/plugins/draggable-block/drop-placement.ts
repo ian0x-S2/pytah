@@ -5,6 +5,7 @@ import {
   $createNodeSelection,
   $getNearestNodeFromDOMNode,
   $getNodeByKey,
+  $getRoot,
   $isElementNode,
   $setSelection,
 } from "lexical";
@@ -56,17 +57,23 @@ export function moveDraggedBlock(
     () => {
       const draggedNode = $getNodeByKey(draggedKey);
       const targetNode = $getNearestNodeFromDOMNode(targetElem);
+      const root = $getRoot();
 
-      if (draggedNode === null || targetNode === null) {
+      if (
+        draggedNode === null ||
+        targetNode === null ||
+        draggedNode.getParent() !== root ||
+        targetNode.getParent() !== root
+      ) {
         return;
       }
 
       claimed = true;
 
       if (targetNode.getKey() !== draggedNode.getKey()) {
-        const targetTop = targetElem.getBoundingClientRect().top;
+        const targetRect = targetElem.getBoundingClientRect();
 
-        if (decideInsertAfter(clientY, targetTop)) {
+        if (decideInsertAfter(clientY, targetRect.top, targetRect.height)) {
           targetNode.insertAfter(draggedNode);
         } else {
           targetNode.insertBefore(draggedNode);

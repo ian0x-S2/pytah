@@ -163,15 +163,25 @@ export const loadEditorJsonContent = (
   editor: LexicalEditor,
   json: string | SerializedEditorState | Record<string, unknown>,
   options?: EditorContentLoadOptions
-) => {
-  const jsonString = typeof json === "string" ? json : JSON.stringify(json);
-  const parsedState = editor.parseEditorState(jsonString);
-  editor.setEditorState(parsedState, {
-    tag: options?.tag,
-  });
-  if (options?.select !== false) {
-    editor.update(() => {
-      selectStartOfRoot();
+): boolean => {
+  try {
+    const jsonString = typeof json === "string" ? json : JSON.stringify(json);
+    const parsedState = editor.parseEditorState(jsonString);
+    editor.setEditorState(parsedState, {
+      tag: options?.tag,
     });
+    if (options?.select !== false) {
+      editor.update(() => {
+        selectStartOfRoot();
+      });
+    }
+    return true;
+  } catch (error) {
+    editor._onError(
+      error instanceof Error
+        ? error
+        : new Error("Failed to parse editor JSON state.")
+    );
+    return false;
   }
 };

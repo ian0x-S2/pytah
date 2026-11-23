@@ -2,12 +2,13 @@
 
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { DRAG_DROP_PASTE, eventFiles } from "@lexical/rich-text";
+import { $insertNodeToNearestRoot } from "@lexical/utils";
 import {
   $createParagraphNode,
   $getNodeByKey,
   $getSelection,
-  $insertNodes,
   $isElementNode,
+  $isParagraphNode,
   $isRangeSelection,
   $isTextNode,
   COMMAND_PRIORITY_EDITOR,
@@ -18,10 +19,16 @@ import {
 import { useEffect, useState } from "react";
 
 import { $createImageNode, $isImageNode } from "../../core/nodes/image/node";
+import { sanitizeMediaUrl } from "../../core/url";
 import type { InsertImagePayload } from "./commands";
 import { INSERT_IMAGE_COMMAND } from "./commands";
 import { InsertImageDialog } from "./insert-dialog";
-import { getFirstImageFile, readFileAsDataUrl } from "./utils";
+import {
+  getImageFiles,
+  isImageFile,
+  MAX_IMAGE_FILE_SIZE_BYTES,
+  readFileAsDataUrl,
+} from "./utils";
 
 const insertParagraphAfterImage = (
   imageNode: ReturnType<typeof $createImageNode>
@@ -37,12 +44,17 @@ const insertParagraphAfterImage = (
 
 const EMPTY_DIALOG_STATE = {
   altText: "",
+  fileError: "",
   fileName: "",
   fileSrc: null as string | null,
   open: false,
   pendingTargetKey: null as string | null,
   url: "",
 };
+
+const MAX_IMAGE_FILE_SIZE_MB = Math.round(
+  MAX_IMAGE_FILE_SIZE_BYTES / (1024 * 1024)
+);
 
 export function ImagePlugin() {
   const [editor] = useLexicalComposerContext();
@@ -55,15 +67,17 @@ export function ImagePlugin() {
       src,
       targetNodeKey,
     }: InsertImagePayload) => {
-      const trimmedSrc = src?.trim();
-      if (!trimmedSrc) {
+      const safeSrc = src
+        ? sanitizeMediaUrl(src, { allowDataImage: true, allowRelative: true })
+        : null;
+      if (!safeSrc) {
         return false;
       }
 
       const imageNode = $createImageNode({
         alignment,
         altText: altText?.trim() ?? "",
-        src: trimmedSrc,
+        src: safeSrc,
       });
 
       if (targetNodeKey) {
@@ -82,7 +96,7 @@ export function ImagePlugin() {
         return false;
       }
 
-      $insertNodes([imageNode]);
+      $insertNodeToNearestRoot(imageNode);
       insertParagraphAfterImage(imageNode);
       return true;
     };
@@ -95,8 +109,9 @@ export function ImagePlugin() {
   }, [editor]);
 
   // Incomplete payloads (no src) mean "open the pick-a-source dialog". The
-  // slash menu and toolbars dispatch the bare command; the target block is
-  // captured here so the dialog submit replaces it.
+  // slash menu and toolbars dispatch the bare command; only an empty paragraph
+  // (or an active slash query) is captured for replacement so toolbar inserts
+  // never overwrite existing text.
   useEffect(
     () =>
       editor.registerCommand(
@@ -115,8 +130,18 @@ export function ImagePlugin() {
                 return;
               }
               const node = selection.anchor.getNode();
-              if ($isTextNode(node)) {
-                targetNodeKey = node.getTopLevelElementOrThrow().getKey();
+              const topLevel = node.getTopLevelElement();
+              if (
+                topLevel &&
+                $isParagraphNode(topLevel) &&
+                topLevel.getTextContent().trim().length === 0
+              ) {
+                targetNodeKey = topLevel.getKey();
+              } else if (
+                $isTextNode(node) &&
+                node.getTextContent().trim().startsWith("/")
+              ) {
+                targetNodeKey = topLevel?.getKey() ?? null;
               }
             });
           }
@@ -134,32 +159,37 @@ export function ImagePlugin() {
   );
 
   useEffect(() => {
-    const insertImageFile = async (file: File) => {
-      const src = await readFileAsDataUrl(file);
-
-      editor.update(() => {
-        editor.dispatchCommand(INSERT_IMAGE_COMMAND, {
+    const insertImageFiles = async (files: File[]) => {
+      const results = await Promise.allSettled(
+        files.map(async (file) => ({
           altText: file.name,
-          src,
+          src: await readFileAsDataUrl(file),
+        }))
+      );
+
+      for (const result of results) {
+        if (result.status !== "fulfilled") {
+          continue;
+        }
+        const { altText, src } = result.value;
+        editor.update(() => {
+          editor.dispatchCommand(INSERT_IMAGE_COMMAND, {
+            altText,
+            src,
+          });
         });
-      });
+      }
     };
 
     return editor.registerCommand(
       DRAG_DROP_PASTE,
       (files) => {
-        const imageFile = getFirstImageFile(files);
-        if (!imageFile) {
+        const imageFiles = getImageFiles(files);
+        if (imageFiles.length === 0) {
           return false;
         }
 
-        void (async () => {
-          try {
-            await insertImageFile(imageFile);
-          } catch {
-            // File reads are best-effort; a failed drop leaves the document.
-          }
-        })();
+        void insertImageFiles(imageFiles);
         return true;
       },
       COMMAND_PRIORITY_HIGH
@@ -172,13 +202,13 @@ export function ImagePlugin() {
         PASTE_COMMAND,
         (event) => {
           const [, files] = eventFiles(event);
-          const imageFile = getFirstImageFile(files);
-          if (!imageFile) {
+          const imageFiles = getImageFiles(files);
+          if (imageFiles.length === 0) {
             return false;
           }
 
           event.preventDefault();
-          editor.dispatchCommand(DRAG_DROP_PASTE, [imageFile]);
+          editor.dispatchCommand(DRAG_DROP_PASTE, imageFiles);
           return true;
         },
         COMMAND_PRIORITY_HIGH
@@ -192,13 +222,13 @@ export function ImagePlugin() {
         DROP_COMMAND,
         (event) => {
           const [, files] = eventFiles(event);
-          const imageFile = getFirstImageFile(files);
-          if (!imageFile) {
+          const imageFiles = getImageFiles(files);
+          if (imageFiles.length === 0) {
             return false;
           }
 
           event.preventDefault();
-          editor.dispatchCommand(DRAG_DROP_PASTE, [imageFile]);
+          editor.dispatchCommand(DRAG_DROP_PASTE, imageFiles);
           return true;
         },
         COMMAND_PRIORITY_HIGH
@@ -211,14 +241,25 @@ export function ImagePlugin() {
   };
 
   const handleSubmit = () => {
-    if (!(dialogState.fileSrc || dialogState.url.trim())) {
+    const candidateSrc = dialogState.fileSrc ?? dialogState.url.trim();
+    const safeSrc = candidateSrc
+      ? sanitizeMediaUrl(candidateSrc, {
+          allowDataImage: true,
+          allowRelative: true,
+        })
+      : null;
+    if (!safeSrc) {
+      setDialogState((state) => ({
+        ...state,
+        fileError: "Enter a valid http(s) image URL or supported image file.",
+      }));
       return;
     }
 
     editor.update(() => {
       editor.dispatchCommand(INSERT_IMAGE_COMMAND, {
         altText: dialogState.altText,
-        src: dialogState.fileSrc ?? dialogState.url.trim(),
+        src: safeSrc,
         targetNodeKey: dialogState.pendingTargetKey ?? undefined,
       });
     });
@@ -229,6 +270,7 @@ export function ImagePlugin() {
     <InsertImageDialog
       idPrefix="image-plugin"
       imageAltText={dialogState.altText}
+      imageFileError={dialogState.fileError}
       imageFileName={dialogState.fileName}
       imageFileSrc={dialogState.fileSrc}
       imageUrl={dialogState.url}
@@ -236,25 +278,54 @@ export function ImagePlugin() {
         setDialogState((state) => ({ ...state, altText: value }))
       }
       onCancel={closeDialog}
+      onClearFile={() =>
+        setDialogState((state) => ({
+          ...state,
+          fileError: "",
+          fileName: "",
+          fileSrc: null,
+        }))
+      }
       onImageFileChange={async (event) => {
         const file = event.target.files?.[0];
         if (!file) {
+          return;
+        }
+        if (!isImageFile(file)) {
+          setDialogState((state) => ({
+            ...state,
+            fileError: `Unsupported file. Use PNG, JPEG, WebP, GIF, or AVIF up to ${MAX_IMAGE_FILE_SIZE_MB} MB.`,
+            fileName: "",
+            fileSrc: null,
+          }));
           return;
         }
         try {
           const src = await readFileAsDataUrl(file);
           setDialogState((state) => ({
             ...state,
+            fileError: "",
             fileName: file.name,
             fileSrc: src,
           }));
         } catch {
-          setDialogState((state) => ({ ...state, fileSrc: null }));
+          setDialogState((state) => ({
+            ...state,
+            fileError: "Failed to read image file.",
+            fileName: "",
+            fileSrc: null,
+          }));
         }
       }}
       onSubmit={handleSubmit}
       onUrlChange={(value) =>
-        setDialogState((state) => ({ ...state, url: value }))
+        setDialogState((state) => ({
+          ...state,
+          fileError: "",
+          fileName: "",
+          fileSrc: null,
+          url: value,
+        }))
       }
       open={dialogState.open}
     />

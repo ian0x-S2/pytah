@@ -16,7 +16,7 @@ import {
 } from "lexical";
 import type { ElementNode } from "lexical";
 
-import type { FeatureSlashCommand, SlashCommandId } from "./types";
+import type { CoreSlashCommandId, FeatureSlashCommand } from "./types";
 import { replaceCurrentBlock } from "./utils";
 
 const replaceElementChildren = (
@@ -118,61 +118,26 @@ const applyDividerCommand = (targetElement: ElementNode) => {
  * Core-owned executors. Feature-scoped executors live beside their features
  * and reach the menu through their descriptor's `run` instead.
  */
-export const CORE_SLASH_COMMAND_EXECUTORS: Record<
-  SlashCommandId,
-  ((element: ElementNode) => void) | undefined
+export const CORE_SLASH_COMMAND_EXECUTORS: Partial<
+  Record<CoreSlashCommandId, (element: ElementNode) => void>
 > = {
   bullet: (element) => applyListCommand(element, "bullet"),
-  callout: undefined,
-  caution: undefined,
   check: (element) => applyListCommand(element, "check"),
   code: applyCodeCommand,
-  collapsible: undefined,
-  columns: undefined,
-  excalidraw: undefined,
   h1: (element) => applyHeadingCommand(element, "h1"),
   h2: (element) => applyHeadingCommand(element, "h2"),
   h3: (element) => applyHeadingCommand(element, "h3"),
   hr: applyDividerCommand,
-  image: undefined,
-  math: undefined,
   number: (element) => applyListCommand(element, "number"),
   paragraph: applyParagraphCommand,
   quote: applyQuoteCommand,
   table: applyTableCommand,
-  tip: undefined,
-  warning: undefined,
-  youtube: undefined,
 };
 
-/**
- * Runtime registry for feature-contributed command runs. The composition
- * surface registers every installed extra's contributions at mount time, so
- * core surfaces (slash menu, toolbar dropdowns) can execute feature actions
- * without importing any feature module statically.
- */
-const featureRunners = new Map<string, FeatureSlashCommand["run"]>();
-
-export const registerSlashRunner = (
-  id: string,
-  run: FeatureSlashCommand["run"]
-): void => {
-  featureRunners.set(id, run);
-};
-
-export const unregisterSlashRunner = (id: string): void => {
-  featureRunners.delete(id);
-};
-
-export const getSlashRunner = (
+export const getCoreSlashRunner = (
   id: string
 ): FeatureSlashCommand["run"] | undefined => {
-  const featureRun = featureRunners.get(id);
-  if (featureRun) {
-    return featureRun;
-  }
-
-  const executor = CORE_SLASH_COMMAND_EXECUTORS[id as SlashCommandId];
+  const executor = CORE_SLASH_COMMAND_EXECUTORS[id as CoreSlashCommandId];
   if (!executor) {
     return undefined;
   }
@@ -181,3 +146,10 @@ export const getSlashRunner = (
     replaceCurrentBlock(editor, executor);
   };
 };
+
+/**
+ * Resolves a core slash runner by id. Feature runners are scoped per editor
+ * instance via `EditorCommandsContext` (`useEditorCommandRunner`), avoiding
+ * cross-editor global state collisions.
+ */
+export const getSlashRunner = getCoreSlashRunner;

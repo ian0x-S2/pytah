@@ -41,23 +41,34 @@ const $getCodeNodeFromSelection = (): CodeNode | null => {
  */
 const $selectAllInCodeNode = (node: CodeNode): void => {
   const children = node.getChildren();
-  for (const child of children) {
-    if ($isTextNode(child)) {
-      child.select(0, 0);
-      break;
-    }
+  if (children.length === 0) {
+    node.select(0, 0);
+    return;
   }
-  for (let index = children.length - 1; index >= 0; index -= 1) {
-    const child = children[index];
-    if (child && $isTextNode(child)) {
-      const selection = $getSelection();
-      if ($isRangeSelection(selection)) {
-        selection.focus.set(child.getKey(), child.getTextContentSize(), "text");
-      }
-      return;
-    }
+
+  const [firstChild] = children;
+  const lastChild = children.at(-1);
+
+  if (firstChild && $isTextNode(firstChild)) {
+    firstChild.select(0, 0);
+  } else {
+    node.select(0, 0);
   }
-  node.select(0, 0);
+
+  const selection = $getSelection();
+  if (!$isRangeSelection(selection)) {
+    return;
+  }
+
+  if (lastChild && $isTextNode(lastChild)) {
+    selection.focus.set(
+      lastChild.getKey(),
+      lastChild.getTextContentSize(),
+      "text"
+    );
+  } else {
+    selection.focus.set(node.getKey(), children.length, "element");
+  }
 };
 
 /**

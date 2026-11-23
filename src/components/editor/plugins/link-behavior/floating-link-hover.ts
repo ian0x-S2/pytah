@@ -22,9 +22,25 @@ export interface HoveredEditorLink {
  * chip must not re-trigger detection (the chip floats over the link text,
  * so `pointerover` fires on it constantly).
  */
-export const isInsideLinkSurface = (eventTarget: EventTarget | null): boolean =>
-  eventTarget instanceof Element &&
-  eventTarget.closest(LINK_SURFACE_SELECTOR) !== null;
+export const isInsideLinkSurface = (
+  eventTarget: EventTarget | null,
+  editorKey?: string
+): boolean => {
+  if (!(eventTarget instanceof Element)) {
+    return false;
+  }
+
+  const surface = eventTarget.closest<HTMLElement>(LINK_SURFACE_SELECTOR);
+  if (surface === null) {
+    return false;
+  }
+
+  if (editorKey && surface.dataset.editorKey) {
+    return surface.dataset.editorKey === editorKey;
+  }
+
+  return true;
+};
 
 /**
  * Snapshots the hovered link's rect. Re-running this on every hover tick
@@ -104,7 +120,7 @@ export const getHoveredEditorLink = (
 
   // Over the chip itself: the chip's own pointer handlers own dismissal —
   // element detection here would re-target with a stale rect instead.
-  if (isInsideLinkSurface(eventTarget)) {
+  if (isInsideLinkSurface(eventTarget, editor.getKey())) {
     return null;
   }
 

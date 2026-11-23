@@ -19,6 +19,14 @@ describe("link behavior utils", () => {
       "mailto:hello@example.com"
     );
     strictEqual(
+      normalizeEditorLinkUrl("mailto:hello@example.com"),
+      "mailto:hello@example.com"
+    );
+    strictEqual(
+      normalizeEditorLinkUrl("javascript:alert('a@b')"),
+      "javascript:alert('a@b')"
+    );
+    strictEqual(
       normalizeEditorLinkUrl("tel:+5511999999999"),
       "tel:+5511999999999"
     );
@@ -43,9 +51,10 @@ describe("link behavior utils", () => {
       [
         sanitizeEditorLinkUrl("javascript:alert(1)"),
         sanitizeEditorLinkUrl("data:text/html,boom"),
+        sanitizeEditorLinkUrl("not a valid url"),
         sanitizeEditorLinkUrl("https://example.com"),
       ],
-      ["about:blank", "about:blank", "https://example.com"]
+      ["about:blank", "about:blank", "about:blank", "https://example.com"]
     );
   });
 });

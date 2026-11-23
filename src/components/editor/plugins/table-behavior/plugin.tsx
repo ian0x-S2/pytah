@@ -44,6 +44,8 @@ function TableCellActionMenuContainer({
   const isMenuOpenRef = useRef(false);
   const isMenuClosingRef = useRef(false);
   const activeCellKeyRef = useRef<TableMenuContext["cellKey"] | null>(null);
+  const pointerUpTimeoutRef = useRef<number | null>(null);
+  const viewportRafRef = useRef<number | null>(null);
 
   const setMenuOpen = (open: boolean) => {
     isMenuOpenRef.current = open;
@@ -97,12 +99,12 @@ function TableCellActionMenuContainer({
   };
 
   const updateMenu = useEffectEvent(() => {
+    if (isMenuClosingRef.current) {
+      return;
+    }
+
     editor.getEditorState().read(() => {
       const context = readTableMenuContext(editor, anchorElem);
-
-      if (isMenuClosingRef.current) {
-        return;
-      }
 
       if (!context) {
         if (isMenuOpenRef.current) {
@@ -129,12 +131,18 @@ function TableCellActionMenuContainer({
 
   useEffect(() => {
     const onPointerUp = () => {
-      window.setTimeout(updateMenu, 0);
+      if (pointerUpTimeoutRef.current !== null) {
+        window.clearTimeout(pointerUpTimeoutRef.current);
+      }
+      pointerUpTimeoutRef.current = window.setTimeout(() => {
+        pointerUpTimeoutRef.current = null;
+        updateMenu();
+      }, 0);
     };
 
     updateMenu();
 
-    return mergeRegister(
+    const unregister = mergeRegister(
       editor.registerUpdateListener(() => {
         updateMenu();
       }),
@@ -151,17 +159,38 @@ function TableCellActionMenuContainer({
         rootElement?.addEventListener("pointerup", onPointerUp);
       })
     );
+
+    return () => {
+      if (pointerUpTimeoutRef.current !== null) {
+        window.clearTimeout(pointerUpTimeoutRef.current);
+        pointerUpTimeoutRef.current = null;
+      }
+      unregister();
+    };
   }, [editor]);
 
   useEffect(() => {
     const handleViewportChange = () => {
-      updateMenu();
+      if (viewportRafRef.current !== null) {
+        return;
+      }
+      viewportRafRef.current = window.requestAnimationFrame(() => {
+        viewportRafRef.current = null;
+        updateMenu();
+      });
     };
 
-    window.addEventListener("resize", handleViewportChange);
-    window.addEventListener("scroll", handleViewportChange, true);
+    window.addEventListener("resize", handleViewportChange, { passive: true });
+    window.addEventListener("scroll", handleViewportChange, {
+      capture: true,
+      passive: true,
+    });
 
     return () => {
+      if (viewportRafRef.current !== null) {
+        window.cancelAnimationFrame(viewportRafRef.current);
+        viewportRafRef.current = null;
+      }
       window.removeEventListener("resize", handleViewportChange);
       window.removeEventListener("scroll", handleViewportChange, true);
     };
@@ -217,7 +246,7 @@ function TableCellActionMenuContainer({
             />
           }
         >
-          <ChevronDownIcon className="size-2.5" />
+          <ChevronDownIcon aria-hidden className="size-2.5" />
         </DropdownMenuTrigger>
         <DropdownMenuContent
           align="start"

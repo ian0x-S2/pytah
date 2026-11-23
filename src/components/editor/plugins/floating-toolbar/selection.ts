@@ -1,9 +1,14 @@
 import { $isCodeNode } from "@lexical/code";
-import { $isAutoLinkNode, $isLinkNode } from "@lexical/link";
 import { $getSelectionStyleValueForProperty } from "@lexical/selection";
-import { $getSelection, $isLineBreakNode, $isRangeSelection } from "lexical";
-import type { LexicalNode, RangeSelection } from "lexical";
+import { $getSelection, $isRangeSelection } from "lexical";
+import type { LexicalEditor, LexicalNode, RangeSelection } from "lexical";
 
+import { getElementFormatFromSelection } from "../block-type-toolbar/utils";
+import {
+  getFloatingToolbarSelectedNode,
+  getSelectedLinkNode,
+  isSelectionWithinSingleLink,
+} from "../link-behavior/selection";
 import { DEFAULT_FORMAT_STATE, EMPTY_TOOLBAR_POSITION } from "./constants";
 import type {
   FloatingToolbarFormatState,
@@ -11,11 +16,18 @@ import type {
   FloatingToolbarState,
 } from "./types";
 
+export {
+  getFloatingToolbarSelectedNode,
+  getSelectedLinkNode,
+  isSelectionWithinSingleLink,
+} from "../link-behavior/selection";
+
 export const areFloatingToolbarFormatsEqual = (
   left: FloatingToolbarFormatState,
   right: FloatingToolbarFormatState
 ) =>
   left.bgColor === right.bgColor &&
+  left.elementFormat === right.elementFormat &&
   left.isBold === right.isBold &&
   left.isCode === right.isCode &&
   left.isHighlight === right.isHighlight &&
@@ -32,59 +44,25 @@ export const areFloatingToolbarPositionsEqual = (
   right: FloatingToolbarPosition
 ) => left.left === right.left && left.top === right.top;
 
-export const getFloatingToolbarSelectedNode = (selection: RangeSelection) => {
-  const anchorNode = selection.anchor.getNode();
-  const focusNode = selection.focus.getNode();
-
-  if (anchorNode === focusNode) {
-    return anchorNode;
-  }
-
-  return selection.isBackward() ? anchorNode : focusNode;
-};
-
-export const getSelectedLinkNode = (node: LexicalNode) => {
-  const parent = node.getParent();
-
-  if ($isLinkNode(parent) || $isAutoLinkNode(parent)) {
-    return parent;
-  }
-
-  if ($isLinkNode(node) || $isAutoLinkNode(node)) {
-    return node;
-  }
-
-  return null;
-};
-
-export const isSelectionWithinSingleLink = (selection: RangeSelection) => {
-  const focusNode = getFloatingToolbarSelectedNode(selection);
-  const focusLinkNode = getSelectedLinkNode(focusNode);
-
-  if (!focusLinkNode) {
-    return false;
-  }
-
-  const invalidNode = selection
-    .getNodes()
-    .filter((node) => !$isLineBreakNode(node))
-    .find((node) => {
-      const linkNode = getSelectedLinkNode(node);
-
-      if (focusLinkNode && !focusLinkNode.is(linkNode)) {
-        return true;
-      }
-
-      return $isAutoLinkNode(linkNode) && linkNode.getIsUnlinked();
-    });
-
-  return invalidNode === undefined;
-};
-
-const getToolbarPosition = (): FloatingToolbarPosition | null => {
+const getToolbarPosition = (
+  editor?: LexicalEditor
+): FloatingToolbarPosition | null => {
   const nativeSelection = window.getSelection();
   if (!(nativeSelection && nativeSelection.rangeCount > 0)) {
     return null;
+  }
+
+  if (editor) {
+    const rootElement = editor.getRootElement();
+    if (
+      !(
+        rootElement &&
+        nativeSelection.anchorNode &&
+        rootElement.contains(nativeSelection.anchorNode)
+      )
+    ) {
+      return null;
+    }
   }
 
   const range = nativeSelection.getRangeAt(0);
@@ -112,6 +90,7 @@ const getFormatState = (
       "background-color",
       ""
     ),
+    elementFormat: getElementFormatFromSelection(),
     isBold: selection.hasFormat("bold"),
     isCode: selection.hasFormat("code"),
     isHighlight: selection.hasFormat("highlight"),
@@ -140,7 +119,9 @@ export const readInlineFormats = (): FloatingToolbarFormatState => {
   return getFormatState(selection, node);
 };
 
-export const readFloatingToolbarState = (): FloatingToolbarState => {
+export const readFloatingToolbarState = (
+  editor?: LexicalEditor
+): FloatingToolbarState => {
   const selection = $getSelection();
   if (!($isRangeSelection(selection) && !selection.isCollapsed())) {
     return {
@@ -165,7 +146,7 @@ export const readFloatingToolbarState = (): FloatingToolbarState => {
     };
   }
 
-  const position = getToolbarPosition();
+  const position = getToolbarPosition(editor);
   if (!position) {
     return {
       formats: DEFAULT_FORMAT_STATE,

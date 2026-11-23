@@ -31,7 +31,12 @@ export const exportMarkdownToFile = (
   editor: LexicalEditor,
   transformers: readonly Transformer[]
 ) => {
-  const snapshot = readEditorSnapshot(editor, transformers);
+  const snapshot = readEditorSnapshot(editor, transformers, {
+    html: false,
+    json: false,
+    markdown: true,
+    text: true,
+  });
   downloadMarkdownContent(
     snapshot.markdown,
     getMarkdownExportFilename(snapshot.text)

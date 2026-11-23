@@ -1,7 +1,8 @@
 "use client";
 
+import { $isCodeNode } from "@lexical/code";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { mergeRegister } from "@lexical/utils";
+import { $findMatchingParent, mergeRegister } from "@lexical/utils";
 import {
   $getSelection,
   $isRangeSelection,
@@ -12,14 +13,13 @@ import {
   KEY_ENTER_COMMAND,
   KEY_ESCAPE_COMMAND,
 } from "lexical";
-import { useEffect, useEffectEvent, useReducer, useRef } from "react";
+import { useEffect, useEffectEvent, useMemo, useReducer, useRef } from "react";
 
 import { createSlashMenuAnchor, getSelectionRectangle } from "./anchor";
 import { SlashCommandMenu } from "./menu";
 import { createInitialSlashCommandState, slashCommandReducer } from "./state";
 import type { FeatureSlashCommand, SlashCommandSelection } from "./types";
 import {
-  filterSlashCommands,
   getFirstCommandId,
   getSelectedCommandIndex,
   getSlashQueryMatch,
@@ -37,20 +37,32 @@ export interface SlashCommandPluginProps {
 
 export function SlashCommandPlugin({ commands }: SlashCommandPluginProps) {
   const [editor] = useLexicalComposerContext();
-  const commandIds = commands.map((entry) => entry.command);
+  const commandMeta = useMemo(
+    () => commands.map((entry) => entry.command),
+    [commands]
+  );
   const [state, dispatch] = useReducer(
     slashCommandReducer,
-    getFirstCommandId(commandIds),
+    getFirstCommandId(commandMeta),
     createInitialSlashCommandState
   );
   const { isOpen, query, rawSelectedCommandId } = state;
   const commandListRef = useRef<HTMLDivElement | null>(null);
   const animationFrameRef = useRef<number | null>(null);
-
-  const filteredCommands = filterSlashCommands(commandIds, query);
-  const filteredEntries = commands.filter((entry) =>
-    filteredCommands.some((command) => command.id === entry.command.id)
+  const dismissedQueryRef = useRef<{ nodeKey: string; text: string } | null>(
+    null
   );
+  const activeQueryRef = useRef<{ nodeKey: string; text: string } | null>(null);
+
+  const normalizedQuery = query.toLowerCase();
+  const filteredEntries = normalizedQuery
+    ? commands.filter(
+        ({ command }) =>
+          command.label.toLowerCase().includes(normalizedQuery) ||
+          command.keywords.some((keyword) => keyword.includes(normalizedQuery))
+      )
+    : commands;
+  const filteredCommands = filteredEntries.map((entry) => entry.command);
 
   const selectedCommandId: SlashCommandSelection = (() => {
     if (filteredCommands.length === 0) {
@@ -67,11 +79,9 @@ export function SlashCommandPlugin({ commands }: SlashCommandPluginProps) {
     selectedCommandId
   );
 
-  // The menu is only actually visible when the popover renders content;
-  // key handling and scroll-into-view must match this exactly.
   const isMenuVisible = isOpen && filteredCommands.length > 0;
 
-  const anchor = createSlashMenuAnchor(editor);
+  const anchor = useMemo(() => createSlashMenuAnchor(editor), [editor]);
 
   const updateSlashMenu = () => {
     const selection = $getSelection();
@@ -79,12 +89,32 @@ export function SlashCommandPlugin({ commands }: SlashCommandPluginProps) {
       $isRangeSelection(selection) && selection.isCollapsed();
 
     if (!isCollapsedRangeSelection) {
+      activeQueryRef.current = null;
+      dismissedQueryRef.current = null;
       dispatch({ payload: { isOpen: false }, type: "patch" });
       return;
     }
 
     const node = selection.anchor.getNode();
     if (!$isTextNode(node)) {
+      activeQueryRef.current = null;
+      dismissedQueryRef.current = null;
+      dispatch({ payload: { isOpen: false }, type: "patch" });
+      return;
+    }
+
+    // Never open the slash menu inside code blocks (typing `//` or `/regex`).
+    if ($isCodeNode(node) || $findMatchingParent(node, $isCodeNode)) {
+      activeQueryRef.current = null;
+      dismissedQueryRef.current = null;
+      dispatch({ payload: { isOpen: false }, type: "patch" });
+      return;
+    }
+
+    // Only match when the slash starts the current block (no preceding sibling).
+    if (node.getPreviousSibling() !== null) {
+      activeQueryRef.current = null;
+      dismissedQueryRef.current = null;
       dispatch({ payload: { isOpen: false }, type: "patch" });
       return;
     }
@@ -95,9 +125,25 @@ export function SlashCommandPlugin({ commands }: SlashCommandPluginProps) {
     const nextQuery = getSlashQueryMatch(textUpToCursor);
 
     if (nextQuery === null) {
+      activeQueryRef.current = null;
+      dismissedQueryRef.current = null;
       dispatch({ payload: { isOpen: false }, type: "patch" });
       return;
     }
+
+    const querySignature = { nodeKey: node.getKey(), text: textUpToCursor };
+    activeQueryRef.current = querySignature;
+
+    // If the user explicitly pressed Escape on this exact query, keep the menu
+    // dismissed until they edit the text or move the caret elsewhere.
+    if (
+      dismissedQueryRef.current &&
+      dismissedQueryRef.current.nodeKey === querySignature.nodeKey &&
+      dismissedQueryRef.current.text === querySignature.text
+    ) {
+      return;
+    }
+    dismissedQueryRef.current = null;
 
     if (!getSelectionRectangle(editor)) {
       dispatch({ payload: { isOpen: false }, type: "patch" });
@@ -106,7 +152,7 @@ export function SlashCommandPlugin({ commands }: SlashCommandPluginProps) {
 
     dispatch({
       payload: {
-        firstCommandId: getFirstCommandId(commandIds),
+        firstCommandId: getFirstCommandId(commandMeta),
         query: nextQuery,
       },
       type: "open",
@@ -127,6 +173,7 @@ export function SlashCommandPlugin({ commands }: SlashCommandPluginProps) {
   });
 
   const executeEntry = useEffectEvent((entry: FeatureSlashCommand) => {
+    dismissedQueryRef.current = null;
     dispatch({ payload: { isOpen: false }, type: "patch" });
     entry.run(editor);
   });
@@ -158,6 +205,7 @@ export function SlashCommandPlugin({ commands }: SlashCommandPluginProps) {
       }),
     [editor]
   );
+
   useEffect(
     () => () => {
       if (animationFrameRef.current !== null) {
@@ -173,10 +221,6 @@ export function SlashCommandPlugin({ commands }: SlashCommandPluginProps) {
       switch (command) {
         case "arrow-down": {
           dispatch({
-            // Navigate within the filtered list: moving through the full
-            // list walks into entries the query hid, and the derived
-            // highlight then falls back to the first filtered item —
-            // freezing keyboard navigation while searching.
             payload: { commands: filteredCommands, direction: "down" },
             type: "move-selected-command",
           });
@@ -197,6 +241,7 @@ export function SlashCommandPlugin({ commands }: SlashCommandPluginProps) {
           return;
         }
         case "escape": {
+          dismissedQueryRef.current = activeQueryRef.current;
           dispatch({ payload: { isOpen: false }, type: "patch" });
           break;
         }
@@ -208,8 +253,6 @@ export function SlashCommandPlugin({ commands }: SlashCommandPluginProps) {
   );
 
   useEffect(() => {
-    // Key handling must match menu visibility exactly: with zero results the
-    // popover is hidden, so arrows and enter must reach the editor.
     if (!isMenuVisible) {
       return;
     }
@@ -261,8 +304,7 @@ export function SlashCommandPlugin({ commands }: SlashCommandPluginProps) {
   };
 
   const handleSelectEntry = (entry: FeatureSlashCommand) => {
-    // Inline (not `executeEntry`): cmdk invokes this from
-    // user-interaction handlers, outside Effects.
+    dismissedQueryRef.current = null;
     dispatch({
       payload: { isOpen: false },
       type: "patch",
@@ -276,7 +318,6 @@ export function SlashCommandPlugin({ commands }: SlashCommandPluginProps) {
       commandListRef={commandListRef}
       editor={editor}
       filteredEntries={filteredEntries}
-      hasResults={filteredCommands.length > 0}
       isMenuVisible={isMenuVisible}
       onHoverCommand={handleHoverCommand}
       onSelectEntry={handleSelectEntry}

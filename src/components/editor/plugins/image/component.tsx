@@ -45,7 +45,10 @@ export function ImageComponent({
   const editable = useLexicalEditable();
   const [, setSelected, clearSelection] = useLexicalNodeSelection(nodeKey);
   const imageRef = useRef<HTMLImageElement | null>(null);
+  const resizeEndTimeoutRef = useRef<number | null>(null);
   const [isResizing, setIsResizing] = useState(false);
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const hasImageError = !src || failedSrc === src;
   const [isNodeSelected, setIsNodeSelected] = useState(() =>
     editor.getEditorState().read(() => {
       const selection = $getSelection();
@@ -191,11 +194,16 @@ export function ImageComponent({
 
   useEffect(
     () => () => {
+      if (resizeEndTimeoutRef.current !== null) {
+        window.clearTimeout(resizeEndTimeoutRef.current);
+        resizeEndTimeoutRef.current = null;
+      }
+      editor.getRootElement()?.style.removeProperty("cursor");
       document.body.style.removeProperty("cursor");
       document.body.style.removeProperty("-webkit-user-select");
       document.body.style.removeProperty("user-select");
     },
-    []
+    [editor]
   );
 
   return (
@@ -207,23 +215,36 @@ export function ImageComponent({
               isFocused ? "editor-image-frame-selected" : "editor-image-frame"
             }
           >
-            <img
-              alt={altText}
-              className="editor-image-img h-auto shadow-xs"
-              draggable="false"
-              height={height === "inherit" ? undefined : height}
-              ref={imageRef}
-              src={src}
-              width={effectiveWidth}
-            />
+            {hasImageError ? (
+              <div className="editor-image-img flex min-h-24 min-w-48 items-center justify-center px-4 py-3 text-xs text-muted-foreground shadow-xs">
+                {altText
+                  ? `Image unavailable: ${altText}`
+                  : "Image unavailable"}
+              </div>
+            ) : (
+              <img
+                alt={altText}
+                className="editor-image-img h-auto shadow-xs"
+                draggable="false"
+                height={height === "inherit" ? undefined : height}
+                onError={() => setFailedSrc(src)}
+                ref={imageRef}
+                src={src}
+                width={effectiveWidth}
+              />
+            )}
           </div>
 
-          {isFocused ? (
+          {isFocused && !hasImageError ? (
             <ImageResizer
               editor={editor}
               imageRef={imageRef}
               onResizeEnd={(nextWidth, nextHeight) => {
-                window.setTimeout(() => {
+                if (resizeEndTimeoutRef.current !== null) {
+                  window.clearTimeout(resizeEndTimeoutRef.current);
+                }
+                resizeEndTimeoutRef.current = window.setTimeout(() => {
+                  resizeEndTimeoutRef.current = null;
                   setIsResizing(false);
                 }, 200);
 

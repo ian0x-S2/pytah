@@ -48,11 +48,11 @@ export const insertCollapsible = (targetNodeKey?: string) => {
 
   const selection = $getSelection();
   if ($isRangeSelection(selection)) {
-    const targetElement = selection.anchor
-      .getNode()
-      .getTopLevelElementOrThrow();
-    replaceElementWithCollapsible(targetElement);
-    return true;
+    const targetElement = selection.anchor.getNode().getTopLevelElement();
+    if (targetElement && $isElementNode(targetElement)) {
+      replaceElementWithCollapsible(targetElement);
+      return true;
+    }
   }
 
   const { containerNode, titleParagraph } = createCollapsibleStructure();

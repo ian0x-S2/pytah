@@ -72,12 +72,14 @@ export function BlockDragStabilizer({
 
     window.addEventListener("dragstart", onDragStartCapture, true);
     window.addEventListener("dragend", onDragEndCapture, true);
-    window.addEventListener("drop", onDragEndCapture, true);
+    // Bubble phase on drop so DROP_COMMAND sees ownDragRef.current === true
+    // for the owning editor before cleanup resets it.
+    window.addEventListener("drop", onDragEndCapture, false);
 
     return () => {
       window.removeEventListener("dragstart", onDragStartCapture, true);
       window.removeEventListener("dragend", onDragEndCapture, true);
-      window.removeEventListener("drop", onDragEndCapture, true);
+      window.removeEventListener("drop", onDragEndCapture, false);
     };
   }, [menuRef, targetLineRef]);
 
@@ -123,6 +125,10 @@ export function BlockDragStabilizer({
         editor.registerCommand(
           DROP_COMMAND,
           (event: DragEvent) => {
+            if (!ownDragRef.current) {
+              return false;
+            }
+
             const [isFileTransfer] = eventFiles(event);
 
             if (isFileTransfer) {

@@ -193,6 +193,53 @@ describe("Weblink Metadata Utilities", () => {
       deepStrictEqual(first, second);
       strictEqual(callCount, 1);
     });
+
+    it("does not cache null responses and supports forceRefresh", async () => {
+      let callCount = 0;
+      const rawFetcher = (url: string) => {
+        callCount += 1;
+        if (callCount === 1) {
+          return Promise.resolve(null);
+        }
+        return Promise.resolve({
+          title: `Attempt ${callCount}`,
+          url,
+        });
+      };
+
+      const cached = createCachedWeblinkFetcher(rawFetcher);
+
+      const first = await cached("https://retry.test");
+      strictEqual(first, null);
+
+      const second = await cached("https://retry.test");
+      strictEqual(second?.title, "Attempt 2");
+
+      const cachedThird = await cached("https://retry.test");
+      strictEqual(cachedThird?.title, "Attempt 2");
+      strictEqual(callCount, 2);
+
+      const refreshed = await cached("https://retry.test", {
+        forceRefresh: true,
+      });
+      strictEqual(refreshed?.title, "Attempt 3");
+      strictEqual(callCount, 3);
+    });
+
+    it("sanitizes unsafe icon and image URLs during normalization", () => {
+      const result = normalizeWeblinkMetadata(
+        {
+          favicon: "javascript:alert(1)",
+          image: "data:image/svg+xml,<svg/>",
+          title: "Safe Title",
+        },
+        "https://example.com"
+      );
+
+      strictEqual(result.title, "Safe Title");
+      strictEqual(result.icon, undefined);
+      strictEqual(result.image, undefined);
+    });
   });
 
   describe("resolveWeblinkFetcher", () => {

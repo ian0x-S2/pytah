@@ -14,7 +14,6 @@ import {
   SubscriptIcon,
   SuperscriptIcon,
 } from "lucide-react";
-import { memo } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -62,84 +61,87 @@ const MenuItemCheck = () => (
  * row. Reuses the static toolbar's command wiring so both surfaces stay
  * consistent.
  */
-export const FloatingToolbarOverflowMenu = memo(
-  ({ editor, formats, onOpenChange }: FloatingToolbarOverflowMenuProps) => {
-    const toggleSubSup = (format: "superscript" | "subscript") => {
-      editor.dispatchCommand(FORMAT_TEXT_COMMAND, format);
-    };
+export function FloatingToolbarOverflowMenu({
+  editor,
+  formats,
+  onOpenChange,
+}: FloatingToolbarOverflowMenuProps) {
+  const toggleSubSup = (format: "superscript" | "subscript") => {
+    editor.dispatchCommand(FORMAT_TEXT_COMMAND, format);
+  };
+  const activeAlign = formats.elementFormat || "left";
 
-    return (
-      <DropdownMenu onOpenChange={onOpenChange}>
-        <ToolbarTooltip label="More formatting options">
-          <DropdownMenuTrigger
-            render={
-              <Button
-                aria-label="More formatting options"
-                size="icon-sm"
-                type="button"
-                variant="ghost"
-              />
-            }
-          >
-            <EllipsisVerticalIcon />
-          </DropdownMenuTrigger>
-        </ToolbarTooltip>
+  return (
+    <DropdownMenu onOpenChange={onOpenChange}>
+      <ToolbarTooltip label="More formatting options">
+        <DropdownMenuTrigger
+          render={
+            <Button
+              aria-label="More formatting options"
+              size="icon-sm"
+              type="button"
+              variant="ghost"
+            />
+          }
+        >
+          <EllipsisVerticalIcon aria-hidden />
+        </DropdownMenuTrigger>
+      </ToolbarTooltip>
 
-        <DropdownMenuContent className="w-44" sideOffset={6}>
-          {TOOLBAR_SUPER_SUB_ACTIONS.map((action) => {
-            const Icon = action.icon;
-            const isActive = formats[action.key];
+      <DropdownMenuContent className="w-44" sideOffset={6}>
+        {TOOLBAR_SUPER_SUB_ACTIONS.map((action) => {
+          const Icon = action.icon;
+          const isActive = formats[action.key];
 
-            return (
-              <DropdownMenuItem
-                key={action.format}
-                onClick={() => toggleSubSup(action.format)}
-              >
-                <Icon aria-hidden />
-                <span>{action.label}</span>
-                {isActive ? <MenuItemCheck /> : null}
-              </DropdownMenuItem>
-            );
-          })}
+          return (
+            <DropdownMenuItem
+              key={action.format}
+              onClick={() => toggleSubSup(action.format)}
+            >
+              <Icon aria-hidden />
+              <span>{action.label}</span>
+              {isActive ? <MenuItemCheck /> : null}
+            </DropdownMenuItem>
+          );
+        })}
 
-          <DropdownMenuSeparator />
+        <DropdownMenuSeparator />
 
-          {TOOLBAR_ALIGN_ACTIONS.map((action) => {
-            const Icon = action.icon;
+        {TOOLBAR_ALIGN_ACTIONS.map((action) => {
+          const Icon = action.icon;
+          const isActive = activeAlign === action.align;
 
-            return (
-              <DropdownMenuItem
-                key={action.align}
-                onClick={() => alignToolbarSelection(editor, action.align)}
-              >
-                <Icon aria-hidden />
-                <span>{action.label}</span>
-              </DropdownMenuItem>
-            );
-          })}
+          return (
+            <DropdownMenuItem
+              key={action.align}
+              onClick={() => alignToolbarSelection(editor, action.align)}
+            >
+              <Icon aria-hidden />
+              <span>{action.label}</span>
+              {isActive ? <MenuItemCheck /> : null}
+            </DropdownMenuItem>
+          );
+        })}
 
-          <DropdownMenuSeparator />
+        <DropdownMenuSeparator />
 
-          <DropdownMenuItem
-            onClick={() =>
-              editor.dispatchCommand(OUTDENT_CONTENT_COMMAND, undefined)
-            }
-          >
-            <IndentDecreaseIcon aria-hidden />
-            <span>Outdent</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() =>
-              editor.dispatchCommand(INDENT_CONTENT_COMMAND, undefined)
-            }
-          >
-            <IndentIncreaseIcon aria-hidden />
-            <span>Indent</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    );
-  }
-);
-
-FloatingToolbarOverflowMenu.displayName = "FloatingToolbarOverflowMenu";
+        <DropdownMenuItem
+          onClick={() =>
+            editor.dispatchCommand(OUTDENT_CONTENT_COMMAND, undefined)
+          }
+        >
+          <IndentDecreaseIcon aria-hidden />
+          <span>Outdent</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() =>
+            editor.dispatchCommand(INDENT_CONTENT_COMMAND, undefined)
+          }
+        >
+          <IndentIncreaseIcon aria-hidden />
+          <span>Indent</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}

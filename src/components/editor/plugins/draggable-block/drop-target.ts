@@ -26,15 +26,16 @@ const SEARCH_UP = -1;
 const SEARCH_DOWN = 1;
 const SEARCH_UNDECIDED = 0;
 
-// Remembers the last hit so consecutive dragover resolutions start nearby
-// instead of scanning from the middle of the document every time.
-let prevIndex = Infinity;
+// Remembers the last hit per editor so consecutive dragover resolutions start
+// nearby without cross-editor state leakage.
+const prevIndexByEditor = new WeakMap<LexicalEditor, number>();
 
-function getSearchStart(keysLength: number): number {
+function getSearchStart(editor: LexicalEditor, keysLength: number): number {
   if (keysLength === 0) {
     return Infinity;
   }
 
+  const prevIndex = prevIndexByEditor.get(editor) ?? Infinity;
   if (prevIndex >= 0 && prevIndex < keysLength) {
     return prevIndex;
   }
@@ -112,10 +113,15 @@ export function readBlockDragKey(
  * Decides whether the dragged block lands after the target block. Pure on
  * viewport coordinates: `clientY` and `getBoundingClientRect().top` share
  * the same origin, unlike `pageY` which also carries the page scroll offset
- * and would force "after" whenever the page is scrolled.
+ * and would force "after" whenever the page is scrolled. When `targetHeight`
+ * is provided, splits cleanly at the block's vertical midpoint.
  */
-export function decideInsertAfter(clientY: number, targetTop: number): boolean {
-  return clientY >= targetTop;
+export function decideInsertAfter(
+  clientY: number,
+  targetTop: number,
+  targetHeight = 0
+): boolean {
+  return clientY >= targetTop + targetHeight / 2;
 }
 
 /**
@@ -164,7 +170,7 @@ function walkBlocks(
   clientY: number
 ): HTMLElement | null {
   const anchorRect = anchorElem.getBoundingClientRect();
-  let index = getSearchStart(topLevelKeys.length);
+  let index = getSearchStart(editor, topLevelKeys.length);
   let direction = SEARCH_UNDECIDED;
 
   while (index >= 0 && index < topLevelKeys.length) {
@@ -188,7 +194,7 @@ function walkBlocks(
       pointX <= anchorRect.right;
 
     if (inside) {
-      prevIndex = index;
+      prevIndexByEditor.set(editor, index);
       return elem;
     }
 
@@ -254,21 +260,23 @@ export function positionTargetLine(
   const { top: anchorTop, width: anchorWidth } =
     anchorElem.getBoundingClientRect();
   const { marginBottom, marginTop } = getCollapsedMargins(targetBlockElem);
+  const zoom = effectiveZoom(targetBlockElem);
 
   let lineTop = targetTop;
 
-  if (clientY >= targetTop) {
+  if (decideInsertAfter(clientY / zoom, targetTop, targetHeight)) {
     lineTop += targetHeight + marginBottom / 2;
   } else {
     lineTop -= marginTop / 2;
   }
 
   const top =
-    lineTop - anchorTop - TARGET_LINE_HALF_HEIGHT + anchorElem.scrollTop;
+    (lineTop - anchorTop - TARGET_LINE_HALF_HEIGHT + anchorElem.scrollTop) /
+    zoom;
   const left = TEXT_BOX_HORIZONTAL_PADDING - MENU_SPACE;
 
   targetLineElem.style.transform = `translate(${left}px, ${top}px)`;
-  targetLineElem.style.width = `${anchorWidth - (TEXT_BOX_HORIZONTAL_PADDING - MENU_SPACE) * 2}px`;
+  targetLineElem.style.width = `${anchorWidth / zoom - (TEXT_BOX_HORIZONTAL_PADDING - MENU_SPACE) * 2}px`;
   targetLineElem.style.opacity = ".4";
 }
 

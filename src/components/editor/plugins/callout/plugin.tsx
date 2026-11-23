@@ -49,15 +49,22 @@ export function CalloutPlugin() {
             return false;
           }
 
-          const topLevelBlock = anchorNode.getTopLevelElementOrThrow();
+          // Walk up from the anchor to find its direct child inside the callout.
+          let directChild: ReturnType<typeof calloutNode.getLastChild> =
+            anchorNode;
+          while (directChild && directChild.getParent() !== calloutNode) {
+            directChild = directChild.getParent();
+          }
+
           // If the cursor is on an empty paragraph at the very end of the callout,
           // pressing Enter exits the callout and creates a new paragraph below it.
           if (
-            topLevelBlock === calloutNode.getLastChild() &&
-            topLevelBlock.getTextContent().length === 0 &&
+            directChild &&
+            directChild === calloutNode.getLastChild() &&
+            directChild.getTextContent().length === 0 &&
             calloutNode.getChildrenSize() > 1
           ) {
-            topLevelBlock.remove();
+            directChild.remove();
             const newParagraph = $createParagraphNode();
             calloutNode.insertAfter(newParagraph);
             newParagraph.select();

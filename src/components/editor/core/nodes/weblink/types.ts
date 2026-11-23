@@ -12,8 +12,12 @@ export interface WeblinkMetadata {
 
 export type WeblinkMetadataFetcher = (
   url: string,
-  options?: { signal?: AbortSignal }
+  options?: { forceRefresh?: boolean; signal?: AbortSignal }
 ) => Promise<Partial<WeblinkMetadata> | null | undefined>;
+
+export type WeblinkFaviconResolver =
+  | false
+  | ((hostname: string) => string | undefined);
 
 export interface WeblinkPayload {
   description?: string;

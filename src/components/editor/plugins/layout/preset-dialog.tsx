@@ -10,35 +10,25 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { LAYOUT_PRESETS } from "./constants";
-
-const TEMPLATE_COLUMN_SEPARATOR = /\s+/u;
-
-const getLayoutPreviewColumns = (templateColumns: string) =>
-  templateColumns.split(TEMPLATE_COLUMN_SEPARATOR).filter(Boolean);
+import { getLayoutColumnCount } from "./utils";
 
 function LayoutPresetPreview({ templateColumns }: { templateColumns: string }) {
-  const columns = getLayoutPreviewColumns(templateColumns);
-  const columnOccurrences = new Map<string, number>();
+  const columnCount = getLayoutColumnCount(templateColumns);
 
   return (
-    <div className="editor-layout-preview h-14 w-full">
-      <div
+    <span className="editor-layout-preview block h-14 w-full">
+      <span
         className="grid h-full gap-2"
         style={{ gridTemplateColumns: templateColumns }}
       >
-        {columns.map((column) => {
-          const currentCount = columnOccurrences.get(column) ?? 0;
-          columnOccurrences.set(column, currentCount + 1);
-
-          return (
-            <div
-              className="editor-layout-preview-cell shadow-xs"
-              key={`${templateColumns}-${column}-${currentCount}`}
-            />
-          );
-        })}
-      </div>
-    </div>
+        {Array.from({ length: columnCount }, (_, index) => (
+          <span
+            className="editor-layout-preview-cell block shadow-xs"
+            key={`${templateColumns}-${index}`}
+          />
+        ))}
+      </span>
+    </span>
   );
 }
 
@@ -66,37 +56,36 @@ export function LayoutPresetDialog({
           <DialogDescription>Select a column layout preset.</DialogDescription>
         </DialogHeader>
 
-        <ScrollArea
-          className="max-h-[min(70vh,34rem)] min-h-0 flex-1"
-          viewportClassName="max-h-[min(70vh,34rem)] px-4 py-4 sm:px-6"
-        >
-          <div className="grid gap-3 sm:grid-cols-2">
-            {LAYOUT_PRESETS.map((preset) => (
-              <Button
-                className="editor-layout-option h-auto min-h-32 justify-start text-left hover:bg-muted/60"
-                key={preset.value}
-                onClick={() => onSelectPreset(preset.value)}
-                type="button"
-                variant="ghost"
-              >
-                <span className="flex w-full flex-col items-start gap-2">
-                  <LayoutPresetPreview templateColumns={preset.value} />
-                  <span className="flex flex-col items-start gap-1">
-                    <span className="text-sm font-medium text-foreground">
-                      {preset.label}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {preset.description}
-                    </span>
-                    <span className="font-mono text-xs text-muted-foreground/80">
-                      {preset.value}
+        <div className="max-h-[min(70vh,34rem)] min-h-0 flex-1 overflow-hidden">
+          <ScrollArea className="h-full">
+            <div className="grid gap-3 px-4 py-4 sm:grid-cols-2 sm:px-6">
+              {LAYOUT_PRESETS.map((preset) => (
+                <Button
+                  className="editor-layout-option h-auto min-h-32 justify-start text-left hover:bg-muted/60"
+                  key={preset.value}
+                  onClick={() => onSelectPreset(preset.value)}
+                  type="button"
+                  variant="ghost"
+                >
+                  <span className="flex w-full flex-col items-start gap-2">
+                    <LayoutPresetPreview templateColumns={preset.value} />
+                    <span className="flex flex-col items-start gap-1">
+                      <span className="text-sm font-medium text-foreground">
+                        {preset.label}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {preset.description}
+                      </span>
+                      <span className="font-mono text-xs text-muted-foreground/80">
+                        {preset.value}
+                      </span>
                     </span>
                   </span>
-                </span>
-              </Button>
-            ))}
-          </div>
-        </ScrollArea>
+                </Button>
+              ))}
+            </div>
+          </ScrollArea>
+        </div>
 
         <DialogFooter
           className="m-0 shrink-0 px-4 py-3 sm:px-6"

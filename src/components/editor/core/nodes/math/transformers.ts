@@ -5,6 +5,11 @@ import type {
 
 import { $createMathNode, $isMathNode, MathNode } from "./node";
 
+// Requires non-whitespace directly inside both delimiters and rejects a digit
+// right after the closing `$`, preventing currency strings like "$5 and $10"
+// from being parsed as inline math while preserving "$x$" and "$E = mc^2$".
+const INLINE_MATH_REGEXP = /\$(?<equation>[^\s$](?:[^$]*[^\s$])?)\$(?!\d)/u;
+
 export const MATH_INLINE_MARKDOWN_TRANSFORMER: TextMatchTransformer = {
   dependencies: [MathNode],
   export: (node) => {
@@ -13,8 +18,8 @@ export const MATH_INLINE_MARKDOWN_TRANSFORMER: TextMatchTransformer = {
     }
     return `$${node.getEquation()}$`;
   },
-  importRegExp: /\$(?<equation>[^$]+)\$/u,
-  regExp: /\$(?<equation>[^$]+)\$/u,
+  importRegExp: INLINE_MATH_REGEXP,
+  regExp: INLINE_MATH_REGEXP,
   replace: (node, match) => {
     const equation = match.groups?.equation;
     if (!equation) {
@@ -35,7 +40,7 @@ export const MATH_BLOCK_MARKDOWN_TRANSFORMER: MultilineElementTransformer = {
     return `$$\n${node.getEquation()}\n$$`;
   },
   handleImportAfterStartMatch: ({ lines, rootNode, startLineIndex }) => {
-    const startLine = lines[startLineIndex];
+    const startLine = lines[startLineIndex]?.trim();
     if (!startLine) {
       return null;
     }
@@ -50,20 +55,26 @@ export const MATH_BLOCK_MARKDOWN_TRANSFORMER: MultilineElementTransformer = {
       return [true, startLineIndex];
     }
 
-    if (startLine.trim() !== "$$") {
+    if (startLine !== "$$") {
       return null;
     }
 
     const equationLines: string[] = [];
     let lineIndex = startLineIndex + 1;
+    let foundClosing = false;
 
     while (lineIndex < lines.length) {
       const line = lines[lineIndex] ?? "";
       if (line.trim() === "$$") {
+        foundClosing = true;
         break;
       }
       equationLines.push(line);
       lineIndex += 1;
+    }
+
+    if (!foundClosing) {
+      return null;
     }
 
     const equation = equationLines.join("\n").trim();
@@ -74,7 +85,7 @@ export const MATH_BLOCK_MARKDOWN_TRANSFORMER: MultilineElementTransformer = {
     optional: true,
     regExp: /^\$\$\s*$/u,
   },
-  regExpStart: /^\$\$\s*$/u,
+  regExpStart: /^\$\$/u,
   replace: () => false,
   type: "multiline-element",
 };

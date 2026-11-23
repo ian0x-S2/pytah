@@ -30,14 +30,49 @@ import {
 } from "lexical";
 import type { ElementNode } from "lexical";
 
+import {
+  WEBLINK_BLOCK_MARKDOWN_TRANSFORMER,
+  WEBLINK_INLINE_MARKDOWN_TRANSFORMER,
+} from "../../core/nodes/weblink/transformer";
+
 const TABLE_DIVIDER_LINE_PATTERN = /^\|(?:\s*:?-+:?\s*\|)+\s*$/u;
 const TABLE_ROW_PATTERN = /^\|(?<rowContent>.+)\|\s*$/u;
 
-const splitMarkdownTableCells = (line: string): string[] =>
-  line
-    .slice(1, -1)
-    .split("|")
-    .map((cell) => cell.trim());
+const splitMarkdownTableCells = (line: string): string[] => {
+  const trimmed = line.trim();
+  const inner = trimmed.slice(1, -1);
+  const cells: string[] = [];
+  let current = "";
+  let escaped = false;
+
+  for (const char of inner) {
+    if (escaped) {
+      current += char === "|" ? "|" : `\\${char}`;
+      escaped = false;
+      continue;
+    }
+
+    if (char === "\\") {
+      escaped = true;
+      continue;
+    }
+
+    if (char === "|") {
+      cells.push(current.trim());
+      current = "";
+      continue;
+    }
+
+    current += char;
+  }
+
+  if (escaped) {
+    current += "\\";
+  }
+
+  cells.push(current.trim());
+  return cells;
+};
 
 const createTableCell = (
   textContent: string,
@@ -80,7 +115,11 @@ export const TABLE_MARKDOWN_TRANSFORMER: MultilineElementTransformer = {
         );
 
       const cellContents = cells.map((cell) =>
-        cell.getTextContent().replaceAll("|", "\\|").trim()
+        cell
+          .getTextContent()
+          .replaceAll(/\r?\n+/gu, " ")
+          .replaceAll("|", "\\|")
+          .trim()
       );
 
       return `| ${cellContents.join(" | ")} |`;
@@ -219,6 +258,8 @@ export const BUILTIN_MARKDOWN_TRANSFORMERS = [
   CHECK_LIST,
   HORIZONTAL_RULE_MARKDOWN_TRANSFORMER,
   TABLE_MARKDOWN_TRANSFORMER,
+  WEBLINK_BLOCK_MARKDOWN_TRANSFORMER,
+  WEBLINK_INLINE_MARKDOWN_TRANSFORMER,
   ...ELEMENT_TRANSFORMERS,
   ...MULTILINE_ELEMENT_TRANSFORMERS,
   ...TEXT_FORMAT_TRANSFORMERS,

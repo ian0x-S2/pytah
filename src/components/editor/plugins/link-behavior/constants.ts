@@ -6,8 +6,10 @@ const URL_MATCHER_PATTERN =
 const EMAIL_MATCHER_PATTERN =
   /(?<email>(?<emailAddress>[\w.+-]+@[\w-]+\.[\w.-]+))/iu;
 
+const HTTP_SCHEME_PATTERN = /^https?:\/\//iu;
+
 const normalizeMatchedUrl = (text: string): string =>
-  text.startsWith("http") ? text : `https://${text}`;
+  HTTP_SCHEME_PATTERN.test(text) ? text : `https://${text}`;
 
 const normalizeMatchedEmail = (text: string): string => `mailto:${text}`;
 

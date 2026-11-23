@@ -13,6 +13,9 @@ import { $createParagraphNode, $isElementNode, ElementNode } from "lexical";
 
 import { $isCollapsibleContainerNode } from "./container-node";
 import { $isCollapsibleContentNode } from "./content-node";
+import { setDomHiddenUntilFound } from "./dom-utils";
+
+const TOGGLE_GUTTER_WIDTH_PX = 36;
 
 export type SerializedCollapsibleTitleNode = SerializedElementNode;
 
@@ -61,7 +64,42 @@ export class CollapsibleTitleNode extends ElementNode {
     }
 
     if (IS_CHROME) {
-      dom.addEventListener("click", () => {
+      dom.setAttribute("aria-expanded", open ? "true" : "false");
+      dom.addEventListener("click", (event) => {
+        if (!editor.isEditable()) {
+          const containerDom = dom.parentElement;
+          const contentDom = dom.nextElementSibling;
+          if (!(containerDom instanceof HTMLElement)) {
+            return;
+          }
+          const nextOpen = containerDom.dataset.open !== "true";
+          containerDom.dataset.open = nextOpen ? "true" : "false";
+          dom.dataset.open = nextOpen ? "true" : "false";
+          dom.setAttribute("aria-expanded", nextOpen ? "true" : "false");
+          if (nextOpen) {
+            containerDom.setAttribute("open", "");
+            if (contentDom instanceof HTMLElement) {
+              contentDom.hidden = false;
+            }
+          } else {
+            containerDom.removeAttribute("open");
+            if (contentDom instanceof HTMLElement) {
+              setDomHiddenUntilFound(contentDom);
+            }
+          }
+          return;
+        }
+
+        // In editable Chrome mode, only toggle when clicking the chevron
+        // gutter (or directly on the summary element outside text), so
+        // clicking inside title text places the caret without collapsing.
+        const rect = dom.getBoundingClientRect();
+        const clickedGutter =
+          event.clientX - rect.left <= TOGGLE_GUTTER_WIDTH_PX;
+        if (!clickedGutter && event.target !== dom) {
+          return;
+        }
+
         editor.update(() => {
           const container = this.getLatest().getParentOrThrow();
           if (!$isCollapsibleContainerNode(container)) {

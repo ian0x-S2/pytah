@@ -55,7 +55,7 @@ export class CalloutNode extends ElementNode {
     key?: NodeKey
   ) {
     super(key);
-    this.__calloutType = calloutType;
+    this.__calloutType = normalizeCalloutType(calloutType);
     this.__emoji = emoji;
   }
 
@@ -140,8 +140,9 @@ export class CalloutNode extends ElementNode {
   static override importJSON(
     serializedNode: SerializedCalloutNode
   ): CalloutNode {
+    const normalizedType = normalizeCalloutType(serializedNode.calloutType);
     return $createCalloutNode(
-      serializedNode.calloutType,
+      normalizedType,
       serializedNode.emoji
     ).updateFromJSON(serializedNode);
   }
@@ -162,7 +163,7 @@ export class CalloutNode extends ElementNode {
 
   setCalloutType(type: CalloutType): this {
     const writable = this.getWritable();
-    writable.__calloutType = type;
+    writable.__calloutType = normalizeCalloutType(type);
     return writable;
   }
 
@@ -181,12 +182,51 @@ export class CalloutNode extends ElementNode {
   }
 
   override collapseAtStart(): boolean {
-    const paragraph = $createParagraphNode();
     const children = this.getChildren();
-    for (const child of children) {
-      paragraph.append(child);
+    if (children.length === 0) {
+      const paragraph = $createParagraphNode();
+      this.replace(paragraph);
+      paragraph.selectStart();
+      return true;
     }
-    this.replace(paragraph);
+
+    const promotedNodes: LexicalNode[] = [];
+    let inlineParagraph: ReturnType<typeof $createParagraphNode> | null = null;
+
+    for (const child of children) {
+      if (child instanceof ElementNode && !child.isInline()) {
+        if (inlineParagraph) {
+          promotedNodes.push(inlineParagraph);
+          inlineParagraph = null;
+        }
+        promotedNodes.push(child);
+      } else {
+        if (!inlineParagraph) {
+          inlineParagraph = $createParagraphNode();
+        }
+        inlineParagraph.append(child);
+      }
+    }
+
+    if (inlineParagraph) {
+      promotedNodes.push(inlineParagraph);
+    }
+
+    const [firstNode, ...restNodes] = promotedNodes;
+    if (!firstNode) {
+      const paragraph = $createParagraphNode();
+      this.replace(paragraph);
+      paragraph.selectStart();
+      return true;
+    }
+
+    this.replace(firstNode);
+    let cursor = firstNode;
+    for (const nextNode of restNodes) {
+      cursor.insertAfter(nextNode);
+      cursor = nextNode;
+    }
+
     return true;
   }
 }

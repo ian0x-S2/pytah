@@ -29,7 +29,8 @@ export function WeblinkWideCard({
   title,
   url,
 }: WeblinkWideCardProps) {
-  const [imageError, setImageError] = useState(false);
+  const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null);
+  const imageError = Boolean(image && failedImageUrl === image);
 
   const handleLinkClick = (event: MouseEvent<HTMLAnchorElement>) => {
     if (isEditable && !event.metaKey && !event.ctrlKey) {
@@ -49,6 +50,7 @@ export function WeblinkWideCard({
         onClick={handleLinkClick}
         rel="noopener noreferrer"
         target="_blank"
+        title={isEditable ? "Ctrl/Cmd+Click to open link" : undefined}
       />
       <div className="pointer-events-none relative z-0 flex min-w-0 flex-1 flex-col justify-between p-3.5 sm:p-4">
         <div className="min-w-0">
@@ -74,7 +76,10 @@ export function WeblinkWideCard({
         <div className="flex items-center gap-1.5 pt-2 text-xs text-muted-foreground">
           <WeblinkIcon className="size-3.5 shrink-0 rounded-xs" icon={icon} />
           <span className="truncate">{domain}</span>
-          <ExternalLinkIcon className="size-3 opacity-60 transition-opacity group-hover:opacity-100" />
+          <ExternalLinkIcon
+            aria-hidden
+            className="size-3 opacity-60 transition-opacity group-hover:opacity-100"
+          />
         </div>
       </div>
       <div
@@ -87,7 +92,7 @@ export function WeblinkWideCard({
           <img
             alt=""
             className="size-full object-cover"
-            onError={() => setImageError(true)}
+            onError={() => setFailedImageUrl(image)}
             src={image}
           />
         ) : (

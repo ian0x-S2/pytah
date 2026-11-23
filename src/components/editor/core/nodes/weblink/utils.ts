@@ -1,16 +1,53 @@
-import type { WeblinkMetadata } from "./types";
+import { sanitizeMediaUrl } from "../../url";
+import type { WeblinkFaviconResolver, WeblinkMetadata } from "./types";
+
+const GOOGLE_FAVICON_PREFIX = "https://www.google.com/s2/favicons?";
+
+export const defaultWeblinkFaviconResolver = (hostname: string): string =>
+  `${GOOGLE_FAVICON_PREFIX}domain=${encodeURIComponent(hostname)}&sz=64`;
+
+export const isDefaultGoogleFavicon = (icon?: string): boolean =>
+  typeof icon === "string" && icon.startsWith(GOOGLE_FAVICON_PREFIX);
+
+export const resolveWeblinkFavicon = (
+  hostname: string,
+  resolver?: WeblinkFaviconResolver
+): string | undefined => {
+  if (resolver === false) {
+    return undefined;
+  }
+
+  const candidate =
+    typeof resolver === "function"
+      ? resolver(hostname)
+      : defaultWeblinkFaviconResolver(hostname);
+
+  if (!candidate) {
+    return undefined;
+  }
+
+  return (
+    sanitizeMediaUrl(candidate, {
+      allowDataImage: false,
+      allowRelative: true,
+    }) ?? undefined
+  );
+};
 
 /**
  * Extracts immediate client-side metadata from a URL:
  * - Domain / Hostname (without www)
- * - Google Favicons service for public, CORS-free high-res favicons
+ * - Optional favicon (Google Favicons by default, overridable/disableable)
  * - Humanized title from the pathname or hostname
  */
-export function resolveWeblinkMetadata(url: string): WeblinkMetadata {
+export function resolveWeblinkMetadata(
+  url: string,
+  faviconResolver?: WeblinkFaviconResolver
+): WeblinkMetadata {
   try {
     const parsed = new URL(url);
     const hostname = parsed.hostname.replace(/^www\./u, "");
-    const icon = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(hostname)}&sz=64`;
+    const icon = resolveWeblinkFavicon(hostname, faviconResolver);
 
     const pathSegments = parsed.pathname.split("/").filter(Boolean);
     const lastSegment = pathSegments.at(-1);

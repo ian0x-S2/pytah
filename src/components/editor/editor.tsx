@@ -9,7 +9,7 @@ import "./editor.css";
 import { $createParagraphNode, $getRoot } from "lexical";
 import type { LexicalEditor, SerializedEditorState } from "lexical";
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -35,6 +35,7 @@ import {
 } from "./core/features";
 import {
   resolveWeblinkFetcher,
+  WeblinkFaviconContext,
   WeblinkMetadataContext,
 } from "./core/nodes/weblink/metadata";
 import type {
@@ -43,12 +44,23 @@ import type {
   EditorOutputContext,
   EditorProps,
   EditorSnapshot,
+  ExtraEditorFeature,
 } from "./core/types";
 import { readEditorSnapshot } from "./core/utils";
 import { EXPORT_MARKDOWN_COMMAND } from "./plugins/export-markdown/commands";
 import { EditorHeader, EditorShell } from "./ui/chrome";
 import { EditorContent } from "./ui/content";
 import { EditorActionBar, EditorOutputGrid } from "./ui/panels";
+
+const EMPTY_EXTRA_FEATURES: readonly ExtraEditorFeature[] = [];
+
+const DISABLED_SNAPSHOT_OPTIONS = {
+  emitInitialSnapshot: false,
+  html: false,
+  json: false,
+  markdown: false,
+  text: false,
+} as const;
 
 const getEditorHeader = (
   minimal: boolean,
@@ -62,12 +74,17 @@ const getEditorHeader = (
   return slots?.header === undefined ? <EditorHeader /> : slots.header;
 };
 
-const getEditorActionBar = (
-  minimal: boolean,
-  chrome: ResolvedEditorChromeOptions,
-  controls: EditorActionBarControls,
-  slots?: EditorChromeSlots
-): ReactNode => {
+function EditorActionBarSlot({
+  chrome,
+  controls,
+  minimal,
+  slots,
+}: {
+  chrome: ResolvedEditorChromeOptions;
+  controls: EditorActionBarControls;
+  minimal: boolean;
+  slots?: EditorChromeSlots;
+}): ReactNode {
   if (minimal || !chrome.actionBar) {
     return null;
   }
@@ -77,7 +94,7 @@ const getEditorActionBar = (
   ) : (
     (renderEditorSlot(slots.actionBar, controls) ?? null)
   );
-};
+}
 
 const getEditorShell = (
   minimal: boolean,
@@ -102,12 +119,17 @@ const getEditorShell = (
   );
 };
 
-const getEditorOutputs = (
-  minimal: boolean,
-  chrome: ResolvedEditorChromeOptions,
-  context: EditorOutputContext,
-  slots?: EditorChromeSlots
-): ReactNode => {
+function EditorOutputsSlot({
+  chrome,
+  context,
+  minimal,
+  slots,
+}: {
+  chrome: ResolvedEditorChromeOptions;
+  context: EditorOutputContext;
+  minimal: boolean;
+  slots?: EditorChromeSlots;
+}): ReactNode {
   if (minimal || !chrome.outputs) {
     return null;
   }
@@ -129,7 +151,7 @@ const getEditorOutputs = (
   ) : (
     (renderEditorSlot(slots.outputs, context) ?? null)
   );
-};
+}
 
 interface SeedEditorInput {
   html?: string;
@@ -138,15 +160,31 @@ interface SeedEditorInput {
 }
 
 const createSeedEditorState =
-  (seedInput: SeedEditorInput, transformers: readonly Transformer[]) =>
+  (
+    seedInput: SeedEditorInput,
+    transformers: readonly Transformer[],
+    onError?: (error: Error, editor: LexicalEditor) => void
+  ) =>
   (editor: LexicalEditor) => {
     if (seedInput.json) {
-      const jsonString =
-        typeof seedInput.json === "string"
-          ? seedInput.json
-          : JSON.stringify(seedInput.json);
-      editor.setEditorState(editor.parseEditorState(jsonString));
-      return;
+      try {
+        const jsonString =
+          typeof seedInput.json === "string"
+            ? seedInput.json
+            : JSON.stringify(seedInput.json);
+        editor.setEditorState(editor.parseEditorState(jsonString));
+        return;
+      } catch (error) {
+        const normalizedError =
+          error instanceof Error
+            ? error
+            : new Error("Failed to parse initialJson editor state.");
+        onError?.(normalizedError, editor);
+        const root = $getRoot();
+        root.clear();
+        root.append($createParagraphNode());
+        return;
+      }
     }
     const root = $getRoot();
     root.clear();
@@ -180,10 +218,12 @@ export function Editor({
   minimal = false,
   namespace,
   onChange,
+  onError,
   placeholder = DEFAULT_PLACEHOLDER,
   pluginSlots,
   slots,
   toolbar = false,
+  weblinkFaviconResolver,
   weblinkMetadataFetcher,
 }: EditorProps) {
   const [textContent, setTextContent] = useState("");
@@ -193,9 +233,7 @@ export function Editor({
     markdown: "",
     text: "",
   });
-  const [editorInstance, setEditorInstance] = useState<LexicalEditor | null>(
-    null
-  );
+  const editorRef = useRef<LexicalEditor | null>(null);
 
   const resolvedChrome = useMemo(() => resolveEditorChrome(chrome), [chrome]);
   const resolvedFeatures = useMemo(
@@ -206,6 +244,7 @@ export function Editor({
     () => resolveWeblinkFetcher(weblinkMetadataFetcher),
     [weblinkMetadataFetcher]
   );
+  const stableExtraFeatures = extraFeatures ?? EMPTY_EXTRA_FEATURES;
 
   // Seed props are initial-only by contract (consumers remount via `key`),
   // so they are captured once per mount.
@@ -218,29 +257,21 @@ export function Editor({
     seedInput.markdown || seedInput.html || seedInput.json
   );
 
-  // Derived registries are memoized so their identities stay stable across
-  // re-renders (the editor state flows into React state on every keystroke);
-  // otherwise every consumer of these props reconciles on each update.
   const featureNodes = useMemo(
-    () => computeFeatureNodes(extraFeatures),
-    [extraFeatures]
+    () => computeFeatureNodes(stableExtraFeatures),
+    [stableExtraFeatures]
   );
   const transformers = useMemo(
-    () => computeEditorTransformers(extraFeatures),
-    [extraFeatures]
+    () => computeEditorTransformers(stableExtraFeatures),
+    [stableExtraFeatures]
   );
   const commands = useMemo(
-    () => computeResolvedSlashCommands(extraFeatures),
-    [extraFeatures]
+    () => computeResolvedSlashCommands(stableExtraFeatures),
+    [stableExtraFeatures]
   );
 
-  // Content is seeded inside LexicalComposer's *first* editor state (Lexical
-  // runs this function in the initial update, before any plugin mounts), so
-  // the very first paint of the editor already contains the document. A
-  // post-mount effect paints an empty editor first and then re-populates the
-  // whole document — a visible "content appears late" delay.
   const seedEditorState = seededViaConfig
-    ? createSeedEditorState(seedInput, transformers)
+    ? createSeedEditorState(seedInput, transformers, onError)
     : undefined;
 
   const initialConfig = createEditorConfig({
@@ -249,7 +280,25 @@ export function Editor({
     extraNodes,
     featureNodes,
     namespace,
+    onError,
   });
+
+  // Skip per-keystroke serialization and shell re-renders when nothing reads
+  // the live snapshot (e.g. `<Editor minimal />` without `onChange`).
+  const hasSnapshotConsumers =
+    Boolean(onChange) ||
+    (!minimal && (resolvedChrome.footer || resolvedChrome.outputs));
+
+  const effectiveFeatures = useMemo(() => {
+    if (hasSnapshotConsumers) {
+      return resolvedFeatures;
+    }
+
+    return {
+      ...resolvedFeatures,
+      snapshot: DISABLED_SNAPSHOT_OPTIONS,
+    };
+  }, [hasSnapshotConsumers, resolvedFeatures]);
 
   const snapshot: EditorSnapshot = {
     ...serializedSnapshot,
@@ -257,9 +306,10 @@ export function Editor({
   };
 
   const handleSnapshotChange = (nextText: string, editor: LexicalEditor) => {
-    setTextContent(nextText);
-    setEditorInstance((currentEditor) => currentEditor ?? editor);
-    (window as unknown as { __editor?: LexicalEditor }).__editor = editor;
+    setTextContent((currentText) =>
+      currentText === nextText ? currentText : nextText
+    );
+    editorRef.current = editor;
   };
 
   const handleSnapshotReady = (
@@ -278,19 +328,17 @@ export function Editor({
 
       return nextSnapshot;
     });
-    setEditorInstance((currentEditor) => currentEditor ?? editor);
+    editorRef.current = editor;
     onChange?.(nextSnapshot, editor);
   };
 
-  // Snapshot serialization options are resolved with the feature flags; the
-  // editor-level handlers (copy, reset, example loaders) must respect the
-  // same gating so disabled outputs are never assumed to be real content.
-  const snapshotOptions = resolvedFeatures.snapshot;
+  const snapshotOptions = effectiveFeatures.snapshot;
 
   const readSerializedOutput = (
     output: "html" | "json" | "markdown"
   ): string => {
-    if (!editorInstance) {
+    const editor = editorRef.current;
+    if (!editor) {
       return "";
     }
 
@@ -301,14 +349,10 @@ export function Editor({
       text: false,
     };
 
-    return readEditorSnapshot(editorInstance, transformers, selectiveOutputs)[
-      output
-    ];
+    return readEditorSnapshot(editor, transformers, selectiveOutputs)[output];
   };
 
   const handleCopyMarkdown = async () => {
-    // When an output is disabled its stored snapshot is a "" placeholder —
-    // serialize on demand so the outputs panel still copies real content.
     await copyEditorOutput(
       snapshotOptions.markdown
         ? serializedSnapshot.markdown
@@ -333,36 +377,34 @@ export function Editor({
   };
 
   const handleExportMarkdown = () => {
-    if (!editorInstance) {
+    const editor = editorRef.current;
+    if (!editor) {
       return;
     }
 
-    editorInstance.dispatchCommand(EXPORT_MARKDOWN_COMMAND, undefined);
+    editor.dispatchCommand(EXPORT_MARKDOWN_COMMAND, undefined);
   };
 
-  const runAndSync = (action: (editor: LexicalEditor) => void) => {
-    if (!editorInstance) {
+  const runAction = (action: (editor: LexicalEditor) => void) => {
+    const editor = editorRef.current;
+    if (!editor) {
       return;
     }
 
-    action(editorInstance);
-    const nextSnapshot = readEditorSnapshot(
-      editorInstance,
-      transformers,
-      snapshotOptions
-    );
-    setTextContent(nextSnapshot.text);
-    setSerializedSnapshot(nextSnapshot);
-    onChange?.(nextSnapshot, editorInstance);
+    // Lexical's update listener in `EditorStatePlugin` emits the post-commit
+    // snapshot once the update flushes, avoiding stale reads and duplicate
+    // `onChange` invocations.
+    action(editor);
   };
 
   const actionBarControls: EditorActionBarControls = {
     onExportMarkdown: resolvedFeatures.exportMarkdown
       ? handleExportMarkdown
       : undefined,
-    onLoadHtml: () => runAndSync(loadEditorHtmlExample),
-    onLoadMarkdown: () => runAndSync(loadEditorMarkdownExample),
-    onReset: () => runAndSync(resetEditorContent),
+    onLoadHtml: () => runAction(loadEditorHtmlExample),
+    onLoadMarkdown: () =>
+      runAction((editor) => loadEditorMarkdownExample(editor, transformers)),
+    onReset: () => runAction(resetEditorContent),
   };
 
   const defaultContent = (
@@ -372,8 +414,9 @@ export function Editor({
       contentClassName={contentClassName}
       density={density}
       editable={editable}
-      extraFeatures={extraFeatures ?? []}
-      features={resolvedFeatures}
+      editorRef={editorRef}
+      extraFeatures={stableExtraFeatures}
+      features={effectiveFeatures}
       footerSlot={slots?.footer}
       initialHtml={initialHtml}
       initialJson={initialJson}
@@ -393,11 +436,13 @@ export function Editor({
   );
 
   const headerContent = getEditorHeader(minimal, resolvedChrome, slots);
-  const actionBarContent = getEditorActionBar(
-    minimal,
-    resolvedChrome,
-    actionBarControls,
-    slots
+  const actionBarContent = (
+    <EditorActionBarSlot
+      chrome={resolvedChrome}
+      controls={actionBarControls}
+      minimal={minimal}
+      slots={slots}
+    />
   );
 
   const shellChildren = (
@@ -415,16 +460,18 @@ export function Editor({
     slots
   );
 
-  const outputContent = getEditorOutputs(
-    minimal,
-    resolvedChrome,
-    {
-      onCopyHtml: handleCopyHtml,
-      onCopyJson: handleCopyJson,
-      onCopyMarkdown: handleCopyMarkdown,
-      snapshot,
-    },
-    slots
+  const outputContent = (
+    <EditorOutputsSlot
+      chrome={resolvedChrome}
+      context={{
+        onCopyHtml: handleCopyHtml,
+        onCopyJson: handleCopyJson,
+        onCopyMarkdown: handleCopyMarkdown,
+        snapshot,
+      }}
+      minimal={minimal}
+      slots={slots}
+    />
   );
 
   return (
@@ -432,11 +479,13 @@ export function Editor({
       className={cn(!minimal && "space-y-6", className)}
       data-density={density}
     >
-      <WeblinkMetadataContext.Provider value={resolvedWeblinkFetcher}>
-        <LexicalComposer initialConfig={initialConfig}>
-          {editorBody}
-        </LexicalComposer>
-      </WeblinkMetadataContext.Provider>
+      <WeblinkFaviconContext.Provider value={weblinkFaviconResolver}>
+        <WeblinkMetadataContext.Provider value={resolvedWeblinkFetcher}>
+          <LexicalComposer initialConfig={initialConfig}>
+            {editorBody}
+          </LexicalComposer>
+        </WeblinkMetadataContext.Provider>
+      </WeblinkFaviconContext.Provider>
 
       {outputContent}
     </div>

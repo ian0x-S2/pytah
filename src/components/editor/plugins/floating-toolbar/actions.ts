@@ -1,133 +1,17 @@
-import {
-  $createLinkNode,
-  $isAutoLinkNode,
-  $isLinkNode,
-  TOGGLE_LINK_COMMAND,
-} from "@lexical/link";
 import { $patchStyleText } from "@lexical/selection";
 import {
-  $createTextNode,
   $getSelection,
-  $isRangeSelection,
-  $isTextNode,
   FORMAT_ELEMENT_COMMAND,
   FORMAT_TEXT_COMMAND,
 } from "lexical";
 import type { LexicalEditor } from "lexical";
 
-import {
-  isValidEditorLinkUrl,
-  normalizeEditorLinkUrl,
-} from "../link-behavior/utils";
-import {
-  getFloatingToolbarSelectedNode,
-  getSelectedLinkNode,
-} from "./selection";
-
-export const submitToolbarLink = (
-  editor: LexicalEditor,
-  linkUrl: string
-): string => {
-  const normalizedLinkUrl = normalizeEditorLinkUrl(linkUrl);
-
-  if (isValidEditorLinkUrl(normalizedLinkUrl)) {
-    editor.update(() => {
-      editor.dispatchCommand(TOGGLE_LINK_COMMAND, normalizedLinkUrl);
-
-      const selection = $getSelection();
-      if (!$isRangeSelection(selection)) {
-        return;
-      }
-
-      const selectedNode = getFloatingToolbarSelectedNode(selection);
-      const linkNode = getSelectedLinkNode(selectedNode);
-      if (!$isAutoLinkNode(linkNode)) {
-        return;
-      }
-
-      const replacementLinkNode = $createLinkNode(linkNode.getURL(), {
-        rel: linkNode.__rel,
-        target: linkNode.__target,
-        title: linkNode.__title,
-      });
-      linkNode.replace(replacementLinkNode, true);
-    });
-  } else {
-    editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
-  }
-
-  return "";
-};
-
-export const clearToolbarLink = (editor: LexicalEditor) => {
-  editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
-};
-
-/**
- * Replaces the selected link's display text, keeping the caret inside the
- * link. An empty value is a no-op (the existing text is kept) so clearing
- * the field by accident never wipes the label.
- */
-export const submitToolbarLinkText = (
-  editor: LexicalEditor,
-  linkText: string
-) => {
-  editor.update(() => {
-    const selection = $getSelection();
-    if (!$isRangeSelection(selection)) {
-      return;
-    }
-
-    const selectedNode = getFloatingToolbarSelectedNode(selection);
-    const linkNode = getSelectedLinkNode(selectedNode);
-    if (!($isLinkNode(linkNode) || $isAutoLinkNode(linkNode))) {
-      return;
-    }
-
-    if (!linkText || linkText === linkNode.getTextContent()) {
-      return;
-    }
-
-    // Splice-replace the children in one step: inserting the replacement
-    // before removing the old ones keeps the selection anchored to a live
-    // node. `clear()` + `append()` removes the selected child first, which
-    // trips Lexical's lost-selection repair and silently rolls the whole
-    // update back — the edited title never reaches the editor.
-    const firstChild = linkNode.getFirstChild();
-    const textNode = $createTextNode(linkText);
-    if ($isTextNode(firstChild)) {
-      textNode.setFormat(firstChild.getFormat());
-      textNode.setStyle(firstChild.getStyle());
-    }
-    linkNode.splice(0, linkNode.getChildrenSize(), [textNode]);
-    textNode.select();
-  });
-};
-
-/**
- * Applies the card's URL + text drafts and moves the caret just after the
- * link. Collapsing outside the link is what lets the card close on Enter:
- * a selection still inside a single link would otherwise re-open it on the
- * next sync.
- */
-export const applyToolbarLink = (
-  editor: LexicalEditor,
-  linkUrl: string,
-  linkText: string
-) => {
-  submitToolbarLink(editor, linkUrl);
-  submitToolbarLinkText(editor, linkText);
-  editor.update(() => {
-    const selection = $getSelection();
-    if (!$isRangeSelection(selection)) {
-      return;
-    }
-
-    const selectedNode = getFloatingToolbarSelectedNode(selection);
-    const linkNode = getSelectedLinkNode(selectedNode);
-    linkNode?.selectNext();
-  });
-};
+export {
+  applyToolbarLink,
+  clearToolbarLink,
+  submitToolbarLink,
+  submitToolbarLinkText,
+} from "../link-behavior/actions";
 
 export type ToggleableTextFormat =
   | "bold"
@@ -172,7 +56,7 @@ export const applyTextColor = (editor: LexicalEditor, color: string) => {
 
 /**
  * Applies an inline `background-color` CSS property to the current Lexical
- * selection.  Passing an empty string removes the property.
+ * selection. Passing an empty string removes the property.
  */
 export const applyBgColor = (editor: LexicalEditor, color: string) => {
   editor.update(() => {

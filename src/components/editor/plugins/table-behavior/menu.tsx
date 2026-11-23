@@ -42,7 +42,7 @@ export function TableActionMenu({
           editor.focus();
         }}
       >
-        <Rows3Icon />
+        <Rows3Icon aria-hidden />
         <span>Insert {rowLabel} above</span>
       </DropdownMenuItem>
       <DropdownMenuItem
@@ -52,7 +52,7 @@ export function TableActionMenu({
           editor.focus();
         }}
       >
-        <Rows3Icon />
+        <Rows3Icon aria-hidden />
         <span>Insert {rowLabel} below</span>
       </DropdownMenuItem>
       <DropdownMenuItem
@@ -62,7 +62,7 @@ export function TableActionMenu({
           editor.focus();
         }}
       >
-        <Columns2Icon />
+        <Columns2Icon aria-hidden />
         <span>Insert {columnLabel} left</span>
       </DropdownMenuItem>
       <DropdownMenuItem
@@ -72,7 +72,7 @@ export function TableActionMenu({
           editor.focus();
         }}
       >
-        <Columns2Icon />
+        <Columns2Icon aria-hidden />
         <span>Insert {columnLabel} right</span>
       </DropdownMenuItem>
       <DropdownMenuSeparator />
@@ -83,8 +83,8 @@ export function TableActionMenu({
           editor.focus();
         }}
       >
-        <Trash2Icon />
-        <span>Delete row</span>
+        <Trash2Icon aria-hidden />
+        <span>Delete {rowLabel}</span>
       </DropdownMenuItem>
       <DropdownMenuItem
         onClick={() => {
@@ -93,8 +93,8 @@ export function TableActionMenu({
           editor.focus();
         }}
       >
-        <Trash2Icon />
-        <span>Delete column</span>
+        <Trash2Icon aria-hidden />
+        <span>Delete {columnLabel}</span>
       </DropdownMenuItem>
       <DropdownMenuItem
         onClick={() => {
@@ -104,7 +104,7 @@ export function TableActionMenu({
         }}
         variant="destructive"
       >
-        <Trash2Icon />
+        <Trash2Icon aria-hidden />
         <span>Delete table</span>
       </DropdownMenuItem>
     </>

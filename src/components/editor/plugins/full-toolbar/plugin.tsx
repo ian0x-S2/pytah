@@ -21,7 +21,7 @@ import {
   SuperscriptIcon,
   UndoIcon,
 } from "lucide-react";
-import { memo, useCallback, useReducer } from "react";
+import { useReducer } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -29,16 +29,16 @@ import { Toggle } from "@/components/ui/toggle";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
+import { useEditorFloatingLinkEnabled } from "../../core/editor-commands-context";
 import { ColorSwatches } from "../../ui/color-swatches";
 import { ToolbarTooltip } from "../../ui/toolbar-tooltip";
 import { BlockTypeDrop } from "../block-type-toolbar/block-type-drop";
-import type { BlockTypeValue } from "../block-type-toolbar/types";
 import {
   applyBgColor,
   applyTextColor,
   toggleToolbarFormat,
 } from "../floating-toolbar/actions";
-import { OPEN_FLOATING_LINK_EDITOR_COMMAND } from "../floating-toolbar/link-command";
+import { OPEN_FLOATING_LINK_EDITOR_COMMAND } from "../link-behavior/commands";
 import { LINK_PLACEHOLDER_URL } from "../link-behavior/utils";
 import { ALIGN_ACTIONS, INLINE_FORMAT_ACTIONS } from "./constants";
 import { InsertPopover } from "./insert-popover";
@@ -52,104 +52,109 @@ interface FullToolbarPluginProps {
   commandIds?: readonly string[];
 }
 
-export const FullToolbarPlugin = memo(
-  ({ className, commandIds }: FullToolbarPluginProps) => {
-    const [editor] = useLexicalComposerContext();
-    const { blockType, formats, setBlockType } = useToolbarState();
-    const [uiState, dispatchUi] = useReducer(
-      fullToolbarUiReducer,
-      INITIAL_UI_STATE
-    );
-    const { activeInsertIndex, insertOpen } = uiState;
+export function FullToolbarPlugin({
+  className,
+  commandIds,
+}: FullToolbarPluginProps) {
+  const [editor] = useLexicalComposerContext();
+  const isFloatingLinkEnabled = useEditorFloatingLinkEnabled();
+  const { blockType, canRedo, canUndo, elementFormat, formats, setBlockType } =
+    useToolbarState();
+  const [uiState, dispatchUi] = useReducer(
+    fullToolbarUiReducer,
+    INITIAL_UI_STATE
+  );
+  const { activeInsertIndex, insertOpen } = uiState;
 
-    const handleBlockTypeChange = useCallback(
-      (value: BlockTypeValue) => {
-        setBlockType(value);
-      },
-      [setBlockType]
-    );
+  const handleLinkToggle = () => {
+    if (formats.isLink) {
+      editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
+      return;
+    }
+    if (!isFloatingLinkEnabled) {
+      return;
+    }
+    editor.dispatchCommand(TOGGLE_LINK_COMMAND, LINK_PLACEHOLDER_URL);
+    editor.dispatchCommand(OPEN_FLOATING_LINK_EDITOR_COMMAND, undefined);
+  };
 
-    const handleLinkToggle = () => {
-      if (formats.isLink) {
-        editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
-        return;
-      }
-      editor.dispatchCommand(TOGGLE_LINK_COMMAND, LINK_PLACEHOLDER_URL);
-      editor.dispatchCommand(OPEN_FLOATING_LINK_EDITOR_COMMAND, undefined);
-    };
+  return (
+    <div
+      aria-label="Formatting toolbar"
+      className={cn("flex flex-wrap items-center gap-0.5", className)}
+      role="toolbar"
+    >
+      <TooltipProvider>
+        <ToolbarTooltip label="Undo">
+          <Button
+            aria-label="Undo"
+            disabled={!canUndo}
+            onClick={() => editor.dispatchCommand(UNDO_COMMAND, undefined)}
+            size="icon-sm"
+            type="button"
+            variant="ghost"
+          >
+            <UndoIcon aria-hidden />
+          </Button>
+        </ToolbarTooltip>
+        <ToolbarTooltip label="Redo">
+          <Button
+            aria-label="Redo"
+            disabled={!canRedo}
+            onClick={() => editor.dispatchCommand(REDO_COMMAND, undefined)}
+            size="icon-sm"
+            type="button"
+            variant="ghost"
+          >
+            <RedoIcon aria-hidden />
+          </Button>
+        </ToolbarTooltip>
 
-    return (
-      <div
-        aria-label="Formatting toolbar"
-        className={cn("flex flex-wrap items-center gap-0.5", className)}
-        role="toolbar"
-      >
-        <TooltipProvider>
-          <ToolbarTooltip label="Undo">
-            <Button
-              aria-label="Undo"
-              onClick={() => editor.dispatchCommand(UNDO_COMMAND, undefined)}
-              size="icon-sm"
-              type="button"
-              variant="ghost"
-            >
-              <UndoIcon />
-            </Button>
-          </ToolbarTooltip>
-          <ToolbarTooltip label="Redo">
-            <Button
-              aria-label="Redo"
-              onClick={() => editor.dispatchCommand(REDO_COMMAND, undefined)}
-              size="icon-sm"
-              type="button"
-              variant="ghost"
-            >
-              <RedoIcon />
-            </Button>
-          </ToolbarTooltip>
+        <Separator className="mx-0.5 h-4" orientation="vertical" />
 
-          <Separator className="mx-0.5 h-4" orientation="vertical" />
+        <BlockTypeDrop
+          blockType={blockType}
+          commandIds={commandIds}
+          editor={editor}
+          onBlockTypeChange={setBlockType}
+          showInsert={false}
+        />
 
-          <BlockTypeDrop
-            blockType={blockType}
-            commandIds={commandIds}
-            editor={editor}
-            onBlockTypeChange={handleBlockTypeChange}
-          />
+        <Separator className="mx-0.5 h-4" orientation="vertical" />
 
-          <Separator className="mx-0.5 h-4" orientation="vertical" />
+        {INLINE_FORMAT_ACTIONS.map((action) => {
+          const Icon = action.icon;
+          return (
+            <ToolbarTooltip key={action.format} label={action.label}>
+              <Toggle
+                aria-label={action.label}
+                onMouseDown={(event) => event.preventDefault()}
+                onPressedChange={() =>
+                  toggleToolbarFormat(editor, action.format)
+                }
+                pressed={formats[action.key]}
+                size="sm"
+              >
+                <Icon aria-hidden />
+              </Toggle>
+            </ToolbarTooltip>
+          );
+        })}
 
-          {INLINE_FORMAT_ACTIONS.map((action) => {
-            const Icon = action.icon;
-            return (
-              <ToolbarTooltip key={action.format} label={action.label}>
-                <Toggle
-                  aria-label={action.label}
-                  onPressedChange={() =>
-                    toggleToolbarFormat(editor, action.format)
-                  }
-                  pressed={formats[action.key]}
-                  size="sm"
-                >
-                  <Icon />
-                </Toggle>
-              </ToolbarTooltip>
-            );
-          })}
+        <ColorSwatches
+          activeColor={formats.textColor}
+          icon={BaselineIcon}
+          label="Text color"
+          onColorChange={(color) => applyTextColor(editor, color)}
+        />
+        <ColorSwatches
+          activeColor={formats.bgColor}
+          icon={PaintBucketIcon}
+          label="Background color"
+          onColorChange={(color) => applyBgColor(editor, color)}
+        />
 
-          <ColorSwatches
-            activeColor={formats.textColor}
-            icon={BaselineIcon}
-            label="Text color"
-            onColorChange={(color) => applyTextColor(editor, color)}
-          />
-          <ColorSwatches
-            activeColor={formats.bgColor}
-            icon={PaintBucketIcon}
-            label="Background color"
-            onColorChange={(color) => applyBgColor(editor, color)}
-          />
-
+        {isFloatingLinkEnabled || formats.isLink ? (
           <ToolbarTooltip label="Link">
             <Toggle
               aria-label="Link"
@@ -158,105 +163,110 @@ export const FullToolbarPlugin = memo(
               pressed={formats.isLink}
               size="sm"
             >
-              <LinkIcon />
+              <LinkIcon aria-hidden />
             </Toggle>
           </ToolbarTooltip>
+        ) : null}
 
-          <Separator className="mx-0.5 h-4" orientation="vertical" />
+        <Separator className="mx-0.5 h-4" orientation="vertical" />
 
-          <ToolbarTooltip label="Superscript">
-            <Toggle
-              aria-label="Superscript"
-              onPressedChange={() =>
-                editor.dispatchCommand(FORMAT_TEXT_COMMAND, "superscript")
-              }
-              pressed={formats.isSuperscript}
-              size="sm"
-            >
-              <SuperscriptIcon />
-            </Toggle>
-          </ToolbarTooltip>
-          <ToolbarTooltip label="Subscript">
-            <Toggle
-              aria-label="Subscript"
-              onPressedChange={() =>
-                editor.dispatchCommand(FORMAT_TEXT_COMMAND, "subscript")
-              }
-              pressed={formats.isSubscript}
-              size="sm"
-            >
-              <SubscriptIcon />
-            </Toggle>
-          </ToolbarTooltip>
-
-          <Separator className="mx-0.5 h-4" orientation="vertical" />
-
-          {ALIGN_ACTIONS.map((action) => {
-            const Icon = action.icon;
-            return (
-              <ToolbarTooltip key={action.align} label={action.label}>
-                <Button
-                  aria-label={action.label}
-                  onClick={() =>
-                    editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, action.align)
-                  }
-                  size="icon-sm"
-                  type="button"
-                  variant="ghost"
-                >
-                  <Icon />
-                </Button>
-              </ToolbarTooltip>
-            );
-          })}
-
-          <Separator className="mx-0.5 h-4" orientation="vertical" />
-
-          <ToolbarTooltip label="Outdent">
-            <Button
-              aria-label="Outdent"
-              onClick={() =>
-                editor.dispatchCommand(OUTDENT_CONTENT_COMMAND, undefined)
-              }
-              size="icon-sm"
-              type="button"
-              variant="ghost"
-            >
-              <IndentDecreaseIcon />
-            </Button>
-          </ToolbarTooltip>
-          <ToolbarTooltip label="Indent">
-            <Button
-              aria-label="Indent"
-              onClick={() =>
-                editor.dispatchCommand(INDENT_CONTENT_COMMAND, undefined)
-              }
-              size="icon-sm"
-              type="button"
-              variant="ghost"
-            >
-              <IndentIncreaseIcon />
-            </Button>
-          </ToolbarTooltip>
-
-          <Separator className="mx-0.5 h-4" orientation="vertical" />
-
-          <InsertPopover
-            activeInsertIndex={activeInsertIndex}
-            commandIds={commandIds}
-            dispatchUi={dispatchUi}
-            insertOpen={insertOpen}
-            onOpenChange={(open) =>
-              dispatchUi({
-                payload: { activeInsertIndex: 0, open },
-                type: "set-insert-open",
-              })
+        <ToolbarTooltip label="Superscript">
+          <Toggle
+            aria-label="Superscript"
+            onMouseDown={(event) => event.preventDefault()}
+            onPressedChange={() =>
+              editor.dispatchCommand(FORMAT_TEXT_COMMAND, "superscript")
             }
-          />
-        </TooltipProvider>
-      </div>
-    );
-  }
-);
+            pressed={formats.isSuperscript}
+            size="sm"
+          >
+            <SuperscriptIcon aria-hidden />
+          </Toggle>
+        </ToolbarTooltip>
+        <ToolbarTooltip label="Subscript">
+          <Toggle
+            aria-label="Subscript"
+            onMouseDown={(event) => event.preventDefault()}
+            onPressedChange={() =>
+              editor.dispatchCommand(FORMAT_TEXT_COMMAND, "subscript")
+            }
+            pressed={formats.isSubscript}
+            size="sm"
+          >
+            <SubscriptIcon aria-hidden />
+          </Toggle>
+        </ToolbarTooltip>
 
-FullToolbarPlugin.displayName = "FullToolbarPlugin";
+        <Separator className="mx-0.5 h-4" orientation="vertical" />
+
+        {ALIGN_ACTIONS.map((action) => {
+          const Icon = action.icon;
+          const isActive =
+            elementFormat === action.align ||
+            (action.align === "left" && elementFormat === "");
+
+          return (
+            <ToolbarTooltip key={action.align} label={action.label}>
+              <Button
+                aria-label={action.label}
+                aria-pressed={isActive}
+                onClick={() =>
+                  editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, action.align)
+                }
+                size="icon-sm"
+                type="button"
+                variant={isActive ? "secondary" : "ghost"}
+              >
+                <Icon aria-hidden />
+              </Button>
+            </ToolbarTooltip>
+          );
+        })}
+
+        <Separator className="mx-0.5 h-4" orientation="vertical" />
+
+        <ToolbarTooltip label="Outdent">
+          <Button
+            aria-label="Outdent"
+            onClick={() =>
+              editor.dispatchCommand(OUTDENT_CONTENT_COMMAND, undefined)
+            }
+            size="icon-sm"
+            type="button"
+            variant="ghost"
+          >
+            <IndentDecreaseIcon aria-hidden />
+          </Button>
+        </ToolbarTooltip>
+        <ToolbarTooltip label="Indent">
+          <Button
+            aria-label="Indent"
+            onClick={() =>
+              editor.dispatchCommand(INDENT_CONTENT_COMMAND, undefined)
+            }
+            size="icon-sm"
+            type="button"
+            variant="ghost"
+          >
+            <IndentIncreaseIcon aria-hidden />
+          </Button>
+        </ToolbarTooltip>
+
+        <Separator className="mx-0.5 h-4" orientation="vertical" />
+
+        <InsertPopover
+          activeInsertIndex={activeInsertIndex}
+          commandIds={commandIds}
+          dispatchUi={dispatchUi}
+          insertOpen={insertOpen}
+          onOpenChange={(open) =>
+            dispatchUi({
+              payload: { activeInsertIndex: 0, open },
+              type: "set-insert-open",
+            })
+          }
+        />
+      </TooltipProvider>
+    </div>
+  );
+}

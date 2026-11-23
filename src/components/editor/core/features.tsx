@@ -108,7 +108,10 @@ const buildCoreSlashCommandEntry = (
 ): FeatureSlashCommand => ({
   command,
   run: (editor) => {
-    const executor = CORE_SLASH_COMMAND_EXECUTORS[command.id];
+    const executor =
+      CORE_SLASH_COMMAND_EXECUTORS[
+        command.id as keyof typeof CORE_SLASH_COMMAND_EXECUTORS
+      ];
     if (!executor) {
       return;
     }

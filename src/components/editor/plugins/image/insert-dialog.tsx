@@ -16,11 +16,13 @@ interface InsertImageDialogProps {
   /** Prefix for form input ids so multiple mounted dialogs stay unique. */
   idPrefix?: string;
   imageAltText: string;
+  imageFileError?: string;
   imageFileName: string;
   imageFileSrc: string | null;
   imageUrl: string;
   onAltTextChange: (value: string) => void;
   onCancel: () => void;
+  onClearFile?: () => void;
   onImageFileChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onSubmit: () => void;
   onUrlChange: (value: string) => void;
@@ -30,11 +32,13 @@ interface InsertImageDialogProps {
 export function InsertImageDialog({
   idPrefix = "slash",
   imageAltText,
+  imageFileError,
   imageFileName,
   imageFileSrc,
   imageUrl,
   onAltTextChange,
   onCancel,
+  onClearFile,
   onImageFileChange,
   onSubmit,
   onUrlChange,
@@ -92,14 +96,29 @@ export function InsertImageDialog({
               Local file
             </label>
             <Input
-              accept="image/*"
+              accept="image/png,image/jpeg,image/webp,image/gif,image/avif"
               id={`${idPrefix}-image-file`}
               onChange={onImageFileChange}
               type="file"
             />
             {imageFileName ? (
-              <p className="text-xs text-muted-foreground">
-                Selected: {imageFileName}
+              <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                <span className="truncate">Selected: {imageFileName}</span>
+                {onClearFile ? (
+                  <Button
+                    onClick={onClearFile}
+                    size="xs"
+                    type="button"
+                    variant="ghost"
+                  >
+                    Clear
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
+            {imageFileError ? (
+              <p className="text-xs text-destructive" role="alert">
+                {imageFileError}
               </p>
             ) : null}
           </div>

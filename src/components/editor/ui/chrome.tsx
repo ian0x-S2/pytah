@@ -1,6 +1,7 @@
 "use client";
 
 import type { FileTextIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,6 +9,8 @@ import { cn } from "@/lib/utils";
 
 import { FEATURE_ITEMS, WORD_SEPARATOR_PATTERN } from "../core/constants";
 import type { EditorSnapshot } from "../core/types";
+
+const COPY_FEEDBACK_MS = 1800;
 
 export function EditorShell({
   children,
@@ -30,7 +33,7 @@ export function EditorHeader({ className }: { className?: string }) {
             className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1 text-xs text-muted-foreground"
             key={item.label}
           >
-            <item.icon className="size-3.5" />
+            <item.icon aria-hidden className="size-3.5" />
             <span>{item.label}</span>
           </div>
         ))}
@@ -80,18 +83,46 @@ export function OutputPanel({
 }: {
   icon: typeof FileTextIcon;
   label: string;
-  onCopy: () => void;
+  onCopy: () => void | Promise<void>;
   value: string;
 }) {
+  const [copied, setCopied] = useState(false);
+  const timerRef = useRef<number | null>(null);
+
+  useEffect(
+    () => () => {
+      if (timerRef.current !== null) {
+        window.clearTimeout(timerRef.current);
+      }
+    },
+    []
+  );
+
+  const handleCopy = async () => {
+    try {
+      await onCopy();
+      setCopied(true);
+      if (timerRef.current !== null) {
+        window.clearTimeout(timerRef.current);
+      }
+      timerRef.current = window.setTimeout(() => {
+        timerRef.current = null;
+        setCopied(false);
+      }, COPY_FEEDBACK_MS);
+    } catch {
+      setCopied(false);
+    }
+  };
+
   return (
     <div className="editor-shell shadow-sm">
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-          <Icon className="size-4 text-muted-foreground" />
+          <Icon aria-hidden className="size-4 text-muted-foreground" />
           <span>{label}</span>
         </div>
-        <Button onClick={onCopy} size="sm" type="button" variant="ghost">
-          Copy
+        <Button onClick={handleCopy} size="sm" type="button" variant="ghost">
+          {copied ? "Copied" : "Copy"}
         </Button>
       </div>
       <Textarea
