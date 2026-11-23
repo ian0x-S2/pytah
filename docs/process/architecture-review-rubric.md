@@ -9,8 +9,8 @@ Use this during review to decide whether a feature follows the editor architectu
 
 ## 2. Public Contract
 
-- Is the change modeled through `features`, `chrome`, `slots`, `pluginSlots`, or `extraNodes` before introducing a new prop or branch?
-- If the capability is optional, is it exposed through `EditorFeatureFlags`?
+- Is the change modeled through `extraFeatures`, `features`, `chrome`, `slots`, `pluginSlots`, or `extraNodes` before introducing a new prop or branch?
+- If the capability is an optional content feature, is it exported as an `ExtraEditorFeature` descriptor (`plugins/<feature>/feature.ts`) with its own `nodes`, `plugin`, `transformers`, and `slashCommands`? If it is a core toggle, is it exposed through `EditorFeatureFlags`?
 
 ## 3. Feature-First Structure
 

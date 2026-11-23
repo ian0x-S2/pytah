@@ -4,7 +4,7 @@ description: "Feature guide for code blocks with fine-grained Shiki syntax highl
 group: "feature-guides"
 icon: "Code"
 label: "Code Block"
-order: 25
+order: 24
 ---
 
 import codeCommandsSource from "@/components/editor/plugins/code-highlight/code-commands.ts?raw";
@@ -150,7 +150,7 @@ Lexical's default `SELECT_ALL_COMMAND` selects the entire document. When trigger
 You can set the default code block theme family across the entire editor using the `codeBlockTheme` prop:
 
 ````tsx
-import { Editor } from "@/components/editor";
+import { Editor } from "@/components/editor/editor";
 
 export function DocumentationEditor() {
   return (

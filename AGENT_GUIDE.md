@@ -59,7 +59,7 @@ bunx shadcn@latest add @pytah/editor-image
 bunx shadcn@latest add @pytah/editor-tables
 bunx shadcn@latest add @pytah/editor-excalidraw
 
-# ou tudo de uma vez:
+# ou todas as features de produção de uma vez (exclui `editor-seed-content`, que é opcional para demos):
 bunx shadcn@latest add @pytah/editor-full
 ```
 
@@ -68,17 +68,17 @@ Instalar via namespace é importante: os itens declaram `registryDependencies` q
 O item `editor` instala automaticamente:
 
 - o core do editor (`src/components/editor/` sem as pastas de features)
-- os primitivos `ui` necessários (`button`, `command`, `dialog`, `dropdown-menu`, `input`, `input-group`, `popover`, `separator`, `textarea`, `toggle`, `tooltip`)
-- `theme-provider.tsx` + `theme-context.ts` (usados pelo code highlight)
+- os 14 primitivos `ui` necessários (`button`, `command`, `dialog`, `dropdown-menu`, `hover-card`, `input`, `input-group`, `popover`, `scroll-area`, `select`, `separator`, `textarea`, `toggle`, `tooltip`)
+- `theme-provider.tsx` + `theme-context.ts` (o editor já detecta `.dark` no `<html>` automaticamente; o `ThemeProvider` é opcional)
 - `lib/utils.ts` (helper `cn()`)
-- apenas as dependências do core (`lexical`, `@lexical/*`, `@base-ui/react`, `cmdk`, ...) — nada de `@excalidraw/excalidraw` ou `katex`
+- apenas as dependências do core (`lexical`, `@lexical/*`, `@base-ui/react`, `cmdk`, `shiki`, `tw-animate-css`, ...) — nada de `@excalidraw/excalidraw` ou `katex`
 - os tokens `--highlight` no CSS
 
-Itens de feature trazem só os próprios arquivos e dependências (`editor-excalidraw` → `@excalidraw/excalidraw`; `editor-math` → `katex`) e puxam o `@pytah/editor` automaticamente.
+Itens de feature trazem só os próprios arquivos e dependências extras (`editor-excalidraw` → `@excalidraw/excalidraw`; `editor-math` → `katex`) e puxam o `@pytah/editor` automaticamente.
 
 ### Passo 4 — Componha as features instaladas
 
-Features não são flags: quem instala, compõe. Cada item exporta um descritor pronto em `plugins/<feature>/feature.ts`:
+Features não são flags: quem instala, compõe. Cada item exporta um descritor pronto em `plugins/<feature>/feature.ts` (exceto TOC em `plugins/toc/descriptor.ts` e seed em `plugins/core/seed-content-feature.ts`):
 
 ```tsx
 // src/app/page.tsx
@@ -203,9 +203,9 @@ Não importou o descritor? O código da feature não entra no bundle.
 
 Os tokens `--highlight` também são injetados automaticamente pelo `shadcn add` (via `cssVars` do item) — mantê-los na folha não causa conflito.
 
-### Passo 6 — Monte o ThemeProvider
+### Passo 6 — ThemeProvider (opcional)
 
-O code highlight usa `useTheme()`, então o `ThemeProvider` deve envolver o editor. Crie um client component:
+O editor detecta automaticamente a classe `.dark` em `document.documentElement` (compatível com `next-themes`, providers próprios ou apps sem provider). Se quiser usar o `ThemeProvider` incluído pelo Pytah para alternância de tema e sincronização do seletor de tema dos blocos de código, crie um client component:
 
 ```tsx
 // src/app/providers.tsx
@@ -255,14 +255,17 @@ Do repositório Pytah para o seu app, **preservando a estrutura de pastas**. O c
 
 ```text
 src/components/editor/          ← copie o diretório inteiro, menos features indesejadas
-src/components/ui/              ← copie só estes primitivos:
+src/components/ui/              ← copie só estes 14 primitivos:
     button.tsx
     command.tsx
     dialog.tsx
     dropdown-menu.tsx
+    hover-card.tsx
     input.tsx
     input-group.tsx
     popover.tsx
+    scroll-area.tsx
+    select.tsx
     separator.tsx
     textarea.tsx
     toggle.tsx
@@ -320,9 +323,9 @@ E garanta o import de `tw-animate-css` no topo:
 @import "tw-animate-css";
 ```
 
-### Passo 7B — Monte o ThemeProvider e renderize
+### Passo 7B — Renderize o editor (e monte o ThemeProvider se desejar)
 
-Idêntico aos passos 5 e 6 do Método A (`providers.tsx` com `ThemeProvider` + `<Editor minimal toolbar="full" />`).
+Idêntico aos passos 4 e 6 do Método A (`<Editor minimal toolbar="full" />`, com `ThemeProvider` opcional).
 
 ### Passo 8B — Valide
 
@@ -349,7 +352,7 @@ O passo a passo é o mesmo, mudando só a configuração do Tailwind v4 e o alia
 
 - Mesmo `postcss.config` do Next App Router
 - Alias `@/*` no `tsconfig.json`
-- `ThemeProvider` + editor em um componente client
+- Editor em um componente client (`ThemeProvider` opcional)
 
 ---
 
@@ -362,15 +365,15 @@ O passo a passo é o mesmo, mudando só a configuração do Tailwind v4 e o alia
 3. `@pytah/editor` + features desejadas instalados
 4. Descritores das features compostos via `extraFeatures`
 5. `tw-animate-css` importado no CSS
-6. `ThemeProvider` envolvendo o editor
+6. (Opcional) `ThemeProvider` envolvendo o editor — ou `.dark` no `<html>` gerenciado pelo seu app
 7. `bun run build` passando
 
 **Método B (manual):**
 
 1. Dependências do core instaladas (+ extras das features mantidas)
 2. Tailwind v4 configurado (postcss ou plugin vite)
-3. Arquivos copiados: core do `editor/`, `ui/*` (11 arquivos), `theme-provider.tsx`, `theme-context.ts`, `lib/utils.ts`
+3. Arquivos copiados: core do `editor/`, `ui/*` (14 arquivos), `theme-provider.tsx`, `theme-context.ts`, `lib/utils.ts`
 4. Alias `@/` → `./src` no tsconfig
 5. Tokens `--highlight` no CSS + bridge `@theme inline`
-6. `ThemeProvider` envolvendo o editor
+6. (Opcional) `ThemeProvider` envolvendo o editor
 7. `bun run build` passando

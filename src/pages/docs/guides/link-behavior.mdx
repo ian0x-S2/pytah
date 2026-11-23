@@ -24,20 +24,25 @@ import linkBehaviorUtilsSource from "@/components/editor/plugins/link-behavior/u
 <FileTree
   items={[
     "src/components/editor/plugins/link-behavior/",
-    "  constants.ts                    ← AUTO_LINK_MATCHERS, LINK_PASTE_OPTIONS",
-    "  utils.ts                        ← URL normalize / validate / sanitize",
-    "  paste.ts                        ← handleLinkPasteOnSelection & PASTE_COMMAND",
-    "  plugin.tsx                      ← LinkBehaviorPlugin composition",
-    "  floating-link-editor.tsx        ← FloatingLinkEditorPlugin (state machine + effects host)",
+    "  actions.ts                       ← applyToolbarLink, clearToolbarLink",
+    "  commands.ts                      ← OPEN_FLOATING_LINK_EDITOR_COMMAND",
+    "  constants.ts                     ← AUTO_LINK_MATCHERS, LINK_PASTE_OPTIONS",
+    "  selection.ts                     ← link selection helpers",
+    "  utils.ts                         ← URL normalize / validate / sanitize (via core/url.ts)",
+    "  paste.ts                         ← handleLinkPasteOnSelection & PASTE_COMMAND",
+    "  plugin.tsx                       ← LinkBehaviorPlugin composition",
+    "  floating-link-editor.tsx         ← FloatingLinkEditorPlugin (state machine + effects host)",
     "  floating-link-editor-surfaces.tsx ← chip (HoverCard) + card (Popover) rendering",
-    "  floating-link-hover.ts          ← document pointerover link detection",
-    "  floating-link-preview-chip.tsx  ← hover preview chip (label + Edit)",
-    "  floating-link-editor-reducer.ts ← closed/preview/edit state machine",
+    "  floating-link-hover.ts           ← document pointerover link detection",
+    "  floating-link-hover-bridge.ts    ← hover grace-period timer state machine",
+    "  floating-link-editor-close-reconcile.ts ← stale selection cleanup on close",
+    "  floating-link-preview-chip.tsx   ← hover preview chip (label + Edit)",
+    "  floating-link-editor-reducer.ts  ← closed/preview/edit state machine",
     "  floating-link-editor-position.ts ← selection anchor + link readers",
-    "  floating-link-editor-panel.tsx  ← text/URL fields + actions",
-    "  floating-link-paste-menu.tsx    ← link paste format popover (Base UI Popover)",
-    "  floating-link-paste-actions.ts  ← link conversion mutations",
-    "  floating-link-paste-items.tsx   ← format options list with roving tabindex",
+    "  floating-link-editor-panel.tsx   ← text/URL fields + inline validation + actions",
+    "  floating-link-paste-menu.tsx     ← link paste format popover (Base UI Popover)",
+    "  floating-link-paste-actions.ts   ← link conversion mutations",
+    "  floating-link-paste-items.tsx    ← format options list with roving tabindex",
   ]}
 />
 
@@ -144,7 +149,7 @@ The link surfaces follow the Google-Docs interaction model:
 | `SELECTION_CHANGE_COMMAND` | LOW | Syncs link state and surface anchoring on every selection change. |
 | `OPEN_FLOATING_LINK_EDITOR_COMMAND` | HIGH | Opens the edit card. |
 | `KEY_DOWN_COMMAND` | HIGH | Cmd/Ctrl+K toggles the link. |
-| `KEY_ESCAPE_COMMAND` | HIGH | Closes the card/chip when the selection lives in a link. |
+| `KEY_ESCAPE_COMMAND` | HIGH | Closes the card/chip when a floating link surface is open (falls through when closed). |
 | `CLICK_COMMAND` | LOW | Cmd/Ctrl+click opens the link URL in a new tab while editing. |
 
 <CodeBlock

@@ -9,7 +9,7 @@ order: 50
 
 ## Overview
 
-The editor is a self-contained module inside `src/components/editor/`. It composes a Lexical editor instance with a set of plugins and a themed UI layer. The architecture follows three rules:
+The editor is a self-contained module inside `src/components/editor/`. It composes a Lexical editor instance with a set of plugins and a themed UI layer. The architecture follows four rules:
 
 **1. Separation of concerns** -- Lexical node definitions, React composition, and plugin behavior live in separate directories.
 
@@ -30,43 +30,53 @@ The editor is a self-contained module inside `src/components/editor/`. It compos
 <FileTree
   items={[
     "src/components/editor/",
-    "├── editor.tsx              # Composition root",
-    "├── core/                   # Foundation layer",
-    "│   ├── actions.ts          # Editor commands (copy, reset, load)",
-    "│   ├── composition.ts      # Feature/chrome defaults + slot helpers",
-    "│   ├── config.ts           # Lexical base nodes + initial config",
-    "│   ├── constants.ts        # Shared constants",
-    "│   ├── features.tsx        # EditorFeature registry (nodes/plugin/transformers/slash ids)",
-    "│   ├── theme.ts            # Lexical EditorThemeClasses (Tailwind)",
-    "│   ├── types.ts            # Shared TypeScript types",
-    "│   ├── utils.ts            # HTML/Markdown serialization helpers (transformers-threaded)",
-    "│   └── nodes/              # Custom Lexical node definitions",
-    "│       ├── collapsible/    # CollapsibleContainer + CollapsibleContent + CollapsibleTitle",
-    "│       ├── image/          # ImageNode (decorator)",
-    "│       ├── layout/         # LayoutContainer + LayoutItem",
-    "│       ├── math/           # MathNode (KaTeX inline and block equations)",
-    "│       └── youtube/        # YouTubeNode (decorator)",
-    "├── plugins/                # Behavior layer",
-    "│   ├── block-type-toolbar/ # Block type dropdown + undo/redo/alignment + keyboard nav",
-    "│   ├── code-highlight/     # Syntax highlighting (fine-grained Shiki core + JS regex engine)",
-    "│   ├── collapsible/        # Collapsible block transforms + keyboard nav",
-    "│   ├── core/               # Essential plugins (editable sync, state, focus)",
-    "│   ├── draggable-block/    # Drag handle for block reordering",
-    "│   ├── floating-toolbar/   # Floating format toolbar on selection",
-    "│   ├── full-toolbar/       # Full top toolbar with inline formatting and pickers",
-    "│   ├── image/              # Image insert/paste/drop + resize",
-    "│   ├── layout/             # Column layout commands",
-    "│   ├── link-behavior/      # Link auto-detection + floating editor",
-    "│   ├── markdown/           # Custom Markdown transformers",
-    "│   ├── math/               # KaTeX math editing and transformers",
-    "│   ├── slash-command/      # Slash menu + insert dialogs",
-    "│   ├── table-behavior/     # Table context menu + row/column ops",
-    "│   ├── toc/                # Document outline with mini-dash indicators and hover popover",
-    "│   └── youtube/            # YouTube embed commands",
-    "└── ui/                     # React composition layer",
-    "    ├── chrome.tsx          # Shell, header, footer",
-    "    ├── content.tsx         # ContentEditable + plugin orchestration",
-    "    └── panels.tsx          # Action bar + output panels",
+    "├── editor.tsx                  # Composition root",
+    "├── core/                       # Foundation layer",
+    "│   ├── actions.ts              # Editor commands (copy, reset, load)",
+    "│   ├── composition.ts          # Feature/chrome defaults + slot helpers",
+    "│   ├── config.ts               # Lexical base nodes + initial config",
+    "│   ├── constants.ts            # Shared constants",
+    "│   ├── editor-commands-context.ts # Per-editor slash command & runner context",
+    "│   ├── features.tsx            # Core EditorFeature registry + extraFeatures helpers",
+    "│   ├── theme.ts                # Lexical EditorThemeClasses (Tailwind)",
+    "│   ├── tokens.css              # --editor-* design tokens + density presets",
+    "│   ├── types.ts                # Shared TypeScript types",
+    "│   ├── url.ts                  # Shared URL & media sanitization helpers",
+    "│   ├── utils.ts                # HTML/JSON/Markdown serialization helpers",
+    "│   └── nodes/                  # Custom Lexical node definitions",
+    "│       ├── callout/            # CalloutNode + GitHub Alert transformer",
+    "│       ├── collapsible/        # CollapsibleContainer + Content + Title",
+    "│       ├── excalidraw/         # ExcalidrawNode (decorator)",
+    "│       ├── image/              # ImageNode + markdown transformer",
+    "│       ├── layout/             # LayoutContainer + LayoutItem",
+    "│       ├── math/               # MathNode (KaTeX) + markdown transformers",
+    "│       ├── weblink/            # WeblinkNode + cards + metadata adapters + transformer",
+    "│       └── youtube/            # YouTubeNode + markdown transformer",
+    "├── plugins/                    # Behavior layer",
+    "│   ├── block-type-toolbar/     # Block type dropdown + undo/redo/alignment",
+    "│   ├── callout/                # Callout commands + Enter-to-exit",
+    "│   ├── code-highlight/         # Fine-grained Shiki core + chrome + line numbers",
+    "│   ├── collapsible/            # Collapsible block transforms + keyboard nav",
+    "│   ├── core/                   # Essential plugins (editable sync, state, focus, hr, seed)",
+    "│   ├── draggable-block/        # Drag handle + drop stabilizer",
+    "│   ├── excalidraw/             # Lazy Excalidraw preview + full-screen dialog + paste",
+    "│   ├── export-markdown/        # Download current document as .md",
+    "│   ├── floating-toolbar/       # Floating format toolbar + overflow menu",
+    "│   ├── full-toolbar/           # Full top toolbar with inline formatting and pickers",
+    "│   ├── image/                  # Image insert/paste/drop + resize",
+    "│   ├── layout/                 # Column layout commands + structural transforms",
+    "│   ├── link-behavior/          # Auto-link + smart paste + hover chip + edit card",
+    "│   ├── markdown/               # Built-in Markdown transformers (tables, HR, weblink)",
+    "│   ├── math/                   # KaTeX math editing and commands",
+    "│   ├── slash-command/          # Slash menu + filtering + per-editor execution",
+    "│   ├── table-behavior/         # Table context menu + row/column ops",
+    "│   ├── toc/                    # Document outline rail + hover popover + EditorWithToc",
+    "│   └── youtube/                # YouTube embed commands + URL dialog",
+    "└── ui/                         # React composition layer",
+    "    ├── chrome.tsx              # Shell, header, footer, action bar, outputs",
+    "    ├── color-swatches.tsx      # Text/background color picker popover",
+    "    ├── content.tsx             # ContentEditable + plugin orchestration",
+    "    └── toolbar-tooltip.tsx     # Shared toolbar button tooltip wrapper",
   ]}
 />
 
@@ -78,14 +88,14 @@ When you are editing the core, start in the layer that owns the concern instead 
 | --- | --- | --- |
 | Change a public prop or extension point | `editor.tsx` and `core/types.ts` | Public contracts live where the ready-made editor and composition API meet. |
 | Add or adjust built-in behavior | `plugins/<feature>/` | Feature behavior belongs with its Lexical commands, transforms, and feature-local UI. |
-| Register a whole capability (nodes + plugin + transformers + slash ids) | `core/features.tsx` (or the `extraFeatures` prop) | The EditorFeature registry is the single source of truth: toggling a flag drives its nodes, plugin, transformers, and slash commands together. |
+| Register a whole capability (nodes + plugin + transformers + slash commands) | `plugins/<feature>/feature.ts` via `extraFeatures` (or `core/features.tsx` for core flags) | Feature descriptors bundle nodes, plugin, transformers, and slash commands together without scattered wiring. |
 | Change toolbars, panels, or shell UI | `ui/` | The React composition layer owns the visual surfaces around the editor. |
 | Add a new node or serialization helper | `core/nodes/<feature>/` | Node code stays feature-local and should align with its owning plugin when a feature spans both layers. |
 | Update onboarding or examples | `src/pages/docs/`, `README.md`, and `CONTRIBUTING.md` | Repo context should stay consistent across the app docs and GitHub landing page. |
 
 ## Data Flow
 
-The `Editor` component in `editor.tsx` is the composition root. It creates the `LexicalComposer` and manages a snapshot state (`EditorSnapshot`) containing the current HTML, Markdown, and plain text output.
+The `Editor` component in `editor.tsx` is the composition root. It creates the `LexicalComposer` and manages a snapshot state (`EditorSnapshot`) containing the current HTML, JSON, Markdown, and plain text output.
 
 Changes flow like this: user edits content → Lexical fires an update → the `EditorStatePlugin` serializes the new state → `editor.tsx` receives the snapshot via callback → the output panels re-render.
 

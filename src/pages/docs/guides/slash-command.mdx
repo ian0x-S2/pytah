@@ -23,17 +23,19 @@ import slashCommandUtilsSource from "@/components/editor/plugins/slash-command/u
 <FileTree
   items={[
     "src/components/editor/plugins/slash-command/",
-    "  types.ts       ← SlashCommand shape + SlashCommandId union",
-    "  commands.ts    ← SLASH_COMMANDS registry + SLASH_COMMAND_PATTERN",
-    "  utils.ts       ← filter, navigation, query-match helpers",
-    "  executors.ts   ← maps each SlashCommandId → Lexical mutation",
-    "  plugin.tsx     ← SlashCommandPlugin (menu UI + keyboard wiring)",
+    "  types.ts       ← SlashCommand, FeatureSlashCommand, CoreSlashCommandId, SlashCommandId",
+    "  commands.ts    ← CORE_SLASH_COMMANDS registry + SLASH_COMMAND_PATTERN",
+    "  utils.ts       ← filter, navigation, query-match, non-destructive toolbar insert helpers",
+    "  executors.ts   ← CORE_SLASH_COMMAND_EXECUTORS + getCoreSlashRunner",
+    "  state.ts       ← open/close/highlight reducer",
+    "  menu.tsx       ← SlashCommandMenu popover list",
+    "  plugin.tsx     ← SlashCommandPlugin (keyboard wiring + per-editor execution)",
   ]}
 />
 
 ## types.ts
 
-The `SlashCommandId` union is the single source of truth for every supported command. The docs below render the actual source files, so the page stays aligned with the implementation.
+`CoreSlashCommandId` enumerates the core block types, while `SlashCommandId` stays open so `extraFeatures` descriptors can register arbitrary custom command IDs without editing internals.
 
 <CodeBlock
   label="src/components/editor/plugins/slash-command/types.ts"
@@ -44,7 +46,7 @@ The `SlashCommandId` union is the single source of truth for every supported com
 
 ## commands.ts
 
-`SLASH_COMMANDS` is the ordered list rendered in the menu. Each entry's `keywords` array drives fuzzy filtering.
+`CORE_SLASH_COMMANDS` is the ordered core list rendered in the menu. Optional features append their own `FeatureSlashCommand` entries per editor via `EditorCommandsContext`.
 
 <CodeBlock
   label="src/components/editor/plugins/slash-command/commands.ts"
@@ -55,7 +57,7 @@ The `SlashCommandId` union is the single source of truth for every supported com
 
 ## utils.ts
 
-Pure helper functions used by the plugin: filtering by query, navigating up/down, and extracting the slash query from the text immediately before the cursor.
+Pure helper functions used by the plugin: filtering by query, navigating up/down, extracting the slash query before the caret, and running non-destructive toolbar inserts.
 
 <CodeBlock
   label="src/components/editor/plugins/slash-command/utils.ts"
@@ -66,7 +68,7 @@ Pure helper functions used by the plugin: filtering by query, navigating up/down
 
 ## executors.ts
 
-Maps every `SlashCommandId` to a function that mutates the Lexical tree. All functions receive the _current top-level element_ that contains the cursor, and replace or transform it in-place.
+Maps every `CoreSlashCommandId` to a Lexical mutation and resolves core runners via `getCoreSlashRunner`. Feature-owned commands carry their own `run` handler inside `ExtraEditorFeature.slashCommands` and flow through per-editor `EditorCommandsContext`.
 
 <CodeBlock
   label="src/components/editor/plugins/slash-command/executors.ts"
@@ -77,61 +79,40 @@ Maps every `SlashCommandId` to a function that mutates the Lexical tree. All fun
 
 ## Adding a New Command
 
-<Callout title="Consumers should use extraFeatures">
-  To add a command together with its node and plugin without editing internals,
-  contribute one `extraFeatures` descriptor and list the command id in its
-  `slashCommandIds`. Editing the three slash-command files below is only for
-  contributing a *built-in* command shipped in the default registry.
+<Callout title="Use extraFeatures for feature and consumer commands">
+  To add a command together with its node, plugin, and markdown transformers
+  without editing slash-command internals, pass an `ExtraEditorFeature`
+  descriptor via `extraFeatures` and define `slashCommands: [{ command, run }]`.
 </Callout>
 
-The flow is still the same: extend the ID union, add a command entry, and register the executor. The source blocks above are the canonical reference for the exact shapes currently in use.
+```tsx
+import { SparklesIcon } from "lucide-react";
 
-### 1. Extend the type union
-
-```ts
-// types.ts -- add your id to SlashCommandId
-export type SlashCommandId =
-  | "paragraph"
-  | "h1"
-  | /* ... */
-  | "my-command";
-```
-
-### 2. Add the menu entry
-
-```ts
-// commands.ts
-import { MyIcon } from "lucide-react";
-
-export const SLASH_COMMANDS: SlashCommand[] = [
-  // ...existing entries...
-  {
-    description: "My custom block",
-    icon: MyIcon,
-    id: "my-command",
-    keywords: ["custom", "my"],
-    label: "My Block",
-  },
-];
-```
-
-### 3. Add the executor
-
-```ts
-// executors.ts
-export const SLASH_COMMAND_EXECUTORS: Record<SlashCommandId, ...> = {
-  // ...existing entries...
-  "my-command": (element) => {
-    const myNode = $createMyNode();
-    element.replace(myNode);
-    myNode.selectEnd();
-  },
+const myFeature: ExtraEditorFeature = {
+  id: "my-block",
+  nodes: [MyBlockNode],
+  plugin: MyBlockPlugin,
+  slashCommands: [
+    {
+      command: {
+        description: "Insert my custom block",
+        icon: SparklesIcon,
+        id: "my-block",
+        keywords: ["custom", "my"],
+        label: "My Block",
+      },
+      run: (editor, targetNodeKey) => {
+        editor.dispatchCommand(INSERT_MY_BLOCK_COMMAND, { targetNodeKey });
+      },
+    },
+  ],
 };
 ```
 
-<Callout title="image and youtube are stubs">
-  Both `image` and `youtube` map to `applyParagraphCommand` in the executors.
-  The actual insertion is handled by a prompt dialog in the plugin's
-  `handleExecute` function. The executor just normalizes the cursor position
-  before the dialog opens.
+<Callout title="Dialog-backed insertion flows" variant="info">
+  Commands that need user input (such as `image`, `youtube`, and `columns`)
+  dispatch an open-dialog command from their `run` callback with the optional
+  `targetNodeKey`. The feature plugin owns its own dialog state and only mutates
+  the document once the user confirms — cancelling leaves the document
+  untouched.
 </Callout>

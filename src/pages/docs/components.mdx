@@ -9,7 +9,7 @@ order: 70
 
 ## Overview
 
-The editor depends on **9 ShadCN UI primitives** from `src/components/ui/`. These are standard shadcn/ui components using the `base-nova` style (Base UI headless primitives instead of Radix).
+The editor depends on **14 ShadCN UI primitives** from `src/components/ui/`. These are standard shadcn/ui components using the `base-nova` style (Base UI headless primitives instead of Radix).
 
 All components follow the same patterns: `data-slot` attributes for CSS targeting, `cn()` for class merging, ShadCN design tokens for all colors, and React 19 ref-as-prop (no `forwardRef`).
 
@@ -17,15 +17,20 @@ All components follow the same patterns: `data-slot` attributes for CSS targetin
 
 | Component | Base Primitive | Used By |
 | --- | --- | --- |
-| `Button` | `@base-ui/react/button` | Toolbar, action bar, dialogs, table menu |
-| `Popover` | `@base-ui/react/popover` | Block type dropdown, table actions |
-| `Toggle` | `@base-ui/react/toggle` | Floating format toolbar (bold, italic, etc.) |
-| `Input` | `@base-ui/react/input` | Link editor, slash command dialogs |
-| `Separator` | `@base-ui/react/separator` | Toolbar section dividers, table menu |
-| `Dialog` | `@base-ui/react/dialog` | Image/YouTube insert dialogs |
+| `Button` | `@base-ui/react/button` | Toolbars, action bar, dialogs, table menu, link surfaces |
 | `Command` | `cmdk` | Slash command menu |
-| `Textarea` | Native | Output panels (HTML/Markdown preview) |
+| `Dialog` | `@base-ui/react/dialog` | Image, YouTube, and layout preset dialogs |
+| `DropdownMenu` | `@base-ui/react/menu` | Block type dropdown, alignment, overflow menu, table actions, weblink menu |
+| `HoverCard` | `@base-ui/react/preview-card` | Link hover preview chip |
+| `Input` | `@base-ui/react/input` | Link editor, image and YouTube insert dialogs |
 | `InputGroup` | Composite | Link editor input with action buttons |
+| `Popover` | `@base-ui/react/popover` | Floating link edit card, link paste menu, math editor, color swatches, insert popover |
+| `ScrollArea` | `@base-ui/react/scroll-area` | Slash menu, block type dropdown, insert popover, math preview, layout dialog |
+| `Select` | `@base-ui/react/select` | Code block language and theme pickers |
+| `Separator` | `@base-ui/react/separator` | Toolbar section dividers, table menu |
+| `Textarea` | Native | Output panels (HTML/Markdown preview) |
+| `Toggle` | `@base-ui/react/toggle` | Floating and full format toolbars (bold, italic, underline, etc.) |
+| `Tooltip` | `@base-ui/react/tooltip` | Icon-only toolbar button labels |
 
 ## Variant System
 

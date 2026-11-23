@@ -74,20 +74,50 @@ Some slots receive contextual helpers so replacements can still use the built-in
 ### Contribute a Whole Feature
 
 ```tsx
+import { calloutFeature } from "@/components/editor/plugins/callout/feature";
+
+<Editor extraFeatures={[calloutFeature]} />;
+```
+
+Or define a custom `ExtraEditorFeature` descriptor with its own `slashCommands`:
+
+```tsx
 <Editor
   extraFeatures={[
     {
       id: "callout",
       plugin: CalloutPlugin,
       nodes: [CalloutNode],
-      transformers: [CALLOUT_TRANSFORMER],
-      slashCommandIds: ["callout"],
+      transformers: [CALLOUT_MARKDOWN_TRANSFORMER],
+      slashCommands: [
+        {
+          command: {
+            description: "Highlighted note box",
+            icon: InfoIcon,
+            id: "callout",
+            keywords: ["note", "callout"],
+            label: "Callout",
+          },
+          run: (editor) => {
+            editor.dispatchCommand(INSERT_CALLOUT_COMMAND, { type: "note" });
+          },
+        },
+      ],
     },
   ]}
 />
 ```
 
-Each descriptor bundles the plugin, nodes, markdown transformers, and slash-command ids for one capability, wired together by the composition surface.
+Each descriptor bundles the plugin, nodes, markdown transformers, and slash-command contributions (`{ command, run }` pairs) for one capability, wired together per-editor by the composition surface.
+
+### Error Handling & Weblink Favicon Control
+
+```tsx
+<Editor
+  onError={(error) => reportEditorError(error)}
+  weblinkFaviconResolver={false} // opt out of external favicon requests (or pass `(host) => string`)
+/>
+```
 
 ### Multiple Editors
 

@@ -79,26 +79,26 @@ Every editor state change serializes the document into the `EditorSnapshot` deli
 />
 ```
 
-<Callout title="Initial-only seed props" variant="note">
-  `initialMarkdown` and `initialHtml` seed the editor once per mount. They are
-  captured when the editor mounts and are not re-applied when their identity
-  changes later — re-seeding in place would replace live state and reset the
-  caret. To load different content, remount with a changed `key` or dispatch a
-  load yourself.
+<Callout title="Initial-only seed props" variant="info">
+  `initialJson`, `initialMarkdown`, and `initialHtml` seed the editor once per
+  mount. They are captured when the editor mounts and are not re-applied when
+  their identity changes later — re-seeding in place would replace live state
+  and reset the caret. To load different content, remount with a changed `key`
+  or dispatch a load yourself.
 </Callout>
 
 ## Contributing a Feature
 
-Use `extraFeatures` to add a whole capability as a single descriptor. Each `ExtraEditorFeature` bundles its optional plugin, owned Lexical nodes, markdown transformers, and slash-command ids — the composition surface wires them together automatically, keeping the mounted stack in sync with the visible command list.
+Use `extraFeatures` to add a whole capability as a single descriptor. Each `ExtraEditorFeature` bundles its optional plugin, owned Lexical nodes, markdown transformers, and `slashCommands` contributions (`{ command, run }` pairs) — the composition surface wires them together automatically per editor instance via `EditorCommandsContext`.
 
 ```tsx
 import { imageFeature } from "@/components/editor/plugins/image/feature";
-import { myCalloutFeature } from "./my-callout/feature";
+import { calloutFeature } from "@/components/editor/plugins/callout/feature";
 
-<Editor extraFeatures={[imageFeature, myCalloutFeature]} />;
+<Editor extraFeatures={[imageFeature, calloutFeature]} />;
 ```
 
-Each descriptor bundles its optional plugin, owned Lexical nodes, markdown transformers, and `slashCommands` contributions (`{ command, run }` pairs). Feature descriptors shipped by the registry live beside their feature (`plugins/<feature>/feature.ts`).
+Feature descriptors shipped by the registry live beside their feature (`plugins/<feature>/feature.ts`, `plugins/toc/descriptor.ts`, `plugins/core/seed-content-feature.ts`).
 
 This is the intended alternative to patching `ui/content.tsx` or the built-in `core/features.tsx` registry from outside.
 

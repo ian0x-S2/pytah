@@ -132,7 +132,7 @@ bun run registry:build # regenerate shadcn registry files under public/r/
 bun run registry:smoke # rebuild the registry and run the install smoke test
 bun run deps:check     # check dependency drift
 bun run deps:validate  # validate dependency updates end-to-end
-bun run lint           # run ESLint
+bun run lint           # run Ultracite checks (Oxlint + Oxfmt)
 bun run test           # run editor tests (bun test)
 ```
 

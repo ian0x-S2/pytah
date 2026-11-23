@@ -26,11 +26,14 @@ import imageUtilsSource from "@/components/editor/plugins/image/utils.ts?raw";
   items={[
     "src/components/editor/core/nodes/image/",
     "  node.tsx          ← DecoratorNode + serialization",
+    "  transformer.ts    ← IMAGE_MARKDOWN_TRANSFORMER",
     "src/components/editor/plugins/image/",
-    "  commands.ts       ← INSERT_IMAGE_COMMAND",
-    "  utils.ts          ← file helpers",
-    "  plugin.tsx        ← ImagePlugin (insert / paste / drop)",
-    "  component.tsx     ← ImageComponent (click / select / delete / align)",
+    "  commands.ts       ← INSERT_IMAGE_COMMAND + OPEN_IMAGE_DIALOG_COMMAND",
+    "  feature.ts        ← imageFeature descriptor",
+    "  insert-dialog.tsx ← URL + validated file upload dialog",
+    "  utils.ts          ← MIME/size validation & file helpers",
+    "  plugin.tsx        ← ImagePlugin (insert / paste / drop / dialog)",
+    "  component.tsx     ← ImageComponent (click / select / delete / align / error fallback)",
     "  resizer.tsx       ← ImageResizer (drag-to-resize overlay)",
     "  resize-geometry.ts ← pure resize math (directions, clamps)",
   ]}
@@ -110,23 +113,13 @@ The pure resize math shared by every consumer of `ImageResizer`: direction types
 
 ## Registration
 
-The image capability ships in the default editor behind the `images` feature flag. To add it (or any whole capability) to a custom composition, contribute a descriptor via `extraFeatures` — no edits to `core/config.ts` or `ui/content.tsx`:
+Images ship as the optional `@pytah/editor-image` registry item. Install it and compose `imageFeature` via `extraFeatures` — no edits to `core/config.ts` or `ui/content.tsx`:
 
 ```tsx
-<Editor
-  extraFeatures={[
-    {
-      id: "images",
-      plugin: ImagePlugin,
-      nodes: [ImageNode],
-      transformers: [IMAGE_MARKDOWN_TRANSFORMER],
-      slashCommandIds: ["image"],
-    },
-  ]}
-/>
-```
+import { imageFeature } from "@/components/editor/plugins/image/feature";
 
-Built-in capabilities are registered the same way in `core/features.tsx`, so a flag toggles the node, plugin, transformers, and slash command together.
+<Editor extraFeatures={[imageFeature]} />;
+```
 
 ### Inserting an image programmatically
 

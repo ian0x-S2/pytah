@@ -21,8 +21,12 @@ import tableBehaviorPluginSource from "@/components/editor/plugins/table-behavio
 <FileTree
   items={[
     "src/components/editor/plugins/table-behavior/",
-    "  actions.ts   ← insert/delete row & column helpers",
-    "  plugin.tsx   ← TableBehaviorPlugin, TableCellActionMenuContainer, TableActionMenu",
+    "  actions.ts   ← insert/delete row, column & table helpers",
+    "  feature.ts   ← tableFeature descriptor",
+    "  menu.tsx     ← TableActionMenu dropdown items",
+    "  plugin.tsx   ← TableBehaviorPlugin + TableCellActionMenuContainer",
+    "  selection.ts ← cell selection, counts & scroll-visibility math",
+    "  types.ts     ← ButtonPosition, SelectionCounts, TableMenuContext",
   ]}
 />
 
@@ -56,19 +60,12 @@ Thin wrappers around the `@lexical/table` mutations. These are kept separate so 
 
 ### Registration
 
-Table behavior ships behind the `tables` feature flag. To add it to a custom composition, contribute a descriptor via `extraFeatures`:
+Table cell actions ship as the optional `@pytah/editor-tables` registry item. Install it and pass `tableFeature` via `extraFeatures`:
 
 ```tsx
-<Editor
-  extraFeatures={[
-    {
-      id: "tables",
-      plugin: TableBehaviorPlugin,
-      transformers: [TABLE_MARKDOWN_TRANSFORMER],
-      slashCommandIds: ["table"],
-    },
-  ]}
-/>
+import { tableFeature } from "@/components/editor/plugins/table-behavior/feature";
+
+<Editor extraFeatures={[tableFeature]} />;
 ```
 
 <Callout title="Anchor element" variant="tip">

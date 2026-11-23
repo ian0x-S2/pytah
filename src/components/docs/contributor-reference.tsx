@@ -64,15 +64,17 @@ const WHERE_TO_CHANGE_ROWS: ThreeColumnRow[] = [
   },
   {
     first:
-      "Register a whole capability (nodes + plugin + transformers + slash ids)",
+      "Register a whole capability (nodes + plugin + transformers + slash commands)",
     key: "feature-registry",
     second: (
       <>
-        <code>core/features.tsx</code> (or the <code>extraFeatures</code> prop)
+        <code>plugins/&lt;feature&gt;/feature.ts</code> via{" "}
+        <code>extraFeatures</code> (or <code>core/features.tsx</code> for core
+        flags)
       </>
     ),
     third:
-      "The EditorFeature registry is the single source of truth: toggling a flag drives its nodes, plugin, transformers, and slash commands together.",
+      "Feature descriptors bundle nodes, plugin, transformers, and slash commands together so consumers compose capabilities without patching internals.",
   },
   {
     first: "Change toolbars, panels, or shell UI",
@@ -182,6 +184,7 @@ export function ContributorChecklistTable() {
 }
 
 export const STANDARD_VALIDATION_COMMAND = `bun run check
+bun run test
 bun run build`;
 
 export const REGISTRY_WORKFLOW_COMMAND = `bun run registry:build

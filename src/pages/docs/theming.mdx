@@ -39,7 +39,7 @@ Replace the `:root` and `.dark` blocks in your CSS with the new values. Keep the
   /* ... all standard ShadCN tokens ... */
 
   /* Keep these editor-specific tokens */
-  --highlight: oklch(0.905 0.145 98);
+  --highlight: oklch(0.97 0.05 90);
   --highlight-foreground: oklch(0.145 0 0);
   --radius: 0.625rem;
 }
@@ -51,7 +51,7 @@ Replace the `:root` and `.dark` blocks in your CSS with the new values. Keep the
   /* ... all standard ShadCN tokens ... */
 
   /* Keep these editor-specific tokens */
-  --highlight: oklch(0.65 0.13 85);
+  --highlight: oklch(0.35 0.06 85);
   --highlight-foreground: oklch(0.985 0 0);
 }
 ```
@@ -127,7 +127,7 @@ Deliberate exceptions (consistent patterns, not errors): heading top margins use
 
 ## Dark Mode
 
-Dark mode is controlled by a `.dark` class on the `<html>` element. The included `ThemeProvider` manages this automatically with three modes: light, dark, and system (follows OS preference).
+Dark mode is controlled by a `.dark` class on the `<html>` element. The editor reads `useResolvedTheme()` (`src/components/theme-context.ts`), which observes `.dark` on `document.documentElement` automatically when rendered without Pytah's `ThemeProvider` — so it works seamlessly with `next-themes` or custom theme providers. Wrapping your app with the included `ThemeProvider` is optional and adds three-mode state (`light`, `dark`, `system`) plus the code-block theme switcher.
 
 Tailwind's `dark:` variant is configured as `@custom-variant dark (&:is(.dark *))`, matching any element inside a `.dark` ancestor.
 

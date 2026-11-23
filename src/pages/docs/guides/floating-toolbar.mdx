@@ -26,11 +26,12 @@ import floatingToolbarTypesSource from "@/components/editor/plugins/floating-too
   items={[
     "src/components/editor/plugins/floating-toolbar/",
     "  types.ts          ← FloatingToolbarState + sub-types",
-    "  constants.ts      ← default/empty state values + shared align actions",
+    "  constants.ts      ← default/empty state + shared format & align actions",
+    "  position.ts       ← viewport edge clamping (left, right, top, bottom)",
     "  selection.ts      ← read selection, compute position + formats",
-    "  actions.ts        ← format toggle, align, link submit/clear, color apply",
-    "  link-command.ts   ← OPEN_FLOATING_LINK_EDITOR_COMMAND",
-    "  overflow-menu.tsx ← ⋮ menu (Turn Into options, sub/sup, align, indent)",
+    "  actions.ts        ← format toggle, align, color apply (+ link action re-exports)",
+    "  link-command.ts   ← re-exports OPEN_FLOATING_LINK_EDITOR_COMMAND",
+    "  overflow-menu.tsx ← ⋮ menu (sub/sup, align, indent)",
     "  plugin.tsx        ← FloatingToolbarPlugin (portal + event wiring)",
   ]}
 />
@@ -55,7 +56,7 @@ import floatingToolbarTypesSource from "@/components/editor/plugins/floating-too
 
 ## link-command.ts
 
-A dedicated Lexical command that tells `FloatingLinkEditorPlugin` to open in edit mode. Kept in a separate file so the floating toolbar and link editor can import it without a circular dependency.
+Re-exports `OPEN_FLOATING_LINK_EDITOR_COMMAND` from `plugins/link-behavior/commands.ts` so the dependency arrow stays strictly one-way (`floating-toolbar` → `link-behavior`) with zero circular imports.
 
 <CodeBlock
   label="src/components/editor/plugins/floating-toolbar/link-command.ts"

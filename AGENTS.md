@@ -35,10 +35,10 @@ Vite + React + TypeScript app whose main product is a rich **Lexical** editor bu
 
 ### Feature registry
 
-- Built-in capabilities are `EditorFeature` descriptors in `core/features.tsx` (flag name, owned nodes, behavior plugin, markdown transformers, slash-command ids). This is the single source of truth for what the default editor ships.
-- `core/config.ts` and `ui/content.tsx` both derive from it. A toggled flag toggles nodes, plugin, transformers and slash commands **together**, never piecemeal.
-- **Add a built-in feature**: add an `EditorFeature` to `EDITOR_FEATURES`, a flag in `EditorFeatureFlags` and a default in `DEFAULT_EDITOR_FEATURES`. Never hardcode plugin mounts, node registrations, transformers or slash commands in scattered files.
-- **Add a consumer feature without touching internals**: `extraFeatures` prop with `ExtraEditorFeature` descriptors (id, plugin, nodes, transformers, slashCommandIds).
+- Core editor capabilities are `EditorFeature` descriptors in `core/features.tsx` (flag name, owned nodes, behavior plugin, markdown transformers). Optional content features (images, tables, callouts, drawings, math, layouts, collapsible, youtube, draggable blocks, TOC) live in their own feature folders and export `ExtraEditorFeature` descriptors (`id`, `plugin`, `nodes`, `transformers`, `slashCommands`).
+- `core/config.ts` and `ui/content.tsx` both derive from the resolved feature set. Toggling a flag or composing an `extraFeatures` descriptor wires nodes, plugin, transformers and slash commands **together**, never piecemeal.
+- **Add a core flag feature**: add an `EditorFeature` to `EDITOR_FEATURES`, a flag in `EditorFeatureFlags` and a default in `DEFAULT_EDITOR_FEATURES`. Never hardcode plugin mounts, node registrations, transformers or slash commands in scattered files.
+- **Add a content or consumer feature without touching internals**: pass `ExtraEditorFeature` descriptors via `extraFeatures` (`id`, `plugin`, `nodes`, `transformers`, `slashCommands` with `{ command, run }` pairs). Slash-command execution uses per-editor `EditorCommandsContext` (never module-global mutable registries).
 - Always-on plugins (history/list/code/link/horizontal-rule/editable/editor-state) and flag-only toggles (markdownShortcuts, tabIndentation) stay mounted in `ui/content.tsx`. Only features owning nodes, transformers or slash commands belong in the registry.
 
 ### Feature contract workflow (humans and agents)
@@ -50,10 +50,12 @@ Vite + React + TypeScript app whose main product is a rich **Lexical** editor bu
 ## Editor invariants
 
 - Copy/paste for HTML and Markdown must keep working; editable and read-only modes must both work.
-- Slash commands are a core UX surface: keep highlight, initial focus and scroll in sync. Ids come from `resolveSlashCommandIds` (enabled features only); no manual list sync.
+- All user-supplied link and media URLs route through `core/url.ts` (`sanitizeHrefUrl`, `sanitizeWebUrl`, `sanitizeMediaUrl`).
+- Light/dark mode resolves through `useResolvedTheme()` (`src/components/theme-context.ts`), observing `.dark` on `<html>` when `ThemeProvider` is absent so `<Editor />` works standalone.
+- Slash commands are a core UX surface: keep highlight, initial focus and scroll in sync. Commands and runners flow per-editor via `EditorCommandsContext`; no manual list sync or module-global runner maps.
 - Markdown transformers are feature-scoped and passed via the resolved `transformers` set. Never hardcode the full list in `core/utils.ts` or `ui/content.tsx`.
-- Snapshot serialization is gated by `features.snapshot` (html/markdown/text, default all on); disabled outputs are never computed and surface as `""`.
-- The mount seed (`initialMarkdown`/`initialHtml`) is captured **once per mount** and applied synchronously via the composer's `initialConfig.editorState` (tagged `pytah-seed`, suppressed from `onChange` when `emitInitialSnapshot: false`). Never re-seed on prop identity changes; consumers remount via `key`.
+- Snapshot serialization is gated by `features.snapshot` (`html`/`json`/`markdown`/`text`, default all on); disabled outputs are never computed and surface as `""`. In `minimal` mode without `onChange`, per-keystroke snapshot serialization is skipped automatically.
+- The mount seed (`initialJson`/`initialMarkdown`/`initialHtml`) is captured **once per mount** and applied synchronously via the composer's `initialConfig.editorState` (tagged `pytah-seed`, suppressed from `onChange` when `emitInitialSnapshot: false`). Never re-seed on prop identity changes; consumers remount via `key`.
 - Never read layout (`getBoundingClientRect`, `getElementByKey` for positioning) or call `scrollIntoView` synchronously after `editor.update` inside a Lexical command listener. The update is nested and the DOM commits only after the listener returns; do post-commit DOM work in the update's `onUpdate` callback.
 - After drag-and-drop, scroll only if the dropped block is outside the viewport.
 

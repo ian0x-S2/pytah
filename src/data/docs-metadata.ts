@@ -1,11 +1,13 @@
 import type { Transformer } from "@lexical/markdown";
 
+import { CALLOUT_MARKDOWN_TRANSFORMER } from "@/components/editor/core/nodes/callout/transformer";
 import { IMAGE_MARKDOWN_TRANSFORMER } from "@/components/editor/core/nodes/image/transformer";
 import {
   MATH_BLOCK_MARKDOWN_TRANSFORMER,
   MATH_INLINE_MARKDOWN_TRANSFORMER,
 } from "@/components/editor/core/nodes/math/transformers";
 import { YOUTUBE_MARKDOWN_TRANSFORMER } from "@/components/editor/core/nodes/youtube/transformer";
+import { calloutFeature } from "@/components/editor/plugins/callout/feature";
 import { collapsibleFeature } from "@/components/editor/plugins/collapsible/feature";
 import { seedContentFeature } from "@/components/editor/plugins/core/seed-content-feature";
 import { draggableBlocksFeature } from "@/components/editor/plugins/draggable-block/feature";
@@ -20,6 +22,7 @@ import { youtubeFeature } from "@/components/editor/plugins/youtube/feature";
 
 const EDITOR_MARKDOWN_TRANSFORMERS = [
   ...BUILTIN_MARKDOWN_TRANSFORMERS,
+  CALLOUT_MARKDOWN_TRANSFORMER,
   IMAGE_MARKDOWN_TRANSFORMER,
   MATH_INLINE_MARKDOWN_TRANSFORMER,
   MATH_BLOCK_MARKDOWN_TRANSFORMER,
@@ -36,6 +39,7 @@ export interface DocsFeatureRow {
 }
 
 const INSTALLED_FEATURES = [
+  calloutFeature,
   collapsibleFeature,
   seedContentFeature,
   draggableBlocksFeature,
@@ -68,6 +72,10 @@ export interface DocsTransformerRow {
 }
 
 const TRANSFORMER_LABELS: Record<string, { markdown: string; name: string }> = {
+  "!\\[((?:\\\\.|[^\\]\\\\])*)\\]\\(([^)\\s]+)\\)$": {
+    markdown: "![alt](url)",
+    name: "Image",
+  },
   "!\\[([^\\]]*)\\]\\(([^)\\s]+)\\)$": {
     markdown: "![alt](url)",
     name: "Image",
@@ -118,6 +126,13 @@ const describeTransformer = (transformer: Transformer): DocsTransformerRow => {
         name: "Inline Math",
       };
     }
+    if (transformer.trigger === "" && transformer.regExp.source === "(?!)") {
+      return {
+        kind: transformer.type,
+        markdown: "[title](url)",
+        name: "Weblink (inline export)",
+      };
+    }
     return {
       kind: transformer.type,
       markdown: transformer.regExp.source,
@@ -127,6 +142,13 @@ const describeTransformer = (transformer: Transformer): DocsTransformerRow => {
 
   if (transformer.type === "multiline-element") {
     const startSource = transformer.regExpStart.source;
+    if (startSource.includes("NOTE|TIP|INFO")) {
+      return {
+        kind: transformer.type,
+        markdown: "> [!NOTE]",
+        name: "Callout Alert",
+      };
+    }
     if (startSource.includes("$$")) {
       return {
         kind: transformer.type,
@@ -141,6 +163,14 @@ const describeTransformer = (transformer: Transformer): DocsTransformerRow => {
       return { kind: transformer.type, markdown: "| a | b |", name: "Table" };
     }
     return { kind: transformer.type, markdown: startSource, name: "Multiline" };
+  }
+
+  if (transformer.regExp.source === "(?!)") {
+    return {
+      kind: transformer.type,
+      markdown: "[title](url)",
+      name: "Weblink (block export)",
+    };
   }
 
   const label = TRANSFORMER_LABELS[transformer.regExp.source];

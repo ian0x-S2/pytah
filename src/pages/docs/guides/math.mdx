@@ -1,0 +1,87 @@
+---
+title: "Math Equations"
+description: "Extension guide for inline and block TeX equations: MathNode, KaTeX rendering, popover editor, and Markdown transformers."
+group: "extension-guides"
+icon: "Sigma"
+label: "Math Equations"
+order: 60
+---
+
+import mathNodeSource from "@/components/editor/core/nodes/math/node.tsx?raw";
+import mathTransformersSource from "@/components/editor/core/nodes/math/transformers.ts?raw";
+import mathFeatureSource from "@/components/editor/plugins/math/feature.ts?raw";
+import mathPluginSource from "@/components/editor/plugins/math/plugin.tsx?raw";
+
+<Callout title="Extension guide">
+  Math equations render TeX formulas inline (`$e = mc^2$`) or as display blocks
+  (`$$ ... $$`) synchronously with KaTeX and an accessible live-preview popover
+  editor.
+</Callout>
+
+## Files
+
+<FileTree
+  items={[
+    "src/components/editor/core/nodes/math/",
+    "  node.tsx          ← MathNode (inline & block DecoratorNode)",
+    "  transformers.ts   ← MATH_BLOCK_MARKDOWN_TRANSFORMER + MATH_INLINE_MARKDOWN_TRANSFORMER",
+    "src/components/editor/plugins/math/",
+    "  commands.ts       ← INSERT_MATH_COMMAND",
+    "  component.tsx     ← MathComponent (KaTeX JS+CSS, popover editor, inline↔block reparenting)",
+    "  feature.ts        ← mathFeature descriptor",
+    "  plugin.tsx        ← MathPlugin (command registration)",
+  ]}
+/>
+
+## Scoped KaTeX Stylesheet
+
+`MathComponent` imports `katex` and `katex/dist/katex.min.css` directly inside the optional `@pytah/editor-math` feature so equations render synchronously on frame 0 without requiring a global CSS import in projects that do not install math.
+
+## Markdown Syntax
+
+- **Inline equations**: `$e = mc^2$` (currency expressions like `$5 and $10` are ignored so prose prices do not accidentally convert into math).
+- **Block equations**: both single-line `$$x^2 + y^2 = z^2$$` and multiline fenced blocks:
+
+```markdown
+$$
+\int_{-\infty}^{\infty} e^{-x^2}\,dx = \sqrt{\pi}
+$$
+```
+
+## Registration
+
+Math support ships as the optional `@pytah/editor-math` registry item. Install it and pass `mathFeature` via `extraFeatures`:
+
+```tsx
+import { mathFeature } from "@/components/editor/plugins/math/feature";
+
+<Editor extraFeatures={[mathFeature]} />;
+```
+
+## Node Implementation
+
+<CodeBlock
+  label="src/components/editor/core/nodes/math/node.tsx"
+  language="tsx"
+>
+  {mathNodeSource}
+</CodeBlock>
+
+## Markdown Transformers
+
+<CodeBlock
+  label="src/components/editor/core/nodes/math/transformers.ts"
+  language="ts"
+>
+  {mathTransformersSource}
+</CodeBlock>
+
+## Plugin & Descriptor
+
+<CodeBlock label="src/components/editor/plugins/math/plugin.tsx" language="tsx">
+  {mathPluginSource}
+</CodeBlock>
+
+<CodeBlock label="src/components/editor/plugins/math/feature.ts" language="ts">
+  {mathFeatureSource}
+</CodeBlock>

@@ -35,7 +35,7 @@ Use `/demo` to exercise behavior directly, `/docs/overview` to re-ground yoursel
 | --- | --- | --- |
 | Change a public prop or extension point | `editor.tsx` and `core/types.ts` | Public contracts live where the ready-made editor and composition API meet. |
 | Add or adjust built-in behavior | `plugins/<feature>/` | Feature behavior belongs with its Lexical commands, transforms, and feature-local UI. |
-| Register a whole capability (nodes + plugin + transformers + slash ids) | `core/features.tsx` (or the `extraFeatures` prop) | The EditorFeature registry is the single source of truth: toggling a flag drives its nodes, plugin, transformers, and slash commands together. |
+| Register a whole capability (nodes + plugin + transformers + slash commands) | `plugins/<feature>/feature.ts` via `extraFeatures` (or `core/features.tsx` for core flags) | Feature descriptors bundle nodes, plugin, transformers, and slash commands together so consumers compose capabilities without patching internals. |
 | Change toolbars, panels, or shell UI | `ui/` | The React composition layer owns the visual surfaces around the editor. |
 | Add a new node or serialization helper | `core/nodes/<feature>/` | Node code stays feature-local and should align with its owning plugin when a feature spans both layers. |
 | Update onboarding or examples | `src/pages/docs/`, `README.md`, and `CONTRIBUTING.md` | Repo context should stay consistent across the app docs and GitHub landing page. |

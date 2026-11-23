@@ -36,8 +36,8 @@ The `Composition` page explains where to mount plugins from a consumer perspecti
 | **floating-toolbar** | Appears on text selection with format toggles (bold, italic, underline, strikethrough, code, highlight, link) | Toggle, Separator |
 | **slash-command** | Slash menu (type /) for inserting blocks, images, tables, YouTube embeds, column layouts, math equations, and collapsible sections | Command, Dialog, Button, Input, Textarea |
 | **toc** | Table of contents / outline indicator in the editor margin with mini-dash indicators and hover popover for heading navigation | Popover, Button |
-| **link-behavior** | Auto-link detection, clickable links, and a floating link editor for viewing/editing URLs | Button, Input |
-| **table-behavior** | Context menu on table cells with insert/delete row/column/table actions | Button, Popover, Separator |
+| **link-behavior** | Auto-link detection, smart URL paste, paste format menu, and Google Docs-style floating link preview/editor | Button, HoverCard, Input, Popover |
+| **table-behavior** | Context menu on table cells with insert/delete row/column/table actions | Button, DropdownMenu, Separator |
 | **draggable-block** | Drag handle that appears on hover to reorder blocks via drag-and-drop | None (DOM-level handles) |
 | **image** | Image rendering with selection ring, alignment support, and resize handles | None (custom DOM) |
 | **excalidraw** | Drawing blocks with a lazy-loaded canvas editor, static svg preview, selection ring, alignment, edge-handle resizing, and HTML round-trip via an embedded svg | None (custom DOM) |
@@ -61,15 +61,15 @@ The `Composition` page explains where to mount plugins from a consumer perspecti
 | **youtube** | YouTube embed insert command and URL parsing |
 | **markdown** | Custom Markdown transformers for images, YouTube embeds, math, tables, and horizontal rules (`---`) |
 
-## Feature Registry (derived from code)
+## Optional Feature Catalog (derived from code)
 
-The built-in feature flags are derived at build time from `core/features.tsx` — toggling a flag toggles that feature's nodes, plugin, transformers, and slash commands together. This table updates automatically when the registry changes; it is never hand-maintained.
+Optional content features ship as standalone registry items exporting `ExtraEditorFeature` descriptors composed via `extraFeatures`. This table derives directly from the installed descriptors in `src/data/docs-metadata.ts` and updates automatically.
 
 <FeatureTable />
 
 ## Markdown Transformers (derived from code)
 
-Every markdown transformer (built-in and feature-owned) ships through the resolved transformer set and is listed below automatically from `plugins/markdown/transformers.ts`. Adding a transformer to that file updates this table without editing docs.
+Every markdown transformer (built-in and feature-owned) ships through the resolved transformer set and is listed below automatically from `src/data/docs-metadata.ts`.
 
 <TransformersTable />
 
@@ -206,12 +206,17 @@ For consumers, the supported way to add a slash command (together with its nodes
 
 ### Consumer path — `extraFeatures`
 
-A feature descriptor bundles the ID, optional behavior plugin, Lexical nodes, markdown transformers, and the slash-command ids it contributes. The menu picks up any id you add.
+A feature descriptor bundles the ID, optional behavior plugin, Lexical nodes, markdown transformers, and `slashCommands` contributions (`{ command, run }` pairs). The menu and block-type dropdown pick up any entry you add per editor instance via `EditorCommandsContext`.
 
 ```tsx
+import { AlertCircleIcon } from "lucide-react";
+
 import { Editor } from "@/components/editor/editor";
 import { MyCalloutNode } from "./my-callout-node";
-import { MyCalloutPlugin } from "./my-callout-plugin";
+import {
+  INSERT_MY_CALLOUT_COMMAND,
+  MyCalloutPlugin,
+} from "./my-callout-plugin";
 
 export function MyEditor() {
   return (
@@ -221,8 +226,23 @@ export function MyEditor() {
           id: "callout",
           plugin: MyCalloutPlugin,
           nodes: [MyCalloutNode],
-          transformers: [CALL_OUT_TRANSFORMER],
-          slashCommandIds: ["callout"],
+          transformers: [MY_CALLOUT_TRANSFORMER],
+          slashCommands: [
+            {
+              command: {
+                description: "Highlighted callout block",
+                icon: AlertCircleIcon,
+                id: "callout",
+                keywords: ["callout", "note", "info"],
+                label: "Callout",
+              },
+              run: (editor, targetNodeKey) => {
+                editor.dispatchCommand(INSERT_MY_CALLOUT_COMMAND, {
+                  targetNodeKey,
+                });
+              },
+            },
+          ],
         },
       ]}
     />
@@ -230,88 +250,14 @@ export function MyEditor() {
 }
 ```
 
-### Built-in authoring path — the three-file contract
+### Core authoring path — built-in commands
 
-When contributing a _built-in_ command (shipped in the default editor), add its id to `EDITOR_FEATURES` in `core/features.tsx` instead of reaching into the slash-command internals. The command menu is driven by the feature registry: the plugin, nodes, and transformers for the same capability live in its own feature folder.
+Only core block types (paragraphs, headings, lists, quotes, code blocks, horizontal rules, and tables) live inside `plugins/slash-command/`:
 
-The slash-command folder still holds three files that describe each command. Editing them is only required when the command itself needs bespoke behavior that the feature descriptor can't express.
+| File | What it defines |
+| --- | --- |
+| `types.ts` | `CoreSlashCommandId`, open `SlashCommandId`, `SlashCommand`, and `FeatureSlashCommand` |
+| `commands.ts` | `CORE_SLASH_COMMANDS` registry and `SLASH_COMMAND_PATTERN` |
+| `executors.ts` | `CORE_SLASH_COMMAND_EXECUTORS` and `getCoreSlashRunner` for core mutations |
 
-| File           | What you add                                               |
-| -------------- | ---------------------------------------------------------- |
-| `types.ts`     | A new literal to the SlashCommandId union                  |
-| `commands.ts`  | A SlashCommand object (label, description, icon, keywords) |
-| `executors.ts` | A Lexical mutation function keyed by your new ID           |
-
-### Step 1 — Register the command ID
-
-Open `plugins/slash-command/types.ts` and add your new identifier to the `SlashCommandId` union. TypeScript will then enforce that the other two files are updated to match.
-
-```ts
-// src/components/editor/plugins/slash-command/types.ts
-export type SlashCommandId =
-  | "paragraph"
-  | "h1"
-  | "h2"
-  | "h3"
-  | "quote"
-  | "code"
-  | "bullet"
-  | "number"
-  | "check"
-  | "image"
-  | "youtube"
-  | "collapsible"
-  | "columns"
-  | "table"
-  | "hr"
-  | "callout"; // ← add your ID here
-```
-
-### Step 2 — Add the command definition
-
-Open `plugins/slash-command/commands.ts` and push a new entry into the `SLASH_COMMANDS` array. Pick a `lucide-react` icon, write a short `description`, and add `keywords` so the fuzzy filter can find your command even when the user doesn't type the exact label.
-
-```ts
-// src/components/editor/plugins/slash-command/commands.ts
-import { AlertCircleIcon } from "lucide-react"; // ← add icon import
-
-export const SLASH_COMMANDS: SlashCommand[] = [
-  // ...existing commands
-  {
-    description: "Highlighted callout block",
-    icon: AlertCircleIcon,
-    id: "callout",
-    keywords: ["callout", "note", "info", "alert", "warning"],
-    label: "Callout",
-  },
-];
-```
-
-### Step 3 — Add the executor
-
-Open `plugins/slash-command/executors.ts` and add an entry to the `SLASH_COMMAND_EXECUTORS` map. The function receives the top-level `ElementNode` where the slash text lives and should replace or transform it into your target block.
-
-```ts
-// src/components/editor/plugins/slash-command/executors.ts
-import { $createParagraphNode } from "lexical"; // already imported
-
-export const SLASH_COMMAND_EXECUTORS: Record<
-  SlashCommandId,
-  (element: ElementNode) => void
-> = {
-  // ...existing entries
-  callout: (element) => {
-    const paragraph = $createParagraphNode();
-    element.replace(paragraph);
-    paragraph.selectEnd();
-  },
-};
-```
-
-<Callout title="Commands that need user input" variant="info">
-  If your command requires extra data before inserting (a URL, a file, a preset
-  choice), intercept it in `plugin.tsx` before the executor runs: capture the
-  `targetNodeKey` from the current selection, store it in state, and open a
-  dialog. The existing `image`, `youtube`, and `columns` commands follow this
-  pattern and are good reference implementations.
-</Callout>
+Optional content blocks (images, callouts, math, YouTube, layouts, collapsible, Excalidraw) should never edit these files — they export their own `ExtraEditorFeature` descriptor with `slashCommands` instead.

@@ -1,0 +1,79 @@
+---
+title: "Table of Contents"
+description: "Feature guide for the document outline sidebar: active heading tracking, mini-dash rail, hover/focus popover, and EditorWithToc wrapper."
+group: "feature-guides"
+icon: "ListTree"
+label: "Table of Contents"
+order: 50
+---
+
+import tocDescriptorSource from "@/components/editor/plugins/toc/descriptor.ts?raw";
+import tocEditorWithTocSource from "@/components/editor/plugins/toc/editor-with-toc.tsx?raw";
+import tocHooksSource from "@/components/editor/plugins/toc/hooks.ts?raw";
+import tocSidebarSource from "@/components/editor/plugins/toc/sidebar.tsx?raw";
+
+<Callout title="Feature guide">
+  The Table of Contents (`@pytah/editor-toc`) renders a compact right-margin
+  outline rail that expands into a full heading popover on hover or keyboard
+  focus, highlighting the active section as you scroll.
+</Callout>
+
+## Files
+
+<FileTree
+  items={[
+    "src/components/editor/plugins/toc/",
+    "  constants.ts        ← scroll offsets & IntersectionObserver rootMargin",
+    "  descriptor.ts       ← tocFeature descriptor",
+    "  editor-with-toc.tsx ← EditorWithToc composition wrapper",
+    "  hooks.ts            ← useActiveHeading (scroll + IntersectionObserver + click jump)",
+    "  plugin.tsx          ← EditorTableOfContentsPlugin wrapper",
+    "  sidebar.tsx         ← EditorTableOfContents (mini-bars rail + hover/focus popover)",
+    "  types.ts            ← TocHeadingTag, TocState",
+    "  utils.ts            ← scroll parent detection, active heading & smooth jump math",
+  ]}
+/>
+
+## Usage
+
+Install `@pytah/editor-toc` and mount `EditorWithToc` (or render `<EditorTableOfContents />` inside your own `slots.shell`):
+
+```tsx
+import { EditorWithToc } from "@/components/editor/plugins/toc/editor-with-toc";
+
+export function DocumentPage() {
+  return <EditorWithToc minimal toolbar="full" />;
+}
+```
+
+Pass `toc={null}` to hide the rail conditionally (for example, in zen mode), or pass a custom React node to replace the default sidebar.
+
+## EditorWithToc Wrapper
+
+<CodeBlock
+  label="src/components/editor/plugins/toc/editor-with-toc.tsx"
+  language="tsx"
+>
+  {tocEditorWithTocSource}
+</CodeBlock>
+
+## Sidebar UI
+
+<CodeBlock label="src/components/editor/plugins/toc/sidebar.tsx" language="tsx">
+  {tocSidebarSource}
+</CodeBlock>
+
+## Active Heading Tracking
+
+<CodeBlock label="src/components/editor/plugins/toc/hooks.ts" language="ts">
+  {tocHooksSource}
+</CodeBlock>
+
+## Feature Descriptor
+
+<CodeBlock
+  label="src/components/editor/plugins/toc/descriptor.ts"
+  language="ts"
+>
+  {tocDescriptorSource}
+</CodeBlock>

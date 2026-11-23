@@ -21,10 +21,14 @@ import youTubePluginSource from "@/components/editor/plugins/youtube/plugin.tsx?
 <FileTree
   items={[
     "src/components/editor/core/nodes/youtube/",
-    "  node.tsx          ← DecoratorBlockNode + serialization",
+    "  node.tsx          ← DecoratorBlockNode + alignment + validation",
+    "  transformer.ts    ← YOUTUBE_MARKDOWN_TRANSFORMER",
     "src/components/editor/plugins/youtube/",
-    "  commands.ts       ← INSERT_YOUTUBE_COMMAND",
-    "  plugin.tsx        ← YouTubePlugin (insert / replace)",
+    "  commands.ts       ← INSERT_YOUTUBE_COMMAND + OPEN_YOUTUBE_DIALOG_COMMAND",
+    "  feature.ts        ← youtubeFeature descriptor",
+    "  insert-dialog.tsx ← URL input dialog with validation",
+    "  plugin.tsx        ← YouTubePlugin (insert / replace / dialog)",
+    "  utils.ts          ← strict YouTube hostname & 11-char ID parser",
   ]}
 />
 
@@ -63,20 +67,12 @@ A single typed command carries the video ID and an optional `targetNodeKey` that
 
 ## Registration
 
-YouTube embeds ship behind the `youtube` feature flag. To add the capability to a custom composition, contribute a descriptor via `extraFeatures`:
+YouTube embeds ship as the optional `@pytah/editor-youtube` registry item. Install it and compose `youtubeFeature` via `extraFeatures`:
 
 ```tsx
-<Editor
-  extraFeatures={[
-    {
-      id: "youtube",
-      plugin: YouTubePlugin,
-      nodes: [YouTubeNode],
-      transformers: [YOUTUBE_MARKDOWN_TRANSFORMER],
-      slashCommandIds: ["youtube"],
-    },
-  ]}
-/>
+import { youtubeFeature } from "@/components/editor/plugins/youtube/feature";
+
+<Editor extraFeatures={[youtubeFeature]} />;
 ```
 
 ### Inserting a video programmatically

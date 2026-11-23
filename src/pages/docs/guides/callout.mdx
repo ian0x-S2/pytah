@@ -9,10 +9,7 @@ order: 35
 
 import calloutNodeSource from "@/components/editor/core/nodes/callout/node.tsx?raw";
 import calloutTransformerSource from "@/components/editor/core/nodes/callout/transformer.ts?raw";
-import calloutCommandsSource from "@/components/editor/plugins/callout/commands.ts?raw";
 import calloutFeatureSource from "@/components/editor/plugins/callout/feature.ts?raw";
-import calloutPluginSource from "@/components/editor/plugins/callout/plugin.tsx?raw";
-import calloutUtilsSource from "@/components/editor/plugins/callout/utils.ts?raw";
 
 <Callout title="Extension guide">
   Callouts provide highlighted containers for tips, notes, warnings, and alerts
@@ -40,6 +37,8 @@ Callout blocks convert to and from standard GitHub Flavored Markdown alerts:
 
 ```markdown
 > [!NOTE] Information to take into account.
+
+> [!INFO] Additional context or reference details.
 
 > [!TIP] Helpful advice or recommendation.
 

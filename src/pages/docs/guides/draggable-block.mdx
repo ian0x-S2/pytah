@@ -10,9 +10,9 @@ order: 40
 import draggableBlockPluginSource from "@/components/editor/plugins/draggable-block/plugin.tsx?raw";
 
 <Callout title="Feature guide">
-  This is a built-in editor capability. If you only need to disable it in an
-  integration, prefer the editor `features` prop rather than editing plugin
-  internals.
+  Draggable blocks ship as an optional registry item
+  (`@pytah/editor-draggable-blocks`). Compose it through `extraFeatures` — no
+  internal edits needed.
 </Callout>
 
 ## Files
@@ -20,7 +20,11 @@ import draggableBlockPluginSource from "@/components/editor/plugins/draggable-bl
 <FileTree
   items={[
     "src/components/editor/plugins/draggable-block/",
-    "  plugin.tsx        ← DraggableBlockPlugin",
+    "  drag-stabilizer.tsx ← viewport-space drop stabilizer + cross-editor guard",
+    "  drop-placement.ts   ← block move + caret/focus restoration",
+    "  drop-target.ts      ← per-editor target lookup + midpoint line placement",
+    "  feature.ts          ← draggableBlocksFeature descriptor",
+    "  plugin.tsx          ← DraggableBlockPlugin",
   ]}
 />
 

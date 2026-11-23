@@ -4,7 +4,7 @@ import { Table, TableCell, TableRow } from "./primitives";
 
 export function FeatureTable() {
   return (
-    <Table headers={["Flag", "Editable-only", "Ships", "Slash commands"]}>
+    <Table headers={["Feature", "Editable-only", "Ships", "Slash commands"]}>
       {docsFeatureRows.map((feature) => (
         <TableRow key={feature.flag}>
           <TableCell>

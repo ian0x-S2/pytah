@@ -28,10 +28,12 @@ import layoutUtilsSource from "@/components/editor/plugins/layout/utils.ts?raw";
     "  container-node.ts  ← LayoutContainerNode (CSS grid wrapper)",
     "  item-node.ts       ← LayoutItemNode (single column)",
     "src/components/editor/plugins/layout/",
-    "  commands.ts        ← INSERT_LAYOUT_COMMAND",
+    "  commands.ts        ← INSERT_LAYOUT_COMMAND + OPEN_LAYOUT_DIALOG_COMMAND",
     "  constants.ts       ← DEFAULT_LAYOUT_TEMPLATE + LAYOUT_PRESETS",
-    "  utils.ts           ← applyLayoutPreset",
-    "  plugin.tsx         ← LayoutPlugin",
+    "  feature.ts         ← layoutFeature descriptor",
+    "  preset-dialog.tsx  ← visual column preset chooser dialog",
+    "  utils.ts           ← getLayoutColumnCount + applyLayoutPreset + insertLayoutPreset",
+    "  plugin.tsx         ← LayoutPlugin (commands + structural transforms + keyboard escape)",
   ]}
 />
 
@@ -102,28 +104,21 @@ Predefined grid templates. `DEFAULT_LAYOUT_TEMPLATE` is used by the slash-comman
 
 ### Registration
 
-Layouts ship behind the `layouts` feature flag. To add the capability to a custom composition, contribute a descriptor via `extraFeatures`:
+Multi-column layouts ship as the optional `@pytah/editor-layouts` registry item. Install it and compose `layoutFeature` via `extraFeatures`:
 
 ```tsx
-<Editor
-  extraFeatures={[
-    {
-      id: "layouts",
-      plugin: LayoutPlugin,
-      nodes: [LayoutContainerNode, LayoutItemNode],
-      slashCommandIds: ["columns"],
-    },
-  ]}
-/>
+import { layoutFeature } from "@/components/editor/plugins/layout/feature";
+
+<Editor extraFeatures={[layoutFeature]} />;
 ```
 
 ### Inserting a layout programmatically
 
 ```tsx
-import { INSERT_LAYOUT_COMMAND } from "../plugins/layout/commands";
+import { INSERT_LAYOUT_COMMAND } from "@/components/editor/plugins/layout/commands";
 
 editor.dispatchCommand(INSERT_LAYOUT_COMMAND, {
-  templateColumns: "1fr 1fr 1fr", // three equal columns
+  templateColumns: "repeat(3, 1fr)", // three equal columns
 });
 
 // replace a specific node:
@@ -135,8 +130,8 @@ editor.dispatchCommand(INSERT_LAYOUT_COMMAND, {
 
 <Callout title="Any valid CSS grid template works" variant="tip">
   The `templateColumns` value is written directly to
-  `style.gridTemplateColumns`. You can pass any valid CSS grid template string —
-  the column count is derived by splitting on whitespace, so named tracks or
-  `repeat()` expressions should be pre-resolved to explicit values before
-  passing them in.
+  `style.gridTemplateColumns`. `getLayoutColumnCount` parses both explicit track
+  lists (`1fr 2fr 1fr`) and nested CSS functions such as `repeat(3, 1fr)` or
+  `repeat(2, minmax(0, 1fr)) 200px`, and structural transforms keep the
+  container and column children valid after arbitrary edits.
 </Callout>

@@ -27,11 +27,13 @@ import sceneSource from "@/components/editor/plugins/excalidraw/scene.ts?raw";
     "  node.tsx          ← ExcalidrawNode + serialization",
     "src/components/editor/plugins/excalidraw/",
     "  commands.ts       ← INSERT_EXCALIDRAW_COMMAND",
+    "  feature.ts        ← excalidrawFeature descriptor",
+    "  paste.ts          ← Excalidraw clipboard JSON paste handler",
     "  scene.ts          ← scene parse/serialize helpers",
     "  image.tsx         ← static svg preview (lazy exportToSvg)",
     "  modal.tsx         ← full-screen drawing surface (lazy @excalidraw/excalidraw)",
     "  component.tsx     ← decorator component (select / resize / edit / align)",
-    "  plugin.tsx        ← ExcalidrawPlugin (insert command)",
+    "  plugin.tsx        ← ExcalidrawPlugin (insert command + clipboard paste)",
   ]}
 />
 
@@ -104,26 +106,12 @@ The decorator component owns the interaction model: click selects the block, dou
 
 ## Registration
 
-Excalidraw drawings ship behind the `excalidraw` feature flag. To add the capability to a custom composition, contribute a descriptor via `extraFeatures`:
+Excalidraw drawings ship as the optional `@pytah/editor-excalidraw` registry item. Install it and compose `excalidrawFeature` via `extraFeatures`:
 
 ```tsx
-import {
-  $createExcalidrawNode,
-  $isExcalidrawNode,
-  ExcalidrawNode,
-} from "@/components/editor/core/nodes/excalidraw/node";
-import { ExcalidrawPlugin } from "@/components/editor/plugins/excalidraw/plugin";
+import { excalidrawFeature } from "@/components/editor/plugins/excalidraw/feature";
 
-<Editor
-  extraFeatures={[
-    {
-      id: "excalidraw",
-      plugin: ExcalidrawPlugin,
-      nodes: [ExcalidrawNode],
-      slashCommandIds: ["excalidraw"],
-    },
-  ]}
-/>;
+<Editor extraFeatures={[excalidrawFeature]} />;
 ```
 
 ### Inserting a drawing programmatically

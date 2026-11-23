@@ -13,8 +13,9 @@ Use this before building a new editor feature, whether the author is a human con
 
 ## Product Shape
 
-- Is this default behavior or an optional lego piece?
-- If optional, which `EditorFeatureFlags` key controls it?
+- Is this default core behavior or an optional content feature (`extraFeatures`)?
+- If optional content feature, what `ExtraEditorFeature` descriptor (`id`, `plugin`, `nodes`, `transformers`, `slashCommands`) does it export?
+- If core toggle, which `EditorFeatureFlags` key controls it?
 - Does it need a `chrome`, `slots`, `pluginSlots`, or `extraNodes` entry instead?
 
 ## Feature Structure

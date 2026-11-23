@@ -39,6 +39,7 @@ Run the standard validation flow:
 
 ```bash
 bun run check
+bun run test
 bun run build
 ```
 

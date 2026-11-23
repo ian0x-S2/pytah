@@ -30,6 +30,7 @@ import collapsibleUtilsSource from "@/components/editor/plugins/collapsible/util
     "  dom-utils.ts       ← setDomHiddenUntilFound / domOnBeforeMatch",
     "src/components/editor/plugins/collapsible/",
     "  commands.ts        ← INSERT_COLLAPSIBLE_COMMAND",
+    "  feature.ts         ← collapsibleFeature descriptor",
     "  utils.ts           ← createCollapsibleStructure helpers",
     "  plugin.tsx         ← CollapsiblePlugin",
   ]}
@@ -106,23 +107,12 @@ Registers node transforms to enforce the `container → [title, content]` invari
 
 ### Registration
 
-The collapsible capability ships behind the `collapsible` feature flag. To add it to a custom composition, contribute a descriptor via `extraFeatures`:
+Collapsible sections ship as the optional `@pytah/editor-collapsible` registry item. Install it and pass `collapsibleFeature` via `extraFeatures`:
 
 ```tsx
-<Editor
-  extraFeatures={[
-    {
-      id: "collapsible",
-      plugin: CollapsiblePlugin,
-      nodes: [
-        CollapsibleContainerNode,
-        CollapsibleTitleNode,
-        CollapsibleContentNode,
-      ],
-      slashCommandIds: ["collapsible"],
-    },
-  ]}
-/>
+import { collapsibleFeature } from "@/components/editor/plugins/collapsible/feature";
+
+<Editor extraFeatures={[collapsibleFeature]} />;
 ```
 
 ### Inserting programmatically

@@ -118,16 +118,23 @@ Then copy these directories and files into your project, preserving their relati
 src/
 ├── components/
 │   ├── editor/          ← entire directory (core + plugins + ui)
-│   └── ui/              ← ShadCN primitives used by the editor:
+│   ├── theme-context.ts ← optional ThemeProvider hook + automatic .dark fallback
+│   ├── theme-provider.tsx
+│   └── ui/              ← 14 ShadCN primitives used by the editor:
 │       ├── button.tsx
 │       ├── command.tsx
 │       ├── dialog.tsx
+│       ├── dropdown-menu.tsx
+│       ├── hover-card.tsx
 │       ├── input.tsx
 │       ├── input-group.tsx
 │       ├── popover.tsx
+│       ├── scroll-area.tsx
+│       ├── select.tsx
 │       ├── separator.tsx
 │       ├── textarea.tsx
-│       └── toggle.tsx
+│       ├── toggle.tsx
+│       └── tooltip.tsx
 └── lib/
     └── utils.ts         ← cn() helper
 ```
