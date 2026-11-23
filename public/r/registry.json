@@ -9,7 +9,7 @@
       "type": "registry:block"
     },
     {
-      "description": "Every optional Pytah editor feature in one install. Compose descriptors through the `extraFeatures` prop.",
+      "description": "Every production optional Pytah editor feature in one install (excludes demo-only `editor-seed-content`). Compose descriptors through the `extraFeatures` prop.",
       "name": "editor-full",
       "title": "Pytah Editor — All Features",
       "type": "registry:block"

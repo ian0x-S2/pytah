@@ -157,8 +157,8 @@ export default function App() {
 const baseAppSource = renderAppSource('<Editor minimal toolbar="full" />');
 
 const fullAppSource = `import { Editor } from "@/components/editor/editor";
+import { calloutFeature } from "@/components/editor/plugins/callout/feature";
 import { collapsibleFeature } from "@/components/editor/plugins/collapsible/feature";
-import { seedContentFeature } from "@/components/editor/plugins/core/seed-content-feature";
 import { draggableBlocksFeature } from "@/components/editor/plugins/draggable-block/feature";
 import { excalidrawFeature } from "@/components/editor/plugins/excalidraw/feature";
 import { imageFeature } from "@/components/editor/plugins/image/feature";
@@ -169,8 +169,8 @@ import { tocFeature } from "@/components/editor/plugins/toc/descriptor";
 import { youtubeFeature } from "@/components/editor/plugins/youtube/feature";
 
 const features = [
+  calloutFeature,
   collapsibleFeature,
-  seedContentFeature,
   draggableBlocksFeature,
   excalidrawFeature,
   imageFeature,
@@ -297,6 +297,15 @@ const verifyInstalledFiles = async (projectDirectory, { withFeatures }) => {
         "components",
         "editor",
         "plugins",
+        "callout",
+        "feature.ts"
+      ),
+      path.join(
+        projectDirectory,
+        "src",
+        "components",
+        "editor",
+        "plugins",
         "image",
         "feature.ts"
       ),
@@ -315,6 +324,33 @@ const verifyInstalledFiles = async (projectDirectory, { withFeatures }) => {
   await Promise.all(
     expectedFiles.map((filePath) => readFile(filePath, "utf-8"))
   );
+
+  const packageJson = JSON.parse(
+    await readFile(path.join(projectDirectory, "package.json"), "utf-8")
+  );
+  const installedDependencies = new Set([
+    ...Object.keys(packageJson.dependencies ?? {}),
+    ...Object.keys(packageJson.devDependencies ?? {}),
+  ]);
+
+  if (withFeatures) {
+    for (const required of ["@excalidraw/excalidraw", "katex"]) {
+      if (!installedDependencies.has(required)) {
+        throw new Error(
+          `Expected ${required} to be installed in all-features scenario`
+        );
+      }
+    }
+    return;
+  }
+
+  for (const forbidden of ["@excalidraw/excalidraw", "katex"]) {
+    if (installedDependencies.has(forbidden)) {
+      throw new Error(
+        `Unexpected heavy dependency ${forbidden} installed in base editor scenario`
+      );
+    }
+  }
 };
 
 const scenarios = [

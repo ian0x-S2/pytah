@@ -188,8 +188,8 @@ export default defineConfig({
       },
     },
     {
-      // Documented intent (see biome-ignore): migrating to the async Cookie
-      // Store API changes runtime semantics.
+      // Documented intent: migrating to the async Cookie Store API changes
+      // runtime semantics and is not available in all environments.
       files: ["src/components/ui/sidebar.tsx"],
       rules: {
         "unicorn/no-document-cookie": "off",
@@ -213,8 +213,8 @@ export default defineConfig({
       },
     },
     {
-      // Correct ARIA listbox pattern (roving tabindex, aria-selected,
-      // container key handler); native select cannot render the options.
+      // Custom ARIA menu pattern (roving tabindex and container key handler);
+      // native select cannot render rich command rows with descriptions.
       files: ["src/components/editor/plugins/full-toolbar/insert-popover.tsx"],
       rules: {
         "jsx-a11y/interactive-supports-focus": "off",
@@ -222,15 +222,14 @@ export default defineConfig({
       },
     },
     {
-      // Escape-capturing dialog (canvas keeps its own Escape); see
-      // biome-ignore justification.
+      // Escape-capturing dialog (canvas keeps its own Escape handling).
       files: ["src/components/editor/plugins/excalidraw/modal.tsx"],
       rules: {
         "jsx-a11y/no-noninteractive-element-interactions": "off",
       },
     },
     {
-      // Hover-intent container for the outline popover; see biome-ignore.
+      // Hover-intent container for the outline popover.
       files: ["src/components/editor/plugins/toc/sidebar.tsx"],
       rules: {
         "jsx-a11y/no-noninteractive-element-interactions": "off",

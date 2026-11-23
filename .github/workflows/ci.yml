@@ -3,6 +3,7 @@ name: CI
 on:
   push:
     branches:
+      - master
       - main
   pull_request:
 
@@ -23,10 +24,16 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Run checks
-        run: npm run check
+        run: bun run check
 
-      - name: Build app
-        run: npm run build
+      - name: Run editor tests
+        run: bun run test
+
+      - name: Build app and registry
+        run: bun run build
+
+      - name: Verify committed registry artifacts
+        run: git diff --exit-code public/r
 
       - name: Smoke test registry install
-        run: npm run registry:smoke
+        run: bun run registry:smoke

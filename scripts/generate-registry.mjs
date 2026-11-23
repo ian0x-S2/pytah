@@ -221,11 +221,16 @@ const collectFileImports = (content) => {
 };
 
 /**
- * Resolves the npm dependencies a set of files actually imports, so every
+ * Peer dependencies already installed by the consumer's React app. Emitting
+ * exact versions for them in registry items would downgrade or pin the host.
+ */
+const HOST_PEER_DEPENDENCIES = new Set(["react", "react-dom"]);
+
+/**
+ * Resolves the npm package names a set of files actually imports, so every
  * registry item declares exactly what its code needs — nothing more.
  */
-const resolveFileDependencies = async (files) => {
-  const packageJson = await readJson(path.join(projectRoot, "package.json"));
+const collectFilePackageNames = async (files) => {
   const packageNames = new Set();
 
   for (const file of files) {
@@ -244,8 +249,28 @@ const resolveFileDependencies = async (files) => {
     }
   }
 
+  return packageNames;
+};
+
+const resolveFileDependencies = async (
+  files,
+  { excludeNames = new Set(), extraNames = [] } = {}
+) => {
+  const packageJson = await readJson(path.join(projectRoot, "package.json"));
+  const packageNames = await collectFilePackageNames(files);
+  for (const extraName of extraNames) {
+    packageNames.add(extraName);
+  }
+
   const names = [...packageNames]
-    .filter((name) => !name.startsWith("@types/"))
+    .filter(
+      (name) =>
+        !(
+          name.startsWith("@types/") ||
+          HOST_PEER_DEPENDENCIES.has(name) ||
+          excludeNames.has(name)
+        )
+    )
     .toSorted((left, right) => left.localeCompare(right));
 
   return names.map((name) => {
@@ -389,7 +414,7 @@ const getFeatureFolderFiles = async (feature) => {
   return files.toSorted((left, right) => left.localeCompare(right));
 };
 
-const createFeatureItem = async (feature) => {
+const createFeatureItem = async (feature, basePackageNames) => {
   const files = await getFeatureFolderFiles(feature);
 
   const entries = await Promise.all(files.map(createComponentEntry));
@@ -398,7 +423,9 @@ const createFeatureItem = async (feature) => {
     $schema: "https://ui.shadcn.com/schema/registry-item.json",
     author: "Pytah",
     categories: ["editor"],
-    dependencies: await resolveFileDependencies(files),
+    dependencies: await resolveFileDependencies(files, {
+      excludeNames: basePackageNames,
+    }),
     description: feature.description,
     files: entries,
     name: feature.name,
@@ -416,8 +443,19 @@ const createBaseItem = async ({
 }) => {
   const collectedSourceFiles = await collectSourceFiles(editorSourceDirectory);
   const baseFiles = collectedSourceFiles.filter((file) => !isFeatureFile(file));
+  const allBaseFiles = [
+    ...baseFiles,
+    ...libEntries.map((entry) =>
+      path.join(projectRoot, "src", entry.target.replace("src/", ""))
+    ),
+    ...uiEntries.map((entry) =>
+      path.join(projectRoot, "src", entry.target.replace("src/", ""))
+    ),
+  ];
+  const basePackageNames = await collectFilePackageNames(allBaseFiles);
+  basePackageNames.add("tw-animate-css");
 
-  return {
+  const item = {
     $schema: "https://ui.shadcn.com/schema/registry-item.json",
     author: "Pytah",
     categories: ["editor"],
@@ -435,15 +473,9 @@ const createBaseItem = async ({
         "color-highlight-foreground": "var(--highlight-foreground)",
       },
     },
-    dependencies: await resolveFileDependencies([
-      ...baseFiles,
-      ...libEntries.map((entry) =>
-        path.join(projectRoot, "src", entry.target.replace("src/", ""))
-      ),
-      ...uiEntries.map((entry) =>
-        path.join(projectRoot, "src", entry.target.replace("src/", ""))
-      ),
-    ]),
+    dependencies: await resolveFileDependencies(allBaseFiles, {
+      extraNames: ["tw-animate-css"],
+    }),
     description:
       "Copy/paste-ready Lexical editor core with chrome, slash menu, links and markdown/html interop. Pair with optional feature items (images, tables, drawings, ...) for content capabilities.",
     docs: [
@@ -451,6 +483,7 @@ const createBaseItem = async ({
       "",
       "The item writes to your configured `components`, `ui`, and `lib` aliases.",
       "It expects the standard `@/` alias contract from `components.json`.",
+      "Light/dark mode works out of the box by observing `.dark` on `<html>`; wrapping your app with `ThemeProvider` is optional.",
       compatibility.notes.animate,
       `The editor is currently validated against Lexical ${compatibility.requirements.lexical}.`,
       "",
@@ -470,6 +503,8 @@ const createBaseItem = async ({
     title: "Pytah Editor",
     type: "registry:block",
   };
+
+  return { basePackageNames, item };
 };
 
 const writeJson = async (filePath, value) => {
@@ -488,26 +523,28 @@ const main = async () => {
     ]
   );
 
-  const baseItem = await createBaseItem({
+  const { basePackageNames, item: baseItem } = await createBaseItem({
     compatibility,
     coreEntries,
     libEntries,
     uiEntries,
   });
 
-  const items = await Promise.all(featureItems.map(createFeatureItem));
+  const items = await Promise.all(
+    featureItems.map((feature) => createFeatureItem(feature, basePackageNames))
+  );
 
   const fullItem = {
     $schema: "https://ui.shadcn.com/schema/registry-item.json",
     author: "Pytah",
     categories: ["editor"],
     description:
-      "Every optional Pytah editor feature in one install. Compose descriptors through the `extraFeatures` prop.",
+      "Every production optional Pytah editor feature in one install (excludes demo-only `editor-seed-content`). Compose descriptors through the `extraFeatures` prop.",
     files: [],
     name: "editor-full",
-    registryDependencies: featureItems.map(
-      (feature) => `${registryNamespace}/${feature.name}`
-    ),
+    registryDependencies: featureItems
+      .filter((feature) => feature.name !== "editor-seed-content")
+      .map((feature) => `${registryNamespace}/${feature.name}`),
     title: "Pytah Editor — All Features",
     type: "registry:block",
   };
