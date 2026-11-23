@@ -42,10 +42,36 @@ export function DemoPage() {
   const editorRef = useRef<LexicalEditor | null>(null);
 
   useEffect(() => {
+    document.title = "Live Demo — Pytah";
     // Reload scroll restoration is disabled app-wide in `main.tsx` (module
     // scope, pre-layout); this just guards against any residual offset.
     window.scrollTo(0, 0);
   }, []);
+
+  useEffect(() => {
+    if (!zen) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.defaultPrevented) {
+        return;
+      }
+
+      if (
+        document.querySelector(
+          'dialog[open], [role="dialog"], [role="menu"], [role="listbox"]'
+        )
+      ) {
+        return;
+      }
+
+      setZen(false);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [zen]);
 
   const tocVisible = showToc && !zen;
 
@@ -76,8 +102,8 @@ export function DemoPage() {
           zen && "pointer-events-none opacity-0"
         )}
       >
-        <div className="mx-auto flex max-w-225 items-center justify-between px-4 py-2">
-          <div className="flex items-center gap-3">
+        <div className="mx-auto flex max-w-225 flex-wrap items-center justify-between gap-2 px-4 py-2">
+          <div className="flex shrink-0 items-center gap-3">
             <Link
               className="text-sm font-semibold tracking-tight text-foreground"
               href="/"
@@ -87,7 +113,7 @@ export function DemoPage() {
             <span className="text-muted-foreground/50">/</span>
             <span className="text-sm text-muted-foreground">Demo</span>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex flex-wrap items-center gap-1">
             <ThemeToggle />
             <Button
               className="gap-1.5"
@@ -95,7 +121,7 @@ export function DemoPage() {
               size="sm"
               variant={showToc ? "secondary" : "ghost"}
             >
-              <ListTreeIcon className="size-3.5" />
+              <ListTreeIcon aria-hidden className="size-3.5" />
               TOC
             </Button>
             <Button
@@ -104,7 +130,7 @@ export function DemoPage() {
               size="sm"
               variant={toolbar ? "secondary" : "ghost"}
             >
-              <PanelTopIcon className="size-3.5" />
+              <PanelTopIcon aria-hidden className="size-3.5" />
               {toolbar ? `Toolbar: ${TOOLBAR_LABELS[toolbar]}` : "Toolbar: Off"}
             </Button>
             <Button
@@ -115,11 +141,12 @@ export function DemoPage() {
             >
               {compact ? (
                 <>
-                  <FoldVerticalIcon className="size-3.5" /> Compact
+                  <FoldVerticalIcon aria-hidden className="size-3.5" /> Compact
                 </>
               ) : (
                 <>
-                  <UnfoldVerticalIcon className="size-3.5" /> Comfortable
+                  <UnfoldVerticalIcon aria-hidden className="size-3.5" />{" "}
+                  Comfortable
                 </>
               )}
             </Button>
@@ -131,11 +158,11 @@ export function DemoPage() {
             >
               {editable ? (
                 <>
-                  <EyeIcon className="size-3.5" /> Preview
+                  <EyeIcon aria-hidden className="size-3.5" /> Preview
                 </>
               ) : (
                 <>
-                  <PencilIcon className="size-3.5" /> Edit
+                  <PencilIcon aria-hidden className="size-3.5" /> Edit
                 </>
               )}
             </Button>
@@ -145,15 +172,7 @@ export function DemoPage() {
               size="sm"
               variant="ghost"
             >
-              {zen ? (
-                <>
-                  <MinimizeIcon className="size-3.5" /> Exit
-                </>
-              ) : (
-                <>
-                  <MaximizeIcon className="size-3.5" /> Zen
-                </>
-              )}
+              <MaximizeIcon aria-hidden className="size-3.5" /> Zen
             </Button>
             <Button
               className="gap-1.5"
@@ -161,16 +180,34 @@ export function DemoPage() {
               size="sm"
               variant="ghost"
             >
-              <DownloadIcon className="size-3.5" /> Export .md
+              <DownloadIcon aria-hidden className="size-3.5" /> Export .md
             </Button>
-            <Link href="/docs/getting-started">
-              <Button className="gap-1.5" size="sm" variant="ghost">
-                <BookOpenIcon className="size-3.5" /> Docs
-              </Button>
-            </Link>
+            <Button
+              className="gap-1.5"
+              nativeButton={false}
+              render={<Link href="/docs/getting-started" />}
+              size="sm"
+              variant="ghost"
+            >
+              <BookOpenIcon aria-hidden className="size-3.5" /> Docs
+            </Button>
           </div>
         </div>
       </header>
+
+      {zen ? (
+        <div className="fixed top-4 right-4 z-50">
+          <Button
+            aria-label="Exit Zen mode"
+            className="gap-1.5 bg-background/85 shadow-sm backdrop-blur-sm"
+            onClick={() => setZen(false)}
+            size="sm"
+            variant="outline"
+          >
+            <MinimizeIcon aria-hidden className="size-3.5" /> Exit Zen
+          </Button>
+        </div>
+      ) : null}
 
       {/* Document page */}
       <main className="mx-auto w-full max-w-225 flex-1">

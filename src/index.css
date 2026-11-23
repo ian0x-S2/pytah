@@ -3,7 +3,6 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
-@import "katex/dist/katex.min.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -30,7 +29,7 @@
 @utility bg-ambient-home {
   background-image: radial-gradient(
     ellipse 75% 45% at 50% -10%,
-    hsl(var(--foreground) / 0.05),
+    color-mix(in oklch, var(--foreground) 5%, transparent),
     transparent
   );
 }
@@ -38,7 +37,7 @@
 @utility bg-ambient-docs {
   background-image: radial-gradient(
     ellipse 75% 45% at 50% -10%,
-    hsl(var(--foreground) / 0.04),
+    color-mix(in oklch, var(--foreground) 4%, transparent),
     transparent
   );
 }
@@ -46,7 +45,7 @@
 @utility bg-ambient-circle {
   background-image: radial-gradient(
     circle at center,
-    hsl(var(--foreground) / 0.03),
+    color-mix(in oklch, var(--foreground) 3%, transparent),
     transparent 70%
   );
 }

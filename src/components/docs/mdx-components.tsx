@@ -1,4 +1,5 @@
 import type { ReactElement, ReactNode } from "react";
+import { Link } from "wouter";
 
 import {
   extractExportedInterface,
@@ -60,8 +61,9 @@ const findCodeElement = (
   }
   const element = node as ReactElement<CodeProps>;
   if (
-    typeof element.props?.className === "string" &&
-    element.props.className.includes("language-")
+    element.type === "code" ||
+    (typeof element.props?.className === "string" &&
+      element.props.className.includes("language-"))
   ) {
     return element;
   }
@@ -152,10 +154,26 @@ interface HeadingProps extends ChildrenProps {
 }
 
 export function MDXAnchor({ children, href }: AnchorProps) {
+  const className =
+    "font-medium text-foreground underline underline-offset-4 transition-opacity hover:opacity-80";
+
+  if (href?.startsWith("/")) {
+    return (
+      <Link className={className} href={href}>
+        {children}
+      </Link>
+    );
+  }
+
+  const isExternal =
+    href?.startsWith("http://") || href?.startsWith("https://");
+
   return (
     <a
-      className="font-medium text-foreground underline underline-offset-4 transition-opacity hover:opacity-80"
+      className={className}
       href={href}
+      rel={isExternal ? "noopener noreferrer" : undefined}
+      target={isExternal ? "_blank" : undefined}
     >
       {children}
     </a>

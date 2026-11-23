@@ -95,7 +95,6 @@ function DocsSidebar() {
             <SidebarMenuButton
               className="h-7 rounded-sm px-2 text-xs"
               render={
-                // biome-ignore lint/a11y/useAnchorContent: content is injected by useRender at runtime
                 <a
                   aria-label="Source"
                   href={REPOSITORY_URL}
@@ -104,7 +103,7 @@ function DocsSidebar() {
                 />
               }
             >
-              <CodeIcon className="size-3" />
+              <CodeIcon aria-hidden className="size-3" />
               <span>Source</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -153,16 +152,16 @@ export function DocsLayout({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="flex items-center gap-2">
-            <Link href="/demo">
-              <Button
-                className="rounded-sm whitespace-nowrap transition-colors"
-                size="sm"
-                variant="ghost"
-              >
-                <PlayIcon className="size-3.5" />
-                <span className="hidden sm:inline">Demo</span>
-              </Button>
-            </Link>
+            <Button
+              className="rounded-sm whitespace-nowrap transition-colors"
+              nativeButton={false}
+              render={<Link href="/demo" />}
+              size="sm"
+              variant="ghost"
+            >
+              <PlayIcon aria-hidden className="size-3.5" />
+              <span className="hidden sm:inline">Demo</span>
+            </Button>
             <div className="ml-1">
               <ThemeToggle />
             </div>

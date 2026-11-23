@@ -1,5 +1,5 @@
 /* Hallmark · genre: modern-minimal · macrostructure: Long Document · design-system: design.md · designed-as-app · radius: sm-only */
-import { useLayoutEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import { Redirect, useRoute } from "wouter";
 
 import { DocsLayout } from "@/components/docs/layout";
@@ -11,6 +11,7 @@ import { DOCS_PAGE_BY_SLUG } from "./docs/manifest";
 export function DocsPage() {
   const [, params] = useRoute("/docs/*");
   const slug = params?.["*"];
+  const page = slug ? DOCS_PAGE_BY_SLUG[slug] : undefined;
 
   useLayoutEffect(() => {
     if (!slug) {
@@ -20,11 +21,15 @@ export function DocsPage() {
     window.scrollTo({ top: 0 });
   }, [slug]);
 
+  useEffect(() => {
+    document.title = page
+      ? `${page.title} — Pytah Docs`
+      : "Page not found — Pytah Docs";
+  }, [page]);
+
   if (!slug) {
     return <Redirect to="/docs/overview" />;
   }
-
-  const page = DOCS_PAGE_BY_SLUG[slug];
 
   if (!page) {
     return (

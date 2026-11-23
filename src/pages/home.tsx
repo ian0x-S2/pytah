@@ -19,10 +19,10 @@ const specRows = [
     title: "Lego-like composition",
   },
   {
-    cta: "Read markdown support",
+    cta: "Read plugins & markdown",
     description:
       "Bi-directional Markdown and HTML conversion that preserves callouts, tables, checklists, and code formatting with zero friction.",
-    href: "/docs/features/markdown-support",
+    href: "/docs/plugins",
     tag: "Workflows",
     title: "Lossless copy & paste",
   },
@@ -148,6 +148,10 @@ function HomeMobileMenu({ className }: { className?: string }) {
 }
 
 export function HomePage() {
+  useEffect(() => {
+    document.title = "Pytah — Rich Text Editor for React";
+  }, []);
+
   return (
     <div className="relative min-h-screen bg-background font-sans text-foreground selection:bg-foreground selection:text-background">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-105 bg-ambient-home" />
@@ -171,40 +175,42 @@ export function HomePage() {
               aria-label="Primary"
               className="hidden min-w-0 items-center gap-0.5 sm:flex sm:gap-2"
             >
-              <Link className="shrink-0" href="/demo">
-                <Button
-                  className="rounded-sm px-2 whitespace-nowrap transition-colors sm:px-2.5"
-                  size="sm"
-                  variant="ghost"
-                >
-                  Demo
-                </Button>
-              </Link>
-              <a
-                className="shrink-0"
-                href={REPOSITORY_URL}
-                rel="noopener noreferrer"
-                target="_blank"
+              <Button
+                className="shrink-0 rounded-sm px-2 whitespace-nowrap transition-colors sm:px-2.5"
+                nativeButton={false}
+                render={<Link href="/demo" />}
+                size="sm"
+                variant="ghost"
               >
-                <Button
-                  aria-label="GitHub repository"
-                  className="rounded-sm px-2 whitespace-nowrap transition-colors sm:px-2.5"
-                  size="sm"
-                  variant="ghost"
-                >
-                  <GithubIcon className="size-3.5" />
-                  GitHub
-                </Button>
-              </a>
-              <Link className="shrink-0" href="/docs/overview">
-                <Button
-                  className="rounded-sm px-2 whitespace-nowrap transition-colors sm:px-2.5"
-                  size="sm"
-                  variant="ghost"
-                >
-                  Get started
-                </Button>
-              </Link>
+                Demo
+              </Button>
+              <Button
+                aria-label="GitHub repository"
+                className="shrink-0 rounded-sm px-2 whitespace-nowrap transition-colors sm:px-2.5"
+                nativeButton={false}
+                render={
+                  <a
+                    aria-label="GitHub repository"
+                    href={REPOSITORY_URL}
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  />
+                }
+                size="sm"
+                variant="ghost"
+              >
+                <GithubIcon className="size-3.5" />
+                GitHub
+              </Button>
+              <Button
+                className="shrink-0 rounded-sm px-2 whitespace-nowrap transition-colors sm:px-2.5"
+                nativeButton={false}
+                render={<Link href="/docs/overview" />}
+                size="sm"
+                variant="ghost"
+              >
+                Get started
+              </Button>
             </nav>
 
             {/* Mobile: theme + hamburger, everything else lives in the menu */}
@@ -235,23 +241,23 @@ export function HomePage() {
             </p>
 
             <div className="mt-6 flex w-full flex-col gap-2.5 sm:mt-8 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
-              <Link className="w-full sm:w-auto" href="/docs/overview">
-                <Button
-                  className="h-11 w-full justify-center rounded-sm px-5 whitespace-nowrap shadow-xs transition-colors sm:h-10 sm:w-auto"
-                  size="default"
-                >
-                  Get started
-                </Button>
-              </Link>
-              <Link className="w-full sm:w-auto" href="/demo">
-                <Button
-                  className="h-11 w-full justify-center rounded-sm px-5 whitespace-nowrap transition-colors sm:h-10 sm:w-auto"
-                  size="default"
-                  variant="outline"
-                >
-                  Live demo
-                </Button>
-              </Link>
+              <Button
+                className="h-11 w-full justify-center rounded-sm px-5 whitespace-nowrap shadow-xs transition-colors sm:h-10 sm:w-auto"
+                nativeButton={false}
+                render={<Link href="/docs/overview" />}
+                size="default"
+              >
+                Get started
+              </Button>
+              <Button
+                className="h-11 w-full justify-center rounded-sm px-5 whitespace-nowrap transition-colors sm:h-10 sm:w-auto"
+                nativeButton={false}
+                render={<Link href="/demo" />}
+                size="default"
+                variant="outline"
+              >
+                Live demo
+              </Button>
             </div>
 
             <dl className="mt-8 grid w-full max-w-xl grid-cols-2 gap-px overflow-hidden rounded-sm border border-border/50 bg-border/50 sm:mt-10 sm:grid-cols-4">
